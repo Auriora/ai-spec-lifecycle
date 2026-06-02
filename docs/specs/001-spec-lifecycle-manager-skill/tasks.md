@@ -30,7 +30,7 @@ last_reviewed: 2026-06-01
 **Purpose**: Decide where the skill should live and how it should be installed.
 
 - [x] T005 Decide whether the skill is a personal Codex skill, repository-managed skill, plugin skill, or staged in repo before install. Decision: keep the canonical skill source under `skills/spec-lifecycle-manager/` in this repository and install a working copy under `$CODEX_HOME/skills/spec-lifecycle-manager/`, falling back to `~/.codex/skills/spec-lifecycle-manager/` when `$CODEX_HOME` is unset.
-- [x] T006 Identify required skill files and optional references. Decision: create `SKILL.md` and `references/document-routing-and-expert-review.md`. Validation target details remain only in this archived implementation spec, not in the reusable skill package.
+- [x] T006 Identify required skill files and optional references. Decision: create `SKILL.md`, `references/document-routing-and-expert-review.md`, and fallback `references/spec-package/` templates. Validation target details remain only in this archived implementation spec, not in the reusable skill package.
 - [x] T007 Confirm whether `agents/openai.yaml` metadata is required for this skill. Decision: include `agents/openai.yaml` as recommended UI metadata; it is not required for runtime behavior.
 
 **Checkpoint**: The target skill structure is known.

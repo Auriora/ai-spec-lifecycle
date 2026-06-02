@@ -26,7 +26,7 @@ The skill's behavior is organized around five phases:
 | --- | --- |
 | Skill metadata | Define clear trigger terms for implementing, continuing, reconciling, promoting, reviewing, or closing spec packages. |
 | `SKILL.md` workflow | Capture the five-phase lifecycle, `[###-slug]` default, reconciliation rules, task completion rules, promotion rules, expert review guidance, and closure criteria. |
-| Supporting references | Include detailed document-routing and expert-review guidance as optional skill references so the local skill remains usable outside this repository. Keep validation targets in archived implementation evidence, not in the reusable skill package. |
+| Supporting references | Include detailed document-routing, expert-review, and fallback spec-package template guidance as optional skill references so the local skill remains usable outside this repository. Keep validation targets in archived implementation evidence, not in the reusable skill package. |
 | `agents/openai.yaml` | Include recommended UI metadata for the local skill. This is not required for runtime behavior, but keeps the skill discoverable and consistent with Codex skill conventions. |
 | Validation fixtures or examples | Validate against one mature documentation repository and one smaller agent-runtime repository to test usefulness and portability without overloading context. |
 | Repository skill source | Track the canonical skill package under `skills/spec-lifecycle-manager/`. |
@@ -39,6 +39,7 @@ The skill does not change product runtime contracts. It defines process contract
 - active specs default to `docs/specs/[###-slug]/`;
 - specs are temporary;
 - durable docs become final current-state truth;
+- durable doc locations come from each target repository's documentation structure;
 - task completion must record validation or alternate verification;
 - expert review roles are role-based and domain-neutral.
 
@@ -74,12 +75,13 @@ skills/spec-lifecycle-manager/
 |-- agents/
 |   `-- openai.yaml
 `-- references/
-    `-- document-routing-and-expert-review.md
+    |-- document-routing-and-expert-review.md
+    `-- spec-package/
 ```
 
 `SKILL.md` should contain only the essential workflow and tell the agent when
 to read the reference files. The reference files should carry the larger
-document-routing and expert-review tables.
+document-routing and expert-review tables plus fallback spec-package templates.
 
 ## Open Questions
 

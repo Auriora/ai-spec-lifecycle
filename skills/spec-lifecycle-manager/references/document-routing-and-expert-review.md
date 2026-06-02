@@ -1,21 +1,21 @@
 # Document Routing And Expert Review
 
-Use this reference when a spec affects durable documentation or when review roles are needed.
+Use this reference when a spec affects durable documentation or when review roles are needed. Map these roles onto the target repository's documented structure; do not create or require these folder names unless the repository already uses them.
 
 ## Durable Doc Roles
 
-| Durable doc area | Role |
+| Durable doc role | Purpose |
 | --- | --- |
-| `docs/requirements/` | Current or accepted operating requirements. |
-| `docs/architecture/` | Stable system shape, component boundaries, and cross-system flows. |
-| `docs/design/` | Current technical design for implemented or accepted component behavior. |
-| `docs/data-flow/` | Source-to-output lineage, transformation behavior, config routing, field dictionaries, and processed output behavior. |
-| `docs/api/` | Canonical machine-readable API contracts and companion API guidance. |
-| `docs/runbooks/` | Operational procedures, rollout, validation, recovery, replay, and support steps. |
-| `docs/adr/` | Durable decisions and rejected alternatives. |
-| `docs/reference/` | Stable factual mappings, limits, schemas, taxonomies, generated summaries, and review matrices. |
-| `docs/backlog/` | Cross-spec sequencing and work not ready for a focused implementation spec. |
-| `docs/reviews/` | Analysis snapshots and evidence that may feed specs or durable docs. |
+| Requirements | Current or accepted operating requirements. |
+| Architecture | Stable system shape, component boundaries, and cross-system flows. |
+| Technical design | Current technical design for implemented or accepted component behavior. |
+| Data flow | Source-to-output lineage, transformation behavior, config routing, field dictionaries, and processed output behavior. |
+| API or contract | Canonical machine-readable contracts and companion guidance. |
+| Runbook or operations | Operational procedures, rollout, validation, recovery, replay, and support steps. |
+| Decision record | Durable decisions and rejected alternatives. |
+| Reference | Stable factual mappings, limits, schemas, taxonomies, generated summaries, and review matrices. |
+| Backlog or roadmap | Cross-spec sequencing and work not ready for a focused implementation spec. |
+| Review or audit | Analysis snapshots and evidence that may feed specs or durable docs. |
 | `docs/specs/` | Temporary active delivery packages. |
 
 ## Spec-To-Doc Routing

@@ -55,6 +55,8 @@ The process needs a reusable skill that makes specs useful while work is active,
 - **FR-012**: The skill MUST require closure checks so completed behavior does not remain documented only in `docs/specs/`.
 - **FR-013**: The skill MUST remain concise enough to load as a Codex skill without consuming excessive context.
 - **FR-014**: The canonical skill package MUST be tracked in the repository under `skills/spec-lifecycle-manager/`; any copy under `~/.codex/skills/` is an installed artifact.
+- **FR-015**: The skill MUST include fallback spec-package templates and MUST prefer repository-provided templates or documentation direction when present.
+- **FR-016**: The skill MUST assume only the active spec package path `docs/specs/[###-slug]/` and MUST discover durable documentation locations from each target repository.
 
 ### Key Entities
 
@@ -74,6 +76,7 @@ The process needs a reusable skill that makes specs useful while work is active,
 6. **Given** accepted spec content affects durable docs, **When** the implementation is complete, **Then** the skill routes updates into requirements, design, architecture, API, data-flow, runbook, ADR, reference, backlog, or review docs as appropriate.
 7. **Given** a spec is ready to close, **When** closure is reviewed, **Then** no accepted current behavior remains documented only in the active spec package.
 8. **Given** a document is created or updated, **When** review guidance is needed, **Then** the skill identifies the relevant role-based expert reviews.
+9. **Given** a repository has spec-package templates, **When** a new spec package is created, **Then** the skill uses those repository templates before falling back to bundled templates.
 
 ## User Scenarios And Testing
 

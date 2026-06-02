@@ -66,7 +66,8 @@ skills/
     |-- agents/
     |   `-- openai.yaml
     `-- references/
-        `-- document-routing-and-expert-review.md
+        |-- document-routing-and-expert-review.md
+        `-- spec-package/
 ```
 
 ### Skill
@@ -99,7 +100,8 @@ skills/spec-lifecycle-manager/
 |-- agents/
 |   `-- openai.yaml
 `-- references/
-    `-- document-routing-and-expert-review.md
+    |-- document-routing-and-expert-review.md
+    `-- spec-package/
 ```
 
 Required runtime file:
@@ -109,6 +111,7 @@ Required runtime file:
 Supporting files:
 
 - `references/document-routing-and-expert-review.md`: durable document routing, expert role matrix, whole-package review, and review evidence guidance.
+- `references/spec-package/`: fallback spec-package templates and artifact relationship guidance for repositories without their own templates.
 - `agents/openai.yaml`: recommended UI metadata. This file is not required for skill execution but should be included for discoverability and consistency with Codex skill conventions.
 
 ## Phases
