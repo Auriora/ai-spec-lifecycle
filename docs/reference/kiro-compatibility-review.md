@@ -154,15 +154,27 @@ The following alignment changes were selected:
 | `references/document-routing-and-expert-review.md` | Unchanged; governs promotion and review phases |
 | `SKILL.md` | Not yet updated; pending separate pass |
 
+## Migration Strategy
+
+**Approach**: Hybrid — one-line trigger in SKILL.md Reconcile section + detailed
+`references/migration-guide.md`.
+
+- SKILL.md Reconcile section now detects old-format specs (presence of `spec.md`
+  or `plan.md`, or checkbox-style tasks without a DAG) and directs the agent to
+  read the migration guide before proceeding.
+- `references/migration-guide.md` contains full field mappings, conversion
+  rules, and a step-by-step procedure.
+- Archived specs (like `001-spec-lifecycle-manager-skill`) are left as-is unless
+  resumed for further work.
+
 ## Pending Work
 
 The following updates remain to fully complete the alignment:
 
-1. **Update SKILL.md** — Revise the Spec Package Flow section to reference the
-   new three-file core (`requirements.md`, `design.md`, `tasks.md`). Update the
+1. **Update SKILL.md Spec Package Flow** — Revise to reference the new
+   three-file core (`requirements.md`, `design.md`, `tasks.md`). Update the
    Start section to mention `requirements.md` instead of `spec.md`. Codify
-   reconciliation-on-resume, promotion-as-post-tasks, and optional-review
-   behaviors.
+   promotion-as-post-tasks and optional-review behaviors.
 
 2. **Update docs/templates/spec-package/** — If the repository's own
    `docs/templates/spec-package/` directory should also align, its templates
@@ -171,7 +183,3 @@ The following updates remain to fully complete the alignment:
 3. **Consider .kiro/specs/ path support** — Evaluate whether the skill should
    support `.kiro/specs/{feature-name}/` as an alternative location for
    environments where Kiro is the primary agent.
-
-4. **Migrate existing spec 001** — The archived spec at
-   `docs/specs/001-spec-lifecycle-manager-skill/` uses the old format. Decide
-   whether to migrate it or leave it as historical.
