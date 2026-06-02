@@ -8,18 +8,18 @@ last_reviewed: YYYY-MM-DD
 
 # Tasks
 
-**Input**: Design documents from `docs/specs/[###-feature-name]/`
+**Input**: Design documents from `[docs-root]/specs/[###-feature-name]/`
 **Prerequisites**: `requirements.md` and `design.md`
 
 ## Task Dependency Graph
 
 ```text
-T001 → T002 → T004
-T001 → T003 → T004
-T004 → T005
-T004 → T006 (parallel)
-T005 → T007
-T006 → T007
+T001 -> T002 -> T004
+T001 -> T003 -> T004
+T004 -> T005
+T004 -> T006 (parallel)
+T005 -> T007
+T006 -> T007
 ```
 
 ## Phase 1: Setup

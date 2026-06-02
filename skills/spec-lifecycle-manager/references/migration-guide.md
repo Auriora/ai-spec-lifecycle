@@ -71,7 +71,7 @@ Old format indicators:
 
    Old:
    ```markdown
-   - **FR-001**: System MUST identify active spec packages using `docs/specs/[###-slug]/`.
+   - **FR-001**: System MUST identify active spec packages using `[docs-root]/specs/[###-slug]/`.
    ```
 
    New:
@@ -83,7 +83,7 @@ Old format indicators:
 
    #### Acceptance Criteria
 
-   1. GIVEN a repository with `docs/specs/[###-slug]/` directories, WHEN the
+   1. GIVEN a repository with `[docs-root]/specs/[###-slug]/` directories, WHEN the
       skill is invoked, THEN it identifies all active spec packages.
    2. WHERE a spec package has status `active` or `draft` in frontmatter, THE
       system SHALL treat it as an active package.
@@ -152,8 +152,8 @@ Old format indicators:
 ## Task Dependency Graph
 
 \```text
-T001 → T002
-T001 → T003 (parallel)
+T001 -> T002
+T001 -> T003 (parallel)
 \```
 
 ## Phase 1: Setup
@@ -165,7 +165,7 @@ T001 → T003 (parallel)
 - **Depends on:** []
 - **Parallel:** no
 - **Story:** —
-- **Files:** `docs/specs/[###-feature-name]/`
+- **Files:** `[docs-root]/specs/[###-feature-name]/`
 - **Description:** Create or update feature documentation structure.
 - **Acceptance:** Directory exists with required template files.
 - **Evidence:** Directory listing or diff showing created files.

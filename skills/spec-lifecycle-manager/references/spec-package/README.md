@@ -6,8 +6,12 @@ spec-package templates or explicit documentation direction.
 Default package path:
 
 ```text
-docs/specs/[###-slug]/
+[docs-root]/specs/[###-slug]/
 ```
+
+Use `docs/` as the default docs root for owned repositories. Use a partition
+such as `docs/<name>/` when the target repository has its own documentation
+system and lifecycle material should stay separate.
 
 ## Artifact Relationship
 
@@ -37,6 +41,8 @@ Use the artifacts as a progressive chain:
 7. `quickstart.md`: temporary setup, demo, validation, rollout, or operator
    notes that may later be promoted into durable docs. Use for developer
    onboarding or operational hand-off.
+8. `open-decisions.md`: unresolved decisions that block stable requirements,
+   design, implementation, verification, promotion, or closure.
 
 Small, low-risk work can use a smaller package. Create only the files that help
 coordinate implementation, validation, or future promotion.
@@ -55,6 +61,7 @@ coordinate implementation, validation, or future promotion.
 - `change-impact.md`
 - `verification.md`
 - `quickstart.md`
+- `open-decisions.md`
 
 ## Acceptance Criteria Format
 

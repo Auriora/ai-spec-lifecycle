@@ -26,6 +26,19 @@ Brief description of the change. What problem is being solved and why it matters
 |------|-----------|
 | Term | Definition |
 
+## Durable Source Baseline
+
+Reference durable source-of-truth docs, contracts, schemas, runbooks,
+governance files, or code-derived references that describe current behavior
+before this change.
+
+| Source | Current behavior relied on | Confidence | Notes |
+|--------|----------------------------|------------|-------|
+| `docs/path/to/doc.md` | Current behavior summary | high | |
+
+If no durable source exists, record the gap and the durable document that should
+become the source of truth after promotion.
+
 ## Requirements
 
 ### Requirement 1: Title
