@@ -14,6 +14,7 @@ This documentation describes reusable agent workflows for managing implementatio
 
 - [Spec lifecycle management](design/spec-lifecycle-management.md): current lifecycle model for temporary implementation specs and durable docs.
 - [Document routing and expert review matrix](reference/document-routing-and-expert-review-matrix.md): where spec content should land and which role-based experts should review it.
+- [AI-native SDD framework landscape](reference/ai-native-sdd-frameworks.md): reference list of spec-driven AI development systems and adjacent methodologies to study.
 - [Spec lifecycle manager skill spec](specs/001-spec-lifecycle-manager-skill/spec.md): archived implementation and validation history for the reusable skill.
 
 ## Skill Source And Install
@@ -34,6 +35,10 @@ Treat the repository copy as the source of truth and the `~/.codex` copy as an
 installed artifact. Use the skill when creating, continuing, reconciling,
 reviewing, implementing from, promoting, or closing implementation spec
 packages.
+
+The skill includes fallback spec-package templates under
+`skills/spec-lifecycle-manager/references/spec-package/`. Repository templates
+such as `docs/templates/spec-package/` take precedence when present.
 
 Run this from the repository root to install or update the local working copy
 from the repository source:
