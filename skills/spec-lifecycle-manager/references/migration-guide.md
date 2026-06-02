@@ -21,6 +21,54 @@ implementation:
 Do not migrate without making the decision explicit in the reconciliation
 summary.
 
+Use this visible note format:
+
+```markdown
+Migration Decision:
+- Package format: continue old format for this slice | migrate before implementation | create follow-up migration task
+- Template authority: repository templates | repository templates with package-local additions | proposed selective template update | skill fallback templates
+- Reason: ...
+- Impact: existing docs touched? yes/no; templates touched? yes/no; durable docs affected? yes/no
+- Follow-up: ...
+```
+
+When a repository has its own `docs/templates/` or documented template system,
+the template authority decision is required even if package migration is not
+performed. Repository templates remain authoritative unless the user explicitly
+asks to revise them.
+
+## Template Authority And Selective Template Migration
+
+Template migration is different from package migration:
+
+- **Package migration** reshapes one active spec package.
+- **Template migration** changes the future document shape for a repository and
+  may affect many existing or future documents.
+
+When repository templates exist, do not replace them wholesale with this
+skill's fallback templates. Grade them first:
+
+| Grade | Meaning | Action |
+|-------|---------|--------|
+| Adopt as-is | Repo templates cover the needed workflow and metadata | Use them without changes |
+| Add package-local fields | Current package needs extra evidence, impact, verification, or risk fields, but repo-wide templates do not need to change yet | Add fields only to the active package |
+| Selective template update | Multiple packages would benefit from a missing field or section | Propose the smallest template change and identify affected document classes |
+| Defer template update | Existing docs would be disrupted or the value is unclear | Continue with current templates and record follow-up |
+| Use skill fallback | No repo templates or governance are available | Use `references/spec-package/` |
+
+Before changing repository templates, record:
+
+- the exact templates affected;
+- the missing fields or sections;
+- which existing docs would become non-conforming or require migration;
+- whether old packages should be grandfathered;
+- whether the change affects durable docs, active specs, or both;
+- review or approval needed before applying the new template.
+
+Prefer package-local additions when only one spec needs stronger tracking.
+Prefer template updates only when the repository's documented workflow should
+change for future packages.
+
 ## When Migration Is Usually Worth It
 
 Migration is usually worth it when:

@@ -22,6 +22,12 @@ documentation system that should stay clean, use a named partition such as
 `docs/<name>/specs/[###-slug]/`. For durable docs, templates, and review
 records, use the target repository's documented structure.
 
+If the target repository has `docs/templates/` or another documented template
+system, treat those templates as authoritative for that repository. Do not apply
+this skill's fallback templates silently. When the repository templates differ
+from this skill's preferred package shape, record a visible template authority
+decision before creating, migrating, or reshaping docs.
+
 ## Start
 
 1. Read applicable repo instructions such as `AGENTS.md`.
@@ -30,7 +36,7 @@ records, use the target repository's documented structure.
 4. Read available spec artifacts: `requirements.md`, `design.md`, `tasks.md`, plus optional `change-impact.md`, `verification.md`, `research.md`, `quickstart.md`, `open-decisions.md`, contracts, checklists, and sequencing docs when present. If `spec.md` or `plan.md` are found instead, the package uses the old format; handle that through the migration decision gate in Reconcile.
 5. Identify the repository's durable documentation targets from its own docs structure and templates before assuming document classes or folder names.
 
-If no active package exists and the user asks to start one, create the smallest useful `[docs-root]/specs/[###-slug]/` package for the risk level. Use repository-documented package templates when present. If no repository-specific package template exists, use `references/spec-package/` as the fallback package template.
+If no active package exists and the user asks to start one, create the smallest useful `[docs-root]/specs/[###-slug]/` package for the risk level. Use repository-documented package templates when present. If no repository-specific package template exists, use `references/spec-package/` as the fallback package template. If both exist and differ, prefer the repository template and record the template authority decision.
 
 If several active packages exist, read repository indexes such as `docs/README.md` and any sequencing docs. Ask the user to choose, or select the first blocking slice from documented sequencing guidance when the next step is clear.
 
@@ -138,7 +144,20 @@ If the spec package uses the old format (has `spec.md` or `plan.md` instead of `
 - migrate before implementation;
 - create a follow-up migration task and proceed only if the old format is coherent enough.
 
-Do not force migration for archived specs, mid-task collaboration, or small changes where migration would create more risk than value.
+Always make the package migration decision visible in the reconciliation
+summary, even when the decision is to continue without migration.
+
+When repository templates exist, also make a visible template authority
+decision before changing package structure, creating new lifecycle docs, or
+updating templates:
+
+- use repository templates as-is;
+- use repository templates and add only missing fields needed for this package;
+- propose a selective template update for review before changing future docs;
+- use this skill's fallback templates because the repository has no documented
+  templates.
+
+Do not force migration for archived specs, mid-task collaboration, or small changes where migration would create more risk than value. Do not migrate repository templates wholesale just because this skill prefers a richer package shape. Template migration must be selective: identify the specific document classes affected, the existing docs that would be impacted, required field additions, compatibility risks, and whether old packages should remain untouched.
 
 Do not trust frontmatter status alone. Reconcile it against repository indexes, sequencing docs, task state, governance constraints, code, tests, config, and durable-doc evidence sections.
 
