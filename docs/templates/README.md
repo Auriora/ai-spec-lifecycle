@@ -3,7 +3,7 @@ title: Documentation templates
 doc_type: reference
 status: active
 owner: platform
-last_reviewed: 2026-05-01
+last_reviewed: 2026-06-02
 ---
 
 # Documentation Templates
@@ -26,7 +26,7 @@ Use this frontmatter on new markdown documents unless a template says otherwise 
 ```yaml
 ---
 title: Short descriptive title
-doc_type: guide|runbook|architecture|design|requirements|adr|integration|reference|checklist|history|spec
+doc_type: guide|runbook|architecture|design|requirements|adr|integration|reference|checklist|history|governance|spec
 status: draft|active|code-derived|deprecated|superseded|archived
 owner: team-or-person
 last_reviewed: YYYY-MM-DD
@@ -122,9 +122,30 @@ Use [history-note.md](history-note.md) for retained historical context that shou
 
 Use [document-lifecycle.md](document-lifecycle.md) for rules on when to keep a doc active, move it to history, or remove it.
 
+### Governance Constitution
+
+Use [governance-constitution.md](governance-constitution.md) for repository
+principles, non-negotiable quality bars, validation rules, and decision gates
+that agents must treat as authoritative.
+Store governance docs under `docs/governance/`.
+
 ### Feature Spec Package
 
-Use the [spec-package](spec-package) templates for structured feature work that needs specification, design, planning, and tasks tracked together.
+Feature spec packages are temporary delivery scaffolding, not durable
+current-state documentation. Their canonical fallback templates live with the
+`spec-lifecycle-manager` skill under:
+
+```text
+skills/spec-lifecycle-manager/references/spec-package/
+```
+
+Use those skill templates for structured work that needs requirements, design,
+tasks, verification, change impact, and optional research or quickstart notes
+tracked together. Spec packages can describe features, bug fixes, refactors,
+migrations, operational changes, or documentation-only changes.
+
+This `docs/templates/` directory is reserved for durable document classes that
+should live with the code and reflect current implementation state.
 
 ## When To Split A Document
 

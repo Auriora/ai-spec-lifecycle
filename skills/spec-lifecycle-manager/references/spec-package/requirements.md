@@ -35,7 +35,7 @@ Brief description of the change. What problem is being solved and why it matters
 #### Acceptance Criteria
 
 1. GIVEN [context], WHEN [action], THEN [outcome]
-2. WHERE [condition applies], THE system SHALL [behavior]
+2. WHERE [condition applies], THE SYSTEM SHALL [behavior]
 
 ### Requirement 2: Title
 
@@ -43,8 +43,8 @@ Brief description of the change. What problem is being solved and why it matters
 
 #### Acceptance Criteria
 
-1. IF [condition], THEN THE system SHALL [behavior]
-2. WHILE [state], THE system SHALL [behavior]
+1. IF [condition], THEN THE SYSTEM SHALL [behavior]
+2. WHILE [state], THE SYSTEM SHALL [behavior]
 
 ## Correctness Properties
 
@@ -69,5 +69,7 @@ property-based testing.
 
 ## Related Artifacts
 
+- Change Impact:
 - Design:
 - Tasks:
+- Verification:

@@ -1,22 +1,42 @@
 # Spec Package Migration Guide
 
-Use this guide to migrate spec packages from the old format (spec.md + plan.md +
-checkbox tasks) to the current format (requirements.md + enriched design.md +
-DAG tasks).
+Use this guide to decide whether and how to migrate spec packages from the old
+format (spec.md + plan.md + checkbox tasks) to the current format
+(requirements.md + enriched design.md + DAG tasks).
 
-## When to Migrate
+## Migration Decision Gate
 
-Migrate when:
+When an active package uses the old format, choose one path before
+implementation:
+
+1. **Continue old format for this slice**: use when the change is small,
+   migration would disrupt active collaboration, or the package is near closure.
+2. **Migrate before implementation**: use when the package will remain active,
+   the old format is already causing drift, or task status is too ambiguous to
+   proceed safely.
+3. **Create a follow-up migration task**: use when implementation can proceed
+   safely now, but the package should be modernized before the next substantial
+   slice.
+
+Do not migrate without making the decision explicit in the reconciliation
+summary.
+
+## When Migration Is Usually Worth It
+
+Migration is usually worth it when:
 
 - An active or in-progress spec is resumed and uses the old format.
 - A spec is reopened for further implementation work.
 - Reconciliation detects `spec.md` or `plan.md` files instead of
   `requirements.md`.
+- Task checkboxes are stale or do not carry evidence.
+- The package needs stronger dependency ordering or verification evidence.
 
-Do not migrate:
+Do not migrate automatically:
 
 - Archived specs that will not be resumed (leave as historical records).
 - Specs where migration would disrupt active collaboration mid-task.
+- Small, low-risk fixes where migration would create more churn than clarity.
 
 ## Detection
 
@@ -42,7 +62,7 @@ Old format indicators:
 | User Scenarios → User Story N | Requirements → Requirement N (rewrite as user story) |
 | Edge Cases | Acceptance criteria on relevant requirements |
 | Success Criteria | Success Criteria |
-| Validation Targets | Remove or move to design.md operational considerations |
+| Validation Targets | Move to verification.md or design.md operational considerations |
 | Related Artifacts | Related Artifacts |
 
 ### Conversion Rules
@@ -98,7 +118,7 @@ Old format indicators:
    requirement. Use IF/THEN format:
 
    ```markdown
-   3. IF no `docs/` folder exists yet, THEN THE system SHALL create the
+   3. IF no `docs/` folder exists yet, THEN THE SYSTEM SHALL create the
       minimum required directory structure.
    ```
 
@@ -112,7 +132,7 @@ Old format indicators:
 | Phases | tasks.md (phase grouping) |
 | Dependencies | tasks.md → Task Dependency Graph |
 | Risks | design.md → Open Questions or Operational Considerations |
-| Validation Strategy | requirements.md → Success Criteria |
+| Validation Strategy | verification.md, plus requirements.md → Success Criteria when it describes desired outcomes |
 | Complexity Tracking | Remove (governance is a design concern now) |
 
 ## Task Migration: Checkboxes → Status + DAG
@@ -148,6 +168,7 @@ T001 → T003 (parallel)
 - **Files:** `docs/specs/[###-feature-name]/`
 - **Description:** Create or update feature documentation structure.
 - **Acceptance:** Directory exists with required template files.
+- **Evidence:** Directory listing or diff showing created files.
 
 ### Task 2: Identify Source Files
 
@@ -159,6 +180,7 @@ T001 → T003 (parallel)
 - **Files:** `src/`, `tests/`
 - **Description:** Identify source and test files affected by the plan.
 - **Acceptance:** File list documented in task or design.
+- **Evidence:** Design section or search output summary.
 
 ### Task 3: Configure Helpers
 
@@ -170,6 +192,7 @@ T001 → T003 (parallel)
 - **Files:** `scripts/`
 - **Description:** Configure or update local validation helpers.
 - **Acceptance:** Helpers run successfully.
+- **Evidence:** Validation command output.
 ```
 
 ### Status Mapping
@@ -180,6 +203,7 @@ T001 → T003 (parallel)
 | `- [x]` (checked) | `done` |
 | `[P]` marker | `Parallel: yes` |
 | No explicit status | `pending` |
+| No verification note | `Evidence: Pending.` |
 
 ### Dependency Inference
 
@@ -240,10 +264,14 @@ When migrating, infer dependencies from:
    above.
 3. Update `design.md` to add High-Level/Low-Level structure.
 4. Rebuild `tasks.md` with DAG, status fields, and per-task acceptance criteria.
-5. Verify cross-references between artifacts are correct.
-6. Delete `spec.md` and `plan.md` from the spec package.
-7. Update any `Related Artifacts` links in remaining files.
-8. Update repository indexes if they reference the old filenames.
+5. Create `verification.md` when the package has validation gates, evidence, or
+   residual risks worth tracking separately.
+6. Verify cross-references between artifacts are correct.
+7. Decide whether to remove, archive, or leave `spec.md` and `plan.md` as
+   historical migration inputs. Do not delete them if they carry unpromoted
+   decision history.
+8. Update any `Related Artifacts` links in remaining files.
+9. Update repository indexes if they reference the old filenames.
 
 ## Post-Migration Verification
 
@@ -252,6 +280,9 @@ After migration, confirm:
 - [ ] `requirements.md` exists with user stories and EARS acceptance criteria
 - [ ] `design.md` has High-Level and Low-Level sections
 - [ ] `tasks.md` has a Task Dependency Graph and per-task status fields
+- [ ] Task entries have Evidence fields
+- [ ] `verification.md` exists when quality gates or validation evidence need
+      separate tracking
 - [ ] No orphan references to `spec.md` or `plan.md`
 - [ ] Frontmatter status and dates are accurate
 - [ ] Related Artifacts links resolve correctly

@@ -36,6 +36,7 @@ T006 → T007
 - **Files:** `path/to/file`
 - **Description:** What needs to be done.
 - **Acceptance:** How to verify this task is complete.
+- **Evidence:** Pending.
 
 ### Task 2: Title
 
@@ -47,6 +48,7 @@ T006 → T007
 - **Files:** `path/to/file`
 - **Description:** What needs to be done.
 - **Acceptance:** How to verify this task is complete.
+- **Evidence:** Pending.
 
 ## Phase 2: Foundation
 
@@ -62,6 +64,7 @@ T006 → T007
 - **Files:** `path/to/file`
 - **Description:** What needs to be done.
 - **Acceptance:** How to verify this task is complete.
+- **Evidence:** Pending.
 
 **Checkpoint**: Foundation ready; user-story work can proceed.
 
@@ -81,6 +84,7 @@ T006 → T007
 - **Files:** `tests/path/to/test`
 - **Description:** Add unit and integration test coverage.
 - **Acceptance:** Tests exist and define expected behavior before implementation.
+- **Evidence:** Pending.
 
 ### Task 5: Implementation for User Story 1
 
@@ -92,6 +96,7 @@ T006 → T007
 - **Files:** `src/path/to/file`
 - **Description:** Implement the feature behavior.
 - **Acceptance:** Tests pass and behavior matches acceptance criteria.
+- **Evidence:** Pending.
 
 **Checkpoint**: User Story 1 is independently functional and testable.
 
@@ -111,6 +116,7 @@ T006 → T007
 - **Files:** `tests/path/to/test`
 - **Description:** Add unit and integration test coverage.
 - **Acceptance:** Tests exist and define expected behavior before implementation.
+- **Evidence:** Pending.
 
 ### Task 7: Implementation for User Story 2
 
@@ -122,6 +128,7 @@ T006 → T007
 - **Files:** `src/path/to/file`
 - **Description:** Implement the feature behavior.
 - **Acceptance:** Tests pass and behavior matches acceptance criteria.
+- **Evidence:** Pending.
 
 **Checkpoint**: User Stories 1 and 2 both work independently.
 
@@ -139,6 +146,7 @@ T006 → T007
 - **Files:** `docs/path/to/file`
 - **Description:** Update durable docs, clean up code, verify performance budget.
 - **Acceptance:** Docs reflect current behavior, no dead code, performance targets met.
+- **Evidence:** Pending.
 
 ## Dependencies and Execution Order
 
@@ -147,6 +155,8 @@ T006 → T007
 - User stories proceed in priority order unless dependencies allow parallel work.
 - Polish and promotion happen after selected user stories are complete.
 - Tests for a user story should be written before implementation where practical.
+- Move tasks to `done` only after filling `Evidence` with the command, test
+  result, review note, screenshot, log, commit, or manual verification note.
 
 ## Status Legend
 
@@ -160,4 +170,6 @@ T006 → T007
 ## Related Artifacts
 
 - Requirements:
+- Change Impact:
 - Design:
+- Verification:

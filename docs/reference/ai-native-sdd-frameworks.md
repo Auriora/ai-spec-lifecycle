@@ -115,6 +115,49 @@ reconciliation, durable-document promotion, role-based review, and closure.
 These external systems are references for improving behavior and templates, not
 replacement packaging targets unless a future decision changes that.
 
+## Adoption Decisions - 2026-06-02
+
+Current direction for the local environment:
+
+- Keep Kiro-style `requirements.md`, EARS acceptance criteria, enriched
+  `design.md`, task dependency graphs, explicit task status, and correctness
+  properties.
+- Add verification and checklist-style quality gates, with task evidence
+  required before `done`.
+- Treat migration from older spec formats as a decision gate, not an automatic
+  prerequisite.
+- Keep spec packages temporary. Durable documentation under `docs/` should live
+  with the code and describe current implementation state.
+- Use `skills/spec-lifecycle-manager/references/spec-package/` as the canonical
+  fallback template location for spec packages. Keep `docs/templates/` focused
+  on durable document templates.
+- Add governance or constitution docs as authoritative constraints for agents.
+- Avoid local specs inside source trees by default. If subsystem behavior specs
+  are needed, prefer documented repo paths such as `docs/specs/src/[path].md`,
+  `docs/specs/modules/[name].md`, or feature-package-local notes that are
+  promoted before closure.
+- Borrow from Spec Kit governance, clarification, checklist, and analysis
+  patterns.
+- Borrow from OpenSpec's delta idea with a lightweight `change-impact.md`
+  artifact that references durable source-of-truth docs and promotion targets.
+- Borrow from HiveSpec's verify/ship discipline with explicit ship or closure
+  risk, blast radius, rollback path, human-review needs, and release-note needs.
+- Borrow from Spec Kitty work packages, next-task selection, review/accept/merge
+  states, and worktree isolation where useful.
+- Borrow from Superpowers skill-based process enforcement and BMAD
+  role-specialized planning/review agents.
+
+Open questions:
+
+- Whether to adopt SpecDD-style local subsystem specs. The concept is useful,
+  but source-tree pollution should be avoided.
+- Whether OpenSpec-style proposal review needs a separate pre-spec phase beyond
+  the current `change-impact.md` delta model.
+- Whether HiveSpec-style ship risk needs a separate `ship.md` artifact later,
+  or whether the `verification.md` risk section is enough.
+- Whether to support `.kiro/specs/{feature-name}/` as an alternative active
+  package path for Kiro-heavy projects.
+
 ## How To Update
 
 Review this file when:

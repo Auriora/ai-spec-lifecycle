@@ -86,6 +86,12 @@ The following alignment changes were selected:
    - Promotion: post-tasks phase after all tasks reach done
    - Expert review: optional per-spec (opt-in via frontmatter or config)
 
+5. **G. Add later lifecycle extensions beyond native Kiro**
+   - `change-impact.md` records durable deltas for features, bug fixes,
+     refactors, migrations, operational changes, and clarifications.
+   - `verification.md` records evidence, quality gates, ship or closure risk,
+     blast radius, rollback, review, and release-note needs.
+
 ### Rejected / Deferred Changes
 
 - **D. Drop research.md, plan.md, quickstart.md from core**: Not adopted.
@@ -129,6 +135,8 @@ The following alignment changes were selected:
 | File | Purpose |
 |------|---------|
 | `references/spec-package/requirements.md` | Core template — user stories, EARS acceptance criteria, correctness properties, technical context, success criteria |
+| `references/spec-package/change-impact.md` | Optional durable-delta template for behavior changes and bug fixes |
+| `references/spec-package/verification.md` | Optional verification, evidence, quality gate, and ship-risk template |
 
 ### Updated Files
 
@@ -152,16 +160,17 @@ The following alignment changes were selected:
 | `references/spec-package/research.md` | Remains as optional artifact |
 | `references/spec-package/quickstart.md` | Remains as optional artifact |
 | `references/document-routing-and-expert-review.md` | Unchanged; governs promotion and review phases |
-| `SKILL.md` | Not yet updated; pending separate pass |
+| `SKILL.md` | Updated to reference the three-file core, verification support, and migration decision gate |
 
 ## Migration Strategy
 
-**Approach**: Hybrid — one-line trigger in SKILL.md Reconcile section + detailed
-`references/migration-guide.md`.
+**Approach**: Hybrid — migration decision gate in SKILL.md Reconcile section +
+detailed `references/migration-guide.md`.
 
 - SKILL.md Reconcile section now detects old-format specs (presence of `spec.md`
   or `plan.md`, or checkbox-style tasks without a DAG) and directs the agent to
-  read the migration guide before proceeding.
+  read the migration guide and choose whether to continue old format, migrate
+  first, or create a follow-up migration task.
 - `references/migration-guide.md` contains full field mappings, conversion
   rules, and a step-by-step procedure.
 - Archived specs (like `001-spec-lifecycle-manager-skill`) are left as-is unless
@@ -171,15 +180,6 @@ The following alignment changes were selected:
 
 The following updates remain to fully complete the alignment:
 
-1. **Update SKILL.md Spec Package Flow** — Revise to reference the new
-   three-file core (`requirements.md`, `design.md`, `tasks.md`). Update the
-   Start section to mention `requirements.md` instead of `spec.md`. Codify
-   promotion-as-post-tasks and optional-review behaviors.
-
-2. **Update docs/templates/spec-package/** — If the repository's own
-   `docs/templates/spec-package/` directory should also align, its templates
-   need the same treatment.
-
-3. **Consider .kiro/specs/ path support** — Evaluate whether the skill should
+1. **Consider .kiro/specs/ path support** — Evaluate whether the skill should
    support `.kiro/specs/{feature-name}/` as an alternative location for
    environments where Kiro is the primary agent.

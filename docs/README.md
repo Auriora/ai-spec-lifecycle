@@ -3,7 +3,7 @@ title: Agent development lifecycle docs
 doc_type: reference
 status: active
 owner: platform
-last_reviewed: 2026-06-01
+last_reviewed: 2026-06-02
 ---
 
 # Agent Development Lifecycle Docs
@@ -13,6 +13,7 @@ This documentation describes reusable agent workflows for managing implementatio
 ## Start Here
 
 - [Spec lifecycle management](design/spec-lifecycle-management.md): current lifecycle model for temporary implementation specs and durable docs.
+- [Agent development lifecycle constitution](governance/constitution.md): governance principles and decision gates for specs, evidence, migration, and durable docs.
 - [Document routing and expert review matrix](reference/document-routing-and-expert-review-matrix.md): where spec content should land and which role-based experts should review it.
 - [AI-native SDD framework landscape](reference/ai-native-sdd-frameworks.md): reference list of spec-driven AI development systems and adjacent methodologies to study.
 - [Spec lifecycle manager skill spec](specs/001-spec-lifecycle-manager-skill/spec.md): archived implementation and validation history for the reusable skill.
@@ -36,9 +37,10 @@ installed artifact. Use the skill when creating, continuing, reconciling,
 reviewing, implementing from, promoting, or closing implementation spec
 packages.
 
-The skill includes fallback spec-package templates under
-`skills/spec-lifecycle-manager/references/spec-package/`. Repository templates
-such as `docs/templates/spec-package/` take precedence when present.
+The skill includes the canonical fallback spec-package templates under
+`skills/spec-lifecycle-manager/references/spec-package/`. The `docs/templates/`
+directory is reserved for durable documentation templates, not active spec
+package templates.
 
 Run this from the repository root to install or update the local working copy
 from the repository source:
@@ -58,6 +60,11 @@ next implementation slice, and identify durable documentation updates.
 
 ## Specs
 
-Active implementation specs use `docs/specs/[###-slug]/`.
+Active implementation specs use `docs/specs/[###-slug]/` by default.
+
+When working inside a repository with its own documentation approach, lifecycle
+material may live under a named docs partition such as
+`docs/<name>/specs/[###-slug]/` to keep the target repository's documentation
+clean.
 
 Specs are temporary delivery packages. Once implementation is complete, accepted behavior should be promoted into durable documentation and the spec should be closed, archived, or removed according to the target repository's document lifecycle.

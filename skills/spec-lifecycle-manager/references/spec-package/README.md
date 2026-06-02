@@ -22,14 +22,19 @@ Use the artifacts as a progressive chain:
    operational considerations, and open questions.
 3. `tasks.md`: dependency graph and phased checklist of independently verifiable
    implementation slices, with explicit status tracking and traceability back to
-   requirements and design.
+   requirements, design, and verification evidence.
 
 ### Optional Artifacts
 
-4. `research.md`: optional investigation of unknowns, alternatives, constraints,
+4. `change-impact.md`: optional OpenSpec-style delta record for changes to
+   existing durable behavior, including bug fixes, modifications, removals,
+   clarifications, and promotion targets.
+5. `verification.md`: validation plan, quality gates, evidence log, residual
+   risks, and release or closure readiness checks.
+6. `research.md`: optional investigation of unknowns, alternatives, constraints,
    prior art, and recommendations. Use for complex features where decisions need
    documented evidence.
-5. `quickstart.md`: temporary setup, demo, validation, rollout, or operator
+7. `quickstart.md`: temporary setup, demo, validation, rollout, or operator
    notes that may later be promoted into durable docs. Use for developer
    onboarding or operational hand-off.
 
@@ -47,6 +52,8 @@ coordinate implementation, validation, or future promotion.
 ### Optional (created when they add value)
 
 - `research.md`
+- `change-impact.md`
+- `verification.md`
 - `quickstart.md`
 
 ## Acceptance Criteria Format
@@ -68,6 +75,12 @@ Requirements use EARS (Easy Approach to Requirements Syntax) keywords:
 | done | Complete and verified |
 | skipped | Intentionally deferred with documented reason |
 
+## Task Evidence
+
+Every task should include an `Evidence` field. Keep it empty while pending, then
+record the command, test result, review note, screenshot, log, commit, or manual
+verification note that proves completion when the task moves to `done`.
+
 ## Lifecycle Phases
 
 The spec lifecycle extends beyond the core artifacts:
@@ -75,6 +88,7 @@ The spec lifecycle extends beyond the core artifacts:
 1. **Create**: Generate requirements, design, and tasks.
 2. **Implement**: Execute tasks in dependency order.
 3. **Reconcile** (on resume): Detect drift between spec, code, and durable docs.
-4. **Promote** (post-completion): Route accepted spec content into durable docs.
-5. **Review** (optional): Role-based expert review per document class.
-6. **Close**: Verify all content is promoted or deferred, close the spec.
+4. **Verify**: Record evidence, quality gates, residual risks, and readiness.
+5. **Promote** (post-completion): Route accepted spec content into durable docs.
+6. **Review** (optional): Role-based expert review per document class.
+7. **Close**: Verify all content is promoted or deferred, close the spec.

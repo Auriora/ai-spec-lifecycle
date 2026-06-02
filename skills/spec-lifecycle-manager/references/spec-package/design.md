@@ -73,4 +73,6 @@ Describe rollout, observability, migration, and failure handling considerations.
 ## Related Artifacts
 
 - Requirements:
+- Change Impact:
 - Tasks:
+- Verification:
