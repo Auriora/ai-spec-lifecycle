@@ -30,11 +30,12 @@ skills/spec-lifecycle-manager/
 
 | Check | Command or Method | Result | Evidence |
 |-------|-------------------|--------|----------|
-| Duplicate docs spec-package templates absent | `find docs/templates/spec-package -maxdepth 1 -type f -print` | Pass | Directory is absent; `docs/templates/README.md` points to skill-owned templates. |
+| Repo-level reusable templates absent | `test ! -d docs/templates` | Pass | Reusable project templates live under skill references, not repo docs. |
+| Skill-owned template references exist | `test -d skills/spec-lifecycle-manager/references/spec-package && test -d skills/spec-lifecycle-manager/references/durable-doc-templates` | Pass | Both spec-package and durable-doc template directories exist under the skill. |
 | Repo-local skill matches canonical source | `diff -qr skills/spec-lifecycle-manager .codex/skills/spec-lifecycle-manager` | Pass | Command returned no differences. |
 | Markdown links resolve | local Python markdown-link resolver over repo markdown excluding `.codex` | Pass | Command returned `markdown-links-ok`. |
-| Required task fields present | `rg` over `skills/spec-lifecycle-manager/references/spec-package/` | Pass | Templates include `Status`, `Evidence`, `change-impact.md`, `verification.md`, and ship risk fields. |
-| Required skill references exist | manual check from `SKILL.md` references | Pass | `references/spec-package/`, `references/migration-guide.md`, and `references/document-routing-and-expert-review.md` exist. |
+| Required task guidance present | `rg` over `skills/spec-lifecycle-manager/references/spec-package/` | Pass | Templates include checklist tasks/subtasks, `Depends on`, `Acceptance`, `Evidence`, `change-impact.md`, `verification.md`, and ship risk guidance. |
+| Required skill references exist | manual check from `SKILL.md` references | Pass | `references/spec-package/`, `references/durable-doc-templates/`, `references/migration-guide.md`, and `references/document-routing-and-expert-review.md` exist. |
 
 ## Fixture Inventory
 

@@ -28,7 +28,8 @@ passes, and dogfood usage.
 
 | Command | Purpose | Result | Evidence |
 |---------|---------|--------|----------|
-| `find docs/templates/spec-package -maxdepth 1 -type f -print` | Confirm duplicate docs templates are absent | pass | Directory is absent. |
+| `test ! -d docs/templates` | Confirm reusable project templates are not kept in repo-level docs | pass | Directory is absent. |
+| `test -d skills/spec-lifecycle-manager/references/spec-package && test -d skills/spec-lifecycle-manager/references/durable-doc-templates` | Confirm skill-owned template references exist | pass | Both directories exist. |
 | `diff -qr skills/spec-lifecycle-manager .codex/skills/spec-lifecycle-manager` | Confirm repo-local installed skill matches source | pass | No differences returned. |
 | Markdown link resolver | Confirm Markdown links resolve | pass | Returned `markdown-links-ok`. |
 | `rg` static field checks | Confirm required fields and artifacts exist | pass | Found status, evidence, change-impact, verification, ship risk, durable baseline, and open decisions. |

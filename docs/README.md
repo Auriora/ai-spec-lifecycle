@@ -37,10 +37,16 @@ installed artifact. Use the skill when creating, continuing, reconciling,
 reviewing, implementing from, promoting, or closing implementation spec
 packages.
 
-The skill includes the canonical fallback spec-package templates under
-`skills/spec-lifecycle-manager/references/spec-package/`. The `docs/templates/`
-directory is reserved for durable documentation templates, not active spec
-package templates.
+The skill includes fallback templates under:
+
+- `skills/spec-lifecycle-manager/references/spec-package/` for temporary
+  implementation spec packages.
+- `skills/spec-lifecycle-manager/references/durable-doc-templates/` for
+  optional durable documentation classes that selected projects can copy or
+  adapt when they do not already have their own `docs/templates/` system.
+
+This repository's `docs/` tree documents the skill and its validation history;
+reusable project templates live with the skill source.
 
 Run this from the repository root to install or update the local working copy
 from the repository source:

@@ -24,9 +24,9 @@ Use the artifacts as a progressive chain:
    including high-level design (architecture, components, data models, data
    flow) and low-level design (algorithms, interfaces, error handling),
    operational considerations, and open questions.
-3. `tasks.md`: dependency graph and phased checklist of independently verifiable
-   implementation slices, with explicit status tracking and traceability back to
-   requirements, design, and verification evidence.
+3. `tasks.md`: Kiro-style phased checklist of independently verifiable tasks and
+   subtasks, with dependency notes, affected files, acceptance criteria, and
+   verification evidence where they add execution clarity.
 
 ### Optional Artifacts
 
@@ -73,20 +73,23 @@ Requirements use EARS (Easy Approach to Requirements Syntax) keywords:
 - **IF/THEN**: Conditional behavior
 - **SHALL**: Unconditional requirements
 
-## Task Status Values
+## Task Checklist And Evidence
 
-| Status | Meaning |
-|--------|---------|
-| pending | Not yet started |
-| in_progress | Currently being worked on |
-| done | Complete and verified |
-| skipped | Intentionally deferred with documented reason |
+Use checkboxes as the visible task status:
 
-## Task Evidence
+- `- [ ] T001 ...`: not complete yet.
+- `- [x] T001 ...`: complete and verified.
+- `- [ ] T001 ...` with `Status: skipped - reason`: intentionally deferred,
+  superseded, or out of scope.
 
-Every task should include an `Evidence` field. Keep it empty while pending, then
-record the command, test result, review note, screenshot, log, commit, or manual
-verification note that proves completion when the task moves to `done`.
+Use nested subtasks for the natural Kiro task shape. Add `Depends on:`, `Files:`,
+`Acceptance:`, and `Evidence:` bullets under parent tasks when they help an
+agent choose the next safe slice or verify completion.
+
+Check off subtasks as work progresses, but check off the parent task only after
+its acceptance criteria are met and evidence is recorded. Evidence can be a
+command, test result, review note, screenshot, log, commit, or manual
+verification note.
 
 ## Lifecycle Phases
 

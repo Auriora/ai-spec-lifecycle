@@ -38,7 +38,7 @@ review).
 |--------|---------------|-------------|
 | Requirements | FR-001 bullet style in `spec.md` | User stories with EARS-format acceptance criteria in `requirements.md` |
 | Design | Lightweight (overview, components, data, operations) | Rich (high-level: architecture, data models, data flow; low-level: algorithms, signatures, error handling) |
-| Tasks | Phased checklist with `[P]` markers and `T001` IDs | Task Dependency Graph (DAG) with per-task status tracking |
+| Tasks | Phased checklist with `[P]` markers and `T001` IDs | Kiro-style tasks and subtasks with dependency-aware execution |
 | Research | Dedicated `research.md` | No equivalent (conversational) |
 | Plan | Dedicated `plan.md` (governance, risks, phases) | No equivalent (folded into design and tasks) |
 | Quickstart | Dedicated `quickstart.md` | No equivalent |
@@ -73,12 +73,13 @@ The following alignment changes were selected:
      handling)
    - Retain operational considerations (value-add not in Kiro)
 
-3. **C. Restructure tasks.md to use a dependency graph**
-   - Task Dependency Graph (DAG) at the top of the file
-   - Per-task `Depends on` field with explicit task ID references
-   - Status tracking (pending/in_progress/done/skipped) replaces checkboxes
-   - Keep phased grouping as visual organizer alongside DAG
-   - Per-task acceptance criteria for reconciliation verification
+3. **C. Keep Kiro-style tasks.md and enhance it**
+   - Checkbox tasks and nested subtasks remain the primary structure
+   - Task Dependency Graph (DAG) or `Depends on` notes clarify execution order
+     when the phase order is not enough
+   - `[P]` markers identify parallel-safe tasks
+   - Per-task acceptance criteria and evidence improve reconciliation
+     verification without replacing the checklist shape
 
 4. **F. Keep promotion/review/reconciliation as value-adds**
    - Reconciliation: automatic on resume, separate output (not persisted in spec
@@ -115,9 +116,12 @@ The following alignment changes were selected:
 
 ### tasks.md Format
 
+- **Checklist-first structure**: Kiro-style checkboxes and nested subtasks are
+  the default shape
 - **Phased grouping + dependency graph**: Phases provide visual structure;
-  the DAG provides machine-readable execution order
-- **Status field**: Replaces checkbox convention (`- [ ]` / `- [x]`)
+  `Depends on` notes or a DAG provide execution order when needed
+- **Evidence and acceptance**: Parent tasks carry acceptance criteria and
+  evidence where completion needs to be defensible
 - **Checkpoints**: Retained between phases for reconciliation gates
 
 ### Reconciliation Output
@@ -143,7 +147,7 @@ The following alignment changes were selected:
 | File | Changes |
 |------|---------|
 | `references/spec-package/design.md` | Added High-Level Design and Low-Level Design sections |
-| `references/spec-package/tasks.md` | Added Task Dependency Graph, per-task Depends on/Status/Acceptance fields, status legend |
+| `references/spec-package/tasks.md` | Reworked to Kiro-style checklist tasks and subtasks with dependency notes, acceptance criteria, evidence, and optional DAG |
 | `references/spec-package/README.md` | Reflects three-file core, EARS format reference, status values, lifecycle phases |
 
 ### Deleted Files
@@ -168,9 +172,10 @@ The following alignment changes were selected:
 detailed `references/migration-guide.md`.
 
 - SKILL.md Reconcile section now detects old-format specs (presence of `spec.md`
-  or `plan.md`, or checkbox-style tasks without a DAG) and directs the agent to
-  read the migration guide and choose whether to continue old format, migrate
-  first, or create a follow-up migration task.
+  or `plan.md`, or ambiguous checkbox tasks without dependency, acceptance, or
+  evidence guidance) and directs the agent to read the migration guide and
+  choose whether to continue old format, migrate first, or create a follow-up
+  migration task.
 - `references/migration-guide.md` contains full field mappings, conversion
   rules, and a step-by-step procedure.
 - Archived specs (like `001-spec-lifecycle-manager-skill`) are left as-is unless

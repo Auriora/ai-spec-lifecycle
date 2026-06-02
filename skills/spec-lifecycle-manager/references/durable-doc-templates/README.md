@@ -6,9 +6,16 @@ owner: platform
 last_reviewed: 2026-06-02
 ---
 
-# Documentation Templates
+# Durable Documentation Templates
 
-This directory defines the standard document classes for this repository, the template to use for each class, and the minimum metadata expected on new documents.
+This directory provides optional durable documentation templates for projects
+using the `spec-lifecycle-manager` skill. Use them only when the target project
+does not already have an authoritative `docs/templates/` system, or when the
+project explicitly chooses to adopt or adapt these templates.
+
+These templates describe current-state documentation that should live with code
+and reflect implemented or accepted behavior. They are not active spec-package
+templates; temporary implementation specs use `../spec-package/`.
 
 ## Core Rules
 
@@ -144,8 +151,9 @@ tasks, verification, change impact, and optional research or quickstart notes
 tracked together. Spec packages can describe features, bug fixes, refactors,
 migrations, operational changes, or documentation-only changes.
 
-This `docs/templates/` directory is reserved for durable document classes that
-should live with the code and reflect current implementation state.
+This directory is reserved for durable document classes that should live with
+the code and reflect current implementation state. Copy or adapt only the
+document classes needed for a selected project.
 
 ## When To Split A Document
 

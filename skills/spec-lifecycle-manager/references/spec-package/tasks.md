@@ -11,62 +11,58 @@ last_reviewed: YYYY-MM-DD
 **Input**: Design documents from `[docs-root]/specs/[###-feature-name]/`
 **Prerequisites**: `requirements.md` and `design.md`
 
+Use a Kiro-style checklist as the primary structure. Keep tasks readable and
+execution-focused; add metadata only where it helps an agent choose the next
+safe slice, verify completion, or promote durable docs.
+
 ## Task Dependency Graph
 
 ```text
-T001 -> T002 -> T004
-T001 -> T003 -> T004
+T001 -> T002
+T001 -> T003
+T002 + T003 -> T004
 T004 -> T005
-T004 -> T006 (parallel)
-T005 -> T007
-T006 -> T007
+T005 -> T006
 ```
 
 ## Phase 1: Setup
 
-**Purpose**: Project initialization and shared preparation.
+**Purpose**: Prepare the package and identify affected files.
 
-### Task 1: Title
+- [ ] T001 Create or update the feature documentation structure under
+  `[docs-root]/specs/[###-feature-name]/`.
+  - Depends on: none
+  - Requirement: -
+  - Files: `[docs-root]/specs/[###-feature-name]/`
+  - Acceptance: Package contains the required artifacts for this change.
+  - Evidence: Pending.
 
-- **ID:** T001
-- **Status:** pending
-- **Depends on:** []
-- **Parallel:** no
-- **Story:** —
-- **Files:** `path/to/file`
-- **Description:** What needs to be done.
-- **Acceptance:** How to verify this task is complete.
-- **Evidence:** Pending.
-
-### Task 2: Title
-
-- **ID:** T002
-- **Status:** pending
-- **Depends on:** [T001]
-- **Parallel:** no
-- **Story:** —
-- **Files:** `path/to/file`
-- **Description:** What needs to be done.
-- **Acceptance:** How to verify this task is complete.
-- **Evidence:** Pending.
+- [ ] T002 Identify source, test, configuration, and durable-doc files affected
+  by the change.
+  - Depends on: T001
+  - Requirement: -
+  - Files: `src/...`, `tests/...`, `docs/...`
+  - Acceptance: Affected file list is documented in `design.md`,
+    `change-impact.md`, or this task.
+  - Evidence: Pending.
 
 ## Phase 2: Foundation
 
-**Purpose**: Shared work that must be complete before user-story implementation.
+**Purpose**: Complete shared prerequisites before user-story work.
 
-### Task 3: Title
+- [ ] T003 Implement or update shared contracts, schemas, helpers,
+  configuration, or guardrails needed by all stories.
+  - Depends on: T001
+  - Requirement: cross-cutting
+  - Files: `path/to/file`
+  - Acceptance: Shared prerequisite is implemented and covered by the relevant
+    validation path.
+  - Evidence: Pending.
+  - [ ] T003.1 Add or update contract/schema definitions.
+  - [ ] T003.2 Add validation, logging, or operational guardrails.
+  - [ ] T003.3 Add focused tests for shared behavior.
 
-- **ID:** T003
-- **Status:** pending
-- **Depends on:** [T001]
-- **Parallel:** yes
-- **Story:** —
-- **Files:** `path/to/file`
-- **Description:** What needs to be done.
-- **Acceptance:** How to verify this task is complete.
-- **Evidence:** Pending.
-
-**Checkpoint**: Foundation ready; user-story work can proceed.
+**Checkpoint**: Foundation is ready; user-story work can proceed.
 
 ## Phase 3: User Story 1 - Title (Priority: P1)
 
@@ -74,29 +70,25 @@ T006 -> T007
 
 **Independent Test**: How to verify this story works on its own.
 
-### Task 4: Tests for User Story 1
+- [ ] T004 [US1] Add tests for user story 1.
+  - Depends on: T002, T003
+  - Files: `tests/path/to/test`
+  - Acceptance: Tests define expected behavior and fail before implementation
+    where practical.
+  - Evidence: Pending.
+  - [ ] T004.1 Cover success path.
+  - [ ] T004.2 Cover validation or error path.
+  - [ ] T004.3 Cover regression or edge case from requirements.
 
-- **ID:** T004
-- **Status:** pending
-- **Depends on:** [T002, T003]
-- **Parallel:** yes
-- **Story:** US1
-- **Files:** `tests/path/to/test`
-- **Description:** Add unit and integration test coverage.
-- **Acceptance:** Tests exist and define expected behavior before implementation.
-- **Evidence:** Pending.
-
-### Task 5: Implementation for User Story 1
-
-- **ID:** T005
-- **Status:** pending
-- **Depends on:** [T004]
-- **Parallel:** no
-- **Story:** US1
-- **Files:** `src/path/to/file`
-- **Description:** Implement the feature behavior.
-- **Acceptance:** Tests pass and behavior matches acceptance criteria.
-- **Evidence:** Pending.
+- [ ] T005 [US1] Implement user story 1 behavior.
+  - Depends on: T004
+  - Files: `src/path/to/file`
+  - Acceptance: User story 1 passes its independent test and satisfies linked
+    acceptance criteria.
+  - Evidence: Pending.
+  - [ ] T005.1 Implement core behavior.
+  - [ ] T005.2 Integrate with shared contracts or config.
+  - [ ] T005.3 Update durable docs or mark the promotion target.
 
 **Checkpoint**: User Story 1 is independently functional and testable.
 
@@ -106,66 +98,53 @@ T006 -> T007
 
 **Independent Test**: How to verify this story works on its own.
 
-### Task 6: Tests for User Story 2
+- [ ] T006 [P] [US2] Add tests and implementation for user story 2.
+  - Depends on: T005
+  - Files: `src/path/to/file`, `tests/path/to/test`
+  - Acceptance: User story 2 passes its independent test and does not regress
+    user story 1.
+  - Evidence: Pending.
+  - [ ] T006.1 Add tests.
+  - [ ] T006.2 Implement behavior.
+  - [ ] T006.3 Run focused validation.
 
-- **ID:** T006
-- **Status:** pending
-- **Depends on:** [T004]
-- **Parallel:** yes
-- **Story:** US2
-- **Files:** `tests/path/to/test`
-- **Description:** Add unit and integration test coverage.
-- **Acceptance:** Tests exist and define expected behavior before implementation.
-- **Evidence:** Pending.
+**Checkpoint**: Selected user stories are independently functional and
+testable.
 
-### Task 7: Implementation for User Story 2
+## Phase 5: Polish, Promotion, and Closure
 
-- **ID:** T007
-- **Status:** pending
-- **Depends on:** [T005, T006]
-- **Parallel:** no
-- **Story:** US2
-- **Files:** `src/path/to/file`
-- **Description:** Implement the feature behavior.
-- **Acceptance:** Tests pass and behavior matches acceptance criteria.
-- **Evidence:** Pending.
+**Purpose**: Finish quality gates, durable docs, and closure readiness.
 
-**Checkpoint**: User Stories 1 and 2 both work independently.
+- [ ] T007 Update durable documentation and promotion targets.
+  - Depends on: T005, T006
+  - Files: `docs/...`
+  - Acceptance: Durable docs describe the resulting current behavior or
+    deferred follow-up is documented.
+  - Evidence: Pending.
 
-## Phase 5: Polish and Cross-Cutting Concerns
+- [ ] T008 Run required validation and record closure risk.
+  - Depends on: T007
+  - Files: `docs/specs/[###-feature-name]/verification.md`
+  - Acceptance: Validation evidence, residual risk, rollback or closure notes,
+    and follow-up owners are recorded.
+  - Evidence: Pending.
 
-**Purpose**: Final quality pass and documentation.
+## Execution Rules
 
-### Task 8: Documentation and Cleanup
-
-- **ID:** T008
-- **Status:** pending
-- **Depends on:** [T007]
-- **Parallel:** no
-- **Story:** —
-- **Files:** `docs/path/to/file`
-- **Description:** Update durable docs, clean up code, verify performance budget.
-- **Acceptance:** Docs reflect current behavior, no dead code, performance targets met.
-- **Evidence:** Pending.
-
-## Dependencies and Execution Order
-
-- Setup starts first.
-- Foundation blocks user-story work.
-- User stories proceed in priority order unless dependencies allow parallel work.
-- Polish and promotion happen after selected user stories are complete.
-- Tests for a user story should be written before implementation where practical.
-- Move tasks to `done` only after filling `Evidence` with the command, test
-  result, review note, screenshot, log, commit, or manual verification note.
-
-## Status Legend
-
-| Status | Meaning |
-|--------|---------|
-| pending | Not yet started |
-| in_progress | Currently being worked on |
-| done | Complete and verified |
-| skipped | Intentionally deferred with documented reason |
+- Keep the checkbox/subtask structure as the default task shape.
+- Use `[P]` only when a task can run in parallel without dependency or file
+  conflicts.
+- Use `Depends on:` for tasks whose execution order is not obvious from the
+  phase order.
+- Check off subtasks as work progresses, but check off the parent task only when
+  its acceptance criteria are met.
+- A task is complete only when evidence is recorded. Evidence can be a command,
+  test result, review note, screenshot, log, commit, or manual verification.
+- If validation cannot run, leave the task unchecked unless the acceptance
+  criteria can be defensibly verified by another recorded method.
+- Mark skipped work with an explicit reason, for example:
+  `- [ ] T009 ...`
+  `  - Status: skipped - superseded by T014.`
 
 ## Related Artifacts
 

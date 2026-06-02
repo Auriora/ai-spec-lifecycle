@@ -120,8 +120,8 @@ replacement packaging targets unless a future decision changes that.
 Current direction for the local environment:
 
 - Keep Kiro-style `requirements.md`, EARS acceptance criteria, enriched
-  `design.md`, task dependency graphs, explicit task status, and correctness
-  properties.
+  `design.md`, checklist tasks with subtasks, dependency notes, evidence, and
+  correctness properties.
 - Add verification and checklist-style quality gates, with task evidence
   required before `done`.
 - Treat migration from older spec formats as a decision gate, not an automatic
@@ -129,8 +129,10 @@ Current direction for the local environment:
 - Keep spec packages temporary. Durable documentation under `docs/` should live
   with the code and describe current implementation state.
 - Use `skills/spec-lifecycle-manager/references/spec-package/` as the canonical
-  fallback template location for spec packages. Keep `docs/templates/` focused
-  on durable document templates.
+  fallback template location for spec packages. Use
+  `skills/spec-lifecycle-manager/references/durable-doc-templates/` as optional
+  durable documentation templates for selected projects that do not already have
+  their own authoritative templates.
 - Add governance or constitution docs as authoritative constraints for agents.
 - Avoid local specs inside source trees by default. If subsystem behavior specs
   are needed, prefer documented repo paths such as `docs/specs/src/[path].md`,

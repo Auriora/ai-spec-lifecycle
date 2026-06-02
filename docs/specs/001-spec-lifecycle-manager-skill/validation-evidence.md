@@ -45,8 +45,9 @@ Repository-specific instructions and durable docs were identified:
 - `docs/README.md` maps durable doc classes including architecture,
   requirements, design, API contracts, data-flow docs, runbooks, ADRs,
   references, backlog, and reviews.
-- `docs/templates/README.md` reinforces that current-state content belongs in
-  durable docs rather than active specs.
+- `skills/spec-lifecycle-manager/references/durable-doc-templates/README.md`
+  reinforces that current-state content belongs in durable docs rather than
+  active specs.
 
 Reconciliation was required because the repository has multiple active specs,
 checked and unchecked tasks, cross-spec dependencies, and frontmatter/status

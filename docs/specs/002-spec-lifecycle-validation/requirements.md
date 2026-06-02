@@ -44,14 +44,16 @@ trials.
 
 #### Acceptance Criteria
 
-1. GIVEN the repository, WHEN static validation runs, THEN no duplicate
-   spec-package templates exist under `docs/templates/`.
+1. GIVEN the repository, WHEN static validation runs, THEN reusable project
+   templates live under `skills/spec-lifecycle-manager/references/`, not
+   repo-level `docs/templates/`.
 2. GIVEN the skill references files, WHEN checked, THEN every referenced skill
    reference file exists.
 3. GIVEN README and template links, WHEN checked, THEN links resolve or any
    exception is documented.
-4. GIVEN spec-package templates, WHEN checked, THEN required fields for status,
-   evidence, change impact, verification, and ship risk are present.
+4. GIVEN spec-package templates, WHEN checked, THEN task templates preserve
+   checklist tasks and subtasks while including evidence, acceptance, change
+   impact, verification, and ship risk guidance.
 
 ### Requirement 2: Fixture-Based Skill Trials
 

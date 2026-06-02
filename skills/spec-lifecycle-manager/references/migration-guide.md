@@ -1,8 +1,10 @@
 # Spec Package Migration Guide
 
-Use this guide to decide whether and how to migrate spec packages from the old
-format (spec.md + plan.md + checkbox tasks) to the current format
-(requirements.md + enriched design.md + DAG tasks).
+Use this guide to decide whether and how to migrate spec packages from older
+formats (`spec.md`, `plan.md`, or weak checkbox-only tasks) to the current
+hybrid Kiro-style format (`requirements.md`, enriched `design.md`, and
+checklist tasks with subtasks, dependency notes, acceptance criteria, and
+evidence).
 
 ## Migration Decision Gate
 
@@ -92,8 +94,10 @@ Old format indicators:
 
 - `spec.md` exists (instead of `requirements.md`)
 - `plan.md` exists (content now split across requirements/design/tasks)
-- `tasks.md` uses `- [ ]` / `- [x]` checkboxes without Status fields
-- `tasks.md` lacks a Task Dependency Graph section
+- `tasks.md` uses ambiguous `- [ ]` / `- [x]` checkboxes without dependency,
+  acceptance, evidence, or verification guidance
+- `tasks.md` lacks dependency notes or a Task Dependency Graph for non-trivial
+  work
 - `design.md` lacks High-Level Design / Low-Level Design sections
 
 ## Field Mapping: spec.md → requirements.md
@@ -183,7 +187,7 @@ Old format indicators:
 | Validation Strategy | verification.md, plus requirements.md → Success Criteria when it describes desired outcomes |
 | Complexity Tracking | Remove (governance is a design concern now) |
 
-## Task Migration: Checkboxes → Status + DAG
+## Task Migration: Weak Checklists -> Enhanced Kiro-Style Tasks
 
 ### Old format
 
@@ -206,52 +210,37 @@ T001 -> T003 (parallel)
 
 ## Phase 1: Setup
 
-### Task 1: Create Documentation Structure
+- [ ] T001 Create or update feature documentation structure.
+  - Depends on: none
+  - Files: `[docs-root]/specs/[###-feature-name]/`
+  - Acceptance: Required package files exist.
+  - Evidence: Pending.
 
-- **ID:** T001
-- **Status:** pending
-- **Depends on:** []
-- **Parallel:** no
-- **Story:** —
-- **Files:** `[docs-root]/specs/[###-feature-name]/`
-- **Description:** Create or update feature documentation structure.
-- **Acceptance:** Directory exists with required template files.
-- **Evidence:** Directory listing or diff showing created files.
+- [ ] T002 Identify source and test files.
+  - Depends on: T001
+  - Files: `src/`, `tests/`
+  - Acceptance: File list is documented in task, design, or change-impact.
+  - Evidence: Pending.
 
-### Task 2: Identify Source Files
-
-- **ID:** T002
-- **Status:** pending
-- **Depends on:** [T001]
-- **Parallel:** no
-- **Story:** —
-- **Files:** `src/`, `tests/`
-- **Description:** Identify source and test files affected by the plan.
-- **Acceptance:** File list documented in task or design.
-- **Evidence:** Design section or search output summary.
-
-### Task 3: Configure Helpers
-
-- **ID:** T003
-- **Status:** done
-- **Depends on:** [T001]
-- **Parallel:** yes
-- **Story:** —
-- **Files:** `scripts/`
-- **Description:** Configure or update local validation helpers.
-- **Acceptance:** Helpers run successfully.
-- **Evidence:** Validation command output.
+- [x] T003 [P] Configure helpers.
+  - Depends on: T001
+  - Files: `scripts/`
+  - Acceptance: Helpers run successfully.
+  - Evidence: Validation command output.
+  - [x] T003.1 Add helper command.
+  - [x] T003.2 Run helper once.
 ```
 
-### Status Mapping
+### Checklist Enhancement Rules
 
-| Old | New |
-|-----|-----|
-| `- [ ]` (unchecked) | `pending` |
-| `- [x]` (checked) | `done` |
-| `[P]` marker | `Parallel: yes` |
-| No explicit status | `pending` |
-| No verification note | `Evidence: Pending.` |
+- Keep `- [ ]` and `- [x]` checkboxes as the primary status marker.
+- Preserve `[P]` markers for parallel-safe tasks.
+- Add nested subtasks when the parent task has natural implementation steps.
+- Add `Depends on:` when dependency order is not obvious from the phase.
+- Add `Files:` when file ownership or conflict avoidance matters.
+- Add `Acceptance:` to make completion defensible.
+- Add `Evidence:` and leave it as `Pending.` until completion is verified.
+- Use `Status: skipped - reason` only for intentionally skipped work.
 
 ### Dependency Inference
 
@@ -311,7 +300,9 @@ When migrating, infer dependencies from:
 2. Create `requirements.md` from `spec.md` + `plan.md` using the field mappings
    above.
 3. Update `design.md` to add High-Level/Low-Level structure.
-4. Rebuild `tasks.md` with DAG, status fields, and per-task acceptance criteria.
+4. Rebuild or enhance `tasks.md` with Kiro-style checklist tasks, useful
+   subtasks, dependency notes or a DAG, affected files, per-task acceptance
+   criteria, and evidence.
 5. Create `verification.md` when the package has validation gates, evidence, or
    residual risks worth tracking separately.
 6. Verify cross-references between artifacts are correct.
@@ -327,8 +318,10 @@ After migration, confirm:
 
 - [ ] `requirements.md` exists with user stories and EARS acceptance criteria
 - [ ] `design.md` has High-Level and Low-Level sections
-- [ ] `tasks.md` has a Task Dependency Graph and per-task status fields
-- [ ] Task entries have Evidence fields
+- [ ] `tasks.md` uses checklist tasks and subtasks as the primary structure
+- [ ] Non-trivial dependencies are captured through `Depends on:` notes or a
+      Task Dependency Graph
+- [ ] Parent tasks have acceptance criteria and evidence fields where needed
 - [ ] `verification.md` exists when quality gates or validation evidence need
       separate tracking
 - [ ] No orphan references to `spec.md` or `plan.md`

@@ -28,6 +28,13 @@ this skill's fallback templates silently. When the repository templates differ
 from this skill's preferred package shape, record a visible template authority
 decision before creating, migrating, or reshaping docs.
 
+This skill includes two kinds of fallback references:
+
+- `references/spec-package/`: temporary implementation spec package templates.
+- `references/durable-doc-templates/`: optional durable documentation templates
+  for selected projects that do not already have an authoritative documentation
+  template system.
+
 ## Start
 
 1. Read applicable repo instructions such as `AGENTS.md`.
@@ -37,6 +44,11 @@ decision before creating, migrating, or reshaping docs.
 5. Identify the repository's durable documentation targets from its own docs structure and templates before assuming document classes or folder names.
 
 If no active package exists and the user asks to start one, create the smallest useful `[docs-root]/specs/[###-slug]/` package for the risk level. Use repository-documented package templates when present. If no repository-specific package template exists, use `references/spec-package/` as the fallback package template. If both exist and differ, prefer the repository template and record the template authority decision.
+
+If durable documentation must be created or promoted and the target repository
+has no documented durable-doc template system, use
+`references/durable-doc-templates/` as optional fallback guidance. Copy or adapt
+only the specific document class needed, not the whole template set.
 
 If several active packages exist, read repository indexes such as `docs/README.md` and any sequencing docs. Ask the user to choose, or select the first blocking slice from documented sequencing guidance when the next step is clear.
 
@@ -48,7 +60,7 @@ Use spec artifacts as a progressive chain, not interchangeable notes:
 
 - `requirements.md`: problem context, goals, non-goals, glossary, user-story-based requirements with EARS-format acceptance criteria, correctness properties for property-based testing, technical context, and success criteria.
 - `design.md`: how the accepted requirements will be implemented, split into high-level design (system architecture, components, data models, data flow) and low-level design (algorithms, function signatures, error handling), plus operational considerations and open questions.
-- `tasks.md`: task dependency graph (DAG) showing execution order, phased grouping for readability, and per-task entries with status tracking (pending/in_progress/done/skipped), explicit dependencies, file paths, and acceptance criteria.
+- `tasks.md`: Kiro-style checklist of tasks and subtasks, phased grouping for readability, dependency graph or explicit dependency notes, file paths, acceptance criteria, and evidence for completed work.
 
 ### Optional Artifacts (created when they add value)
 
@@ -101,19 +113,29 @@ Retain operational considerations (rollout, observability, migration, failure ha
 
 ### Task Format
 
-Each task entry includes:
+Prefer a Kiro-style checklist over a block-heavy task form:
 
-- **ID**: unique identifier (T001, T002, ...)
-- **Status**: pending | in_progress | done | skipped
-- **Depends on**: list of task IDs that must complete first
-- **Parallel**: whether it can run alongside other tasks in the same phase
-- **Story**: user story reference (US1, US2, ...) or — if cross-cutting
-- **Files**: exact file paths affected
-- **Description**: what needs to be done
-- **Acceptance**: how to verify the task is complete
-- **Evidence**: command, test, review note, screenshot, log, commit, or manual verification that proves completion
+```markdown
+- [ ] T004 [P] [US1] Add tests for user story 1.
+  - Depends on: T002, T003
+  - Files: `tests/path/to/test`
+  - Acceptance: Tests define expected behavior and fail before implementation
+    where practical.
+  - Evidence: Pending.
+  - [ ] T004.1 Cover success path.
+  - [ ] T004.2 Cover validation or error path.
+```
 
-The Task Dependency Graph at the top of `tasks.md` shows the full DAG in text form. Phases provide visual grouping; the DAG provides execution order.
+Task expectations:
+
+- Use stable task IDs (`T001`, `T002`, ...) and subtask IDs (`T004.1`) when useful.
+- Keep checkboxes as the visible status marker.
+- Use `[P]` only for tasks that can run in parallel without dependency or file conflicts.
+- Add `Depends on:`, `Files:`, `Acceptance:`, and `Evidence:` bullets where they materially improve execution or reconciliation.
+- Check off subtasks as work progresses, but check off the parent task only when acceptance criteria are met and evidence is recorded.
+- Record skipped work with an explicit reason instead of silently deleting it.
+
+The Task Dependency Graph at the top of `tasks.md` is useful for non-trivial specs, but it should support the checklist rather than replace it. Phases provide visual grouping; dependency notes and the graph provide execution order.
 
 ### Spec Lifetime
 
@@ -138,7 +160,7 @@ Produce a concise reconciliation summary when it adds clear value. Reconciliatio
 - durable docs disagree with the spec;
 - the change affects API contracts, data flow, architecture, operations, security, or cross-module behavior.
 
-If the spec package uses the old format (has `spec.md` or `plan.md` instead of `requirements.md`, or `tasks.md` uses checkboxes without a Task Dependency Graph), read `references/migration-guide.md` and use a migration decision gate before implementation:
+If the spec package uses the old format (has `spec.md` or `plan.md` instead of `requirements.md`, or `tasks.md` has ambiguous checkboxes without dependency, acceptance, or evidence guidance), read `references/migration-guide.md` and use a migration decision gate before implementation:
 
 - continue in old format for this slice;
 - migrate before implementation;
@@ -177,9 +199,12 @@ For fresh, small, low-risk work, a one- or two-line reconciliation is enough whe
 
 ## Implement
 
-Select one coherent implementation slice at a time, usually a phase, checkpoint, user story, or requirement group from `tasks.md`. Respect the Task Dependency Graph: only select tasks whose dependencies are all `done`.
+Select one coherent implementation slice at a time, usually a phase, checkpoint, user story, parent task, or subtask group from `tasks.md`. Respect the dependency graph and `Depends on:` notes: only select tasks whose dependencies are complete.
 
-Before choosing the slice, compare task status fields against actual code, tests, config, and durable-doc evidence. Call out status-stale candidates when validation or review is the current goal.
+Before choosing the slice, compare task checkboxes, subtasks, acceptance
+criteria, and evidence against actual code, tests, config, and durable-doc
+evidence. Call out status-stale candidates when validation or review is the
+current goal.
 
 Before editing, state:
 
@@ -190,12 +215,12 @@ Before editing, state:
 
 Task status rules:
 
-- Set a task to `done` only when its acceptance criteria are met.
+- Check off a parent task only when its acceptance criteria are met.
 - Prefer passing tests before marking implementation tasks `done`.
 - If automated tests do not apply, record the alternate verification method and residual risk.
-- If validation could not run, do not hide that. Mark the task `done` only when it can be defensibly verified without that validation.
-- Update task `Evidence` when a task moves to `done`; evidence can be a command, test result, review note, screenshot, log, commit, or manual verification note.
-- Set a task to `skipped` only with a documented reason (intentional deferral, superseded, or out of scope).
+- If validation could not run, do not hide that. Check off the parent task only when it can be defensibly verified without that validation.
+- Update task `Evidence` when a task is checked complete; evidence can be a command, test result, review note, screenshot, log, commit, or manual verification note.
+- Mark a task or subtask as skipped only with a documented reason (intentional deferral, superseded, or out of scope).
 
 ## Verify
 
