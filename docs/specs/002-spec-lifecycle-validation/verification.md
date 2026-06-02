@@ -22,7 +22,7 @@ passes, and dogfood usage.
 | Six fixtures created | yes | done | `tests/fixtures/skill-validation/` contains six scenario fixtures. |
 | Prompt trials complete | yes | done | Linnaeus and Mendel sub-agents reported pass results. |
 | Review matrix complete | yes | done | Aristotle and Descartes sub-agents reported review results; fixes applied. |
-| Dogfood assessment complete | yes | done | Dogfood assessment recorded in `validation-evidence.md`. |
+| Dogfood assessment complete | yes | done | Dogfood assessment and old-format archived spec trial recorded in `validation-evidence.md`. |
 
 ## Validation Commands
 
@@ -53,8 +53,9 @@ passes, and dogfood usage.
 | T004 | done | Linnaeus and Mendel prompt trials passed | |
 | T005 | done | Aristotle and Descartes reviews completed; findings fixed | |
 | T006 | done | Evidence recorded | |
-| T007 | done | Dogfood assessment recorded | |
-| T008 | done | Task and verification statuses updated | |
+| T007 | done | Old-format archived spec trial recorded | |
+| T008 | done | Dogfood assessment recorded | |
+| T009 | done | Task and verification statuses updated | |
 
 ## Manual Or External Verification
 
@@ -70,6 +71,9 @@ agent id, model, prompt scope, result, and residual risk in
   test script.
 - Optional artifact count may be too heavy for small work; the skill already
   permits omitting optional artifacts when they do not add value.
+- Some current docs still reference older global-install assumptions; this does
+  not affect the archived `001` package migration decision, but should be
+  cleaned up before publishing current usage guidance.
 
 ## Ship Or Closure Risk
 

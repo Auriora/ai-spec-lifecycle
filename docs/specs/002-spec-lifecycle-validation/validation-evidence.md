@@ -87,6 +87,45 @@ needed for this validation because it did not change existing durable behavior.
 The main cost is artifact count; small validation work should keep optional
 artifacts omitted unless they add clear value.
 
+### Old-Format Archived Spec Trial
+
+Prompt tested:
+
+```text
+Use the skill with docs/specs/001-spec-lifecycle-manager-skill.
+```
+
+Observed package state:
+
+- package uses old format: `spec.md`, `plan.md`, `tasks.md`, `design.md`;
+- frontmatter status is `archived`;
+- task list is fully checked;
+- closure recommendation says durable current-state guidance lives in
+  `docs/design/`, `docs/reference/`, `docs/README.md`, and tracked skill source;
+- package is retained as historical validation and decision history.
+
+Migration decision gate result:
+
+| Option | Decision | Reason |
+|--------|----------|--------|
+| Continue old format for this slice | Selected | The package is archived and no implementation slice is needed. |
+| Migrate before implementation | Rejected | Migration would churn historical evidence and is explicitly discouraged for archived specs. |
+| Create follow-up migration task | Rejected | No future active work is currently planned for the archived package. |
+
+Reconciliation classifications:
+
+| Classification | Evidence |
+|----------------|----------|
+| intentionally deferred | Old-format package remains historical rather than migrated. |
+| durable docs stale | Some older durable docs and archived evidence still mention global install paths and older package concepts; current repo-local usage is documented elsewhere and may need cleanup if promoted as current guidance. |
+| implemented but unverified | Not applicable; no implementation task is active. |
+| code incomplete | Not applicable. |
+| governance conflict | Not applicable. |
+
+Skill behavior result: pass. The skill correctly avoids forced migration for an
+archived old-format package and uses the migration decision gate. The useful
+follow-up is durable-doc cleanup, not migration of the archived spec.
+
 ## Residual Risks
 
 - Prompt trials were mental/read-only rather than mutating fixtures.

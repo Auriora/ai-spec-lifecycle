@@ -17,6 +17,7 @@ last_reviewed: 2026-06-02
 T001 -> T002 -> T003 -> T004 -> T006 -> T008
 T001 -> T005 -> T006
 T006 -> T007 -> T008
+T008 -> T009
 ```
 
 ## Phase 1: Spec Package Setup
@@ -99,11 +100,23 @@ T006 -> T007 -> T008
 - **Acceptance:** Evidence includes results, residual risk, and follow-up tasks or decisions.
 - **Evidence:** Recorded static checks, fixture inventory, prompt trials, review matrix, fixes, and residual risks in `validation-evidence.md`.
 
-### Task 7: Review Dogfood Friction
+### Task 7: Dogfood Old-Format Archived Spec
 
 - **ID:** T007
 - **Status:** done
 - **Depends on:** [T006]
+- **Parallel:** no
+- **Story:** US5
+- **Files:** `docs/specs/001-spec-lifecycle-manager-skill/`, `docs/specs/002-spec-lifecycle-validation/validation-evidence.md`
+- **Description:** Use the skill against old-format archived spec `001` and record migration decision gate behavior.
+- **Acceptance:** Evidence shows whether to continue old format, migrate, or create a follow-up migration task.
+- **Evidence:** Recorded old-format archived spec trial in `validation-evidence.md`; selected continue old format/no migration.
+
+### Task 8: Review Dogfood Friction
+
+- **ID:** T008
+- **Status:** done
+- **Depends on:** [T007]
 - **Parallel:** no
 - **Story:** US5
 - **Files:** `docs/specs/002-spec-lifecycle-validation/verification.md`
@@ -111,11 +124,11 @@ T006 -> T007 -> T008
 - **Acceptance:** Dogfood assessment is recorded with keep/change recommendations.
 - **Evidence:** Dogfood assessment recorded in `validation-evidence.md`; artifact overhead noted as residual process cost.
 
-### Task 8: Final Validation Readiness
+### Task 9: Final Validation Readiness
 
-- **ID:** T008
+- **ID:** T009
 - **Status:** done
-- **Depends on:** [T007]
+- **Depends on:** [T008]
 - **Parallel:** no
 - **Story:** US1-US5
 - **Files:** `docs/specs/002-spec-lifecycle-validation/tasks.md`, `docs/specs/002-spec-lifecycle-validation/verification.md`
