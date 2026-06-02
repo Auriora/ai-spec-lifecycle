@@ -204,6 +204,135 @@ The reusable skill package intentionally does not include the implementation
 validation target repositories; those remain only in this archived validation
 evidence.
 
+## Spec Kit Investigation - 2026-06-02
+
+### Investigation Source
+
+The user requested investigation of GitHub Spec Kit to identify improvements to
+the `spec-lifecycle-manager` skill:
+
+```text
+https://github.com/github/spec-kit
+```
+
+Sources reviewed:
+
+- GitHub repository README and release metadata for `github/spec-kit`.
+- Spec Kit documentation site at `https://github.github.io/spec-kit/`.
+- Current command templates from the repository for `specify`, `clarify`,
+  `plan`, `tasks`, `analyze`, and `implement`.
+- Spec Kit reference pages for integrations, extensions, and presets.
+
+Observed version context: GitHub showed latest release `0.9.0` on
+2026-06-01. This evidence was captured on 2026-06-02.
+
+### Findings
+
+Spec Kit's current core workflow is broader than a simple
+`spec -> plan -> tasks -> implement` sequence. The observed flow includes:
+
+```text
+constitution -> specify -> clarify -> plan -> tasks -> analyze -> implement
+```
+
+Spec Kit creates and uses `.specify/` project state, including constitution
+memory, templates, scripts, extension configuration, and active feature
+metadata. Its default feature package path is `specs/[###-slug]/`, while this
+repository's lifecycle skill intentionally defaults to
+`docs/specs/[###-slug]/`.
+
+Spec Kit supports additional artifacts beyond this skill's baseline package:
+
+- `checklists/` for requirements and quality gates;
+- `data-model.md` for entities, fields, relationships, validation rules, and
+  state transitions;
+- `contracts/` for public API, CLI, UI, grammar, or service contracts;
+- `.specify/memory/constitution.md` for governing principles;
+- `.specify/extensions.yml` for before/after command hooks;
+- `.specify/templates/overrides/`, presets, and extensions for workflow
+  customization.
+
+Spec Kit's `clarify` workflow asks targeted questions before planning and
+writes accepted answers back into the spec. Its `analyze` workflow performs a
+read-only consistency pass across `spec.md`, `plan.md`, and `tasks.md`,
+checking ambiguity, duplication, coverage gaps, unmapped tasks, and conflicts
+with the project constitution. Its `implement` workflow checks checklist status
+before implementation, loads available design artifacts, respects task
+dependencies, and marks tasks complete as work is verified.
+
+Spec Kit task generation uses a strict checklist format:
+
+```text
+- [ ] T001 [P] [US1] Description with exact file path
+```
+
+Tasks are organized by independently testable user stories, with setup,
+foundational prerequisites, story phases, and polish or cross-cutting work.
+
+Spec Kit can be adapted through presets or extensions. Presets are best for
+template, terminology, and command override changes. Extensions are best for
+new capabilities, domain-specific commands, external integrations, quality
+gates, and additional workflow phases.
+
+### Suggestions Reviewed With User
+
+The investigation produced eight suggested improvements. The user responded to
+each numbered item on 2026-06-02:
+
+| # | Suggestion | User response | Interpretation |
+| --- | --- | --- | --- |
+| 1 | Add Spec Kit project detection for `.specify/feature.json`, `.specify/memory/constitution.md`, and default `specs/[###-slug]/` packages. | No | Do not broaden this skill's default package detection to Spec Kit's `specs/` path or active-feature metadata. Keep `docs/specs/[###-slug]/` as the only default assumed path. |
+| 2 | Add a "Spec Kit Compatibility" section that uses Spec Kit artifacts first when `.specify/` exists, then applies durable-doc promotion and closure rules. | Maybe | Treat as undecided. Do not implement without a later explicit request. |
+| 3 | Expand artifact intake to include `data-model.md`, `contracts/`, `checklists/`, `.specify/extensions.yml`, template overrides, and constitution memory. | Expand on this | Needs a more detailed proposal before implementation. The most useful subset for this skill is likely `data-model.md`, `contracts/`, `checklists/`, and a repository governance file when present; extension hooks and template override resolution may be too Spec Kit-specific for the generic skill. |
+| 4 | Add clarification and checklist gates. | Yes | Accepted. Add guidance to ask high-impact clarification questions before planning when the spec is materially underspecified, and inspect checklist status before implementation or closure when checklists exist. |
+| 5 | Add read-only cross-artifact analysis after `tasks.md`. | Yes | Accepted. Add a read-only analysis/reconciliation step across spec, design, plan, tasks, durable docs, code evidence, validation evidence, and governance constraints before implementation. |
+| 6 | Tighten task rules to require Spec Kit's exact task format. | No | Do not require Spec Kit's exact task syntax. The skill should continue accepting repository task formats while encouraging stable IDs, file paths, requirement/story mapping, dependency order, and independently verifiable slices. |
+| 7 | Treat constitution or equivalent governance as authoritative. | Yes | Accepted. If a repository has constitution, AGENTS, documented principles, policy, or governance files, treat conflicts with those sources as blockers unless the user explicitly asks to update that governance source. |
+| 8 | Consider publishing this as a Spec Kit extension or preset. | No | Do not pursue Spec Kit extension or preset packaging. Keep this as a Codex skill. |
+
+### Recommended Follow-Up Scope
+
+Based on the user's responses, the next skill improvement pass should focus on
+three accepted areas:
+
+1. Clarification and checklist gates.
+2. Read-only cross-artifact analysis.
+3. Governance-authority handling.
+
+The expanded artifact-intake idea needs a narrower design before editing the
+skill. A pragmatic proposal is:
+
+- Always keep `docs/specs/[###-slug]/` as the default active package path.
+- When present inside the active package, also read `data-model.md`,
+  `contracts/`, `checklists/`, and any clearly named governance or decision
+  files.
+- Treat `data-model.md` as durable-data and state-transition evidence.
+- Treat `contracts/` as API, CLI, UI, integration, schema, grammar, or public
+  behavior evidence.
+- Treat `checklists/` as readiness and quality-gate evidence, not as
+  implementation proof by itself.
+- Treat repository governance files as higher-priority constraints during
+  reconciliation.
+- Avoid implementing Spec Kit-specific hook dispatch, preset resolution,
+  `.specify/feature.json` active-feature detection, or extension/preset
+  packaging unless the user later changes the decisions above.
+
+### Potential Skill Wording Changes
+
+The accepted follow-up could be reflected in `SKILL.md` with these concise
+additions:
+
+- In `Start`: read package-local `data-model.md`, `contracts/`,
+  `checklists/`, governance files, and decision records when present.
+- In `Reconcile`: perform read-only cross-artifact analysis for ambiguity,
+  duplication, coverage gaps, unmapped tasks, stale task state, and governance
+  conflicts before implementation.
+- In `Implement`: if checklists exist, summarize complete and incomplete items
+  before editing; ask or stop when an incomplete checklist blocks the selected
+  slice.
+- In `Close`: closure cannot proceed while required checklist, governance,
+  contract, durable-doc, or validation evidence remains incomplete.
+
 ## Closure Recommendation
 
 Phase 4 is complete. The skill is validated enough for local use, with
