@@ -110,7 +110,7 @@ class SpecRuntimeTests(unittest.TestCase):
     def test_next_task_selects_first_unblocked_task_with_context(self):
         payload = spec_runtime.next_task(SPEC)
 
-        self.assertEqual("T009", payload["selected"]["task_id"])
+        self.assertEqual("T010", payload["selected"]["task_id"])
         self.assertIn("traceability_context", payload)
         self.assertEqual([], [gap for gap in payload["traceability_context"]["gaps"] if gap["severity"] == "error"])
 
@@ -191,6 +191,101 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertTrue(payload["blocked"])
         self.assertIn("TASK_EVIDENCE_MISSING", {item["code"] for item in payload["blocking"]})
 
+    def test_hook_implementation_task_complete_blocks_missing_evidence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            spec = repo / "docs/specs/001-example"
+            spec.mkdir(parents=True)
+            (spec / "tasks.md").write_text(
+                "\n".join(
+                    [
+                        "---",
+                        "title: Tasks",
+                        "doc_type: spec",
+                        "artifact_type: tasks",
+                        "status: draft",
+                        "owner: platform",
+                        "last_reviewed: 2026-06-05",
+                        "---",
+                        "",
+                        "# Tasks",
+                        "",
+                        "- [x] T001 Do thing.",
+                        "  - Depends on: none",
+                        "  - Files: `src/x`",
+                        "  - Acceptance: Done.",
+                        "  - Evidence: Pending.",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            payload = spec_runtime.run_hook(
+                repo,
+                "implementation-task-complete",
+                spec_path=spec,
+                task_id="T001",
+                severity_profile="blocking",
+            )
+
+        self.assertTrue(payload["blocked"])
+        self.assertIn("TASK_EVIDENCE_MISSING", {item["code"] for item in payload["blocking"]})
+
+    def test_hook_verification_updated_checks_requirement_and_task_refs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            spec = repo / "docs/specs/001-example"
+            spec.mkdir(parents=True)
+            (spec / "verification.md").write_text(
+                "\n".join(
+                    [
+                        "---",
+                        "title: Verification",
+                        "doc_type: spec",
+                        "artifact_type: verification",
+                        "status: draft",
+                        "owner: platform",
+                        "last_reviewed: 2026-06-05",
+                        "---",
+                        "",
+                        "# Verification",
+                        "",
+                        "## Quality Gates",
+                        "",
+                        "## Evidence Log",
+                        "",
+                        "- T001 covers Requirement 1.",
+                        "",
+                        "## Residual Risks",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            payload = spec_runtime.run_hook(
+                repo,
+                "verification-updated",
+                spec_path=spec,
+                severity_profile="blocking",
+            )
+
+        self.assertFalse(payload["blocked"])
+        self.assertEqual({"error": 0, "warn": 0, "info": 0}, payload["summary"])
+
+    def test_hook_spec_resumed_flags_old_format(self):
+        spec = ROOT / "docs/specs/001-spec-lifecycle-manager-skill"
+
+        payload = spec_runtime.run_hook(ROOT, "spec-resumed", spec_path=spec, severity_profile="advisory")
+
+        self.assertFalse(payload["blocked"])
+        self.assertIn("OLD_FORMAT_MIGRATION_DECISION_NEEDED", {item["code"] for item in payload["diagnostics"]})
+
+    def test_hook_spec_close_check_blocks_active_spec(self):
+        payload = spec_runtime.run_hook(ROOT, "spec-close-check", spec_path=SPEC, severity_profile="blocking")
+
+        self.assertTrue(payload["blocked"])
+        self.assertIn("TASK_NOT_VERIFIED", {item["code"] for item in payload["blocking"]})
+
     def test_cli_prompts_outputs_json(self):
         completed = subprocess.run(
             [str(SCRIPT), "prompts", str(ROOT)],
@@ -201,6 +296,25 @@ class SpecRuntimeTests(unittest.TestCase):
 
         payload = json.loads(completed.stdout)
         self.assertEqual(4, len(payload["prompts"]))
+
+    def test_cli_spec_close_hook_exits_nonzero_when_blocking(self):
+        completed = subprocess.run(
+            [
+                str(SCRIPT),
+                "hook",
+                "spec-close-check",
+                "--spec-path",
+                str(SPEC),
+                "--severity-profile",
+                "blocking",
+            ],
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertEqual(1, completed.returncode)
+        payload = json.loads(completed.stdout)
+        self.assertTrue(payload["blocked"])
 
 
 if __name__ == "__main__":

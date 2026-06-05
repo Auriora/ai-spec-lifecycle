@@ -244,6 +244,8 @@ skills/spec-lifecycle-manager/scripts/spec_runtime.py next-task docs/specs/004-s
 skills/spec-lifecycle-manager/scripts/spec_runtime.py closure-check docs/specs/004-spec-management-mcp
 skills/spec-lifecycle-manager/scripts/spec_runtime.py prompts .
 skills/spec-lifecycle-manager/scripts/spec_runtime.py hook spec-file-changed --changed-files docs/specs/004-spec-management-mcp/tasks.md
+skills/spec-lifecycle-manager/scripts/spec_runtime.py hook implementation-task-complete --spec-path docs/specs/004-spec-management-mcp --task-id T009
+skills/spec-lifecycle-manager/scripts/spec_runtime.py hook spec-close-check --spec-path docs/specs/004-spec-management-mcp --severity-profile blocking
 ```
 
 These helpers are advisory runtime surfaces, not replacements for lifecycle

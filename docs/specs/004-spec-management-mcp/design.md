@@ -441,6 +441,16 @@ The CLI-first hook runner is exposed through
 profiles, changed-file package detection, direct spec-path checks, and JSON
 reports with diagnostics, summary, affected specs, and blocking findings.
 
+Completion and lifecycle gate hooks extend the same runner:
+
+- `implementation-task-complete` checks a selected task or completed tasks for
+  evidence, files, and changed-file alignment.
+- `verification-updated` checks `verification.md` structure and whether
+  verification evidence references task and requirement IDs.
+- `spec-resumed` runs package lint, flags old-format packages, warns when
+  resuming closed specs, and detects stale review dates.
+- `spec-close-check` wraps closure readiness blockers into hook diagnostics.
+
 ### Hook Roadmap
 
 #### Phase 1: Advisory Hooks

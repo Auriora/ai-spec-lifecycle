@@ -12,6 +12,7 @@ import json
 import re
 import sys
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -36,6 +37,7 @@ REQUIRED_PROMPTS = ["reconcile-spec", "choose-next-task", "task-context", "lint-
 FRONTMATTER_RE = re.compile(r"\A---\n(.*?)\n---\n", re.DOTALL)
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$", re.MULTILINE)
 TASK_RE = re.compile(r"\bT\d{3}(?:\.\d+)?\b")
+REQ_RE = re.compile(r"\bRequirement\s+\d+[A-Z]?\b", re.IGNORECASE)
 TASK_LINE_RE = re.compile(r"^\s*-\s+\[([ xX])\]\s+(T\d{3}(?:\.\d+)?)\b(.*)$")
 
 
@@ -705,6 +707,7 @@ def run_hook(
     hook_name: str,
     changed_files: list[str] | None = None,
     spec_path: Path | None = None,
+    task_id: str | None = None,
     severity_profile: str = "advisory",
     advisory: bool = False,
 ) -> dict[str, Any]:
@@ -741,6 +744,22 @@ def run_hook(
             path = (root / changed).resolve()
             if path.exists() and path.suffix == ".md":
                 diagnostics.extend(lint_doc(path, path.stem))
+    elif hook_name == "implementation-task-complete":
+        for spec in affected:
+            affected_specs.append(str(spec))
+            diagnostics.extend(check_implementation_task_complete(spec, task_id, changed_files, root))
+    elif hook_name == "verification-updated":
+        for spec in affected:
+            affected_specs.append(str(spec))
+            diagnostics.extend(check_verification_updated(spec))
+    elif hook_name == "spec-resumed":
+        for spec in affected:
+            affected_specs.append(str(spec))
+            diagnostics.extend(check_spec_resumed(spec))
+    elif hook_name == "spec-close-check":
+        for spec in affected:
+            affected_specs.append(str(spec))
+            diagnostics.extend(check_spec_close_hook(spec))
     else:
         diagnostics.append(
             diagnostic("error", "HOOK_UNKNOWN", root, f"Unknown hook: {hook_name}", waivable=False)
@@ -759,6 +778,198 @@ def run_hook(
         "blocking": blocking,
         "blocked": bool(blocking),
     }
+
+
+def check_implementation_task_complete(
+    spec_path: Path,
+    task_id: str | None,
+    changed_files: list[str],
+    repo_root: Path,
+) -> list[dict[str, Any]]:
+    tasks_path = spec_path / "tasks.md"
+    diagnostics: list[dict[str, Any]] = []
+    tasks = parse_tasks(tasks_path)
+    by_id = {task.task_id: task for task in tasks}
+    selected = [by_id[task_id]] if task_id and task_id in by_id else [task for task in tasks if task.complete]
+    if task_id and task_id not in by_id:
+        return [
+            diagnostic(
+                "error",
+                "TASK_NOT_FOUND",
+                tasks_path,
+                f"Task {task_id} was not found.",
+                lifecycle_gate="completion",
+                artifact_type="tasks",
+                waivable=False,
+            )
+        ]
+    for task in selected:
+        if not task.complete:
+            diagnostics.append(
+                diagnostic(
+                    "warn",
+                    "TASK_NOT_MARKED_COMPLETE",
+                    tasks_path,
+                    f"{task.task_id} is not marked complete.",
+                    task.line,
+                    "completion",
+                    "tasks",
+                )
+            )
+        if task.complete and not task_verified(task, by_id):
+            diagnostics.append(
+                diagnostic(
+                    "error",
+                    "TASK_EVIDENCE_MISSING",
+                    tasks_path,
+                    f"Completed task {task.task_id} has no evidence.",
+                    task.line,
+                    "completion",
+                    "tasks",
+                )
+            )
+        if task.complete and not task.files:
+            diagnostics.append(
+                diagnostic(
+                    "warn",
+                    "TASK_FILES_MISSING",
+                    tasks_path,
+                    f"Completed task {task.task_id} has no Files field.",
+                    task.line,
+                    "completion",
+                    "tasks",
+                )
+            )
+        if task.complete and task.files and changed_files:
+            changed = {(repo_root / item).resolve() for item in changed_files}
+            expected = {(repo_root / item).resolve() for item in task.files if item != "implementation path TBD"}
+            if expected and not any(path in changed for path in expected):
+                diagnostics.append(
+                    diagnostic(
+                        "warn",
+                        "TASK_CHANGED_FILES_UNMATCHED",
+                        tasks_path,
+                        f"Changed files do not include Files entries for {task.task_id}.",
+                        task.line,
+                        "completion",
+                        "tasks",
+                    )
+                )
+    return diagnostics
+
+
+def check_verification_updated(spec_path: Path) -> list[dict[str, Any]]:
+    path = spec_path / "verification.md"
+    if not path.exists():
+        return [
+            diagnostic(
+                "error",
+                "VERIFICATION_ARTIFACT_MISSING",
+                path,
+                "verification.md is missing.",
+                lifecycle_gate="verification",
+                artifact_type="verification",
+                waivable=False,
+            )
+        ]
+    text = read_text(path)
+    diagnostics = lint_doc(path, "verification")
+    if not TASK_RE.search(text):
+        diagnostics.append(
+            diagnostic(
+                "warn",
+                "VERIFICATION_TASK_REF_MISSING",
+                path,
+                "Verification evidence does not reference task IDs.",
+                lifecycle_gate="verification",
+                artifact_type="verification",
+            )
+        )
+    if not REQ_RE.search(text):
+        diagnostics.append(
+            diagnostic(
+                "warn",
+                "VERIFICATION_REQUIREMENT_REF_MISSING",
+                path,
+                "Verification evidence does not reference requirement IDs.",
+                lifecycle_gate="verification",
+                artifact_type="verification",
+            )
+        )
+    return diagnostics
+
+
+def check_spec_resumed(spec_path: Path) -> list[dict[str, Any]]:
+    diagnostics: list[dict[str, Any]] = []
+    inventory = artifact_inventory(spec_path)
+    if spec_format(inventory) == "old-format":
+        diagnostics.append(
+            diagnostic(
+                "warn",
+                "OLD_FORMAT_MIGRATION_DECISION_NEEDED",
+                spec_path,
+                "Old-format package found; make migration decision visible before implementation.",
+                lifecycle_gate="resume",
+            )
+        )
+    result = lint_spec_package(spec_path)
+    assert isinstance(result, dict)
+    diagnostics.extend(result["diagnostics"])
+    status = spec_status(spec_path)
+    if status in {"archived", "closed"}:
+        diagnostics.append(
+            diagnostic(
+                "warn",
+                "RESUMING_CLOSED_SPEC",
+                spec_path,
+                f"Spec status is {status}; confirm this package should be resumed.",
+                lifecycle_gate="resume",
+            )
+        )
+    review_date = last_reviewed(spec_path)
+    if review_date and (date.today() - review_date).days > 30:
+        diagnostics.append(
+            diagnostic(
+                "warn",
+                "SPEC_REVIEW_STALE",
+                spec_path,
+                f"Spec last_reviewed is {review_date.isoformat()}; reconcile stale context.",
+                lifecycle_gate="resume",
+            )
+        )
+    return diagnostics
+
+
+def last_reviewed(spec_path: Path) -> date | None:
+    for name in ["requirements.md", "tasks.md", "spec.md", "plan.md"]:
+        path = spec_path / name
+        if not path.exists():
+            continue
+        value = parse_frontmatter(read_text(path)).get("last_reviewed")
+        if not value:
+            continue
+        try:
+            return date.fromisoformat(value)
+        except ValueError:
+            return None
+    return None
+
+
+def check_spec_close_hook(spec_path: Path) -> list[dict[str, Any]]:
+    result = closure_check(spec_path)
+    diagnostics: list[dict[str, Any]] = []
+    for blocker in result["blockers"]:
+        diagnostics.append(
+            diagnostic(
+                "error",
+                blocker["code"],
+                Path(blocker.get("path", spec_path)),
+                blocker["message"],
+                lifecycle_gate="closure",
+                waivable=False,
+            )
+        )
+    return diagnostics
 
 
 def hook_blockers(diagnostics: list[dict[str, Any]], advisory: bool) -> list[dict[str, Any]]:
@@ -802,10 +1013,22 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     prompts.add_argument("repo_root", type=Path, nargs="?", default=Path.cwd())
 
     hook = sub.add_parser("hook", help="Run a spec lifecycle hook.")
-    hook.add_argument("hook_name", choices=["spec-file-changed", "task-checkbox-changed", "template-changed"])
+    hook.add_argument(
+        "hook_name",
+        choices=[
+            "spec-file-changed",
+            "task-checkbox-changed",
+            "template-changed",
+            "implementation-task-complete",
+            "verification-updated",
+            "spec-resumed",
+            "spec-close-check",
+        ],
+    )
     hook.add_argument("--repo-root", type=Path, default=Path.cwd())
     hook.add_argument("--changed-files", nargs="*", default=[])
     hook.add_argument("--spec-path", type=Path)
+    hook.add_argument("--task-id")
     hook.add_argument("--severity-profile", choices=["advisory", "blocking"], default="advisory")
     hook.add_argument("--advisory", action="store_true")
     return parser.parse_args(argv)
@@ -835,17 +1058,18 @@ def main(argv: list[str] | None = None) -> int:
             args.hook_name,
             changed_files=args.changed_files,
             spec_path=args.spec_path,
+            task_id=args.task_id,
             severity_profile=args.severity_profile,
             advisory=args.advisory,
         )
     else:
         raise ValueError(args.command)
     print_payload(payload)
+    if args.command == "hook":
+        return 1 if payload["blocked"] else 0
     if "summary" in payload and payload["summary"].get("error", 0):
         return 1
     if args.command == "closure-check" and not payload["ready"]:
-        return 1
-    if args.command == "hook" and payload["blocked"]:
         return 1
     return 0
 

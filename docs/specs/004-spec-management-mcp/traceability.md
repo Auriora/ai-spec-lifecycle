@@ -26,6 +26,7 @@ referenced source artifacts.
 | T007 | Requirement 2 | Requirement 2 AC1, AC2, AC3, AC4 | `design.md#mcp-prompts`, `design.md#prompt-template-pattern`, `design.md#client-support-fallback` | none | Prompt definitions are discoverable or documented as client fallback | `skills/spec-lifecycle-manager/SKILL.md` | none |
 | T008 | Requirement 8 | Requirement 8 AC1, AC2, AC4, AC5 | `design.md#hook-design`, `design.md#phase-1-advisory-hooks`, `design.md#recommended-hook-adoption-order` | none | CLI `hook spec-file-changed`; CLI `hook task-checkbox-changed`; unit tests for advisory and blocking modes | `skills/spec-lifecycle-manager/SKILL.md` | none |
 | T009 | Requirement 8 | Requirement 8 AC2, AC3, AC5 | `design.md#phase-2-completion-gates`, `design.md#phase-3-lifecycle-gates` | none | Completion, verification, resume, and closure hook checks with clear blocking/advisory behavior | `skills/spec-lifecycle-manager/SKILL.md` | none |
+| T010 | Requirement 5, Requirement 7 | Requirement 5 AC1, AC2, AC3, AC4; Requirement 7 AC1, AC2, AC3, AC4 | `design.md#reconciliation-design`, `design.md#review-packet-design`, `design.md#packet-output-schema` | none | CLI reconciliation, promotion planning, and review packet smoke checks with unit coverage | `skills/spec-lifecycle-manager/SKILL.md` | none |
 | T012 | Requirement 6A | Requirement 6A AC1, AC2, AC3, AC4 | `design.md#mcp-tools`, `design.md#mcp-resources` | none | CLI lookup for task, requirement, design, and missing-row cases; unit tests for matrix parsing and gap reporting | `skills/spec-lifecycle-manager/SKILL.md`, `skills/spec-lifecycle-manager/references/spec-package/traceability.md` | none |
 
 ## Requirement To Delivery Matrix
@@ -37,6 +38,7 @@ referenced source artifacts.
 | Requirement 4 | AC1, AC2, AC3, AC4, AC5 | `design.md#mcp-tools`, `design.md#linter-design`, `design.md#artifact-rules` | T005 | CLI `lint`; unit tests | `skills/spec-lifecycle-manager/SKILL.md` |
 | Requirement 6 | AC1, AC2, AC3, AC4, AC5, AC6 | `design.md#mcp-tools`, `design.md#task-planner-and-closure-checks` | T006 | CLI `next-task` and `closure-check`; unit tests | `skills/spec-lifecycle-manager/SKILL.md` |
 | Requirement 6A | AC1, AC2, AC3, AC4 | `design.md#mcp-tools`, `design.md#mcp-resources` | T012 | CLI lookup for task, requirement, design, and missing-row cases; unit tests | `skills/spec-lifecycle-manager/SKILL.md`, `skills/spec-lifecycle-manager/references/spec-package/traceability.md` |
+| Requirement 7 | AC1, AC2, AC3, AC4 | `design.md#review-packet-design`, `design.md#packet-output-schema` | T010 | Review packet smoke checks and unit tests | `skills/spec-lifecycle-manager/SKILL.md` |
 | Requirement 8 | AC1, AC2, AC3, AC4, AC5 | `design.md#hook-design`, `design.md#phase-1-advisory-hooks`, `design.md#phase-2-completion-gates`, `design.md#phase-3-lifecycle-gates`, `design.md#recommended-hook-adoption-order` | T008, T009 | CLI hook smoke checks and unit tests | `skills/spec-lifecycle-manager/SKILL.md` |
 
 ## Design To Implementation Matrix
@@ -54,9 +56,12 @@ referenced source artifacts.
 | `design.md#client-support-fallback` | Requirement 2 | T007 | `skills/spec-lifecycle-manager/SKILL.md` | Natural-language fallback review |
 | `design.md#hook-design` | Requirement 8 | T008 | `skills/spec-lifecycle-manager/scripts/spec_runtime.py`, `tests/runtime/test_spec_runtime.py` | CLI hook smoke checks |
 | `design.md#phase-1-advisory-hooks` | Requirement 8 | T008 | `skills/spec-lifecycle-manager/scripts/spec_runtime.py` | Advisory `spec-file-changed` hook |
-| `design.md#phase-2-completion-gates` | Requirement 8 | T009 | `skills/spec-lifecycle-manager/scripts/spec_runtime.py` | Completion and verification hook checks TBD |
-| `design.md#phase-3-lifecycle-gates` | Requirement 8 | T009 | `skills/spec-lifecycle-manager/scripts/spec_runtime.py` | Resume and closure hook checks TBD |
+| `design.md#phase-2-completion-gates` | Requirement 8 | T009 | `skills/spec-lifecycle-manager/scripts/spec_runtime.py` | Completion and verification hook checks |
+| `design.md#phase-3-lifecycle-gates` | Requirement 8 | T009 | `skills/spec-lifecycle-manager/scripts/spec_runtime.py` | Resume and closure hook checks |
 | `design.md#recommended-hook-adoption-order` | Requirement 8 | T008 | `skills/spec-lifecycle-manager/scripts/spec_runtime.py` | Hook command supports first two hook types |
+| `design.md#reconciliation-design` | Requirement 5 | T010 | `skills/spec-lifecycle-manager/scripts/spec_runtime.py` | Reconciliation checks TBD |
+| `design.md#review-packet-design` | Requirement 7 | T010 | `skills/spec-lifecycle-manager/scripts/spec_runtime.py` | Review packet generation TBD |
+| `design.md#packet-output-schema` | Requirement 7 | T010 | `skills/spec-lifecycle-manager/scripts/spec_runtime.py` | Review packet schema validation TBD |
 | `design.md#mcp-tools` | Requirement 6A | T012 | `skills/spec-lifecycle-manager/scripts/traceability_lookup.py`, `tests/traceability/test_traceability_lookup.py` | CLI lookup for task, requirement, design, and missing-row cases; unit tests |
 
 ## Open Decision Impact

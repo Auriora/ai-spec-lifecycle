@@ -147,17 +147,23 @@ T010 -> T011
 
 ## Phase 4: Lifecycle Hook Gates
 
-- [ ] T009 Add completion, verification, resume, and closure hooks.
+- [x] T009 Add completion, verification, resume, and closure hooks.
   - Depends on: T008
-  - Files: implementation path TBD, hook config path TBD, `tests/`
+  - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`,
+    `tests/runtime/test_spec_runtime.py`
   - Acceptance: Hooks can check implementation task completion,
     verification-evidence updates, spec resume reconciliation, and spec closure
     readiness with clear blocking versus advisory behavior.
-  - Evidence: Pending.
-  - [ ] T009.1 Implement implementation task completion checks.
-  - [ ] T009.2 Implement verification evidence mapping checks.
-  - [ ] T009.3 Implement resume reconciliation hook.
-  - [ ] T009.4 Implement closure readiness hook.
+  - Evidence: `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'`;
+    `skills/spec-lifecycle-manager/scripts/spec_runtime.py hook implementation-task-complete --spec-path docs/specs/004-spec-management-mcp --task-id T009`;
+    `skills/spec-lifecycle-manager/scripts/spec_runtime.py hook verification-updated --spec-path docs/specs/004-spec-management-mcp`;
+    `skills/spec-lifecycle-manager/scripts/spec_runtime.py hook spec-resumed --spec-path docs/specs/004-spec-management-mcp`;
+    `skills/spec-lifecycle-manager/scripts/spec_runtime.py hook spec-close-check --spec-path docs/specs/004-spec-management-mcp --severity-profile blocking`
+    returns blockers for the still-active spec.
+  - [x] T009.1 Implement implementation task completion checks.
+  - [x] T009.2 Implement verification evidence mapping checks.
+  - [x] T009.3 Implement resume reconciliation hook.
+  - [x] T009.4 Implement closure readiness hook.
 
 ## Phase 5: Semantic Review And Promotion Planning
 
