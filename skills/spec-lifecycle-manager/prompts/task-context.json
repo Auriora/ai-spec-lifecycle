@@ -1,0 +1,41 @@
+{
+  "name": "task-context",
+  "description": "Return the full spec context that must be reviewed before implementing a task.",
+  "arguments": [
+    {
+      "name": "spec_id",
+      "required": true,
+      "description": "Spec package ID or path."
+    },
+    {
+      "name": "task_id",
+      "required": true,
+      "description": "Stable task ID, for example T012."
+    }
+  ],
+  "resources": [
+    "specs://{spec_id}/traceability",
+    "specs://{spec_id}/tasks",
+    "specs://{spec_id}/summary"
+  ],
+  "tools": [
+    "task_context",
+    "traceability_lookup"
+  ],
+  "instructions": [
+    "Use traceability as the first lookup point.",
+    "Verify referenced requirements, acceptance criteria, design sections, verification expectations, durable targets, and open decisions against source artifacts.",
+    "Report missing or stale matrix rows as gaps before implementation."
+  ],
+  "return_format": [
+    "task",
+    "requirements",
+    "acceptance_criteria",
+    "design_sections",
+    "verification",
+    "durable_targets",
+    "open_decisions",
+    "gaps"
+  ],
+  "client_support_fallback": "Run traceability_lookup.py with --task."
+}

@@ -242,6 +242,8 @@ skills/spec-lifecycle-manager/scripts/spec_runtime.py summary docs/specs/004-spe
 skills/spec-lifecycle-manager/scripts/spec_runtime.py lint docs/specs/004-spec-management-mcp
 skills/spec-lifecycle-manager/scripts/spec_runtime.py next-task docs/specs/004-spec-management-mcp
 skills/spec-lifecycle-manager/scripts/spec_runtime.py closure-check docs/specs/004-spec-management-mcp
+skills/spec-lifecycle-manager/scripts/spec_runtime.py prompts .
+skills/spec-lifecycle-manager/scripts/spec_runtime.py hook spec-file-changed --changed-files docs/specs/004-spec-management-mcp/tasks.md
 ```
 
 These helpers are advisory runtime surfaces, not replacements for lifecycle

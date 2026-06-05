@@ -1,0 +1,38 @@
+{
+  "name": "lint-spec",
+  "description": "Run deterministic spec lint checks and explain actionable findings.",
+  "arguments": [
+    {
+      "name": "spec_id",
+      "required": true,
+      "description": "Spec package ID or path."
+    },
+    {
+      "name": "severity_profile",
+      "required": false,
+      "description": "advisory or blocking."
+    }
+  ],
+  "resources": [
+    "specs://{spec_id}/health",
+    "templates://spec-package/{artifact_type}"
+  ],
+  "tools": [
+    "lint_spec_package",
+    "lint_doc"
+  ],
+  "instructions": [
+    "Use the spec-lifecycle-manager skill.",
+    "Run deterministic lint before semantic review.",
+    "Explain findings by severity and lifecycle gate.",
+    "Keep waivers visible with their recorded reasons."
+  ],
+  "return_format": [
+    "summary",
+    "diagnostics",
+    "waivers",
+    "recommended_fixes",
+    "residual_risk"
+  ],
+  "client_support_fallback": "Run spec_runtime.py lint on the package or changed document."
+}

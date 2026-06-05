@@ -119,25 +119,31 @@ T010 -> T011
 
 ## Phase 3: Prompt And Hook Surfaces
 
-- [ ] T007 Add MCP prompt definitions.
+- [x] T007 Add MCP prompt definitions.
   - Depends on: T006, T012
-  - Files: implementation path TBD, prompt definition files TBD
+  - Files: `skills/spec-lifecycle-manager/prompts/`,
+    `skills/spec-lifecycle-manager/scripts/spec_runtime.py`,
+    `tests/runtime/test_spec_runtime.py`
   - Acceptance: `reconcile-spec`, `choose-next-task`, `task-context`, and
     `lint-spec` prompts are discoverable where client support exists and
     include clear arguments.
-  - Evidence: Pending.
+  - Evidence: `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'`;
+    `skills/spec-lifecycle-manager/scripts/spec_runtime.py prompts .`.
 
-- [ ] T008 Add hook runner MVP.
+- [x] T008 Add hook runner MVP.
   - Depends on: T006
-  - Files: implementation path TBD, hook config path TBD, `tests/`
+  - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`,
+    `tests/runtime/test_spec_runtime.py`
   - Acceptance: `spec-file-changed` and `task-checkbox-changed` can lint
     affected spec packages, detect completed tasks without evidence, and emit
     JSON plus human-readable output.
-  - Evidence: Pending.
-  - [ ] T008.1 Implement changed-spec artifact lint.
-  - [ ] T008.2 Implement task checkbox evidence detection.
-  - [ ] T008.3 Implement advisory versus blocking severity profiles.
-  - [ ] T008.4 Add fixture coverage for changed files and task completion.
+  - Evidence: `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'`;
+    `skills/spec-lifecycle-manager/scripts/spec_runtime.py hook spec-file-changed --changed-files docs/specs/004-spec-management-mcp/tasks.md`;
+    `skills/spec-lifecycle-manager/scripts/spec_runtime.py hook task-checkbox-changed --severity-profile blocking --changed-files docs/specs/004-spec-management-mcp/tasks.md`.
+  - [x] T008.1 Implement changed-spec artifact lint.
+  - [x] T008.2 Implement task checkbox evidence detection.
+  - [x] T008.3 Implement advisory versus blocking severity profiles.
+  - [x] T008.4 Add fixture coverage for changed files and task completion.
 
 ## Phase 4: Lifecycle Hook Gates
 

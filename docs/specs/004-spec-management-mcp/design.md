@@ -226,6 +226,11 @@ client-visible commands while delegating validation to tools.
 | `promotion-plan` | `spec_id` | Map accepted content into durable docs. |
 | `close-spec` | `spec_id` | Check verification, promotion, unresolved decisions, and active index status. |
 
+The CLI-first prompt contracts live under
+`skills/spec-lifecycle-manager/prompts/`. `spec_runtime.py prompts` validates
+the required definitions, arguments, resource references, tool references,
+return format, and client-support fallback text.
+
 ### Prompt Template Pattern
 
 Each prompt should produce instructions in this shape:
@@ -429,6 +434,12 @@ The hook runner should support:
 - `--severity-profile`
 - `--json`
 - `--advisory`
+
+The CLI-first hook runner is exposed through
+`skills/spec-lifecycle-manager/scripts/spec_runtime.py hook`. The MVP supports
+`spec-file-changed`, `task-checkbox-changed`, advisory and blocking severity
+profiles, changed-file package detection, direct spec-path checks, and JSON
+reports with diagnostics, summary, affected specs, and blocking findings.
 
 ### Hook Roadmap
 

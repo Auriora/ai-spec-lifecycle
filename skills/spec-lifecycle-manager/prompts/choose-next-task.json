@@ -1,0 +1,40 @@
+{
+  "name": "choose-next-task",
+  "description": "Select the next runnable task slice with dependencies and traceability context.",
+  "arguments": [
+    {
+      "name": "spec_id",
+      "required": true,
+      "description": "Spec package ID or path."
+    },
+    {
+      "name": "phase",
+      "required": false,
+      "description": "Optional phase or task group preference."
+    }
+  ],
+  "resources": [
+    "specs://{spec_id}/summary",
+    "specs://{spec_id}/tasks",
+    "specs://{spec_id}/traceability"
+  ],
+  "tools": [
+    "next_task",
+    "task_context",
+    "lint_spec_package"
+  ],
+  "instructions": [
+    "Use the spec-lifecycle-manager skill.",
+    "Do not select a task whose dependencies are incomplete or lack evidence.",
+    "Return the selected task with requirement, design, verification, durable target, and open-decision context.",
+    "If no task is runnable, return concrete blockers."
+  ],
+  "return_format": [
+    "selected_task",
+    "dependency_state",
+    "traceability_context",
+    "validation_plan",
+    "blockers"
+  ],
+  "client_support_fallback": "Use spec_runtime.py next-task and traceability_lookup.py directly."
+}

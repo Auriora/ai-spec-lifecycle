@@ -110,7 +110,7 @@ class SpecRuntimeTests(unittest.TestCase):
     def test_next_task_selects_first_unblocked_task_with_context(self):
         payload = spec_runtime.next_task(SPEC)
 
-        self.assertEqual("T007", payload["selected"]["task_id"])
+        self.assertEqual("T009", payload["selected"]["task_id"])
         self.assertIn("traceability_context", payload)
         self.assertEqual([], [gap for gap in payload["traceability_context"]["gaps"] if gap["severity"] == "error"])
 
@@ -131,6 +131,76 @@ class SpecRuntimeTests(unittest.TestCase):
 
         payload = json.loads(completed.stdout)
         self.assertIn("specs", payload)
+
+    def test_prompt_definitions_are_discoverable_and_valid(self):
+        payload = spec_runtime.load_prompt_definitions(ROOT)
+
+        names = {prompt["name"] for prompt in payload["prompts"]}
+        self.assertTrue({"reconcile-spec", "choose-next-task", "task-context", "lint-spec"} <= names)
+        self.assertEqual({"error": 0, "warn": 0, "info": 0}, payload["summary"])
+
+    def test_hook_spec_file_changed_lints_affected_package(self):
+        payload = spec_runtime.run_hook(
+            ROOT,
+            "spec-file-changed",
+            changed_files=["docs/specs/004-spec-management-mcp/tasks.md"],
+            severity_profile="advisory",
+        )
+
+        self.assertTrue(payload["advisory"])
+        self.assertFalse(payload["blocked"])
+        self.assertEqual({"error": 0, "warn": 0, "info": 0}, payload["summary"])
+        self.assertEqual(1, len(payload["affected_specs"]))
+
+    def test_hook_task_checkbox_changed_blocks_missing_evidence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            spec = repo / "docs/specs/001-example"
+            spec.mkdir(parents=True)
+            (spec / "tasks.md").write_text(
+                "\n".join(
+                    [
+                        "---",
+                        "title: Tasks",
+                        "doc_type: spec",
+                        "artifact_type: tasks",
+                        "status: draft",
+                        "owner: platform",
+                        "last_reviewed: 2026-06-05",
+                        "---",
+                        "",
+                        "# Tasks",
+                        "",
+                        "- [x] T001 Do thing.",
+                        "  - Depends on: none",
+                        "  - Files: `src/x`",
+                        "  - Acceptance: Done.",
+                        "  - Evidence: Pending.",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            payload = spec_runtime.run_hook(
+                repo,
+                "task-checkbox-changed",
+                changed_files=["docs/specs/001-example/tasks.md"],
+                severity_profile="blocking",
+            )
+
+        self.assertTrue(payload["blocked"])
+        self.assertIn("TASK_EVIDENCE_MISSING", {item["code"] for item in payload["blocking"]})
+
+    def test_cli_prompts_outputs_json(self):
+        completed = subprocess.run(
+            [str(SCRIPT), "prompts", str(ROOT)],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+        payload = json.loads(completed.stdout)
+        self.assertEqual(4, len(payload["prompts"]))
 
 
 if __name__ == "__main__":

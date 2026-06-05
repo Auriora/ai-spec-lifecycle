@@ -32,6 +32,7 @@ OPTIONAL_ARTIFACTS = [
     "traceability.md",
 ]
 SPEC_ARTIFACTS = CORE_ARTIFACTS + OPTIONAL_ARTIFACTS
+REQUIRED_PROMPTS = ["reconcile-spec", "choose-next-task", "task-context", "lint-spec"]
 FRONTMATTER_RE = re.compile(r"\A---\n(.*?)\n---\n", re.DOTALL)
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$", re.MULTILINE)
 TASK_RE = re.compile(r"\bT\d{3}(?:\.\d+)?\b")
@@ -623,6 +624,155 @@ def closure_check(spec_path: Path) -> dict[str, Any]:
     }
 
 
+def prompts_dir(repo_root: Path) -> Path:
+    return repo_root / "skills" / "spec-lifecycle-manager" / "prompts"
+
+
+def load_prompt_definitions(repo_root: Path) -> dict[str, Any]:
+    root = repo_root.resolve()
+    directory = prompts_dir(root)
+    prompts: list[dict[str, Any]] = []
+    diagnostics: list[dict[str, Any]] = []
+    if not directory.exists():
+        diagnostics.append(
+            diagnostic("error", "PROMPTS_DIR_MISSING", directory, "Prompt directory is missing.", waivable=False)
+        )
+        return {"repo_root": str(root), "prompts": prompts, "diagnostics": diagnostics, "summary": diagnostic_summary(diagnostics)}
+    for path in sorted(directory.glob("*.json")):
+        try:
+            data = json.loads(read_text(path))
+        except json.JSONDecodeError as exc:
+            diagnostics.append(
+                diagnostic("error", "PROMPT_JSON_INVALID", path, f"Invalid prompt JSON: {exc}", waivable=False)
+            )
+            continue
+        prompts.append(data)
+        diagnostics.extend(validate_prompt_definition(path, data))
+    names = {prompt.get("name") for prompt in prompts}
+    for required in REQUIRED_PROMPTS:
+        if required not in names:
+            diagnostics.append(
+                diagnostic("error", "PROMPT_REQUIRED_MISSING", directory, f"Required prompt missing: {required}", waivable=False)
+            )
+    return {
+        "repo_root": str(root),
+        "prompts_dir": str(directory),
+        "prompts": prompts,
+        "diagnostics": diagnostics,
+        "summary": diagnostic_summary(diagnostics),
+    }
+
+
+def validate_prompt_definition(path: Path, data: dict[str, Any]) -> list[dict[str, Any]]:
+    diagnostics: list[dict[str, Any]] = []
+    required_fields = ["name", "description", "arguments", "resources", "tools", "instructions", "return_format"]
+    for field in required_fields:
+        if not data.get(field):
+            diagnostics.append(
+                diagnostic("error", "PROMPT_FIELD_MISSING", path, f"Prompt missing field: {field}", waivable=False)
+            )
+    if data.get("name") != path.stem:
+        diagnostics.append(
+            diagnostic("error", "PROMPT_NAME_MISMATCH", path, "Prompt name must match the JSON filename.", waivable=False)
+        )
+    args = data.get("arguments", [])
+    if not isinstance(args, list):
+        diagnostics.append(diagnostic("error", "PROMPT_ARGUMENTS_INVALID", path, "arguments must be a list.", waivable=False))
+    else:
+        for arg in args:
+            if not isinstance(arg, dict) or not arg.get("name") or "required" not in arg or not arg.get("description"):
+                diagnostics.append(
+                    diagnostic("error", "PROMPT_ARGUMENT_INVALID", path, "Each argument needs name, required, and description.", waivable=False)
+                )
+    if not data.get("client_support_fallback"):
+        diagnostics.append(
+            diagnostic("warn", "PROMPT_FALLBACK_MISSING", path, "Prompt should document client-support fallback.")
+        )
+    return diagnostics
+
+
+def spec_path_for_changed_file(repo_root: Path, changed_file: str) -> Path | None:
+    path = (repo_root / changed_file).resolve()
+    parts = path.parts
+    for idx, part in enumerate(parts):
+        if part == "specs" and idx + 1 < len(parts):
+            return Path(*parts[: idx + 2])
+    return None
+
+
+def run_hook(
+    repo_root: Path,
+    hook_name: str,
+    changed_files: list[str] | None = None,
+    spec_path: Path | None = None,
+    severity_profile: str = "advisory",
+    advisory: bool = False,
+) -> dict[str, Any]:
+    root = repo_root.resolve()
+    changed_files = changed_files or []
+    effective_advisory = advisory or severity_profile == "advisory"
+    diagnostics: list[dict[str, Any]] = []
+    affected_specs: list[str] = []
+
+    if spec_path:
+        affected = [spec_path.resolve()]
+    else:
+        affected_set = {
+            found
+            for changed in changed_files
+            if (found := spec_path_for_changed_file(root, changed)) is not None
+        }
+        affected = sorted(affected_set)
+
+    if hook_name == "spec-file-changed":
+        for spec in affected:
+            affected_specs.append(str(spec))
+            result = lint_spec_package(spec)
+            assert isinstance(result, dict)
+            diagnostics.extend(result["diagnostics"])
+    elif hook_name == "task-checkbox-changed":
+        for spec in affected:
+            tasks_path = spec / "tasks.md"
+            if tasks_path.exists():
+                affected_specs.append(str(spec))
+                diagnostics.extend(lint_doc(tasks_path, "tasks"))
+    elif hook_name == "template-changed":
+        for changed in changed_files:
+            path = (root / changed).resolve()
+            if path.exists() and path.suffix == ".md":
+                diagnostics.extend(lint_doc(path, path.stem))
+    else:
+        diagnostics.append(
+            diagnostic("error", "HOOK_UNKNOWN", root, f"Unknown hook: {hook_name}", waivable=False)
+        )
+
+    blocking = hook_blockers(diagnostics, effective_advisory)
+    return {
+        "hook": hook_name,
+        "repo_root": str(root),
+        "severity_profile": severity_profile,
+        "advisory": effective_advisory,
+        "changed_files": changed_files,
+        "affected_specs": affected_specs,
+        "diagnostics": diagnostics,
+        "summary": diagnostic_summary(diagnostics),
+        "blocking": blocking,
+        "blocked": bool(blocking),
+    }
+
+
+def hook_blockers(diagnostics: list[dict[str, Any]], advisory: bool) -> list[dict[str, Any]]:
+    if advisory:
+        return []
+    blockers: list[dict[str, Any]] = []
+    for item in diagnostics:
+        if item["severity"] == "error":
+            blockers.append(item)
+        elif item["code"] == "TASK_EVIDENCE_MISSING":
+            blockers.append(item)
+    return blockers
+
+
 def print_payload(payload: dict[str, Any]) -> None:
     print(json.dumps(payload, indent=2, sort_keys=True))
 
@@ -647,6 +797,17 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 
     closure = sub.add_parser("closure-check", help="Check spec closure readiness.")
     closure.add_argument("spec_path", type=Path)
+
+    prompts = sub.add_parser("prompts", help="List and validate prompt definitions.")
+    prompts.add_argument("repo_root", type=Path, nargs="?", default=Path.cwd())
+
+    hook = sub.add_parser("hook", help="Run a spec lifecycle hook.")
+    hook.add_argument("hook_name", choices=["spec-file-changed", "task-checkbox-changed", "template-changed"])
+    hook.add_argument("--repo-root", type=Path, default=Path.cwd())
+    hook.add_argument("--changed-files", nargs="*", default=[])
+    hook.add_argument("--spec-path", type=Path)
+    hook.add_argument("--severity-profile", choices=["advisory", "blocking"], default="advisory")
+    hook.add_argument("--advisory", action="store_true")
     return parser.parse_args(argv)
 
 
@@ -666,12 +827,25 @@ def main(argv: list[str] | None = None) -> int:
         payload = next_task(args.spec_path.resolve())
     elif args.command == "closure-check":
         payload = closure_check(args.spec_path.resolve())
+    elif args.command == "prompts":
+        payload = load_prompt_definitions(args.repo_root)
+    elif args.command == "hook":
+        payload = run_hook(
+            args.repo_root,
+            args.hook_name,
+            changed_files=args.changed_files,
+            spec_path=args.spec_path,
+            severity_profile=args.severity_profile,
+            advisory=args.advisory,
+        )
     else:
         raise ValueError(args.command)
     print_payload(payload)
     if "summary" in payload and payload["summary"].get("error", 0):
         return 1
     if args.command == "closure-check" and not payload["ready"]:
+        return 1
+    if args.command == "hook" and payload["blocked"]:
         return 1
     return 0
 
