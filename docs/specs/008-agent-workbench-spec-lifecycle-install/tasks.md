@@ -2,7 +2,7 @@
 title: Agent Workbench spec lifecycle install tasks
 doc_type: spec
 artifact_type: tasks
-status: draft
+status: archived
 owner: platform
 last_reviewed: 2026-06-05
 ---
@@ -49,7 +49,8 @@ T004 -> T005
     `../agent-workbench/docs/reference/agent-dev-lifecycle/spec-lifecycle-manager-mcp-install.md`
   - Acceptance: Reference note includes config snippet, install/sync path,
     validation checklist, and duplicate-instance checks.
-  - Evidence: Agent Workbench reference note added.
+  - Evidence: Agent Workbench reference note added as an external repo artifact;
+    Agent Workbench will manage its commit and lifecycle.
 
 - [x] T004 Decide hook install policy.
   - Depends on: T003
@@ -58,7 +59,8 @@ T004 -> T005
     `docs/specs/008-agent-workbench-spec-lifecycle-install/design.md`
   - Acceptance: Hooks are advisory-only by default; blocking hooks require a
     later dogfood pass and explicit promotion decision.
-  - Evidence: Hook policy documented in design and Agent Workbench reference.
+  - Evidence: Hook policy documented in design and external Agent Workbench
+    reference note.
 
 ## Phase 3: Validation And Backlog
 

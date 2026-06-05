@@ -14,6 +14,21 @@ requires visible archived docs.
 
 ## Entries
 
+### 2026-06-05 - 008-agent-workbench-spec-lifecycle-install
+
+- **Spec:** `docs/specs/008-agent-workbench-spec-lifecycle-install/`
+- **Title:** Agent Workbench spec lifecycle install
+- **Final spec commit:** `59359bb`
+- **Closure cleanup commit:** pending
+- **Closure action:** retained-as-history
+- **Closed by:** platform
+- **Durable docs updated:**
+  - `docs/backlog/README.md`
+  - `../agent-workbench/docs/reference/agent-dev-lifecycle/spec-lifecycle-manager-mcp-install.md` (external repo-managed artifact)
+- **Verification summary:** MCP `scan_specs`, `prompts_validate`, and `closure_check`; spec 008 lint and closure-check; duplicate host-level MCP entry check; `git diff --check` in both repos.
+- **Residual risks:** Agent Workbench reference note is external and managed by the Agent Workbench repo; blocking spec lifecycle hooks remain future work.
+- **Follow-up:** Agent Workbench repo manages its reference note; create a later focused spec only if blocking hook promotion is desired.
+
 ### 2026-06-05 - 007-spec-lifecycle-mcp-server
 
 - **Spec:** `docs/specs/007-spec-lifecycle-mcp-server/`

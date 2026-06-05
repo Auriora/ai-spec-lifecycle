@@ -2,7 +2,7 @@
 title: Agent Workbench spec lifecycle install requirements
 doc_type: spec
 artifact_type: requirements
-status: draft
+status: archived
 owner: platform
 last_reviewed: 2026-06-05
 ---
