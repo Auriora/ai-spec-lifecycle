@@ -182,6 +182,19 @@ fields rather than as unstructured whole documents. For example:
 | `closure_check` | `spec_path` | Closure readiness, blockers, residual risk, active-index status. |
 | `generate_review_packet` | `spec_path`, `review_type`, optional model class | Bounded review packet with inputs, question, output schema, and stop conditions. |
 
+### Task Planner And Closure Checks
+
+The CLI-first MVP exposes `next-task` and `closure-check` through
+`skills/spec-lifecycle-manager/scripts/spec_runtime.py`.
+
+`next-task` parses `tasks.md`, checks dependency IDs, requires completed
+dependencies to have evidence, and returns the first runnable incomplete task
+with traceability context when `traceability.md` exists.
+
+`closure-check` reports whether a spec is ready to close. It currently blocks
+closure when tasks are incomplete or lack evidence, required verification or
+traceability artifacts are missing, or linter errors remain.
+
 ### Future Tools
 
 | Tool | Purpose |

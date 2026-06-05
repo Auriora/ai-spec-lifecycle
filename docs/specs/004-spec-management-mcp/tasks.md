@@ -55,39 +55,50 @@ T010 -> T011
 
 ## Phase 2: Deterministic Runtime MVP
 
-- [ ] T004 Implement spec scanner and resources.
+- [x] T004 Implement spec scanner and resources.
   - Depends on: T003
-  - Files: implementation path TBD, `tests/`
+  - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`,
+    `tests/runtime/test_spec_runtime.py`
   - Acceptance: `scan_specs`, `specs://active`, `specs://{spec_id}/summary`,
     and template resources return structured data for current and fixture
     specs.
-  - Evidence: Pending.
-  - [ ] T004.1 Discover active spec packages.
-  - [ ] T004.2 Classify current versus old-format packages.
-  - [ ] T004.3 Resolve effective templates.
-  - [ ] T004.4 Expose MCP resources.
+  - Evidence: `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'`;
+    `skills/spec-lifecycle-manager/scripts/spec_runtime.py scan .`;
+    `skills/spec-lifecycle-manager/scripts/spec_runtime.py summary docs/specs/004-spec-management-mcp`.
+  - [x] T004.1 Discover active spec packages.
+  - [x] T004.2 Classify current versus old-format packages.
+  - [x] T004.3 Resolve effective templates.
+  - [x] T004.4 Expose MCP-resource-shaped JSON payloads.
 
-- [ ] T005 Implement artifact linters.
+- [x] T005 Implement artifact linters.
   - Depends on: T003
-  - Files: implementation path TBD, `tests/`
+  - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`,
+    `tests/runtime/test_spec_runtime.py`
   - Acceptance: `lint_doc` and `lint_spec_package` validate frontmatter,
     required sections, task evidence, dependency IDs, and optional artifact
     rules.
-  - Evidence: Pending.
-  - [ ] T005.1 Implement frontmatter and heading checks.
-  - [ ] T005.2 Implement requirements checks.
-  - [ ] T005.3 Implement design checks.
-  - [ ] T005.4 Implement tasks checks.
-  - [ ] T005.5 Implement optional artifact checks.
-  - [ ] T005.6 Implement waiver parsing and reporting.
+  - Evidence: `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'`;
+    `skills/spec-lifecycle-manager/scripts/spec_runtime.py lint docs/specs/004-spec-management-mcp`.
+    Explicit `spec-lint-waive: CODE - reason` markers are parsed and reported
+    as waived diagnostics.
+  - [x] T005.1 Implement frontmatter and heading checks.
+  - [x] T005.2 Implement requirements checks.
+  - [x] T005.3 Implement design checks.
+  - [x] T005.4 Implement tasks checks.
+  - [x] T005.5 Implement optional artifact checks.
+  - [x] T005.6 Implement waiver parsing and reporting.
 
-- [ ] T006 Implement next-task and closure checks.
+- [x] T006 Implement next-task and closure checks.
   - Depends on: T004, T005
-  - Files: implementation path TBD, `tests/`
+  - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`,
+    `tests/runtime/test_spec_runtime.py`
   - Acceptance: `next_task` respects dependencies and evidence and returns
     traceability context; `closure_check` reports verification, promotion,
     open-decision, and active-index blockers.
-  - Evidence: Pending.
+  - Evidence: `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'`;
+    `skills/spec-lifecycle-manager/scripts/spec_runtime.py next-task docs/specs/004-spec-management-mcp`;
+    `skills/spec-lifecycle-manager/scripts/spec_runtime.py closure-check docs/specs/004-spec-management-mcp`
+    returns blockers for the still-active spec.
 
 - [x] T012 Implement traceability lookup.
   - Depends on: T003 for the standalone CLI; T006 remains the dependency for

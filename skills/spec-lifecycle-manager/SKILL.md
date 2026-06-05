@@ -233,6 +233,21 @@ decisions, and any gaps such as missing matrix rows, unresolved `TBD` values,
 missing referenced artifacts, or missing heading anchors. Treat reported gaps
 as reconciliation inputs before implementing the task.
 
+When this skill's `scripts/spec_runtime.py` helper is available, use it for
+deterministic scanner, linter, next-task, and closure-check passes:
+
+```bash
+skills/spec-lifecycle-manager/scripts/spec_runtime.py scan .
+skills/spec-lifecycle-manager/scripts/spec_runtime.py summary docs/specs/004-spec-management-mcp
+skills/spec-lifecycle-manager/scripts/spec_runtime.py lint docs/specs/004-spec-management-mcp
+skills/spec-lifecycle-manager/scripts/spec_runtime.py next-task docs/specs/004-spec-management-mcp
+skills/spec-lifecycle-manager/scripts/spec_runtime.py closure-check docs/specs/004-spec-management-mcp
+```
+
+These helpers are advisory runtime surfaces, not replacements for lifecycle
+judgment. Use their JSON results as structured evidence for reconciliation,
+task selection, lint findings, and closure blockers.
+
 Before choosing the slice, compare task checkboxes, subtasks, acceptance
 criteria, and evidence against actual code, tests, config, and durable-doc
 evidence. Call out status-stale candidates when validation or review is the
