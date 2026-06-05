@@ -1,6 +1,7 @@
 ---
 title: Feature design title
-doc_type: design
+doc_type: spec
+artifact_type: design
 status: draft
 owner: team-or-person
 last_reviewed: YYYY-MM-DD
@@ -11,6 +12,14 @@ last_reviewed: YYYY-MM-DD
 ## Overview
 
 Summarize the proposed design approach and how it satisfies the requirements.
+
+## Requirement Coverage
+
+Map requirements and success criteria to the design elements that satisfy them.
+
+| Requirement | Acceptance Criteria | Design Coverage | Validation Approach |
+|-------------|---------------------|-----------------|---------------------|
+| Requirement 1 | AC1, AC2 | Component, flow, interface, or decision | Test, review, command, or manual check |
 
 ## High-Level Design
 
@@ -61,6 +70,26 @@ interface Example {
 
 How errors propagate, what gets surfaced to users, retry behavior, and failure
 modes.
+
+### Security, Trust, and Access
+
+Describe authentication, authorization, workspace permissions, process
+execution, network access, credential handling, sandbox assumptions, and
+untrusted input boundaries.
+
+### Migration and Compatibility
+
+Describe schema migrations, data migrations, rollout sequencing, backward
+compatibility, feature flags, deprecation behavior, or compatibility risks.
+
+## Validation Strategy
+
+Describe how the implementation will be verified. Map validation to
+requirements, tasks, and risk.
+
+| Validation | Covers | Evidence Location | Residual Risk |
+|------------|--------|-------------------|---------------|
+| Test, command, review, or manual check | Requirement, task, or risk | `verification.md`, task evidence, CI, log, screenshot, or review note | Risk or none |
 
 ## Operational Considerations
 

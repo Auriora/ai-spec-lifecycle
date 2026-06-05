@@ -17,6 +17,15 @@ superseded_by:
 
 Accepted | Proposed | Superseded | Deprecated
 
+The ADR status above is the decision state. Keep it aligned with the
+frontmatter document lifecycle status where practical:
+
+- `Proposed` usually pairs with `status: draft`.
+- `Accepted` usually pairs with `status: active`.
+- `Superseded` usually pairs with `status: superseded` and a `superseded_by`
+  value.
+- `Deprecated` usually pairs with `status: deprecated` or `status: archived`.
+
 ## Context
 
 Describe the technical or business situation that requires a decision. Include the constraints that matter and the existing state that this ADR changes or preserves.

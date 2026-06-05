@@ -35,9 +35,24 @@ Describe the important end-to-end flows at a high level.
 - Internal services:
 - Contracts or schemas:
 
+## Code And Config Touchpoints
+
+| Area | Path Or Setting | Why It Matters |
+| --- | --- | --- |
+| Component, config, schema, runtime contract, or generated artifact | Repository path, config key, or service | How it supports this architecture. |
+
 ## Constraints
 
 List the technical, operational, or compliance constraints that shape the design.
+
+## Validation
+
+Describe how maintainers can confirm this architecture overview still matches
+the implemented system.
+
+| Claim | Evidence | Validation Method |
+| --- | --- | --- |
+| Architecture claim | Code, config, test, schema, runbook, or ADR | Command, review method, or generated reference |
 
 ## Related ADRs
 
@@ -46,3 +61,10 @@ List the technical, operational, or compliance constraints that shape the design
 ## Related Diagrams
 
 - `docs/architecture/diagrams/...`
+
+## Related Docs
+
+- Technical design:
+- Requirements:
+- Runbooks:
+- Integration guides:

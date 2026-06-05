@@ -1,6 +1,7 @@
 ---
 title: Feature requirements title
-doc_type: requirements
+doc_type: spec
+artifact_type: requirements
 status: draft
 owner: team-or-person
 last_reviewed: YYYY-MM-DD
@@ -35,6 +36,7 @@ before this change.
 | Source | Current behavior relied on | Confidence | Notes |
 |--------|----------------------------|------------|-------|
 | `docs/path/to/doc.md` | Current behavior summary | high | |
+| none found | Documentation gap summary | low | Promote accepted behavior to `docs/path/to/new-doc.md`. |
 
 If no durable source exists, record the gap and the durable document that should
 become the source of truth after promotion.

@@ -17,6 +17,12 @@ These templates describe current-state documentation that should live with code
 and reflect implemented or accepted behavior. They are not active spec-package
 templates; temporary implementation specs use `../spec-package/`.
 
+When a spec package closes, durable docs should contain the current-state
+requirements, design, contract, operations, decision, and reference material
+needed by future readers. The closed spec may be archived or removed according
+to the repository lifecycle, but it should not remain the active source of truth
+for implemented behavior.
+
 ## Core Rules
 
 1. Every new document should use one primary document class.
@@ -33,12 +39,15 @@ Use this frontmatter on new markdown documents unless a template says otherwise 
 ```yaml
 ---
 title: Short descriptive title
-doc_type: guide|runbook|architecture|design|requirements|adr|integration|reference|checklist|history|governance|spec
+doc_type: guide|runbook|architecture|design|requirements|adr|integration|reference|checklist|history|governance
 status: draft|active|code-derived|deprecated|superseded|archived
 owner: team-or-person
 last_reviewed: YYYY-MM-DD
 ---
 ```
+
+Use `doc_type: spec` only for temporary spec-package files. Durable documents
+should use the specific durable class that best describes their role.
 
 Use `status: code-derived` only for documentation generated or assembled from
 implemented code, repository config, and existing docs that is intended to
@@ -53,6 +62,12 @@ deciders:
 supersedes:
 superseded_by:
 ```
+
+For ADRs, the body `## Status` records the decision state, while frontmatter
+`status` records the document lifecycle state. Keep them aligned where
+practical: proposed decisions usually use `status: draft`, accepted decisions
+usually use `status: active`, superseded decisions should set `superseded_by`,
+and deprecated decisions should point readers to current guidance.
 
 ## Document Classes
 
@@ -72,6 +87,9 @@ history note, or feature spec.
 ### Architecture Overview
 
 Use [architecture-overview.md](architecture-overview.md) for stable explanations of system shape, component responsibilities, and key flows.
+Architecture overviews should link important code, config, contracts, and
+validation evidence so future readers can check whether the architecture still
+matches implementation.
 Store architecture overviews under `docs/architecture/`.
 
 ### Requirements
@@ -111,6 +129,9 @@ behavior, contracts, configuration, and failure handling.
 Use [api-contract-guide.md](api-contract-guide.md) for prose that explains how
 to read or apply a machine-readable contract such as an MCP tool schema,
 resource schema, JSON schema, or API definition.
+The machine-readable contract remains the source of truth; the guide should
+record ownership, compatibility, error behavior, migration expectations, tests,
+and related integration docs.
 
 ### Reference
 
@@ -119,7 +140,9 @@ limits, naming rules, capability matrices, or runtime dictionaries.
 
 ### Checklist
 
-Use [checklist.md](checklist.md) for bounded review or rollout checklists with explicit scope and completion criteria.
+Use [checklist.md](checklist.md) for bounded review or rollout checklists with
+explicit scope, completion criteria, owners, evidence, results, and follow-up
+items.
 
 ### History Note
 
