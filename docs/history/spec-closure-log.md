@@ -19,7 +19,7 @@ requires visible archived docs.
 - **Spec:** `docs/specs/004-spec-management-mcp/`
 - **Title:** Spec management MCP
 - **Final spec commit:** `86687b6`
-- **Closure cleanup commit:** pending
+- **Closure cleanup commit:** `1a72d07`
 - **Closure action:** retained-as-history
 - **Closed by:** platform
 - **Durable docs updated:**

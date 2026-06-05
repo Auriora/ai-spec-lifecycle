@@ -50,7 +50,7 @@ dogfood closure-log entry creation.
 
 | Requirement | Acceptance criteria covered | Evidence | Residual risk |
 |-------------|-----------------------------|----------|---------------|
-| Requirement 1 | AC1, AC2, AC3 | `spec-closure-log.md`; `docs/history/spec-closure-log.md` | Cleanup commit hash remains pending until committed. |
+| Requirement 1 | AC1, AC2, AC3 | `spec-closure-log.md`; `docs/history/spec-closure-log.md` | Cleanup commit hash recorded after the closure workflow commit. |
 | Requirement 2 | AC1, AC2, AC3 | Durable lifecycle docs and closure log/changelog boundary | Active index automation deferred. |
 | Requirement 3 | AC1, AC2, AC3 | Skill and document lifecycle two-commit guidance | Automated commit verification deferred. |
 | Requirement 4 | AC1, AC2, AC3 | `SKILL.md` close guidance | Future hook can enforce deletion checks. |
@@ -78,7 +78,8 @@ changelogs.
 
 ## Residual Risks
 
-- Cleanup commit hash is pending until this work is committed.
+- Closure cleanup commit hash is recorded as the first cleanup workflow commit,
+  `1a72d07`; this follow-up evidence update is intentionally separate.
 - Automated verification that a final spec commit contains the removed path is
   future MCP/hook work.
 - 004 is retained as history rather than removed, so active scan behavior still
@@ -102,7 +103,7 @@ changelogs.
 - **Final spec commit:** `86687b6`
 - **Closure log path:** `docs/history/spec-closure-log.md`
 - **Closure log entry updated:** yes
-- **Closure cleanup commit:** pending
+- **Closure cleanup commit:** `1a72d07`
 - **Active indexes updated:** yes
 - **Durable docs linked back to evidence where useful:** yes
 - **Residual spec-only content:** 004 remains as retained historical package.
