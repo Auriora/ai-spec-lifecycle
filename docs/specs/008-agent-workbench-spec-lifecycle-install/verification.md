@@ -101,7 +101,7 @@ checklist, and B002 backlog closure.
 - **Final spec commit:** `59359bb`
 - **Closure log path:** `docs/history/spec-closure-log.md`
 - **Closure log entry updated:** yes
-- **Closure cleanup commit:** pending
+- **Closure cleanup commit:** `29a2d54`
 - **Active indexes updated:** yes
 - **Durable docs linked back to evidence where useful:** yes
 - **Residual spec-only content:** Implementation evidence remains in spec 008

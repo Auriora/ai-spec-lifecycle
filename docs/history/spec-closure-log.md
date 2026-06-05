@@ -19,7 +19,7 @@ requires visible archived docs.
 - **Spec:** `docs/specs/008-agent-workbench-spec-lifecycle-install/`
 - **Title:** Agent Workbench spec lifecycle install
 - **Final spec commit:** `59359bb`
-- **Closure cleanup commit:** pending
+- **Closure cleanup commit:** `29a2d54`
 - **Closure action:** retained-as-history
 - **Closed by:** platform
 - **Durable docs updated:**
