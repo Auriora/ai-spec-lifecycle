@@ -246,6 +246,9 @@ skills/spec-lifecycle-manager/scripts/spec_runtime.py prompts .
 skills/spec-lifecycle-manager/scripts/spec_runtime.py hook spec-file-changed --changed-files docs/specs/004-spec-management-mcp/tasks.md
 skills/spec-lifecycle-manager/scripts/spec_runtime.py hook implementation-task-complete --spec-path docs/specs/004-spec-management-mcp --task-id T009
 skills/spec-lifecycle-manager/scripts/spec_runtime.py hook spec-close-check --spec-path docs/specs/004-spec-management-mcp --severity-profile blocking
+skills/spec-lifecycle-manager/scripts/spec_runtime.py reconcile docs/specs/004-spec-management-mcp
+skills/spec-lifecycle-manager/scripts/spec_runtime.py promotion-plan docs/specs/004-spec-management-mcp
+skills/spec-lifecycle-manager/scripts/spec_runtime.py review-packet docs/specs/004-spec-management-mcp --review-type design_requirements_trace
 ```
 
 These helpers are advisory runtime surfaces, not replacements for lifecycle

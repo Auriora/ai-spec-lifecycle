@@ -167,17 +167,23 @@ T010 -> T011
 
 ## Phase 5: Semantic Review And Promotion Planning
 
-- [ ] T010 Add reconciliation, promotion planning, and review packets.
+- [x] T010 Add reconciliation, promotion planning, and review packets.
   - Depends on: T007, T009
-  - Files: implementation path TBD, `tests/`
+  - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`,
+    `tests/runtime/test_spec_runtime.py`
   - Acceptance: Tools generate classified drift reports, durable promotion
     targets, and bounded cheap-agent review packets.
-  - Evidence: Pending.
-  - [ ] T010.1 Implement `reconcile_spec`.
-  - [ ] T010.2 Implement `promotion_plan`.
-  - [ ] T010.3 Implement `generate_review_packet`.
-  - [ ] T010.4 Record review-packet result disposition format.
-  - [ ] T010.5 Implement agent-oriented hook candidates for
+  - Evidence: `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'`;
+    `skills/spec-lifecycle-manager/scripts/spec_runtime.py reconcile docs/specs/004-spec-management-mcp`;
+    `skills/spec-lifecycle-manager/scripts/spec_runtime.py promotion-plan docs/specs/004-spec-management-mcp`;
+    `skills/spec-lifecycle-manager/scripts/spec_runtime.py review-packet docs/specs/004-spec-management-mcp --review-type design_requirements_trace`;
+    `skills/spec-lifecycle-manager/scripts/spec_runtime.py hook agent-slice-start --spec-path docs/specs/004-spec-management-mcp --task-id T010 --severity-profile blocking`;
+    `skills/spec-lifecycle-manager/scripts/spec_runtime.py hook review-packet-dispatch --spec-path docs/specs/004-spec-management-mcp`.
+  - [x] T010.1 Implement `reconcile_spec`.
+  - [x] T010.2 Implement `promotion_plan`.
+  - [x] T010.3 Implement `generate_review_packet`.
+  - [x] T010.4 Record review-packet result disposition format.
+  - [x] T010.5 Implement agent-oriented hook candidates for
     `agent-slice-start`, `agent-response-check`, `review-packet-dispatch`, and
     `review-result-recorded`.
 

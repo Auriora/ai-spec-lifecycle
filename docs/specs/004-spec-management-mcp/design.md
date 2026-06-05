@@ -328,6 +328,11 @@ Reports must separate:
 - inferred diagnosis;
 - recommended action.
 
+The CLI-first MVP exposes this report through
+`skills/spec-lifecycle-manager/scripts/spec_runtime.py reconcile`. Findings use
+the documented drift classifications and include separate observed facts,
+inferred diagnosis, recommended action, source diagnostics, and blind spots.
+
 ## Traceability Design
 
 Traceability is the deterministic guardrail against implementing from task text
@@ -413,6 +418,13 @@ Review packets allow cheap agents to help without writing into the repository.
   "blind_spots": []
 }
 ```
+
+The CLI-first MVP exposes review packets through
+`skills/spec-lifecycle-manager/scripts/spec_runtime.py review-packet`. Packets
+are read-only, include an artifact manifest, frame document content as
+untrusted data, define stop conditions, and include the expected output schema.
+`review-result-template` and `validate-review-result` provide the disposition
+shape for accepted, rejected, deferred, and human-decision findings.
 
 ## Hook Design
 

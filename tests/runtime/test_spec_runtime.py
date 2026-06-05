@@ -110,7 +110,7 @@ class SpecRuntimeTests(unittest.TestCase):
     def test_next_task_selects_first_unblocked_task_with_context(self):
         payload = spec_runtime.next_task(SPEC)
 
-        self.assertEqual("T010", payload["selected"]["task_id"])
+        self.assertEqual("T011", payload["selected"]["task_id"])
         self.assertIn("traceability_context", payload)
         self.assertEqual([], [gap for gap in payload["traceability_context"]["gaps"] if gap["severity"] == "error"])
 
@@ -286,6 +286,77 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertTrue(payload["blocked"])
         self.assertIn("TASK_NOT_VERIFIED", {item["code"] for item in payload["blocking"]})
 
+    def test_reconcile_spec_reports_incomplete_work(self):
+        payload = spec_runtime.reconcile_spec(SPEC)
+
+        self.assertIn("code incomplete", payload["summary"])
+        self.assertTrue(payload["blind_spots"])
+
+    def test_promotion_plan_returns_durable_targets(self):
+        payload = spec_runtime.promotion_plan(SPEC)
+
+        targets = {item["target"] for item in payload["targets"]}
+        self.assertIn("skills/spec-lifecycle-manager/SKILL.md", targets)
+
+    def test_generate_review_packet_is_read_only_and_bounded(self):
+        payload = spec_runtime.generate_review_packet(SPEC, "design_requirements_trace", "cheap")
+
+        self.assertEqual("read-only", payload["scope"])
+        self.assertEqual("cheap", payload["model_class"])
+        self.assertIn("expected_output_schema", payload)
+        self.assertIn("requirements.md", payload["input_artifacts"])
+
+    def test_validate_review_result_disposition(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "review-result.json"
+            path.write_text(
+                json.dumps(spec_runtime.review_result_disposition_template("design_requirements_trace")),
+                encoding="utf-8",
+            )
+
+            payload = spec_runtime.validate_review_result(path)
+
+        self.assertEqual({"error": 0, "warn": 0, "info": 0}, payload["summary"])
+
+    def test_agent_slice_start_uses_traceability(self):
+        payload = spec_runtime.run_hook(
+            ROOT,
+            "agent-slice-start",
+            spec_path=SPEC,
+            task_id="T010",
+            severity_profile="blocking",
+        )
+
+        self.assertFalse(payload["blocked"])
+        self.assertEqual({"error": 0, "warn": 0, "info": 0}, payload["summary"])
+
+    def test_agent_response_check_warns_without_changed_files(self):
+        payload = spec_runtime.run_hook(
+            ROOT,
+            "agent-response-check",
+            spec_path=SPEC,
+            task_id="T010",
+            severity_profile="advisory",
+        )
+
+        self.assertFalse(payload["blocked"])
+        self.assertIn("AGENT_CHANGED_FILES_MISSING", {item["code"] for item in payload["diagnostics"]})
+
+    def test_review_result_recorded_blocks_invalid_result(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "review-result.json"
+            path.write_text("{}", encoding="utf-8")
+
+            payload = spec_runtime.run_hook(
+                ROOT,
+                "review-result-recorded",
+                result_path=path,
+                severity_profile="blocking",
+            )
+
+        self.assertTrue(payload["blocked"])
+        self.assertIn("REVIEW_RESULT_FIELD_MISSING", {item["code"] for item in payload["blocking"]})
+
     def test_cli_prompts_outputs_json(self):
         completed = subprocess.run(
             [str(SCRIPT), "prompts", str(ROOT)],
@@ -315,6 +386,17 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertEqual(1, completed.returncode)
         payload = json.loads(completed.stdout)
         self.assertTrue(payload["blocked"])
+
+    def test_cli_review_packet_outputs_json(self):
+        completed = subprocess.run(
+            [str(SCRIPT), "review-packet", str(SPEC), "--review-type", "design_requirements_trace"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+        payload = json.loads(completed.stdout)
+        self.assertEqual("design_requirements_trace", payload["review_type"])
 
 
 if __name__ == "__main__":
