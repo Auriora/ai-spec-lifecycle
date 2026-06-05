@@ -47,6 +47,38 @@ Use the artifacts as a progressive chain:
 Small, low-risk work can use a smaller package. Create only the files that help
 coordinate implementation, validation, or future promotion.
 
+## Spec Package Metadata
+
+Spec package files are temporary delivery artifacts. Use `doc_type: spec` for
+all package files, then use `artifact_type` to identify the artifact:
+
+```yaml
+---
+title: Feature requirements title
+doc_type: spec
+artifact_type: requirements
+status: draft
+owner: team-or-person
+last_reviewed: YYYY-MM-DD
+---
+```
+
+Recommended `artifact_type` values:
+
+- `requirements`
+- `design`
+- `tasks`
+- `change-impact`
+- `verification`
+- `research`
+- `quickstart`
+- `open-decisions`
+
+Durable docs use durable document classes such as `requirements`, `design`,
+`architecture`, `runbook`, `adr`, `reference`, or `checklist`. Do not treat a
+spec-package `requirements.md` or `design.md` as a durable source of truth after
+closure; promote accepted content into the durable documentation set.
+
 ## Template Files
 
 ### Core (always created)
@@ -101,4 +133,6 @@ The spec lifecycle extends beyond the core artifacts:
 4. **Verify**: Record evidence, quality gates, residual risks, and readiness.
 5. **Promote** (post-completion): Route accepted spec content into durable docs.
 6. **Review** (optional): Role-based expert review per document class.
-7. **Close**: Verify all content is promoted or deferred, close the spec.
+7. **Close**: Verify all content is promoted or deferred, remove the spec from
+   active indexes, and archive or remove the package according to the
+   repository's document lifecycle.

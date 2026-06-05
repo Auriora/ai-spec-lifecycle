@@ -54,6 +54,9 @@ trials.
 4. GIVEN spec-package templates, WHEN checked, THEN task templates preserve
    checklist tasks and subtasks while including evidence, acceptance, change
    impact, verification, and ship risk guidance.
+5. GIVEN spec-package and durable-doc templates, WHEN checked, THEN temporary
+   spec artifacts use `doc_type: spec` with `artifact_type`, while durable docs
+   use durable document classes.
 
 ### Requirement 2: Fixture-Based Skill Trials
 

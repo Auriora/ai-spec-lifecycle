@@ -34,6 +34,20 @@ Use this reference when a spec affects durable documentation or when review role
 | Quickstart validation | Runbooks, getting-started docs, or deployment validation docs. |
 | Tasks and checkpoints | Remain in the spec while active; close, archive, or remove after promotion. |
 
+## Closure Cleanup Routing
+
+Before closing a spec, route or dispose of every lasting element:
+
+| Lasting element | Closure action |
+| --- | --- |
+| Implemented requirements or accepted behavior | Promote to durable requirements, reference, contract, or test documentation. |
+| Implemented design or architecture | Promote to durable design or architecture docs. |
+| Operational procedures, rollout, validation, or recovery steps | Promote to runbooks, getting-started guides, checklists, or operations references. |
+| Decisions and rationale | Promote to ADR, history note, or durable reference. |
+| Evidence that is useful only for audit | Archive with clear historical status or retain in the repository's audit/review location. |
+| Completed task coordination with no lasting value | Remove from the active docs path after closure. |
+| Unfinished or deferred work | Move to backlog, roadmap, issue tracker, or a follow-up spec. |
+
 ## Expert Roles
 
 | Expert role | Review focus |
@@ -84,3 +98,5 @@ Before closure, review for:
 - tests, checks, or alternate verification recorded;
 - stale or duplicate spec-only content removed from the active knowledge path;
 - follow-up work moved to backlog or a focused spec.
+- spec package disposition recorded as archived, removed, or retained as
+  historical context.

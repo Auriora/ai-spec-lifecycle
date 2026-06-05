@@ -35,6 +35,7 @@ skills/spec-lifecycle-manager/
 | Repo-local skill matches canonical source | `diff -qr skills/spec-lifecycle-manager .codex/skills/spec-lifecycle-manager` | Pass | Command returned no differences. |
 | Markdown links resolve | local Python markdown-link resolver over repo markdown excluding `.codex` | Pass | Command returned `markdown-links-ok`. |
 | Required task guidance present | `rg` over `skills/spec-lifecycle-manager/references/spec-package/` | Pass | Templates include checklist tasks/subtasks, `Depends on`, `Acceptance`, `Evidence`, `change-impact.md`, `verification.md`, and ship risk guidance. |
+| Spec and durable metadata separated | `rg` over skill templates | Pass | Spec-package files use `doc_type: spec` plus `artifact_type`; durable templates use durable `doc_type` classes. |
 | Required skill references exist | manual check from `SKILL.md` references | Pass | `references/spec-package/`, `references/durable-doc-templates/`, `references/migration-guide.md`, and `references/document-routing-and-expert-review.md` exist. |
 
 ## Fixture Inventory

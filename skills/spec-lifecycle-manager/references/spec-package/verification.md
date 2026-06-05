@@ -1,6 +1,7 @@
 ---
 title: Feature verification title
-doc_type: verification
+doc_type: spec
+artifact_type: verification
 status: draft
 owner: team-or-person
 last_reviewed: YYYY-MM-DD
@@ -21,6 +22,8 @@ record covers.
 | Task evidence complete | yes | pending | |
 | Automated tests pass or alternate verification recorded | yes | pending | |
 | Durable documentation updates identified | yes | pending | |
+| Durable documentation promoted or explicitly deferred | yes | pending | |
+| Spec cleanup decision recorded | yes | pending | |
 | Governance or policy conflicts resolved | yes | pending | |
 
 ## Validation Commands
@@ -49,6 +52,33 @@ what performed it, the date, evidence, and residual risk.
 ## Residual Risks
 
 - Risk and mitigation or owner.
+
+## Durable Promotion And Cleanup
+
+Use this section before closure. A spec is not ready to close while accepted
+behavior, decisions, operations, contracts, validation procedures, or follow-up
+ownership exist only inside the spec package.
+
+| Spec content | Durable destination or deferral | Status | Evidence |
+|--------------|---------------------------------|--------|----------|
+| Requirements and accepted behavior | `docs/requirements/...` or target repo equivalent | pending | |
+| Technical design or architecture | `docs/design/...` or `docs/architecture/...` | pending | |
+| Contracts, schemas, data flow, or integration behavior | contract/data-flow/reference docs | pending | |
+| Operational steps, rollout, validation, or recovery | runbook/getting-started/checklist docs | pending | |
+| Decisions and rationale | ADR, history note, or durable reference | pending | |
+| Follow-up work | backlog, roadmap, issue, or follow-up spec | pending | |
+
+### Spec Cleanup Decision
+
+- **Cleanup action:** keep active | archive | remove | retain as history note
+- **Reason:**
+- **Active indexes updated:** no
+- **Durable docs linked back to evidence where useful:** no
+- **Residual spec-only content:** none | listed below
+
+Residual spec-only content:
+
+- Content and owner or reason for retention.
 
 ## Ship Or Closure Risk
 

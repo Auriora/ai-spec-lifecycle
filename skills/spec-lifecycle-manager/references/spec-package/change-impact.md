@@ -1,6 +1,7 @@
 ---
 title: Feature change impact title
-doc_type: change-impact
+doc_type: spec
+artifact_type: change-impact
 status: draft
 owner: team-or-person
 last_reviewed: YYYY-MM-DD

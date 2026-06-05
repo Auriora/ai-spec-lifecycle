@@ -1,6 +1,7 @@
 ---
 title: Feature tasks title
-doc_type: tasks
+doc_type: spec
+artifact_type: tasks
 status: draft
 owner: team-or-person
 last_reviewed: YYYY-MM-DD

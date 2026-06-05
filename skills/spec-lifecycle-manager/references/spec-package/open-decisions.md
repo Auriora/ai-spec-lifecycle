@@ -1,6 +1,7 @@
 ---
 title: Feature open decisions title
-doc_type: decisions
+doc_type: spec
+artifact_type: open-decisions
 status: draft
 owner: team-or-person
 last_reviewed: YYYY-MM-DD

@@ -82,6 +82,23 @@ Keep a checklist active only while it still drives live work.
   either move the remaining useful context into a current doc or retain a
   clearly archived copy with `status: archived`
 
+## Spec Package Cleanup
+
+Spec packages are temporary delivery scaffolding. Before a spec leaves the
+active implementation path:
+
+- promote accepted current-state behavior into durable docs;
+- route durable decisions into ADRs, history notes, or reference docs;
+- move unfinished work into a backlog, roadmap, issue, or follow-up spec;
+- update active indexes so the spec is no longer presented as current work;
+- archive the package only when it provides useful audit, decision, or design
+  history;
+- remove the package when durable docs, commits, tests, and issue history
+  already preserve the useful record.
+
+A closed spec should not be the only place a future reader can learn how the
+implemented system works.
+
 ## Related Docs
 
 - [Documentation Templates](README.md)

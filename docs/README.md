@@ -16,6 +16,7 @@ This documentation describes reusable agent workflows for managing implementatio
 - [Agent development lifecycle constitution](governance/constitution.md): governance principles and decision gates for specs, evidence, migration, and durable docs.
 - [Document routing and expert review matrix](reference/document-routing-and-expert-review-matrix.md): where spec content should land and which role-based experts should review it.
 - [AI-native SDD framework landscape](reference/ai-native-sdd-frameworks.md): reference list of spec-driven AI development systems and adjacent methodologies to study.
+- [Coding agent workflow research](reference/coding-agent-workflow-research.md): evidence and recommendations for operator-guided coding-agent workflows.
 - [Spec lifecycle manager skill spec](specs/001-spec-lifecycle-manager-skill/spec.md): archived implementation and validation history for the reusable skill.
 
 ## Skill Source And Install

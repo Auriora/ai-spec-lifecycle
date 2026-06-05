@@ -251,6 +251,13 @@ Common routing:
 - temporary research -> durable decision, reference, review, or discard when no longer useful;
 - deferred work -> backlog, roadmap, issue tracker, or a smaller follow-up spec.
 
+Promotion should produce an explicit durable-doc map before closure:
+
+- spec content promoted;
+- durable destination path or documented deferral;
+- evidence that the destination now reflects current behavior;
+- residual spec-only content, if any, and why it remains.
+
 Read `references/document-routing-and-expert-review.md` when document routing or review roles are material to the task.
 
 ## Review
@@ -278,4 +285,23 @@ A spec can close only when:
 - unresolved work is moved to backlog or a follow-up spec;
 - indexes no longer present the package as active implementation work.
 
-Do not leave completed behavior documented only in `docs/specs/`.
+Before closing, perform a final spec cleanup check:
+
+1. Re-read `requirements.md`, `design.md`, `tasks.md`, `change-impact.md`,
+   `verification.md`, `quickstart.md`, `research.md`, and `open-decisions.md`
+   if present.
+2. Classify each lasting element as promoted, explicitly deferred, discarded, or
+   retained as history.
+3. Confirm durable destinations exist and are linked from the relevant indexes.
+4. Confirm active docs no longer point readers to the spec as the source of
+   current behavior.
+5. Decide the package disposition according to the target repository's document
+   lifecycle: archive, remove, or retain as a clearly historical record.
+6. Update active spec indexes, sequencing docs, task boards, or README entries
+   so the package no longer appears active.
+7. Record closure evidence in `verification.md` or the repository's chosen
+   closure record.
+
+Do not leave completed behavior documented only in `docs/specs/`. If durable
+promotion is blocked, keep the spec open or create a follow-up with an explicit
+owner, destination, and closure blocker.
