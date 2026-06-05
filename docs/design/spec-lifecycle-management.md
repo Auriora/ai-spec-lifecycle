@@ -113,6 +113,26 @@ old format for the current slice, migrate before implementation, or create a
 follow-up migration task. Archived specs should remain historical unless
 resumed.
 
+## Runtime Support
+
+The `spec-lifecycle-manager` skill includes a dependency-free CLI runtime for
+deterministic lifecycle checks:
+
+```text
+skills/spec-lifecycle-manager/scripts/spec_runtime.py
+skills/spec-lifecycle-manager/scripts/traceability_lookup.py
+```
+
+The runtime provides JSON outputs for spec scanning, summary resources, linting,
+next-task selection, closure checks, prompt-definition validation,
+reconciliation, promotion planning, review-packet generation, review-result
+disposition validation, and hook checks. These outputs are advisory runtime
+surfaces; they do not replace the skill, repository governance, or durable
+documentation.
+
+See [Spec lifecycle runtime](../reference/spec-lifecycle-runtime.md) for the
+current command surface and hook modes.
+
 ## Implementation Rules
 
 - Implement one coherent task slice at a time, usually one phase or checkpoint from `tasks.md`.

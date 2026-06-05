@@ -189,13 +189,19 @@ T010 -> T011
 
 ## Phase 6: Metrics, Governance, Dogfood, And Promote
 
-- [ ] T011 Dogfood the MCP runtime on this spec and promote durable docs.
+- [x] T011 Dogfood the MCP runtime on this spec and promote durable docs.
   - Depends on: T010
-  - Files: `docs/specs/004-spec-management-mcp/`, durable docs TBD
+  - Files: `docs/specs/004-spec-management-mcp/`,
+    `docs/reference/spec-lifecycle-runtime.md`,
+    `docs/design/spec-lifecycle-management.md`,
+    `docs/README.md`
   - Acceptance: Dogfood evidence records useful findings, overhead, prompt
     support limits, hook value, repeated waivers, governance-sensitive changes,
     and durable doc promotion targets.
-  - Evidence: Pending.
+  - Evidence: `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'`;
+    runtime dogfood commands recorded in `verification.md`; durable runtime
+    docs promoted to `docs/reference/spec-lifecycle-runtime.md` and linked from
+    `docs/design/spec-lifecycle-management.md`.
 
 ## Related Artifacts
 

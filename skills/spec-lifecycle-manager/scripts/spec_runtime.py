@@ -263,7 +263,7 @@ def durable_source_refs(requirements_path: Path) -> list[str]:
         return []
     refs = []
     for line in match.group(1).splitlines():
-        if line.strip().startswith("- "):
+        if line.strip().startswith("- ") and ".md" in line:
             refs.append(line.strip()[2:])
     return refs
 

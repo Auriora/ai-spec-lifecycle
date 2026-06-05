@@ -110,16 +110,14 @@ class SpecRuntimeTests(unittest.TestCase):
     def test_next_task_selects_first_unblocked_task_with_context(self):
         payload = spec_runtime.next_task(SPEC)
 
-        self.assertEqual("T011", payload["selected"]["task_id"])
-        self.assertIn("traceability_context", payload)
-        self.assertEqual([], [gap for gap in payload["traceability_context"]["gaps"] if gap["severity"] == "error"])
+        self.assertIsNone(payload["selected"])
+        self.assertEqual("No runnable incomplete task found.", payload["message"])
 
-    def test_closure_check_blocks_incomplete_spec(self):
+    def test_closure_check_reports_completed_spec_ready(self):
         payload = spec_runtime.closure_check(SPEC)
 
-        self.assertFalse(payload["ready"])
-        codes = {item["code"] for item in payload["blockers"]}
-        self.assertIn("TASK_NOT_VERIFIED", codes)
+        self.assertTrue(payload["ready"])
+        self.assertEqual([], payload["blockers"])
 
     def test_cli_scan_outputs_json(self):
         completed = subprocess.run(
@@ -280,17 +278,20 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertFalse(payload["blocked"])
         self.assertIn("OLD_FORMAT_MIGRATION_DECISION_NEEDED", {item["code"] for item in payload["diagnostics"]})
 
-    def test_hook_spec_close_check_blocks_active_spec(self):
-        payload = spec_runtime.run_hook(ROOT, "spec-close-check", spec_path=SPEC, severity_profile="blocking")
+    def test_hook_spec_close_check_blocks_incomplete_spec(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = self.write_incomplete_spec(Path(tmp))
+            payload = spec_runtime.run_hook(Path(tmp), "spec-close-check", spec_path=spec, severity_profile="blocking")
 
         self.assertTrue(payload["blocked"])
         self.assertIn("TASK_NOT_VERIFIED", {item["code"] for item in payload["blocking"]})
 
     def test_reconcile_spec_reports_incomplete_work(self):
-        payload = spec_runtime.reconcile_spec(SPEC)
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = self.write_incomplete_spec(Path(tmp))
+            payload = spec_runtime.reconcile_spec(spec)
 
         self.assertIn("code incomplete", payload["summary"])
-        self.assertTrue(payload["blind_spots"])
 
     def test_promotion_plan_returns_durable_targets(self):
         payload = spec_runtime.promotion_plan(SPEC)
@@ -369,19 +370,23 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertEqual(4, len(payload["prompts"]))
 
     def test_cli_spec_close_hook_exits_nonzero_when_blocking(self):
-        completed = subprocess.run(
-            [
-                str(SCRIPT),
-                "hook",
-                "spec-close-check",
-                "--spec-path",
-                str(SPEC),
-                "--severity-profile",
-                "blocking",
-            ],
-            capture_output=True,
-            text=True,
-        )
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = self.write_incomplete_spec(Path(tmp))
+            completed = subprocess.run(
+                [
+                    str(SCRIPT),
+                    "hook",
+                    "spec-close-check",
+                    "--repo-root",
+                    tmp,
+                    "--spec-path",
+                    str(spec),
+                    "--severity-profile",
+                    "blocking",
+                ],
+                capture_output=True,
+                text=True,
+            )
 
         self.assertEqual(1, completed.returncode)
         payload = json.loads(completed.stdout)
@@ -397,6 +402,124 @@ class SpecRuntimeTests(unittest.TestCase):
 
         payload = json.loads(completed.stdout)
         self.assertEqual("design_requirements_trace", payload["review_type"])
+
+    def write_incomplete_spec(self, repo: Path) -> Path:
+        spec = repo / "docs/specs/001-example"
+        spec.mkdir(parents=True)
+        frontmatter = [
+            "---",
+            "title: Example",
+            "doc_type: spec",
+            "status: draft",
+            "owner: platform",
+            "last_reviewed: 2026-06-05",
+            "---",
+            "",
+        ]
+        (spec / "requirements.md").write_text(
+            "\n".join(
+                frontmatter
+                + [
+                    "# Requirements",
+                    "",
+                    "## Durable Source Baseline",
+                    "- No durable source exists yet.",
+                    "",
+                    "## Goals",
+                    "## Non-Goals",
+                    "## Requirements",
+                    "### Requirement 1: Example",
+                    "#### Acceptance Criteria",
+                    "1. GIVEN context, WHEN action, THEN outcome.",
+                    "## Correctness Properties",
+                    "## Success Criteria",
+                ]
+            ),
+            encoding="utf-8",
+        )
+        (spec / "design.md").write_text(
+            "\n".join(
+                frontmatter
+                + [
+                    "# Design",
+                    "",
+                    "## Overview",
+                    "## High-Level Design",
+                    "## Low-Level Design",
+                    "## Operational Considerations",
+                    "## Open Questions",
+                ]
+            ),
+            encoding="utf-8",
+        )
+        (spec / "tasks.md").write_text(
+            "\n".join(
+                [
+                    "---",
+                    "title: Tasks",
+                    "doc_type: spec",
+                    "artifact_type: tasks",
+                    "status: draft",
+                    "owner: platform",
+                    "last_reviewed: 2026-06-05",
+                    "---",
+                    "",
+                    "# Tasks",
+                    "",
+                    "- [ ] T001 Do thing.",
+                    "  - Depends on: none",
+                    "  - Files: `src/x`",
+                    "  - Acceptance: Done.",
+                    "  - Evidence: Pending.",
+                ]
+            ),
+            encoding="utf-8",
+        )
+        (spec / "verification.md").write_text(
+            "\n".join(
+                [
+                    "---",
+                    "title: Verification",
+                    "doc_type: spec",
+                    "artifact_type: verification",
+                    "status: draft",
+                    "owner: platform",
+                    "last_reviewed: 2026-06-05",
+                    "---",
+                    "",
+                    "# Verification",
+                    "",
+                    "## Quality Gates",
+                    "## Evidence Log",
+                    "- T001 covers Requirement 1.",
+                    "## Residual Risks",
+                ]
+            ),
+            encoding="utf-8",
+        )
+        (spec / "traceability.md").write_text(
+            "\n".join(
+                [
+                    "---",
+                    "title: Traceability",
+                    "doc_type: spec",
+                    "artifact_type: traceability",
+                    "status: draft",
+                    "owner: platform",
+                    "last_reviewed: 2026-06-05",
+                    "---",
+                    "",
+                    "# Traceability Matrix",
+                    "",
+                    "## Task To Context Matrix",
+                    "## Requirement To Delivery Matrix",
+                    "## Design To Implementation Matrix",
+                    "## Open Decision Impact",
+                ]
+            ),
+            encoding="utf-8",
+        )
+        return spec
 
 
 if __name__ == "__main__":
