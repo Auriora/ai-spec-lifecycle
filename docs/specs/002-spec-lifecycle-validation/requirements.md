@@ -64,6 +64,9 @@ trials.
    references and templates provide a task-to-context matrix or MCP lookup
    path that maps tasks to requirements, acceptance criteria, design sections,
    verification, durable targets, and open decisions.
+8. GIVEN closure-log support is enabled, WHEN checked, THEN durable templates
+   and skill guidance require final spec commit recording, closure-log entries,
+   cleanup action, active-index cleanup, and Git-backed archive boundaries.
 
 ### Requirement 2: Fixture-Based Skill Trials
 

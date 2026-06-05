@@ -72,6 +72,10 @@ ownership exist only inside the spec package.
 
 - **Cleanup action:** keep active | archive | remove | retain as history note
 - **Reason:**
+- **Final spec commit:** pending | commit hash | not required
+- **Closure log path:** pending | `docs/history/spec-closure-log.md` | repository-specific path | not required
+- **Closure log entry updated:** no
+- **Closure cleanup commit:** pending | commit hash | not available yet
 - **Active indexes updated:** no
 - **Durable docs linked back to evidence where useful:** no
 - **Residual spec-only content:** none | listed below

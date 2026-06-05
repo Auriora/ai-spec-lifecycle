@@ -39,6 +39,8 @@ skills/spec-lifecycle-manager/
 | Traceability lookup support present | `rg "traceability.md|task_context|traceability_lookup"` | Pass | Skill references optional `traceability.md`; spec-package templates include a traceability matrix; MCP spec defines task-context and traceability lookup surfaces. |
 | Spec and durable metadata separated | `rg` over skill templates | Pass | Spec-package files use `doc_type: spec` plus `artifact_type`; durable templates use durable `doc_type` classes. |
 | Required skill references exist | manual check from `SKILL.md` references | Pass | `references/spec-package/`, `references/durable-doc-templates/`, `references/migration-guide.md`, and `references/document-routing-and-expert-review.md` exist. |
+| Closure-log template present | `test -f skills/spec-lifecycle-manager/references/durable-doc-templates/spec-closure-log.md` | Pass | Fallback durable closure-log template exists. |
+| Final spec commit guidance present | `rg "final spec commit|spec-closure-log|docs/history/spec-closure-log.md"` | Pass | Skill, lifecycle docs, verification template, and durable template docs mention final spec commit and closure-log path. |
 
 ## Fixture Inventory
 
@@ -80,6 +82,7 @@ skills/spec-lifecycle-manager/
 | DAG examples used Unicode arrows. | Replaced machine-oriented DAG examples with ASCII `->`. | Static search no longer finds Unicode arrows in spec-package templates. |
 | Fallback templates hard-coded `docs/specs/`. | Replaced fallback path examples with `[docs-root]/specs/[###-slug]/`. | Static search no longer finds hard-coded paths in fallback templates. |
 | `open-decisions.md` referenced but missing. | Added fallback `open-decisions.md` template and README entry. | Static search found template and optional artifact entry. |
+| Closure-log workflow absent. | Added fallback `spec-closure-log.md`, final spec commit fields in verification, and close guidance for Git-backed cleanup. | Static search finds closure-log template and final spec commit guidance. |
 
 ## Dogfood Assessment
 

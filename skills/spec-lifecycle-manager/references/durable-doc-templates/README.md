@@ -148,6 +148,20 @@ items.
 
 Use [history-note.md](history-note.md) for retained historical context that should not be mistaken for current guidance.
 
+### Spec Closure Log
+
+Use [spec-closure-log.md](spec-closure-log.md) for compact durable records of
+closed implementation specs, including final spec commit, closure action,
+durable promotions, verification summary, residual risk, and follow-up work.
+
+The fallback default path is `docs/history/spec-closure-log.md` with
+`doc_type: history`. Treat repository-specific changelog, archive, compliance,
+or issue-tracking templates as authoritative when they exist, and record the
+template authority decision before adopting this fallback.
+
+Spec closure logs are implementation-lifecycle history. They are not product
+release changelogs, though product changelogs may use closure entries as input.
+
 ### Document Lifecycle
 
 Use [document-lifecycle.md](document-lifecycle.md) for rules on when to keep a doc active, move it to history, or remove it.

@@ -96,6 +96,21 @@ active implementation path:
 - remove the package when durable docs, commits, tests, and issue history
   already preserve the useful record.
 
+When using Git-backed archival, use a two-commit close flow:
+
+1. Commit the final spec state while the full package is still present.
+2. Record that final spec commit in the closure log.
+3. Remove, archive, or mark the package historical.
+4. Commit the cleanup separately.
+
+The fallback closure log path is `docs/history/spec-closure-log.md` with
+`doc_type: history`. If the repository has its own changelog, archive,
+compliance, or issue-tracking record, treat that as authoritative and record
+the template authority decision.
+
+Do not remove a spec package when the final spec commit is missing. Keep the
+spec active or record the blocker until the final state is recoverable.
+
 A closed spec should not be the only place a future reader can learn how the
 implemented system works.
 

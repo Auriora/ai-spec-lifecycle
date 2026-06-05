@@ -76,3 +76,9 @@ material may live under a named docs partition such as
 clean.
 
 Specs are temporary delivery packages. Once implementation is complete, accepted behavior should be promoted into durable documentation and the spec should be closed, archived, or removed according to the target repository's document lifecycle.
+
+Closed specs that are removed from the active docs tree should be discoverable
+through a spec closure log, defaulting to `docs/history/spec-closure-log.md`
+when no repository-specific closure record exists. The closure log records the
+final spec commit, closure action, durable destinations, verification summary,
+residual risks, and follow-up work.

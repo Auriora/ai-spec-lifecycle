@@ -340,6 +340,11 @@ A spec can close only when:
 - unresolved work is moved to backlog or a follow-up spec;
 - indexes no longer present the package as active implementation work.
 
+If the repository uses a spec closure log, or no repository-specific closure
+record exists and this skill's fallback lifecycle is being used, closing must
+also preserve a durable closure breadcrumb. The fallback closure log path is
+`docs/history/spec-closure-log.md` with `doc_type: history`.
+
 Before closing, perform a final spec cleanup check:
 
 1. Re-read `requirements.md`, `design.md`, `tasks.md`, `change-impact.md`,
@@ -354,8 +359,27 @@ Before closing, perform a final spec cleanup check:
    lifecycle: archive, remove, or retain as a clearly historical record.
 6. Update active spec indexes, sequencing docs, task boards, or README entries
    so the package no longer appears active.
-7. Record closure evidence in `verification.md` or the repository's chosen
-   closure record.
+7. If the package will be removed from the active tree, require a final spec
+   commit hash that contains the complete final package before removal. Do not
+   remove the package when that commit is missing.
+8. Add or update the repository's closure record with spec ID, title, closed
+   date, final spec commit, closure action, durable destinations,
+   verification summary, residual risks, and follow-up work.
+9. Record closure evidence in `verification.md`, the closure log, or the
+   repository's chosen closure record.
+
+Use these closure actions consistently:
+
+- `removed`: deleted from the active tree after the final spec commit records
+  the full package;
+- `archived`: moved to an archive/history path because repository policy
+  requires visible historical docs;
+- `retained-as-history`: kept in place or nearby but clearly marked
+  historical, archived, or superseded.
+
+When reporting closure, include the final spec commit, closure cleanup commit
+if known, durable docs updated, closure action, residual risks, and follow-up
+destinations.
 
 Do not leave completed behavior documented only in `docs/specs/`. If durable
 promotion is blocked, keep the spec open or create a follow-up with an explicit

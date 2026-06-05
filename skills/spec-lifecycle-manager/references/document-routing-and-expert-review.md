@@ -45,6 +45,7 @@ Before closing a spec, route or dispose of every lasting element:
 | Operational procedures, rollout, validation, or recovery steps | Promote to runbooks, getting-started guides, checklists, or operations references. |
 | Decisions and rationale | Promote to ADR, history note, or durable reference. |
 | Evidence that is useful only for audit | Archive with clear historical status or retain in the repository's audit/review location. |
+| Closure summary and final spec commit | Record in the repository's spec closure log, defaulting to `docs/history/spec-closure-log.md` when no authoritative closure record exists. |
 | Completed task coordination with no lasting value | Remove from the active docs path after closure. |
 | Unfinished or deferred work | Move to backlog, roadmap, issue tracker, or a follow-up spec. |
 
@@ -100,3 +101,6 @@ Before closure, review for:
 - follow-up work moved to backlog or a focused spec.
 - spec package disposition recorded as archived, removed, or retained as
   historical context.
+- final spec commit recorded before removal when Git-backed archival is used;
+- closure log entry records durable destinations, verification summary,
+  residual risks, and follow-up work.

@@ -45,12 +45,25 @@ reviewers reconstructing why a spec disappeared.
 | Product/release changelog | Communicates product, release, or operator-facing changes. | Existing repository changelog path. |
 | Full spec archive | Full closed spec package. Prefer Git history; keep in tree only when policy requires. | Git final spec commit, or `docs/archive/specs/...` if required. |
 
-Default recommendation:
+Default decision:
 
 - Keep `docs/specs/` focused on active implementation packages.
-- Add a durable closure log under a history or changelog area when a repository
-  wants Git-backed spec cleanup.
+- Use `docs/history/spec-closure-log.md` as the fallback durable closure log
+  path when the repository has no authoritative closure-log or archival path.
+- Use `doc_type: history` for the fallback closure log document class.
 - Use Git history as the default archive for removed closed specs.
+
+Rationale:
+
+- `docs/history/` makes the document's historical and audit role explicit
+  without overloading product or release changelogs.
+- `spec-closure-log.md` distinguishes implementation lifecycle closure records
+  from broader changelog entries.
+- `doc_type: history` already exists in the fallback durable document classes,
+  so a new durable class is unnecessary for the MVP.
+- Repositories with existing changelog, archive, compliance, or issue-tracking
+  conventions remain authoritative and should record a template authority
+  decision before adopting this fallback.
 
 ### Closure Entry Shape
 
