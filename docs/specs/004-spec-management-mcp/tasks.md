@@ -19,9 +19,10 @@ last_reviewed: 2026-06-05
 T001 -> T002 -> T003
 T003 -> T004
 T003 -> T005
+T003 -> T012
 T004 + T005 -> T006
 T006 -> T008
-T006 -> T012 -> T007
+T006 + T012 -> T007
 T008 -> T009
 T007 + T009 -> T010
 T010 -> T011
@@ -43,13 +44,14 @@ T010 -> T011
   - Acceptance: Package includes requirements, design, tasks, and research.
   - Evidence: This spec package created.
 
-- [ ] T003 Decide implementation home and packaging.
+- [x] T003 Decide implementation home and packaging.
   - Depends on: T002
   - Files: `docs/specs/004-spec-management-mcp/design.md`,
-    future implementation paths
+    `skills/spec-lifecycle-manager/scripts/traceability_lookup.py`
   - Acceptance: Decision identifies whether the MCP server lives in this repo,
     a plugin package, or a separate reusable repository.
-  - Evidence: Pending.
+  - Evidence: Design records that deterministic helpers can live in the skill
+    scripts first and be wrapped by a future MCP adapter.
 
 ## Phase 2: Deterministic Runtime MVP
 
@@ -87,15 +89,22 @@ T010 -> T011
     open-decision, and active-index blockers.
   - Evidence: Pending.
 
-- [ ] T012 Implement traceability lookup.
-  - Depends on: T006
-  - Files: implementation path TBD, `tests/`,
+- [x] T012 Implement traceability lookup.
+  - Depends on: T003 for the standalone CLI; T006 remains the dependency for
+    wiring this behavior into future MCP task-selection surfaces.
+  - Files: `skills/spec-lifecycle-manager/scripts/traceability_lookup.py`,
+    `tests/traceability/test_traceability_lookup.py`,
+    `docs/specs/004-spec-management-mcp/traceability.md`,
+    `skills/spec-lifecycle-manager/SKILL.md`,
     `skills/spec-lifecycle-manager/references/spec-package/traceability.md`
   - Acceptance: `task_context` and `traceability_lookup` return forward and
     reverse mappings across requirements, acceptance criteria, design sections,
     tasks, verification, durable targets, and open decisions; stale or missing
     matrix rows are reported as gaps.
-  - Evidence: Pending.
+  - Evidence: `python3 -m unittest discover -s tests -p 'test_*.py'`;
+    `skills/spec-lifecycle-manager/scripts/traceability_lookup.py docs/specs/004-spec-management-mcp --task T012`;
+    missing task lookup returns exit code 1 with
+    `TRACEABILITY_TASK_ROW_MISSING`.
 
 ## Phase 3: Prompt And Hook Surfaces
 
@@ -164,3 +173,4 @@ T010 -> T011
 - Requirements: [requirements.md](requirements.md)
 - Design: [design.md](design.md)
 - Research: [research.md](research.md)
+- Traceability: [traceability.md](traceability.md)

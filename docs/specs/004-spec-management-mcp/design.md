@@ -112,6 +112,18 @@ The MCP server should not silently edit spec packages in the MVP. It may
 generate proposed patches or structured edit plans later, but first behavior
 should be read-heavy and deterministic.
 
+### Implementation Packaging Decision
+
+Deterministic lifecycle helpers may start as dependency-free scripts inside the
+`spec-lifecycle-manager` skill when they are useful before the MCP server
+exists. The future MCP adapter should wrap these tested helpers where practical
+instead of duplicating parsing logic.
+
+The traceability lookup MVP lives at
+`skills/spec-lifecycle-manager/scripts/traceability_lookup.py`. It provides the
+`task_context` and `traceability_lookup` behavior as a CLI now and establishes
+the payload shape for a future MCP tool.
+
 ## MCP Resources
 
 ### Static And Dynamic Resource URIs

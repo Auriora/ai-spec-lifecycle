@@ -19,6 +19,17 @@ Before implementing a task, review the row for that task ID and the linked
 requirement/design rows. If this matrix is stale or incomplete, reconcile it
 against the full spec package before coding.
 
+If the `spec-lifecycle-manager` skill is available in a repository checkout,
+the lookup helper can perform this first pass:
+
+```bash
+skills/spec-lifecycle-manager/scripts/traceability_lookup.py docs/specs/000-example --task T001 --format text
+```
+
+The helper is deterministic. It does not replace reading the source artifacts;
+it points the agent to the relevant sections and reports gaps that must be
+reconciled.
+
 ## Task To Context Matrix
 
 | Task ID | Requirements | Acceptance Criteria | Design Sections | Change Impact | Verification | Durable Targets | Open Decisions |

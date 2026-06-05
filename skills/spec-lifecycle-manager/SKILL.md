@@ -219,6 +219,20 @@ verification expectations, durable targets, and open decisions against the
 source artifacts. If the matrix is missing, stale, or incomplete, reconcile it
 from the full package instead of proceeding from task text alone.
 
+If this skill's `scripts/traceability_lookup.py` helper is available, prefer it
+for the first lookup:
+
+```bash
+skills/spec-lifecycle-manager/scripts/traceability_lookup.py docs/specs/004-spec-management-mcp --task T012 --format text
+```
+
+Run it from the repository root or pass an absolute spec package path. The
+helper returns the task row, linked requirements, acceptance criteria, design
+sections, change impact, verification expectations, durable targets, open
+decisions, and any gaps such as missing matrix rows, unresolved `TBD` values,
+missing referenced artifacts, or missing heading anchors. Treat reported gaps
+as reconciliation inputs before implementing the task.
+
 Before choosing the slice, compare task checkboxes, subtasks, acceptance
 criteria, and evidence against actual code, tests, config, and durable-doc
 evidence. Call out status-stale candidates when validation or review is the
