@@ -94,7 +94,7 @@ resources, prompts, tests, durable docs, and install guidance.
 - **Final spec commit:** `e7485bd`
 - **Closure log path:** `docs/history/spec-closure-log.md`
 - **Closure log entry updated:** yes
-- **Closure cleanup commit:** pending
+- **Closure cleanup commit:** `ea0c6a0`
 - **Active indexes updated:** yes
 - **Durable docs linked back to evidence where useful:** yes
 - **Residual spec-only content:** Implementation evidence remains in spec 007

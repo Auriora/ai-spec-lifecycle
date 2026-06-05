@@ -19,7 +19,7 @@ requires visible archived docs.
 - **Spec:** `docs/specs/007-spec-lifecycle-mcp-server/`
 - **Title:** Spec lifecycle MCP server
 - **Final spec commit:** `e7485bd`
-- **Closure cleanup commit:** pending
+- **Closure cleanup commit:** `ea0c6a0`
 - **Closure action:** retained-as-history
 - **Closed by:** platform
 - **Durable docs updated:**
