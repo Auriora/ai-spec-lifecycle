@@ -18,6 +18,7 @@ This documentation describes reusable agent workflows for managing implementatio
 - [AI-native SDD framework landscape](reference/ai-native-sdd-frameworks.md): reference list of spec-driven AI development systems and adjacent methodologies to study.
 - [Coding agent workflow research](reference/coding-agent-workflow-research.md): evidence and recommendations for operator-guided coding-agent workflows.
 - [Spec lifecycle runtime](reference/spec-lifecycle-runtime.md): deterministic CLI helper surface for spec scanning, linting, task context, hooks, prompts, reconciliation, promotion planning, and review packets.
+- [Backlog](backlog/README.md): proposed or deferred lifecycle work that is not yet a focused implementation spec.
 - [Spec lifecycle manager skill spec](specs/001-spec-lifecycle-manager-skill/spec.md): archived implementation and validation history for the reusable skill.
 
 ## Skill Source And Install
@@ -45,7 +46,8 @@ The skill includes fallback templates under:
   implementation spec packages.
 - `skills/spec-lifecycle-manager/references/durable-doc-templates/` for
   optional durable documentation classes that selected projects can copy or
-  adapt when they do not already have their own `docs/templates/` system.
+  adapt when they do not already have their own `docs/templates/` system,
+  including backlog and roadmap templates for deferred work.
 
 This repository's `docs/` tree documents the skill and its validation history;
 reusable project templates live with the skill source.

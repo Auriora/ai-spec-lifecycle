@@ -72,6 +72,7 @@ Current fallback package files:
 | `docs/adr/` | Durable decisions and rejected alternatives that future maintainers should understand. |
 | `docs/reference/` | Stable factual mappings, limits, schemas, taxonomies, generated summaries, and review matrices. |
 | `docs/backlog/` | Cross-spec sequencing and work not ready for a focused implementation spec. |
+| `docs/roadmap/` | Sequenced lifecycle work, milestones, adoption stages, and multi-spec dependencies. |
 | `docs/reviews/` | Analysis snapshots and evidence that may feed specs or durable docs. |
 | `docs/specs/` | Temporary active delivery packages and optional documented subsystem spec locations. |
 
@@ -176,9 +177,30 @@ When implementation stabilizes, promote accepted spec content into durable docs:
 | Data lineage, fields, config routing, and processed outputs | Data-flow docs, field dictionaries, config docs, and reference docs. |
 | Lasting decision rationale | ADRs. |
 | Temporary research findings | ADR, reference, review, or discard if no longer useful. |
-| Deferred implementation work | Backlog or a smaller follow-up spec. |
+| Deferred implementation work lacking scope or acceptance criteria | Backlog. |
+| Deferred sequencing, adoption, milestone, or multi-spec dependency work | Roadmap. |
+| Deferred work ready for implementation | Issue tracker item or smaller follow-up spec. |
 
 Do not leave completed behavior documented only in `docs/specs/`.
+
+## Backlog And Roadmap Routing
+
+Backlog and roadmap documents are durable planning surfaces, not active
+implementation specs and not product changelogs. Use them to keep deferred
+work visible without treating every idea as ready-to-build work.
+
+Use backlog for proposed, accepted, deferred, or dropped work that needs
+clarification before implementation. Backlog entries should stay concise and
+link to their primary destination when promoted.
+
+Use roadmap for sequencing, milestones, adoption stages, or dependencies that
+span multiple specs, backlog items, repositories, releases, or operational
+rollouts. Roadmap items should include exit criteria and evidence links.
+
+Use a follow-up spec or issue tracker item when deferred work has clear scope,
+acceptance criteria, and validation expectations. Repository-specific planning
+systems remain authoritative; the fallback durable templates are optional when
+no project template exists.
 
 ## Closure Criteria
 
@@ -189,7 +211,8 @@ A spec can be closed when:
 - durable docs describe the resulting current behavior;
 - API, data-flow, runbook, reference, and ADR updates are complete where relevant;
 - task state is accurate;
-- unresolved work is moved to backlog or a follow-up spec;
+- unresolved work is moved to backlog, roadmap, issue tracker, or a follow-up
+  spec;
 - the docs index no longer presents the spec as an active implementation package.
 
 Closure may remove the spec, move it to an archive/history area, or keep a clearly marked historical package if the repository's document lifecycle calls for that.

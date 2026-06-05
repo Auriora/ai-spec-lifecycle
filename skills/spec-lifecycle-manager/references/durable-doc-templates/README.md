@@ -39,7 +39,7 @@ Use this frontmatter on new markdown documents unless a template says otherwise 
 ```yaml
 ---
 title: Short descriptive title
-doc_type: guide|runbook|architecture|design|requirements|adr|integration|reference|checklist|history|governance
+doc_type: guide|runbook|architecture|design|requirements|adr|integration|reference|checklist|history|governance|backlog|roadmap
 status: draft|active|code-derived|deprecated|superseded|archived
 owner: team-or-person
 last_reviewed: YYYY-MM-DD
@@ -144,6 +144,24 @@ Use [checklist.md](checklist.md) for bounded review or rollout checklists with
 explicit scope, completion criteria, owners, evidence, results, and follow-up
 items.
 
+### Backlog
+
+Use [backlog.md](backlog.md) for proposed or deferred work that is not yet
+ready to become a focused implementation spec. Backlog entries should stay
+concise and identify a primary destination such as a follow-up spec, issue,
+roadmap item, durable doc, or explicit deferral.
+
+Store fallback backlog docs under `docs/backlog/`.
+
+### Roadmap
+
+Use [roadmap.md](roadmap.md) for sequenced work, milestones, adoption stages,
+or multi-spec dependencies. Roadmaps should link to backlog items for
+clarification work, active specs or issues for implementation work, and closure
+logs for completed work that creates follow-up planning.
+
+Store fallback roadmap docs under `docs/roadmap/`.
+
 ### History Note
 
 Use [history-note.md](history-note.md) for retained historical context that should not be mistaken for current guidance.
@@ -200,7 +218,8 @@ Split a document when it combines:
 - accepted decision rationale and current architecture explanation
 - integration overview and step-by-step incident handling
 - reference data and operational procedure
-- history or backlog notes and current operator guidance
+- backlog or roadmap planning and active implementation specs
+- history, closure-log, or changelog notes and current operator guidance
 
 ## Naming Guidance
 

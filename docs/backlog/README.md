@@ -15,12 +15,14 @@ spec or that should not block the active spec currently being delivered.
 
 | ID | Status | Topic | Source | Notes |
 |----|--------|-------|--------|-------|
-| B001 | proposed | Backlog and roadmap templates | MCP implementation discussion | Add durable templates and skill guidance for backlog and roadmap docs, including when to route deferred spec work to `docs/backlog/`, `docs/roadmap/`, issue trackers, or follow-up specs. |
+| B001 | done | Backlog and roadmap templates | MCP implementation discussion; `docs/specs/006-backlog-roadmap-templates/` | Durable templates and skill guidance added for backlog and roadmap docs, including routing deferred spec work to `docs/backlog/`, `docs/roadmap/`, issue trackers, or follow-up specs. |
 
 ## Maintenance
 
 - Promote an item into a focused spec when scope, owner, and acceptance
   criteria are clear.
+- Promote or link an item to roadmap when sequencing, milestone, adoption, or
+  multi-spec dependency tracking matters.
 - Link closed specs to backlog items when follow-up work is intentionally
   deferred.
 - Keep backlog items concise; detailed requirements belong in a spec package.

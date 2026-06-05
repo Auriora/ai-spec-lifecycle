@@ -306,6 +306,22 @@ Common routing:
 - temporary research -> durable decision, reference, review, or discard when no longer useful;
 - deferred work -> backlog, roadmap, issue tracker, or a smaller follow-up spec.
 
+Route deferred work by readiness:
+
+- use backlog when work is useful but lacks enough scope, acceptance criteria,
+  owner, or timing to become active implementation work;
+- use roadmap when work affects sequencing, milestones, adoption stages, or
+  dependencies across specs, repositories, or releases;
+- use the repository's issue tracker when issues are the authoritative planning
+  system or when the work needs external assignment, labels, or project-board
+  tracking;
+- create a smaller follow-up spec when the work is ready to implement and has
+  clear requirements, design direction, acceptance criteria, and validation
+  expectations.
+
+Record one primary destination for each deferred item. Add cross-links where
+useful, but do not leave the same work ambiguously active in multiple places.
+
 Promotion should produce an explicit durable-doc map before closure:
 
 - spec content promoted;
@@ -337,7 +353,8 @@ A spec can close only when:
 - durable docs describe the resulting current behavior;
 - contract, data, operations, reference, and decision-record updates are complete where relevant according to the repository's docs structure;
 - task state is accurate;
-- unresolved work is moved to backlog or a follow-up spec;
+- unresolved work is moved to backlog, roadmap, issue tracker, or a follow-up
+  spec;
 - indexes no longer present the package as active implementation work.
 
 If the repository uses a spec closure log, or no repository-specific closure

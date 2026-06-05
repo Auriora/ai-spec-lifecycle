@@ -14,7 +14,8 @@ Use this reference when a spec affects durable documentation or when review role
 | Runbook or operations | Operational procedures, rollout, validation, recovery, replay, and support steps. |
 | Decision record | Durable decisions and rejected alternatives. |
 | Reference | Stable factual mappings, limits, schemas, taxonomies, generated summaries, and review matrices. |
-| Backlog or roadmap | Cross-spec sequencing and work not ready for a focused implementation spec. |
+| Backlog | Proposed or deferred work not ready for a focused implementation spec. |
+| Roadmap | Sequenced work, milestones, adoption stages, and multi-spec dependencies. |
 | Review or audit | Analysis snapshots and evidence that may feed specs or durable docs. |
 | `docs/specs/` | Temporary active delivery packages. |
 
@@ -47,7 +48,9 @@ Before closing a spec, route or dispose of every lasting element:
 | Evidence that is useful only for audit | Archive with clear historical status or retain in the repository's audit/review location. |
 | Closure summary and final spec commit | Record in the repository's spec closure log, defaulting to `docs/history/spec-closure-log.md` when no authoritative closure record exists. |
 | Completed task coordination with no lasting value | Remove from the active docs path after closure. |
-| Unfinished or deferred work | Move to backlog, roadmap, issue tracker, or a follow-up spec. |
+| Unfinished or deferred work lacking scope or acceptance criteria | Move to backlog. |
+| Deferred work with sequencing, milestone, adoption, or multi-spec dependency impact | Move or link to roadmap. |
+| Deferred work that is ready to implement | Move to a follow-up spec or issue tracker item. |
 
 ## Expert Roles
 
@@ -77,7 +80,8 @@ Before closing a spec, route or dispose of every lasting element:
 | Runbook | Operations and SRE expert, senior developer | QA and test strategy expert, security and compliance expert, documentation architect |
 | ADR | Systems architect, software architect | Operations and SRE expert, security and compliance expert, documentation architect |
 | Reference | Documentation architect, relevant technical expert | QA and test strategy expert |
-| Backlog or roadmap | Developer process expert, systems architect | Product and requirements analyst, operations and SRE expert |
+| Backlog | Developer process expert, product and requirements analyst | Systems architect, documentation architect |
+| Roadmap | Developer process expert, systems architect | Product and requirements analyst, operations and SRE expert |
 | Review or audit report | QA and test strategy expert, relevant technical expert | Documentation architect, developer process expert |
 | Spec package | Developer process expert, software architect, QA and test strategy expert | Systems architect, documentation architect, operations and SRE expert |
 
@@ -98,7 +102,7 @@ Before closure, review for:
 - durable docs updated and linked;
 - tests, checks, or alternate verification recorded;
 - stale or duplicate spec-only content removed from the active knowledge path;
-- follow-up work moved to backlog or a focused spec.
+- follow-up work moved to backlog, roadmap, issue tracker, or a focused spec.
 - spec package disposition recorded as archived, removed, or retained as
   historical context.
 - final spec commit recorded before removal when Git-backed archival is used;
