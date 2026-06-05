@@ -2,7 +2,7 @@
 title: Spec lifecycle MCP server verification
 doc_type: spec
 artifact_type: verification
-status: draft
+status: archived
 owner: platform
 last_reviewed: 2026-06-05
 ---
@@ -24,7 +24,7 @@ resources, prompts, tests, durable docs, and install guidance.
 | Automated tests pass or alternate verification recorded | yes | pass | Focused MCP tests and full runtime tests passed. |
 | Durable documentation updates identified | yes | pass | Runtime reference, docs index, skill guidance, closure log, and backlog updated. |
 | Durable documentation promoted or explicitly deferred | yes | pass | Install and runtime guidance promoted. |
-| Spec cleanup decision recorded | yes | pass | Spec remains active until committed and closure-log cleanup can be decided. |
+| Spec cleanup decision recorded | yes | pass | Closure log records final spec commit `e7485bd`; package retained as historical evidence. |
 | Governance or policy conflicts resolved | yes | pass | Server is read-only and does not replace skill authority. |
 
 ## Validation Commands
@@ -88,17 +88,17 @@ resources, prompts, tests, durable docs, and install guidance.
 
 ### Spec Cleanup Decision
 
-- **Cleanup action:** retain as active until committed
+- **Cleanup action:** retain as history note
 - **Reason:** The package records implementation evidence for the MCP server
-  adapter.
-- **Final spec commit:** pending
+  adapter and remains useful for validation.
+- **Final spec commit:** `e7485bd`
 - **Closure log path:** `docs/history/spec-closure-log.md`
-- **Closure log entry updated:** no
+- **Closure log entry updated:** yes
 - **Closure cleanup commit:** pending
 - **Active indexes updated:** yes
 - **Durable docs linked back to evidence where useful:** yes
 - **Residual spec-only content:** Implementation evidence remains in spec 007
-  until closure.
+  as a retained historical package.
 
 ## Ship Or Closure Risk
 

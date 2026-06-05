@@ -14,6 +14,24 @@ requires visible archived docs.
 
 ## Entries
 
+### 2026-06-05 - 007-spec-lifecycle-mcp-server
+
+- **Spec:** `docs/specs/007-spec-lifecycle-mcp-server/`
+- **Title:** Spec lifecycle MCP server
+- **Final spec commit:** `e7485bd`
+- **Closure cleanup commit:** pending
+- **Closure action:** retained-as-history
+- **Closed by:** platform
+- **Durable docs updated:**
+  - `docs/reference/spec-lifecycle-runtime.md`
+  - `docs/README.md`
+  - `skills/spec-lifecycle-manager/SKILL.md`
+  - `docs/backlog/README.md`
+  - `docs/history/spec-closure-log.md`
+- **Verification summary:** `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'`; `git diff --check`; `spec_runtime.py closure-check docs/specs/007-spec-lifecycle-mcp-server` reported ready before cleanup.
+- **Residual risks:** Agent Workbench plugin packaging and hook installation remain future work tracked in backlog B002.
+- **Follow-up:** `docs/backlog/README.md` B002 for Agent Workbench MCP packaging and hook install.
+
 ### 2026-06-05 - 004-spec-management-mcp
 
 - **Spec:** `docs/specs/004-spec-management-mcp/`
