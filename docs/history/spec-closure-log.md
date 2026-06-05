@@ -27,5 +27,5 @@ requires visible archived docs.
   - `docs/design/spec-lifecycle-management.md`
   - `docs/README.md`
 - **Verification summary:** `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'`; `git diff --check`; `spec_runtime.py closure-check docs/specs/004-spec-management-mcp` reported ready before cleanup.
-- **Residual risks:** MCP server and hook installation remain future work; current runtime is CLI-first.
+- **Residual risks:** MCP server adapter delivered later in `docs/specs/007-spec-lifecycle-mcp-server/`; hook installation remains future work.
 - **Follow-up:** `docs/specs/005-spec-closure-log-management/` for closure-log workflow completion.

@@ -68,6 +68,19 @@ Use $spec-lifecycle-manager to reconcile this active spec package, choose the
 next implementation slice, and identify durable documentation updates.
 ```
 
+The installed skill also includes a local read-only stdio MCP server:
+
+```bash
+python3 ~/.codex/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py /path/to/repo
+```
+
+Use the repository source path instead of `~/.codex` while developing this
+repo:
+
+```bash
+python3 skills/spec-lifecycle-manager/scripts/spec_mcp_server.py "$PWD"
+```
+
 ## Specs
 
 Active implementation specs use `docs/specs/[###-slug]/` by default.

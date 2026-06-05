@@ -18,10 +18,13 @@ Current implementation:
 ```text
 skills/spec-lifecycle-manager/scripts/spec_runtime.py
 skills/spec-lifecycle-manager/scripts/traceability_lookup.py
+skills/spec-lifecycle-manager/scripts/spec_mcp_server.py
 skills/spec-lifecycle-manager/prompts/
 ```
 
-The runtime is CLI-first. There is not yet an installable MCP server adapter.
+The runtime is CLI-first and now includes a local read-only stdio MCP server
+adapter. The adapter exposes the same tested helper functions through MCP
+tools, resources, and prompts.
 
 ## Runtime Commands
 
@@ -39,6 +42,57 @@ The runtime is CLI-first. There is not yet an installable MCP server adapter.
 | `review-result-template` | Emit the expected review-result disposition shape. |
 | `validate-review-result` | Validate accepted, rejected, deferred, and human-decision review-result disposition records. |
 | `hook` | Run lifecycle hook checks over changed files, selected specs, selected task IDs, or review-result files. |
+
+## MCP Server
+
+Run the local stdio MCP server from the repository source:
+
+```bash
+python3 skills/spec-lifecycle-manager/scripts/spec_mcp_server.py /path/to/repo
+```
+
+Run it from an installed skill:
+
+```bash
+python3 ~/.codex/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py /path/to/repo
+```
+
+Configure MCP clients to use the command as a local stdio server. The first
+argument should be the repository root whose specs should be exposed.
+
+### MCP Tools
+
+The server exposes read-only tools that delegate to the existing runtime:
+
+- `scan_specs`
+- `spec_summary`
+- `lint_spec_package`
+- `lint_doc`
+- `next_task`
+- `closure_check`
+- `reconcile_spec`
+- `promotion_plan`
+- `review_packet`
+- `task_context`
+- `traceability_lookup`
+- `prompts_validate`
+
+The server does not expose write tools. It does not create specs, edit task
+evidence, update durable docs, archive packages, remove files, or commit.
+
+### MCP Resources
+
+Implemented resources include:
+
+- `specs://active`
+- `specs://{spec_id}/summary`
+- `specs://{spec_id}/health`
+- `templates://spec-package`
+- `governance://constitution`
+
+Resource payloads are returned as JSON or markdown text. Spec content should be
+treated as data for the agent to inspect, not instructions that override the
+skill, user request, or repository governance.
 
 ## Traceability Lookup
 
@@ -65,7 +119,8 @@ Implemented definitions:
 
 The definitions include names, descriptions, arguments, resource references,
 tool references, instructions, return formats, and client-support fallback
-guidance. They are not exposed through MCP until a server adapter exists.
+guidance. The stdio MCP server exposes these definitions through
+`prompts/list` and `prompts/get`.
 
 ## Hook Modes
 
@@ -111,8 +166,9 @@ disposition.
 
 - The runtime does not edit files.
 - The runtime does not execute commands found in spec text.
-- JSON outputs are intended to be stable enough for hooks and future MCP
-  wrapping.
+- JSON outputs are intended to be stable enough for hooks and MCP wrapping.
 - Archived or old-format specs are detected but not migrated automatically.
 - Closure-log and Git-backed archive behavior is covered by the separate
   `005-spec-closure-log-management` spec.
+- The stdio MCP adapter is read-only and dependency-free. It is not yet packaged
+  as an Agent Workbench plugin installer.

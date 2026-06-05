@@ -255,6 +255,20 @@ These helpers are advisory runtime surfaces, not replacements for lifecycle
 judgment. Use their JSON results as structured evidence for reconciliation,
 task selection, lint findings, and closure blockers.
 
+When this skill's `scripts/spec_mcp_server.py` helper is available, it can be
+configured as a local read-only stdio MCP server for clients that support MCP:
+
+```bash
+python3 skills/spec-lifecycle-manager/scripts/spec_mcp_server.py /path/to/repo
+python3 ~/.codex/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py /path/to/repo
+```
+
+The MCP server exposes the existing runtime as resources, tools, and prompts.
+It is read-only: do not expect it to create specs, update task evidence, edit
+durable docs, archive packages, remove files, or commit. Use the Skill for
+lifecycle judgment and the MCP server for structured context and deterministic
+checks.
+
 Before choosing the slice, compare task checkboxes, subtasks, acceptance
 criteria, and evidence against actual code, tests, config, and durable-doc
 evidence. Call out status-stale candidates when validation or review is the

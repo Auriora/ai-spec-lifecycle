@@ -16,6 +16,7 @@ spec or that should not block the active spec currently being delivered.
 | ID | Status | Topic | Source | Notes |
 |----|--------|-------|--------|-------|
 | B001 | done | Backlog and roadmap templates | MCP implementation discussion; `docs/specs/006-backlog-roadmap-templates/` | Durable templates and skill guidance added for backlog and roadmap docs, including routing deferred spec work to `docs/backlog/`, `docs/roadmap/`, issue trackers, or follow-up specs. |
+| B002 | proposed | Agent Workbench MCP packaging and hook install | `docs/specs/007-spec-lifecycle-mcp-server/` | Package the read-only MCP server for Agent Workbench or plugin install, and decide how advisory lifecycle hooks should be installed or configured. |
 
 ## Maintenance
 

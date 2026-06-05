@@ -1,0 +1,81 @@
+import json
+import subprocess
+import sys
+import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+SERVER = ROOT / "skills/spec-lifecycle-manager/scripts/spec_mcp_server.py"
+
+
+def rpc(request_id, method, params=None):
+    message = {"jsonrpc": "2.0", "id": request_id, "method": method}
+    if params is not None:
+        message["params"] = params
+    return message
+
+
+class SpecMcpServerTests(unittest.TestCase):
+    def send(self, *messages):
+        completed = subprocess.run(
+            [sys.executable, str(SERVER), str(ROOT)],
+            input="\n".join(json.dumps(message) for message in messages) + "\n",
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return [json.loads(line) for line in completed.stdout.splitlines() if line.strip()]
+
+    def test_initialize_reports_read_only_capabilities(self):
+        [payload] = self.send(rpc(1, "initialize", {"protocolVersion": "2025-06-18"}))
+
+        result = payload["result"]
+        self.assertEqual("2025-06-18", result["protocolVersion"])
+        self.assertEqual("spec-lifecycle-manager", result["serverInfo"]["name"])
+        self.assertIn("tools", result["capabilities"])
+        self.assertIn("resources", result["capabilities"])
+        self.assertIn("prompts", result["capabilities"])
+
+    def test_tools_list_and_call_scan_specs(self):
+        responses = self.send(
+            rpc(1, "tools/list"),
+            rpc(2, "tools/call", {"name": "scan_specs", "arguments": {"repo_root": str(ROOT)}}),
+        )
+
+        tools = {tool["name"] for tool in responses[0]["result"]["tools"]}
+        self.assertIn("scan_specs", tools)
+        self.assertIn("closure_check", tools)
+        structured = responses[1]["result"]["structuredContent"]
+        self.assertIn("specs", structured)
+        self.assertIn("004-spec-management-mcp", {item["spec_id"] for item in structured["specs"]})
+
+    def test_resources_list_and_read_active_specs(self):
+        responses = self.send(rpc(1, "resources/list"), rpc(2, "resources/read", {"uri": "specs://active"}))
+
+        uris = {resource["uri"] for resource in responses[0]["result"]["resources"]}
+        self.assertIn("specs://active", uris)
+        content = responses[1]["result"]["contents"][0]
+        payload = json.loads(content["text"])
+        self.assertIn("specs", payload)
+
+    def test_prompts_list_and_get(self):
+        responses = self.send(
+            rpc(1, "prompts/list"),
+            rpc(2, "prompts/get", {"name": "task-context", "arguments": {"spec_id": "004-spec-management-mcp", "task_id": "T010"}}),
+        )
+
+        prompts = {prompt["name"] for prompt in responses[0]["result"]["prompts"]}
+        self.assertIn("task-context", prompts)
+        message = responses[1]["result"]["messages"][0]
+        self.assertEqual("user", message["role"])
+        self.assertIn("Use the spec-lifecycle-manager skill", message["content"]["text"])
+
+    def test_unknown_tool_returns_json_rpc_error(self):
+        [payload] = self.send(rpc(1, "tools/call", {"name": "missing_tool", "arguments": {}}))
+
+        self.assertEqual(-32602, payload["error"]["code"])
+        self.assertIn("Unknown tool", payload["error"]["message"])
+
+
+if __name__ == "__main__":
+    unittest.main()
