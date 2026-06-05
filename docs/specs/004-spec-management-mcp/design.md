@@ -121,6 +121,7 @@ should be read-heavy and deterministic.
 | `specs://active` | Active spec inventory with IDs, paths, status, artifact inventory, old-format flag, and health summary. |
 | `specs://{spec_id}/summary` | Requirements, design status, task counts, open decisions, verification state, durable-source references. |
 | `specs://{spec_id}/tasks` | Parsed task graph, checkboxes, dependencies, files, acceptance, evidence, blockers. |
+| `specs://{spec_id}/traceability` | Parsed or inferred requirement/design/task/verification/durable-target matrix. |
 | `specs://{spec_id}/health` | Lint and lifecycle health diagnostics. |
 | `specs://{spec_id}/promotion-targets` | Candidate durable docs and missing promotion destinations. |
 | `templates://spec-package/{artifact_type}` | Effective spec template for an artifact type plus authority decision. |
@@ -162,7 +163,9 @@ fields rather than as unstructured whole documents. For example:
 | `lint_spec_package` | `spec_path`, optional severity profile | Diagnostics grouped by artifact and lifecycle gate. |
 | `lint_doc` | `path`, optional `artifact_type` | Artifact-specific diagnostics. |
 | `reconcile_spec` | `spec_path`, optional scope flags | Drift report with classifications and evidence gaps. |
-| `next_task` | `spec_path`, optional phase or user story | Next safe task slice with dependencies, files, and evidence needs. |
+| `next_task` | `spec_path`, optional phase or user story | Next safe task slice with dependencies, files, evidence needs, and traceability context. |
+| `task_context` | `spec_path`, `task_id` | Requirements, acceptance criteria, design sections, change impact, verification expectations, durable targets, and open decisions for a task. |
+| `traceability_lookup` | `spec_path`, lookup by task, requirement, or design section | Forward and reverse mappings across spec artifacts, with gaps and stale references reported. |
 | `promotion_plan` | `spec_path` | Durable-doc routing plan and missing promotion targets. |
 | `closure_check` | `spec_path` | Closure readiness, blockers, residual risk, active-index status. |
 | `generate_review_packet` | `spec_path`, `review_type`, optional model class | Bounded review packet with inputs, question, output schema, and stop conditions. |
@@ -176,6 +179,7 @@ fields rather than as unstructured whole documents. For example:
 | `propose_promotion_patch` | Generate patch plans for durable docs. |
 | `record_review_result` | Attach cheap-agent review results and disposition. |
 | `record_metric` | Record cycle-time and review-value data. |
+| `update_traceability_matrix` | Propose or apply traceability matrix updates after requirements, design, or tasks change. |
 
 Write tools should remain out of the MVP unless the deterministic read tools
 prove useful.
@@ -190,6 +194,7 @@ client-visible commands while delegating validation to tools.
 | `start-spec` | `title`, `risk_level`, optional `docs_root` | Guide the agent through creating a new spec package. |
 | `reconcile-spec` | `spec_id` or `spec_path` | Produce a reconciliation summary before resumed work. |
 | `choose-next-task` | `spec_id`, optional `phase` | Select a safe task slice and validation plan. |
+| `task-context` | `spec_id`, `task_id` | Return the spec context that must be reviewed before implementing a task. |
 | `lint-spec` | `spec_id`, optional `severity_profile` | Run deterministic lint and explain actionable findings. |
 | `review-requirements` | `spec_id`, optional `review_depth` | Generate a bounded requirements review packet. |
 | `review-design` | `spec_id`, optional `review_depth` | Generate a bounded design review packet. |
@@ -250,6 +255,7 @@ tools. Prompts are convenience entry points, not a governance dependency.
 | `requirements.md` | Frontmatter, durable source baseline, goals, non-goals, glossary when useful, user stories, EARS criteria, correctness properties, success criteria. |
 | `design.md` | Frontmatter, overview, high-level design, low-level design, interfaces, error handling, operational concerns, open questions. |
 | `tasks.md` | Frontmatter, dependency graph or dependency notes, stable task IDs, checkboxes, acceptance criteria, evidence for completed tasks, valid dependencies. |
+| `traceability.md` | Task IDs, requirement references, design section references, verification references, durable targets, open-decision references, and bidirectional consistency. |
 | `change-impact.md` | Durable source mapping, delta classification, promotion target, remove/rename/bug-fix handling. |
 | `verification.md` | Quality gates, evidence log, residual risk, closure or release readiness. |
 | `research.md` | Scope, sources, findings, tradeoffs, recommendation, uncertainty. |
@@ -277,6 +283,7 @@ review. Deterministic checks run first:
 4. Check old-format migration decision.
 5. Check unresolved decisions.
 6. Check verification and promotion readiness.
+7. Check traceability matrix freshness when present.
 
 Semantic review can then be delegated to review packets:
 
@@ -290,6 +297,57 @@ Reports must separate:
 - observed facts;
 - inferred diagnosis;
 - recommended action.
+
+## Traceability Design
+
+Traceability is the deterministic guardrail against implementing from task text
+alone. The MCP runtime should support both a package-local `traceability.md`
+artifact and inferred traceability from the core artifacts.
+
+### Matrix Inputs
+
+- `requirements.md`: requirement IDs, user stories, acceptance criteria,
+  correctness properties, success criteria, durable-source baseline.
+- `design.md`: section headings, requirement coverage table, interfaces,
+  algorithms, validation strategy, security, migration, operational concerns.
+- `tasks.md`: task IDs, dependencies, files, acceptance, evidence, user-story
+  tags.
+- `change-impact.md`: durable deltas and promotion targets.
+- `verification.md`: gates, requirement coverage, task evidence, residual risk.
+- `open-decisions.md`: decision IDs and blocking impact.
+- `traceability.md`: explicit forward and reverse mappings when present.
+
+### Lookup Output
+
+`task_context(spec_path, task_id)` should return:
+
+```json
+{
+  "task_id": "T004",
+  "task": "Add tests for user story 1",
+  "requirements": ["Requirement 1"],
+  "acceptance_criteria": ["Requirement 1 AC1", "Requirement 1 AC2"],
+  "design_sections": ["design.md#low-level-design"],
+  "change_impact": ["change-impact.md#durable-delta"],
+  "verification": ["verification.md#requirement-coverage"],
+  "durable_targets": ["docs/requirements/example.md"],
+  "open_decisions": [],
+  "files": ["tests/path/to/test"],
+  "gaps": []
+}
+```
+
+If the explicit matrix disagrees with source artifacts, the tool should report
+both the observed source facts and the stale matrix entry.
+
+### Matrix Freshness Rules
+
+- Every task ID in `tasks.md` should have a row when `traceability.md` exists.
+- Every requirement should map to at least one design section, task, or
+  documented deferral before implementation starts.
+- Every completed task should map to verification evidence before closure.
+- Open decisions that block a task should appear in task context.
+- Durable targets should be present for implemented behavior before closure.
 
 ## Review Packet Design
 

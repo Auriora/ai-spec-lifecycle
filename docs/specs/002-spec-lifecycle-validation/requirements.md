@@ -57,6 +57,13 @@ trials.
 5. GIVEN spec-package and durable-doc templates, WHEN checked, THEN temporary
    spec artifacts use `doc_type: spec` with `artifact_type`, while durable docs
    use durable document classes.
+6. GIVEN an agent implements a task from `tasks.md`, WHEN checked, THEN the
+   skill and templates instruct the agent to consult the full spec package
+   context before treating task wording as insufficient or non-implementable.
+7. GIVEN traceability support is enabled, WHEN checked, THEN the skill
+   references and templates provide a task-to-context matrix or MCP lookup
+   path that maps tasks to requirements, acceptance criteria, design sections,
+   verification, durable targets, and open decisions.
 
 ### Requirement 2: Fixture-Based Skill Trials
 

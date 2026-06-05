@@ -132,6 +132,15 @@ testable.
 
 ## Execution Rules
 
+- Do not implement from `tasks.md` alone. Treat this file as the execution
+  index for the package. Before implementing a task, review the linked
+  requirements, acceptance criteria, design details, change-impact notes,
+  verification expectations, durable-source baseline, and open decisions.
+- If a task line is broad, vague, or sounds like planning work, resolve its
+  concrete implementation meaning from `requirements.md`, `design.md`,
+  `change-impact.md`, `verification.md`, and `open-decisions.md` before
+  coding. Do not use vague task wording as a reason to skip implementation when
+  the package contains enough detail elsewhere.
 - Keep the checkbox/subtask structure as the default task shape.
 - Use `[P]` only when a task can run in parallel without dependency or file
   conflicts.

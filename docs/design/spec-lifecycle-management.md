@@ -116,6 +116,13 @@ resumed.
 ## Implementation Rules
 
 - Implement one coherent task slice at a time, usually one phase or checkpoint from `tasks.md`.
+- Do not implement from `tasks.md` alone. Task entries are an execution index;
+  agents must review the relevant requirements, acceptance criteria, design,
+  change impact, verification expectations, durable-source baseline, and open
+  decisions before coding.
+- If task wording is broad or vague, resolve its concrete implementation
+  meaning from the full spec package before treating it as blocked or
+  non-implementable.
 - Prefer independently testable user-story slices over broad task batches.
 - Map tests and validation back to requirement IDs, acceptance criteria, success criteria, or task IDs where practical.
 - Update task status only when the task's completion criteria are satisfied.

@@ -88,6 +88,7 @@ Promotion target after implementation:
 | Hook | Local event-triggered check, such as a pre-commit lint or post-task evidence check. |
 | Review packet | Bounded prompt plus context bundle suitable for a cheap or fast agent review pass. |
 | Spec artifact | One document in a spec package, such as `requirements.md`, `design.md`, `tasks.md`, `verification.md`, or `change-impact.md`. |
+| Traceability matrix | Bidirectional mapping between requirements, acceptance criteria, design sections, task IDs, verification evidence, durable targets, and open decisions. |
 
 ## Requirements
 
@@ -205,6 +206,31 @@ rules.
    the blocking task, decision, evidence, or validation gap.
 4. IF no safe task exists, THEN the selector SHALL return a concrete blocker
    rather than a generic failure.
+5. GIVEN a selected task ID, WHEN next-task selection returns task context,
+   THEN it SHALL include related requirements, acceptance criteria, design
+   sections, change-impact entries, verification expectations, durable targets,
+   and open decisions.
+6. IF a traceability matrix is missing or stale, THEN the selector SHALL infer
+   task context from the full spec package and report the matrix gap.
+
+### Requirement 6A: Provide Traceability Lookup
+
+**User Story:** As an implementation agent, I want to look up a task ID and
+receive the relevant specification context, so that I do not implement from task
+wording alone.
+
+#### Acceptance Criteria
+
+1. GIVEN a spec ID and task ID, WHEN traceability lookup runs, THEN it returns
+   the task row, related requirements, acceptance criteria, design sections,
+   change impact, verification expectations, durable targets, and open
+   decisions.
+2. GIVEN a requirement ID, WHEN reverse lookup runs, THEN it returns related
+   design sections, tasks, verification entries, and durable targets.
+3. GIVEN a design section, WHEN reverse lookup runs, THEN it returns related
+   requirements, tasks, files or interfaces, and verification entries.
+4. IF any referenced artifact is missing, stale, or ambiguous, THEN lookup
+   SHALL report the gap instead of inventing context.
 
 ### Requirement 7: Generate Review Packets For Cheap Agents
 

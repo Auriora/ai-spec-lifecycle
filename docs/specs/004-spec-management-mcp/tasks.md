@@ -20,8 +20,8 @@ T001 -> T002 -> T003
 T003 -> T004
 T003 -> T005
 T004 + T005 -> T006
-T006 -> T007
 T006 -> T008
+T006 -> T012 -> T007
 T008 -> T009
 T007 + T009 -> T010
 T010 -> T011
@@ -82,17 +82,29 @@ T010 -> T011
 - [ ] T006 Implement next-task and closure checks.
   - Depends on: T004, T005
   - Files: implementation path TBD, `tests/`
-  - Acceptance: `next_task` respects dependencies and evidence; `closure_check`
-    reports verification, promotion, open-decision, and active-index blockers.
+  - Acceptance: `next_task` respects dependencies and evidence and returns
+    traceability context; `closure_check` reports verification, promotion,
+    open-decision, and active-index blockers.
+  - Evidence: Pending.
+
+- [ ] T012 Implement traceability lookup.
+  - Depends on: T006
+  - Files: implementation path TBD, `tests/`,
+    `skills/spec-lifecycle-manager/references/spec-package/traceability.md`
+  - Acceptance: `task_context` and `traceability_lookup` return forward and
+    reverse mappings across requirements, acceptance criteria, design sections,
+    tasks, verification, durable targets, and open decisions; stale or missing
+    matrix rows are reported as gaps.
   - Evidence: Pending.
 
 ## Phase 3: Prompt And Hook Surfaces
 
 - [ ] T007 Add MCP prompt definitions.
-  - Depends on: T006
+  - Depends on: T006, T012
   - Files: implementation path TBD, prompt definition files TBD
-  - Acceptance: `reconcile-spec`, `choose-next-task`, and `lint-spec` prompts
-    are discoverable where client support exists and include clear arguments.
+  - Acceptance: `reconcile-spec`, `choose-next-task`, `task-context`, and
+    `lint-spec` prompts are discoverable where client support exists and
+    include clear arguments.
   - Evidence: Pending.
 
 - [ ] T008 Add hook runner MVP.

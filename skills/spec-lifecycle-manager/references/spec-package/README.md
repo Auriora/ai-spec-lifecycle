@@ -43,6 +43,10 @@ Use the artifacts as a progressive chain:
    onboarding or operational hand-off.
 8. `open-decisions.md`: unresolved decisions that block stable requirements,
    design, implementation, verification, promotion, or closure.
+9. `traceability.md`: optional bidirectional matrix that maps task IDs to
+   requirements, acceptance criteria, design sections, change impact,
+   verification, durable targets, and open decisions. Use it for larger specs
+   or when agents need a task-ID lookup surface before implementation.
 
 Small, low-risk work can use a smaller package. Create only the files that help
 coordinate implementation, validation, or future promotion.
@@ -73,6 +77,7 @@ Recommended `artifact_type` values:
 - `research`
 - `quickstart`
 - `open-decisions`
+- `traceability`
 
 Durable docs use durable document classes such as `requirements`, `design`,
 `architecture`, `runbook`, `adr`, `reference`, or `checklist`. Do not treat a
@@ -94,6 +99,7 @@ closure; promote accepted content into the durable documentation set.
 - `verification.md`
 - `quickstart.md`
 - `open-decisions.md`
+- `traceability.md`
 
 ## Acceptance Criteria Format
 
@@ -122,6 +128,17 @@ Check off subtasks as work progresses, but check off the parent task only after
 its acceptance criteria are met and evidence is recorded. Evidence can be a
 command, test result, review note, screenshot, log, commit, or manual
 verification note.
+
+Tasks are an execution index, not a standalone specification. Before
+implementing a task, agents should review the relevant `requirements.md`,
+`design.md`, `change-impact.md`, `verification.md`, `open-decisions.md`, and
+durable-source baseline. If a task line is vague but the package provides
+implementation detail elsewhere, use the fuller package context instead of
+treating the task as non-implementable.
+
+For larger packages, add `traceability.md` so agents can look up a task ID and
+see the related requirements, acceptance criteria, design sections,
+verification gates, durable-doc targets, and open decisions before coding.
 
 ## Lifecycle Phases
 

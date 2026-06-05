@@ -40,7 +40,7 @@ This skill includes two kinds of fallback references:
 1. Read applicable repo instructions such as `AGENTS.md`.
 2. Inspect repository documentation direction such as `docs/README.md`, `docs/templates/`, governance or constitution docs, document lifecycle notes, indexes, existing docs, and whether a lifecycle partition such as `docs/<name>/` is used.
 3. Locate the active spec package under the chosen docs root, defaulting to `docs/specs/[###-slug]/`.
-4. Read available spec artifacts: `requirements.md`, `design.md`, `tasks.md`, plus optional `change-impact.md`, `verification.md`, `research.md`, `quickstart.md`, `open-decisions.md`, contracts, checklists, and sequencing docs when present. If `spec.md` or `plan.md` are found instead, the package uses the old format; handle that through the migration decision gate in Reconcile.
+4. Read available spec artifacts: `requirements.md`, `design.md`, `tasks.md`, plus optional `change-impact.md`, `verification.md`, `research.md`, `quickstart.md`, `open-decisions.md`, `traceability.md`, contracts, checklists, and sequencing docs when present. If `spec.md` or `plan.md` are found instead, the package uses the old format; handle that through the migration decision gate in Reconcile.
 5. Identify the repository's durable documentation targets from its own docs structure and templates before assuming document classes or folder names.
 
 If no active package exists and the user asks to start one, create the smallest useful `[docs-root]/specs/[###-slug]/` package for the risk level. Use repository-documented package templates when present. If no repository-specific package template exists, use `references/spec-package/` as the fallback package template. If both exist and differ, prefer the repository template and record the template authority decision.
@@ -68,6 +68,10 @@ Use spec artifacts as a progressive chain, not interchangeable notes:
 - `verification.md`: validation plan, quality gates, evidence log, residual risks, and release or closure readiness checks.
 - `research.md`: bounded investigation, tradeoffs, unknowns, and recommendations that inform the requirements or design.
 - `quickstart.md`: temporary validation, demo, setup, rollout, or operator notes that may later be promoted into durable docs.
+- `traceability.md`: optional bidirectional matrix that maps tasks to relevant
+  requirements, acceptance criteria, design sections, change impact,
+  verification, durable targets, and open decisions. Use it when the package is
+  large enough that task text may not carry enough context by itself.
 
 Not every task needs every artifact. For small, low-risk work, create only the files that add clear value.
 
@@ -201,6 +205,20 @@ For fresh, small, low-risk work, a one- or two-line reconciliation is enough whe
 
 Select one coherent implementation slice at a time, usually a phase, checkpoint, user story, parent task, or subtask group from `tasks.md`. Respect the dependency graph and `Depends on:` notes: only select tasks whose dependencies are complete.
 
+Do not implement from `tasks.md` alone. Treat task text as an execution index,
+not the full specification. Before implementing a task, read the relevant
+requirements, acceptance criteria, design sections, change-impact entries,
+verification expectations, durable-source baseline, and open decisions. If the
+task wording appears broad, vague, or ambiguous, resolve it through those
+artifacts before coding. Lack of detail in the task line is not a reason to
+ignore the fuller spec context.
+
+When `traceability.md` exists, use it as the first task-context lookup for the
+selected task ID, then verify the referenced requirements, design sections,
+verification expectations, durable targets, and open decisions against the
+source artifacts. If the matrix is missing, stale, or incomplete, reconcile it
+from the full package instead of proceeding from task text alone.
+
 Before choosing the slice, compare task checkboxes, subtasks, acceptance
 criteria, and evidence against actual code, tests, config, and durable-doc
 evidence. Call out status-stale candidates when validation or review is the
@@ -209,6 +227,7 @@ current goal.
 Before editing, state:
 
 - selected task IDs or requirement IDs;
+- spec artifacts consulted and the relevant details they add;
 - files or doc classes likely affected;
 - validation expected;
 - any unresolved decision that blocks implementation.
