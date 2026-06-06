@@ -2,7 +2,7 @@
 title: Coding agent operating model verification
 doc_type: spec
 artifact_type: verification
-status: draft
+status: archived
 owner: platform
 last_reviewed: 2026-06-06
 ---
@@ -86,9 +86,9 @@ destination decision, dogfood evidence, and closure readiness.
 - **Cleanup action:** retain as history note
 - **Reason:** The package records exploration history and evidence for the
   durable operating model.
-- **Final spec commit:** pending
+- **Final spec commit:** `7ee157b`
 - **Closure log path:** `docs/history/spec-closure-log.md`
-- **Closure log entry updated:** pending
+- **Closure log entry updated:** yes
 - **Closure cleanup commit:** pending
 - **Active indexes updated:** yes
 - **Durable docs linked back to evidence where useful:** yes

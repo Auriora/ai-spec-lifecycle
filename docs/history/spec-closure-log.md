@@ -3,7 +3,7 @@ title: Spec closure log
 doc_type: history
 status: active
 owner: platform
-last_reviewed: 2026-06-05
+last_reviewed: 2026-06-06
 ---
 
 # Spec Closure Log
@@ -13,6 +13,22 @@ package history is preserved by Git unless a repository-specific archive policy
 requires visible archived docs.
 
 ## Entries
+
+### 2026-06-06 - 003-coding-agent-operating-model
+
+- **Spec:** `docs/specs/003-coding-agent-operating-model/`
+- **Title:** Coding agent operating model
+- **Final spec commit:** `7ee157b`
+- **Closure cleanup commit:** pending
+- **Closure action:** retained-as-history
+- **Closed by:** platform
+- **Durable docs updated:**
+  - `docs/design/coding-agent-operating-model.md`
+  - `docs/reference/coding-agent-workflow-research.md`
+  - `docs/README.md`
+- **Verification summary:** Spec 003 lint, closure-check, traceability lookups, full runtime tests, focused Codex hook tests, and `git diff --check` passed.
+- **Residual risks:** The model is durable guidance, not mandatory governance; metrics remain lightweight/manual.
+- **Follow-up:** None.
 
 ### 2026-06-06 - 010-codex-hook-dogfood
 
