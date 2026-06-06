@@ -1,6 +1,12 @@
 ---
 name: spec-lifecycle-manager
 description: Manage AI-assisted implementation specs from intake through reconciliation, implementation, durable documentation promotion, expert review, and closure. Use when creating, continuing, reconciling, reviewing, implementing from, promoting, or closing spec packages, especially under docs/specs/[###-slug]/.
+license: MIT
+compatibility: Requires Codex with Agent Skills support, Python 3.9+, and repository docs using AGENTS.md or equivalent instructions; MCP and hooks are optional but supported.
+metadata:
+  author: Auriora
+  version: "0.1.0"
+  bundled_in_plugin: spec-lifecycle-manager
 ---
 
 # Spec Lifecycle Manager

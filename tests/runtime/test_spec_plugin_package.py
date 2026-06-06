@@ -5,6 +5,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 PLUGIN = ROOT / "plugins" / "spec-lifecycle-manager"
+SOURCE_SKILL = ROOT / "skills" / "spec-lifecycle-manager"
+BUNDLED_SKILL = PLUGIN / "skills" / "spec-lifecycle-manager"
 
 
 class SpecPluginPackageTests(unittest.TestCase):
@@ -34,6 +36,34 @@ class SpecPluginPackageTests(unittest.TestCase):
         hooks = json.loads((PLUGIN / "hooks" / "hooks.json").read_text(encoding="utf-8"))
         post_tool = hooks["hooks"]["PostToolUse"][0]["hooks"][0]
         self.assertIn("${PLUGIN_ROOT}/skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py", post_tool["command"])
+
+    def test_bundled_skill_matches_source_skill(self):
+        source_files = {
+            path.relative_to(SOURCE_SKILL)
+            for path in SOURCE_SKILL.rglob("*")
+            if path.is_file() and "__pycache__" not in path.parts
+        }
+        bundled_files = {
+            path.relative_to(BUNDLED_SKILL)
+            for path in BUNDLED_SKILL.rglob("*")
+            if path.is_file() and "__pycache__" not in path.parts
+        }
+        self.assertEqual(source_files, bundled_files)
+        for relative in sorted(source_files):
+            self.assertEqual(
+                (SOURCE_SKILL / relative).read_bytes(),
+                (BUNDLED_SKILL / relative).read_bytes(),
+                f"Bundled skill file drifted: {relative}",
+            )
+
+    def test_skill_frontmatter_includes_agent_skills_metadata(self):
+        text = (SOURCE_SKILL / "SKILL.md").read_text(encoding="utf-8")
+        frontmatter = text.split("---", 2)[1]
+        self.assertIn("name: spec-lifecycle-manager", frontmatter)
+        self.assertIn("description:", frontmatter)
+        self.assertIn("license: MIT", frontmatter)
+        self.assertIn("compatibility:", frontmatter)
+        self.assertIn("metadata:", frontmatter)
 
 
 if __name__ == "__main__":

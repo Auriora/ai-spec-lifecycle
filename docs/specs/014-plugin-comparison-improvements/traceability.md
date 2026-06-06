@@ -20,6 +20,7 @@ last_reviewed: 2026-06-06
 | T005 | Requirement 4 | R4 AC1-AC3 | `design.md#gate-marker-candidates` | `change-impact.md#durable-source-mapping` | `verification.md#quality-gates` | `docs/reference/spec-lifecycle-runtime.md`, `skills/spec-lifecycle-manager/scripts/spec_runtime.py` | D003 |
 | T006 | Requirement 5 | R5 AC1-AC3 | `design.md#components-and-changes` | `change-impact.md#promotion-targets` | `verification.md#quality-gates` | `docs/backlog/README.md`, `docs/roadmap/README.md` | D005 |
 | T007 | Requirement 3, Requirement 4, Requirement 5 | R3 AC1-AC3, R4 AC1-AC3, R5 AC1 | `design.md#migration-and-compatibility` | `change-impact.md#compatibility` | `verification.md#quality-gates` | `plugins/spec-lifecycle-manager/` | D001, D002, D003 |
+| T010 | Requirement 5 | R5 AC1-AC3 | `design.md#agent-skills-standard-alignment` | `change-impact.md#durable-source-mapping` | `verification.md#quality-gates` | `skills/spec-lifecycle-manager/SKILL.md`, `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/SKILL.md`, `tests/runtime/test_spec_plugin_package.py`, `docs/backlog/README.md` | D005 |
 | T008 | Requirement 1, Requirement 2, Requirement 3, Requirement 4, Requirement 5 | All | `design.md#validation-strategy` | `change-impact.md#compatibility` | `verification.md#evidence-log` | `verification.md` | none |
 | T009 | Requirement 5 | R5 AC1-AC3 | `design.md#operational-considerations` | `change-impact.md#promotion-targets` | `verification.md#closure-readiness` | `docs/history/spec-closure-log.md`, `docs/history/spec-archive-index.md` | none |
 
@@ -31,7 +32,7 @@ last_reviewed: 2026-06-06
 | Requirement 2 | T004, T008 | Prompt/skill/runtime validation depending on D001. |
 | Requirement 3 | T003, T007, T008 | Prompt validation; MCP prompt tests if added. |
 | Requirement 4 | T005, T007, T008 | Runtime tests or docs review depending on D003. |
-| Requirement 5 | T001, T002, T006, T009 | Backlog/roadmap review; closure readiness. |
+| Requirement 5 | T001, T002, T006, T010, T009 | Backlog/roadmap review; closure readiness. |
 
 ## Design To Implementation Matrix
 
@@ -42,6 +43,7 @@ last_reviewed: 2026-06-06
 | Prompt alias candidates | T003, T007 | Prompt definitions mirrored into development skill and bundled plugin. |
 | Gate marker candidates | T005, T007 | Runtime docs and optional runtime checks if accepted. |
 | Migration and compatibility | T007, T008 | Plugin validation, prompt validation, and full test pass. |
+| Agent Skills standard alignment | T010 | Source and bundled skill metadata plus drift tests. |
 | Operational considerations | T006, T009 | Backlog, roadmap, closure log, and archive index updates. |
 
 ## Open Decision Impact

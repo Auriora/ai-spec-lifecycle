@@ -42,6 +42,7 @@ spec or that should not block the active spec currently being delivered.
 | B025 | candidate | OpenTelemetry and Jaeger tracing | User request; Agent Workbench reference implementation | Add disabled-by-default OpenTelemetry tracing for MCP tools and executable runtime code, with configurable OTLP HTTP export to Jaeger or a collector. Use `../agent-workbench/docs/design/observability-debugging-design.md` and `../agent-workbench/src/infrastructure/telemetry/` as reference implementation inputs. |
 | B026 | candidate | Distribution packaging for GHCR | User request | Package the skill, MCP server, scripts, prompts, and install metadata for distribution through GitHub Container Registry. Define versioning, image/package layout, install or sync commands, provenance, and compatibility checks. |
 | B027 | done | Project principles template | User request; `docs/governance/project-principles.md` | Added a reusable durable-doc template and skill guidance for purpose, problem statement, VMOST, core principles, scope rules, project-fit decision questions, governance relationship, and current product signals. |
+| B028 | candidate | Agent Skills reference validator integration | Agent Skills standard review; `014-plugin-comparison-improvements` | Evaluate adding `skills-ref validate` to validation commands for source and bundled skills. Decide dependency installation, offline behavior, and whether failures should block plugin packaging. |
 
 ## Candidate Priorities
 
@@ -58,6 +59,7 @@ dogfooding, not on factual claims from conversation content.
 | P2 | B012 | Helps distinguish real task evidence from vague completion claims. |
 | P2 | B008 | Improves closure quality and durable-promotion confidence. |
 | P2 | B025 | Adds operational visibility for MCP tools and runtime executables as the tool surface grows; should stay disabled by default and export to Jaeger only when configured. |
+| P2 | B028 | Gives an official standard conformance check once dependency and offline behavior are agreed. |
 | P3 | B009 | Useful for richer specs, but lower priority than preflight because traceability can already be hand-authored. |
 | P3 | B013 | Helps continuation between agents now that the preflight/context model exists. |
 | P3 | B022 | Valuable hygiene once agent instructions and MCP docs change more often. |

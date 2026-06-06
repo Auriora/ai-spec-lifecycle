@@ -26,6 +26,7 @@ last_reviewed: 2026-06-06
 | Date | Task | Evidence | Result |
 |------|------|----------|--------|
 | 2026-06-06 | Spec creation | Created initial spec package. | pending validation |
+| 2026-06-07 | T010 | Added Agent Skills optional metadata to source and bundled `SKILL.md`; added source/bundled skill drift tests; routed `skills-ref validate` integration to backlog B028. Focused package tests, plugin validation, spec lint, next-task traceability, and whitespace check passed. | pass |
 
 ## Closure Readiness
 

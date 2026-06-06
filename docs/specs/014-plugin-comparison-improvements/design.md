@@ -139,6 +139,18 @@ work to backlog.
 - Runtime output additions should be additive and backward-compatible.
 - Plugin package validation must continue to pass.
 
+### Agent Skills Standard Alignment
+
+The `spec-lifecycle-manager` skill should remain a valid Agent Skills package:
+
+- `SKILL.md` frontmatter includes required `name` and `description` fields.
+- Optional `license`, `compatibility`, and `metadata` fields document
+  packaging expectations without changing runtime behavior.
+- The bundled plugin copy stays byte-for-byte aligned with the source skill
+  tree, excluding generated cache files.
+- Official `skills-ref validate` integration is deferred to backlog until the
+  repository explicitly accepts the external validator dependency.
+
 ## Validation Strategy
 
 | Validation | Covers | Evidence Location | Residual Risk |

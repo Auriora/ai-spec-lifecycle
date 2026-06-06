@@ -63,13 +63,24 @@ last_reviewed: 2026-06-06
   - Depends on: T003, T004, T005
   - Evidence:
 
+- [x] T010 Align the lifecycle skill with Agent Skills metadata guidance.
+  - Requirements: Requirement 5
+  - Files: `skills/spec-lifecycle-manager/SKILL.md`,
+    `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/SKILL.md`,
+    `tests/runtime/test_spec_plugin_package.py`, `docs/backlog/README.md`
+  - Acceptance: Source and bundled `SKILL.md` files include useful optional
+    Agent Skills metadata; package tests verify source and bundled skill files
+    stay in sync; official validator integration is routed to backlog unless
+    accepted as a dependency.
+  - Evidence: `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_plugin_package` passed; `python3 /home/bcherrington/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py plugins/spec-lifecycle-manager` passed; `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py lint docs/specs/014-plugin-comparison-improvements` passed.
+
 ## Phase 4: Verification and Closure
 
 - [ ] T008 Run validation and record evidence.
   - Requirements: Requirement 1, Requirement 2, Requirement 3, Requirement 4, Requirement 5
   - Acceptance: Required validation commands pass or residual risks are
     documented in `verification.md`.
-  - Depends on: T006, T007
+  - Depends on: T006, T007, T010
   - Evidence:
 
 - [ ] T009 Promote durable docs and close package.
