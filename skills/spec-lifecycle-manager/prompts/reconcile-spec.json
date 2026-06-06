@@ -34,5 +34,5 @@
     "next_action",
     "evidence_or_residual_risk"
   ],
-  "client_support_fallback": "If MCP prompts are unavailable, ask naturally to reconcile the spec using the spec-lifecycle-manager skill plus spec_runtime.py lint and next-task."
+  "client_support_recovery": "If MCP tools are unavailable, ask naturally to reconcile the spec using the spec-lifecycle-manager skill plus spec_runtime.py lint and next-task."
 }

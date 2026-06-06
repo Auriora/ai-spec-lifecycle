@@ -22,3 +22,6 @@ installer runs:
 
 The runtime is advisory and read-only. It does not create specs, edit task
 evidence, update durable docs, close packages, remove files, or commit changes.
+When the MCP tools are visible in Codex, use them for lifecycle context and
+deterministic checks. Run the underlying Python scripts directly only for
+implementation validation, CI, MCP debugging, or explicit no-MCP recovery.

@@ -11,7 +11,9 @@ last_reviewed: 2026-06-05
 ## Purpose
 
 Record how the `spec-lifecycle-manager` MCP server is installed and validated
-alongside Agent Workbench for this repository.
+alongside Agent Workbench for this repository. Once installed and visible,
+Codex agents should use the MCP tools for lifecycle context and deterministic
+checks before running the underlying `.py` scripts directly.
 
 ## Supported Model
 
@@ -120,6 +122,7 @@ Use this checklist after install, sync, or reload:
 | Check | Expected evidence |
 |-------|-------------------|
 | MCP tools visible after reload | Codex exposes `mcp__spec_lifecycle_manager` tools. |
+| MCP-first guidance synced | Installed skill tells agents to prefer MCP tools and treat scripts as implementation, validation, CI, explicit recovery, or debugging surfaces. |
 | Server starts | `initialize` returns server name `spec-lifecycle-manager`. |
 | Spec scan works | `scan_specs` returns the repository root and the expected active-spec count. |
 | Archive index works | `archive_index` returns no diagnostics for removed package history. |

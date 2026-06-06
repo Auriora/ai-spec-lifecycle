@@ -34,5 +34,5 @@
     "recommended_fixes",
     "residual_risk"
   ],
-  "client_support_fallback": "Run spec_runtime.py lint on the package or changed document."
+  "client_support_recovery": "If MCP tools are unavailable, run spec_runtime.py lint on the package or changed document."
 }

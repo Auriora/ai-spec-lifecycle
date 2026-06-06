@@ -241,8 +241,25 @@ verification expectations, durable targets, and open decisions against the
 source artifacts. If the matrix is missing, stale, or incomplete, reconcile it
 from the full package instead of proceeding from task text alone.
 
-If this skill's `scripts/traceability_lookup.py` helper is available, prefer it
-for the first lookup:
+### Runtime Access Order
+
+When MCP tools are available in the current Codex session, use them before
+shelling out to this skill's Python runtime scripts. The MCP server is the
+primary agent-facing surface for lifecycle context and deterministic checks:
+
+- `scan_specs` or `active_spec_preflight` before lifecycle work.
+- `task_context` and `traceability_lookup` before implementing a selected task.
+- `spec_summary`, `lint_spec_package`, `next_task`, `closure_check`,
+  `archive_index`, `reconcile_spec`, `promotion_plan`, `review_packet`,
+  `agent_backed_tool`, and `prompts_validate` for their matching workflows.
+
+Use `scripts/spec_runtime.py` and `scripts/traceability_lookup.py` directly as
+implementation, CI, validation, and recovery interfaces only: MCP unavailable,
+installed-runtime validation, MCP adapter debugging, or a repository validation
+checklist that explicitly requires the CLI command.
+
+If MCP tools are unavailable and this skill's `scripts/traceability_lookup.py`
+helper is available, use it for the first lookup:
 
 ```bash
 skills/spec-lifecycle-manager/scripts/traceability_lookup.py docs/specs/013-example-active-spec --task T012 --format text
@@ -255,8 +272,9 @@ decisions, and any gaps such as missing matrix rows, unresolved `TBD` values,
 missing referenced artifacts, or missing heading anchors. Treat reported gaps
 as reconciliation inputs before implementing the task.
 
-When this skill's `scripts/spec_runtime.py` helper is available, use it for
-deterministic scanner, linter, next-task, and closure-check passes:
+When MCP tools are unavailable or CLI validation is explicitly required, the
+underlying `scripts/spec_runtime.py` helper provides deterministic scanner,
+linter, next-task, closure-check, hook, review, and prompt-validation passes:
 
 ```bash
 skills/spec-lifecycle-manager/scripts/spec_runtime.py scan .
@@ -279,9 +297,9 @@ Only run package-specific commands against an active package returned by
 `scan`. If scan reports no active specs, use durable docs and history indexes
 for context instead of substituting a removed package path.
 
-These helpers are advisory runtime surfaces, not replacements for lifecycle
-judgment. Use their JSON results as structured evidence for reconciliation,
-task selection, lint findings, and closure blockers.
+The MCP tools and CLI helpers are advisory runtime surfaces, not replacements
+for lifecycle judgment. Use their structured results as evidence for
+reconciliation, task selection, lint findings, and closure blockers.
 
 `agent-backed-tool` is also advisory and read-only. The current runner
 implementation is a disabled stub: it builds the bounded review packet and
@@ -301,8 +319,8 @@ Do not add write-capable agent-backed tools inside an active implementation
 slice unless a separate explicit spec defines sandboxing, permissions, review,
 rollback, and evidence requirements.
 
-When this skill's `scripts/spec_mcp_server.py` helper is available, it can be
-configured as a local read-only stdio MCP server for clients that support MCP:
+When this skill's `scripts/spec_mcp_server.py` helper is available, configure
+it as a local read-only stdio MCP server for clients that support MCP:
 
 ```bash
 python3 skills/spec-lifecycle-manager/scripts/spec_mcp_server.py /path/to/repo
@@ -312,8 +330,8 @@ python3 ~/.codex/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py /path/
 The MCP server exposes the existing runtime as resources, tools, and prompts.
 It is read-only: do not expect it to create specs, update task evidence, edit
 durable docs, archive packages, remove files, or commit. Use the Skill for
-lifecycle judgment and the MCP server for structured context and deterministic
-checks.
+lifecycle judgment and the MCP server, when visible, for structured context and
+deterministic checks.
 
 When this skill's `scripts/codex_spec_lifecycle_hook.py` helper is installed
 as a Codex `PostToolUse` hook, it provides advisory checks for changed spec

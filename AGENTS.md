@@ -16,6 +16,12 @@ fixtures under `tests/fixtures/`.
 
 ## Build, Test, and Development Commands
 
+In Codex sessions where the `spec-lifecycle-manager` MCP server is available,
+prefer MCP tools for lifecycle context (`scan_specs`, `active_spec_preflight`,
+`task_context`, `traceability_lookup`, `closure_check`, `archive_index`, and
+`prompts_validate`). The direct Python commands below are for validation, CI,
+explicit recovery when MCP is unavailable, and runtime debugging.
+
 - `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'`:
   run the full test suite.
 - `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py scan .`:
@@ -57,8 +63,10 @@ follow-up backlog items.
 Review this file and any deeper `AGENTS.md` before changing files. For lifecycle
 work, use the `spec-lifecycle-manager` skill and do not implement from
 `tasks.md` alone; review relevant requirements, design, traceability,
-verification, and governance first. Run `spec_runtime.py scan .` before
-lifecycle work; if there are no active specs, use durable docs, backlog,
-roadmap, the closure log, and the archive index instead of deleted packages.
+verification, and governance first. Use MCP `scan_specs` or
+`active_spec_preflight` before lifecycle work when the MCP server is available;
+only run `spec_runtime.py scan .` directly when MCP is unavailable or being
+debugged. If there are no active specs, use durable docs, backlog, roadmap, the
+closure log, and the archive index instead of deleted packages.
 If a session lacks repository instructions, ask the user to run `/init` once
 rather than repeating the reminder.

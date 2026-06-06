@@ -35,5 +35,5 @@
     "open_decisions",
     "gaps"
   ],
-  "client_support_fallback": "Run traceability_lookup.py with --task."
+  "client_support_recovery": "If MCP tools are unavailable, run traceability_lookup.py with --task."
 }

@@ -403,7 +403,7 @@ def get_prompt(name: str, arguments: dict[str, Any], repo_root: Path) -> dict[st
             "Return format:",
             *[f"- {item}" for item in prompt.get("return_format", [])],
             "",
-            f"Fallback: {prompt.get('client_support_fallback', '')}",
+            f"Recovery: {prompt.get('client_support_recovery') or prompt.get('client_support_fallback', '')}",
         ]
     )
     return {

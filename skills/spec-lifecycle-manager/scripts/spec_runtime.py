@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Deterministic spec lifecycle runtime helpers.
 
-The helpers in this module are dependency-free and CLI-first. They provide the
-payloads that a future MCP server can expose as resources and tools.
+The helpers in this module are dependency-free. They back both the direct CLI
+validation surface and the MCP server's resources and tools.
 """
 
 from __future__ import annotations
@@ -889,6 +889,14 @@ def active_spec_items(repo_root: Path, docs_root: str | None = None) -> list[dic
     return [item for item in scan["specs"] if item["lifecycle"] == "active"]
 
 
+def agent_interface(tools: list[str]) -> dict[str, Any]:
+    return {
+        "preferred": "mcp",
+        "mcp_tools": tools,
+        "script_use": "implementation_validation_ci_mcp_debug_or_no_mcp_recovery",
+    }
+
+
 def active_spec_preflight(
     repo_root: Path,
     spec_path: Path | None = None,
@@ -909,6 +917,8 @@ def active_spec_preflight(
             "next_task": None,
             "agent_readiness_packet": None,
             "no_active_spec_context": context,
+            "agent_interface": context["agent_interface"],
+            "script_validation_commands": context["script_validation_commands"],
             "validation_commands": context["validation_commands"],
             "guidance": context["guidance"],
         }
@@ -921,6 +931,8 @@ def active_spec_preflight(
             "selected_spec": None,
             "next_task": None,
             "agent_readiness_packet": None,
+            "agent_interface": agent_interface(["scan_specs", "active_spec_preflight"]),
+            "script_validation_commands": [],
             "validation_commands": ["Select one active spec, then rerun preflight with --spec-path."],
             "guidance": ["Multiple active specs exist; do not infer the implementation target from task names alone."],
         }
@@ -957,6 +969,10 @@ def active_spec_preflight(
         "next_task": next_payload,
         "agent_readiness_packet": task_payload_result,
         "no_active_spec_context": None,
+        "agent_interface": agent_interface(
+            ["active_spec_preflight", "spec_summary", "lint_spec_package", "next_task", "task_context", "closure_check"]
+        ),
+        "script_validation_commands": validation_commands_for_spec(selected_path),
         "validation_commands": validation_commands_for_spec(selected_path),
         "guidance": [
             "Review requirements, design, traceability, verification, durable targets, and open decisions before implementation.",
@@ -996,6 +1012,8 @@ def agent_readiness_packet(spec_path: Path, task_id: str) -> dict[str, Any]:
             "durable_targets": context.get("durable_targets", []),
             "open_decisions": context.get("open_decisions", []),
         },
+        "agent_interface": agent_interface(["agent_readiness_packet", "task_context", "traceability_lookup", "lint_spec_package"]),
+        "script_validation_commands": validation_commands_for_spec(spec, task_id),
         "validation_commands": validation_commands_for_spec(spec, task_id),
         "guardrails": [
             "Do not implement from the task line alone.",
@@ -1029,6 +1047,12 @@ def no_active_spec_context(repo_root: Path) -> dict[str, Any]:
         "archive_index_summary": archive["summary"],
         "archive_index_path": archive["path"],
         "removed_spec_count": archive["summary"].get("removed", 0),
+        "agent_interface": agent_interface(["scan_specs", "no_active_spec_context", "archive_index", "prompts_validate"]),
+        "script_validation_commands": [
+            "PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py scan .",
+            "PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py archive-index .",
+            "PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py prompts .",
+        ],
         "validation_commands": [
             "PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py scan .",
             "PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py archive-index .",
@@ -1196,9 +1220,9 @@ def validate_prompt_definition(path: Path, data: dict[str, Any]) -> list[dict[st
                 diagnostics.append(
                     diagnostic("error", "PROMPT_ARGUMENT_INVALID", path, "Each argument needs name, required, and description.", waivable=False)
                 )
-    if not data.get("client_support_fallback"):
+    if not data.get("client_support_recovery") and not data.get("client_support_fallback"):
         diagnostics.append(
-            diagnostic("warn", "PROMPT_FALLBACK_MISSING", path, "Prompt should document client-support fallback.")
+            diagnostic("warn", "PROMPT_RECOVERY_MISSING", path, "Prompt should document client-support recovery.")
         )
     return diagnostics
 

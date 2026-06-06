@@ -321,7 +321,10 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertEqual("T001", payload["task"]["task_id"])
         self.assertIn("Requirement 1", {item["id"] for item in payload["required_review"]["requirements"]})
         self.assertIn("docs/reference/current.md", payload["required_review"]["durable_targets"])
+        self.assertEqual("mcp", payload["agent_interface"]["preferred"])
+        self.assertIn("task_context", payload["agent_interface"]["mcp_tools"])
         self.assertTrue(any("traceability_lookup.py" in command for command in payload["validation_commands"]))
+        self.assertEqual(payload["script_validation_commands"], payload["validation_commands"])
 
     def test_active_spec_preflight_selects_single_active_spec(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -334,6 +337,8 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertEqual("001-current", payload["selected_spec"]["spec_id"])
         self.assertEqual("T001", payload["agent_readiness_packet"]["task_id"])
         self.assertIsNotNone(payload["agent_readiness_packet"])
+        self.assertEqual("mcp", payload["agent_interface"]["preferred"])
+        self.assertIn("active_spec_preflight", payload["agent_interface"]["mcp_tools"])
 
     def test_no_active_spec_context_uses_durable_history(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -363,7 +368,10 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertEqual("no_active_spec", payload["status"])
         self.assertIn("docs/backlog/README.md", payload["durable_context"])
         self.assertIn("docs/history/spec-archive-index.md", payload["durable_context"])
+        self.assertEqual("mcp", payload["agent_interface"]["preferred"])
+        self.assertIn("no_active_spec_context", payload["agent_interface"]["mcp_tools"])
         self.assertTrue(any("scan" in command for command in payload["validation_commands"]))
+        self.assertEqual(payload["script_validation_commands"], payload["validation_commands"])
 
     def test_active_spec_preflight_returns_no_active_context(self):
         with tempfile.TemporaryDirectory() as tmp:

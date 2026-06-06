@@ -10,7 +10,7 @@ last_reviewed: 2026-06-06
 
 The spec lifecycle runtime is a dependency-free helper surface shipped with the
 `spec-lifecycle-manager` skill. It provides deterministic JSON outputs that
-agents, hooks, and a future MCP server can use without replacing the skill's
+agents, hooks, and the MCP server can use without replacing the skill's
 workflow judgment.
 
 Current implementation:
@@ -24,9 +24,11 @@ skills/spec-lifecycle-manager/scripts/spec_agent_schemas.py
 skills/spec-lifecycle-manager/prompts/
 ```
 
-The runtime is CLI-first and now includes a local read-only stdio MCP server
-adapter. The adapter exposes the same tested helper functions through MCP
-tools, resources, and prompts.
+The Python scripts are the tested implementation and CLI validation surface.
+For Codex sessions with the MCP server configured, the MCP tools are the
+preferred agent-facing interface. Shell out to the scripts only for CI,
+repository validation, MCP debugging, or explicit recovery when MCP tools are
+not available.
 
 ## Runtime Commands
 
@@ -36,7 +38,7 @@ tools, resources, and prompts.
 | `summary` | Return a `specs://{spec_id}/summary`-style payload with task counts, artifact state, open decisions, durable-source references, and health. |
 | `lint` | Run deterministic document or package lint checks for frontmatter, required sections, task IDs, dependencies, evidence, optional artifacts, and waivers. |
 | `next-task` | Select the next runnable task whose dependencies are complete with evidence and include traceability context when available. |
-| `active-spec-preflight` | Return the active spec, next task, readiness context, no-active fallback context, guidance, and validation commands. |
+| `active-spec-preflight` | Return the active spec, next task, readiness context, no-active context, guidance, and validation commands. |
 | `agent-readiness-packet` | Return bounded implementation context for a specific task before coding. |
 | `no-active-spec-context` | Return durable docs, backlog, roadmap, closure-log, and archive-index context when no active spec exists. |
 | `closure-check` | Report whether a spec is ready to close and list blockers. |
@@ -66,6 +68,12 @@ python3 ~/.codex/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py /path/
 
 Configure MCP clients to use the command as a local stdio server. The first
 argument should be the repository root whose specs should be exposed.
+
+### MCP-First Usage
+
+Agents should call MCP tools before invoking the direct `.py` scripts whenever
+the `spec-lifecycle-manager` server is visible. Use the direct CLI commands
+only as validation, CI, runtime debugging, or no-MCP recovery surfaces.
 
 ### MCP Tools
 
@@ -172,7 +180,7 @@ Implemented definitions:
 - `lint-spec`
 
 The definitions include names, descriptions, arguments, resource references,
-tool references, instructions, return formats, and client-support fallback
+tool references, instructions, return formats, and client-support recovery
 guidance. The stdio MCP server exposes these definitions through
 `prompts/list` and `prompts/get`.
 
