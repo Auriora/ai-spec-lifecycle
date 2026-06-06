@@ -1,0 +1,52 @@
+---
+title: Agent development lifecycle roadmap
+doc_type: roadmap
+status: active
+owner: platform
+last_reviewed: 2026-06-06
+---
+
+# Roadmap
+
+This roadmap sequences lifecycle work that spans multiple specs, backlog items,
+or adoption stages. It is a planning view, not a changelog and not a substitute
+for active implementation specs.
+
+## Scope
+
+- **Roadmap owner:** platform
+- **Planning horizon:** near-term lifecycle hardening
+- **Review cadence:** after each spec closure or when backlog priorities change
+- **Backlog source:** `docs/backlog/README.md`
+- **Decision authority:** user and platform maintainer
+
+## Horizons
+
+| ID | Horizon | Status | Outcome | Dependencies | Exit Criteria | Owner | Evidence |
+|----|---------|--------|---------|--------------|---------------|-------|----------|
+| R001 | now | active | Spec archive index and closure-log runtime support | B003, `docs/specs/011-spec-archive-index-runtime/` | Runtime can validate closure index entries and archived spec cleanup decisions without relying on retained packages alone. | platform | Active spec 011 |
+| R002 | next | deferred | Blocking lifecycle hook promotion decision | Advisory hook dogfood evidence, R001 | Decision recorded to keep hooks advisory or promote selected checks to blocking profile. | platform | Closure log or follow-up spec |
+| R003 | later | accepted | Coding agent operating model governance adoption | Repeated model use, review evidence | Governance update accepted or explicitly rejected after operating model dogfood. | platform | ADR, governance update, or backlog disposition |
+| R004 | later | proposed | Archived spec audit report | Default archived scan behavior, B006 | Optional report exists for intentionally auditing historical records against current templates. | platform | Future spec or backlog disposition |
+
+## Decision History
+
+| Date | Decision | Impact | Evidence |
+|------|----------|--------|----------|
+| 2026-06-06 | Create a durable roadmap before opening new lifecycle work. | Gives future agents an explicit sequencing surface instead of inferring priorities from archived specs. | `docs/backlog/README.md`, `docs/specs/011-spec-archive-index-runtime/` |
+| 2026-06-06 | Promote spec archive index work before blocking hook promotion. | Archive/index support reduces closure ambiguity and gives hooks/runtime a stronger evidence surface. | B003, R001 |
+
+## Routing Rules
+
+- Use active specs for implementation-ready work with acceptance criteria.
+- Use backlog for candidate or deferred work that needs more scope.
+- Use this roadmap when work affects sequencing, adoption, or multi-spec
+  dependencies.
+- Keep completed delivery evidence in spec verification records and the closure
+  log.
+
+## Related Artifacts
+
+- Backlog: [../backlog/README.md](../backlog/README.md)
+- Active specs: [../specs/](../specs/)
+- Closure log: [../history/spec-closure-log.md](../history/spec-closure-log.md)

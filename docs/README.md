@@ -21,6 +21,8 @@ This documentation describes reusable agent workflows for managing implementatio
 - [Spec lifecycle runtime](reference/spec-lifecycle-runtime.md): deterministic CLI helper surface for spec scanning, linting, task context, hooks, prompts, reconciliation, promotion planning, and review packets.
 - [Spec lifecycle manager MCP install](reference/spec-lifecycle-manager-mcp-install.md): local host-level MCP install, validation, and Agent Workbench companion-server boundary.
 - [Backlog](backlog/README.md): proposed or deferred lifecycle work that is not yet a focused implementation spec.
+- [Roadmap](roadmap/README.md): sequenced lifecycle work, adoption stages, and multi-spec dependencies.
+- [Spec archive index](history/spec-archive-index.md): compact Git-backed index of closed spec package archive state.
 - [Spec lifecycle manager skill spec](specs/001-spec-lifecycle-manager-skill/spec.md): archived implementation and validation history for the reusable skill.
 
 ## Skill Source And Install
@@ -99,3 +101,8 @@ through a spec closure log, defaulting to `docs/history/spec-closure-log.md`
 when no repository-specific closure record exists. The closure log records the
 final spec commit, closure action, durable destinations, verification summary,
 residual risks, and follow-up work.
+
+Use `docs/history/spec-archive-index.md` as the compact lookup surface for
+closed spec package archive state. The closure log remains the narrative
+history; the archive index is the machine-checkable index for retained or
+removed packages.

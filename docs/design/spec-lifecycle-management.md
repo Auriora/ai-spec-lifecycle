@@ -253,6 +253,19 @@ Use this two-commit close flow when removing a spec package:
 5. Update active indexes so the package is no longer presented as current work.
 6. Commit the cleanup separately.
 
+When archive-index support is available, also record closed spec package state
+in:
+
+```text
+docs/history/spec-archive-index.md
+```
+
+The closure log is the narrative history. The archive index is the compact
+lookup surface for package path, final spec commit, cleanup commit, closure
+action, durable destinations, and verification reference. If a package is
+removed, the final spec commit must identify a commit that still contains the
+completed package before removal.
+
 Closure actions:
 
 | Action | Meaning |
