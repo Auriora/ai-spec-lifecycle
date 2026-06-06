@@ -61,6 +61,10 @@ If durable documentation must be created or promoted and the target repository
 has no documented durable-doc template system, use
 `references/durable-doc-templates/` as optional fallback guidance. Copy or adapt
 only the specific document class needed, not the whole template set.
+Use `references/durable-doc-templates/project-principles.md` when a repository
+needs a project-fit guide that explains purpose, problem, VMOST, scope
+boundaries, decision questions, governance relationship, and current product
+signals.
 
 If several active packages exist, read repository indexes such as `docs/README.md` and any sequencing docs. Ask the user to choose, or select the first blocking slice from documented sequencing guidance when the next step is clear.
 

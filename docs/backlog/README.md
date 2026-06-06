@@ -41,6 +41,7 @@ spec or that should not block the active spec currently being delivered.
 | B024 | candidate | Review result router | Expert and subagent review feedback workflow | Route review findings to accept, reject, defer, backlog, follow-up spec, or human decision with rationale and evidence links. |
 | B025 | candidate | OpenTelemetry and Jaeger tracing | User request; Agent Workbench reference implementation | Add disabled-by-default OpenTelemetry tracing for MCP tools and executable runtime code, with configurable OTLP HTTP export to Jaeger or a collector. Use `../agent-workbench/docs/design/observability-debugging-design.md` and `../agent-workbench/src/infrastructure/telemetry/` as reference implementation inputs. |
 | B026 | candidate | Distribution packaging for GHCR | User request | Package the skill, MCP server, scripts, prompts, and install metadata for distribution through GitHub Container Registry. Define versioning, image/package layout, install or sync commands, provenance, and compatibility checks. |
+| B027 | done | Project principles template | User request; `docs/governance/project-principles.md` | Added a reusable durable-doc template and skill guidance for purpose, problem statement, VMOST, core principles, scope rules, project-fit decision questions, governance relationship, and current product signals. |
 
 ## Candidate Priorities
 

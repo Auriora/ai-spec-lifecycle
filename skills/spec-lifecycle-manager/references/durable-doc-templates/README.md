@@ -191,6 +191,13 @@ principles, non-negotiable quality bars, validation rules, and decision gates
 that agents must treat as authoritative.
 Store governance docs under `docs/governance/`.
 
+### Project Principles
+
+Use [project-principles.md](project-principles.md) for project purpose, problem
+statement, VMOST, scope rules, project-fit decision questions, and current
+product signals that help decide whether work belongs in the project.
+Store project principles under `docs/governance/`.
+
 ### Feature Spec Package
 
 Feature spec packages are temporary delivery scaffolding, not durable
