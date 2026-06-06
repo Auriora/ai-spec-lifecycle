@@ -61,8 +61,8 @@ T001 -> T002 -> T003 -> T004 -> T005 -> T006
   - Acceptance: Final spec commit and cleanup commit are recorded; spec is
     archived as retained history.
   - Evidence: Final spec commit `2d17440` recorded; package retained as
-    historical; closure log and archive index updated with cleanup evidence
-    pending this closure commit.
+    historical; closure log and archive index updated with cleanup commit
+    `66a5f7b`.
 
 ## Related Artifacts
 

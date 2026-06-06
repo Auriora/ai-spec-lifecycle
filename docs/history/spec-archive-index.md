@@ -47,4 +47,4 @@ to verify retained or removed package evidence.
 
 - Closure log: [spec-closure-log.md](spec-closure-log.md)
 - Lifecycle design: [../design/spec-lifecycle-management.md](../design/spec-lifecycle-management.md)
-- Active specs: [../specs/](../specs/)
+- Spec inventory: [../specs/](../specs/)

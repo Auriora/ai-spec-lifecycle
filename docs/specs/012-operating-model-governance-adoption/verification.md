@@ -54,7 +54,7 @@ agent operating model, planning updates, and spec closure readiness.
 | T003 | complete | Operating model records governance adoption boundary. | |
 | T004 | complete | B005 and R003 marked complete. | |
 | T005 | complete | Spec lint, scan, archive-index validation, full tests, and diff hygiene passed. | |
-| T006 | complete | Closure log and archive index updated; final spec commit recorded. | Cleanup commit pending until archive commit exists. |
+| T006 | complete | Closure log and archive index updated; final spec commit recorded. | Cleanup commit `66a5f7b` recorded. |
 
 ## Durable Promotion And Cleanup
 

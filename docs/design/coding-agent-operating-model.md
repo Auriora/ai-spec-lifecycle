@@ -117,8 +117,10 @@ Recent lifecycle work validated this model across:
 - higher-risk host-level Codex hook installation;
 - spec closure and retained-history evidence updates.
 
-The model is kept as durable design guidance. Governance changes are deferred
-until this model becomes mandatory policy rather than operating guidance.
+The model is kept as durable design guidance. Selected rules have been adopted
+as governance where they need to constrain future agents; the remaining
+workflow mechanics stay as operating guidance until a later governance decision
+promotes them.
 
 ## Governance Adoption
 
