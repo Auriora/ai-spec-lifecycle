@@ -8,15 +8,87 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "skills/spec-lifecycle-manager/scripts/traceability_lookup.py"
-SPEC = ROOT / "docs/specs/004-spec-management-mcp"
 sys.path.insert(0, str(SCRIPT.parent))
 
 import traceability_lookup
 
 
+def write_traceability_spec(repo: Path) -> Path:
+    (repo / ".git").mkdir()
+    skill = repo / "skills/spec-lifecycle-manager"
+    skill.mkdir(parents=True)
+    (skill / "SKILL.md").write_text("# Skill\n", encoding="utf-8")
+    spec = repo / "docs/specs/001-traceability"
+    spec.mkdir(parents=True)
+    (spec / "requirements.md").write_text(
+        "\n".join(
+            [
+                "# Requirements",
+                "",
+                "### Requirement 6A: MCP Context",
+                "",
+                "The runtime exposes MCP context.",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (spec / "design.md").write_text(
+        "\n".join(
+            [
+                "# Design",
+                "",
+                "## MCP Resources",
+                "",
+                "Expose spec resources.",
+                "",
+                "## MCP Tools",
+                "",
+                "Expose spec tools.",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (spec / "traceability.md").write_text(
+        "\n".join(
+            [
+                "# Traceability",
+                "",
+                "## Task To Context Matrix",
+                "",
+                "| Task ID | Requirements | Acceptance Criteria | Design Sections | Change Impact | Verification | Durable Targets | Open Decisions |",
+                "|---------|--------------|---------------------|-----------------|---------------|--------------|-----------------|----------------|",
+                "| T012 | Requirement 6A | AC1 | `design.md#mcp-resources`, `design.md#mcp-tools` | none | `verification.md#quality-gates` | `skills/spec-lifecycle-manager/SKILL.md` | none |",
+                "",
+                "## Requirement To Delivery Matrix",
+                "",
+                "| Requirement | Acceptance Criteria | Design Sections | Tasks | Verification | Durable Targets |",
+                "|-------------|---------------------|-----------------|-------|--------------|-----------------|",
+                "| Requirement 6A | AC1 | `design.md#mcp-resources`, `design.md#mcp-tools` | T012 | `verification.md#quality-gates` | `skills/spec-lifecycle-manager/SKILL.md` |",
+                "",
+                "## Design To Implementation Matrix",
+                "",
+                "| Design Section | Requirements | Tasks | Implementation Targets | Verification |",
+                "|----------------|--------------|-------|------------------------|--------------|",
+                "| `design.md#mcp-tools` | Requirement 6A | T012 | `skills/spec-lifecycle-manager/SKILL.md` | `verification.md#quality-gates` |",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (spec / "tasks.md").write_text("# Tasks\n\n- [x] T012 Add MCP context.\n  - Evidence: Done.\n", encoding="utf-8")
+    (spec / "verification.md").write_text("# Verification\n\n## Quality Gates\n", encoding="utf-8")
+    return spec
+
+
 class TraceabilityLookupTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.spec = write_traceability_spec(Path(self.tmp.name))
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
     def test_task_lookup_returns_full_context(self):
-        payload = traceability_lookup.task_lookup(SPEC, "T012")
+        payload = traceability_lookup.task_lookup(self.spec, "T012")
 
         self.assertEqual(payload["lookup"], {"type": "task", "value": "T012"})
         self.assertEqual(payload["traceability_row"]["Requirements"], "Requirement 6A")
@@ -26,21 +98,21 @@ class TraceabilityLookupTests(unittest.TestCase):
         self.assertEqual([], [gap for gap in payload["gaps"] if gap["severity"] == "error"])
 
     def test_reverse_requirement_lookup(self):
-        payload = traceability_lookup.reverse_lookup(SPEC, "requirement", "Requirement 6A")
+        payload = traceability_lookup.reverse_lookup(self.spec, "requirement", "Requirement 6A")
 
         self.assertEqual(payload["traceability_row"]["Tasks"], "T012")
         self.assertIn("design.md#mcp-resources", payload["traceability_row"]["Design Sections"])
         self.assertEqual([], [gap for gap in payload["gaps"] if gap["severity"] == "error"])
 
     def test_reverse_design_lookup(self):
-        payload = traceability_lookup.reverse_lookup(SPEC, "design", "design.md#mcp-tools")
+        payload = traceability_lookup.reverse_lookup(self.spec, "design", "design.md#mcp-tools")
 
         self.assertEqual(payload["traceability_row"]["Requirements"], "Requirement 6A")
         self.assertEqual(payload["traceability_row"]["Tasks"], "T012")
         self.assertEqual([], [gap for gap in payload["gaps"] if gap["severity"] == "error"])
 
     def test_missing_task_reports_gap(self):
-        payload = traceability_lookup.task_lookup(SPEC, "T999")
+        payload = traceability_lookup.task_lookup(self.spec, "T999")
 
         codes = {gap["code"] for gap in payload["gaps"]}
         self.assertIn("TRACEABILITY_TASK_ROW_MISSING", codes)
@@ -71,7 +143,7 @@ class TraceabilityLookupTests(unittest.TestCase):
 
     def test_cli_json_output(self):
         completed = subprocess.run(
-            [str(SCRIPT), str(SPEC), "--task", "T012"],
+            [str(SCRIPT), str(self.spec), "--task", "T012"],
             check=True,
             capture_output=True,
             text=True,

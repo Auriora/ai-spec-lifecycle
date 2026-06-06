@@ -13,6 +13,43 @@ INVALID_FIXTURE_ROOT = ROOT / "tests/fixtures/codex-hook/invalid-spec"
 HOOK = ROOT / "skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py"
 
 
+def write_valid_spec(repo: Path) -> None:
+    spec = repo / "docs/specs/001-valid"
+    spec.mkdir(parents=True)
+    frontmatter = "\n".join(
+        [
+            "---",
+            "title: Valid",
+            "doc_type: spec",
+            "artifact_type: {artifact}",
+            "status: draft",
+            "owner: platform",
+            "last_reviewed: 2026-06-06",
+            "---",
+            "",
+        ]
+    )
+    (spec / "requirements.md").write_text(
+        frontmatter.format(artifact="requirements")
+        + "# Requirements\n\n## Durable Source Baseline\n\n## Goals\n\n## Non-Goals\n\n## Requirements\n\n### Requirement 1: Valid\n\n#### Acceptance Criteria\n\n1. GIVEN context, WHEN checked, THEN outcome.\n\n## Correctness Properties\n\n- CP-001: Holds.\n\n## Success Criteria\n",
+        encoding="utf-8",
+    )
+    (spec / "design.md").write_text(
+        frontmatter.format(artifact="design")
+        + "# Design\n\n## Overview\n\n## High-Level Design\n\n## Low-Level Design\n\n## Operational Considerations\n\n## Open Questions\n",
+        encoding="utf-8",
+    )
+    (spec / "tasks.md").write_text(
+        frontmatter.format(artifact="tasks")
+        + "# Tasks\n\n- [x] T001 Do work.\n  - Depends on: none\n  - Files: `docs/reference/x.md`\n  - Acceptance: Done.\n  - Evidence: Done.\n",
+        encoding="utf-8",
+    )
+    (spec / "verification.md").write_text(
+        frontmatter.format(artifact="verification") + "# Verification\n\n## Quality Gates\n\n## Evidence Log\n\n## Residual Risks\n",
+        encoding="utf-8",
+    )
+
+
 def run_hook(payload: dict[str, object]) -> subprocess.CompletedProcess[str]:
     with tempfile.TemporaryDirectory() as tmp:
         env = os.environ.copy()
@@ -29,16 +66,21 @@ def run_hook(payload: dict[str, object]) -> subprocess.CompletedProcess[str]:
 
 class CodexSpecLifecycleHookTests(unittest.TestCase):
     def test_hook_stays_quiet_when_spec_checks_pass(self):
-        payload = {
-            "hook_event_name": "PostToolUse",
-            "cwd": str(ROOT),
-            "tool_name": "apply_patch",
-            "tool_response": {
-                "output": "Updated the following files:\nM docs/specs/009-archived-spec-scan-hygiene/tasks.md\n"
-            },
-        }
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            repo.mkdir()
+            (repo / ".git").mkdir()
+            write_valid_spec(repo)
+            payload = {
+                "hook_event_name": "PostToolUse",
+                "cwd": str(repo),
+                "tool_name": "apply_patch",
+                "tool_response": {
+                    "output": "Updated the following files:\nM docs/specs/001-valid/tasks.md\n"
+                },
+            }
 
-        result = run_hook(payload)
+            result = run_hook(payload)
 
         self.assertEqual("", result.stdout)
         self.assertEqual("", result.stderr)

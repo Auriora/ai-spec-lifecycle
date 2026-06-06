@@ -95,15 +95,18 @@ material may live under a named docs partition such as
 `docs/<name>/specs/[###-slug]/` to keep the target repository's documentation
 clean.
 
-Specs are temporary delivery packages. Once implementation is complete, accepted behavior should be promoted into durable documentation and the spec should be closed, archived, or removed according to the target repository's document lifecycle.
+Specs are temporary delivery packages. Once implementation is complete,
+accepted behavior must be promoted into durable documentation that represents
+the actual current implementation. The completed spec package should then be
+removed from the active docs tree unless a repository-specific policy explicitly
+requires visible historical spec packages.
 
-Closed specs that are removed from the active docs tree should be discoverable
-through a spec closure log, defaulting to `docs/history/spec-closure-log.md`
-when no repository-specific closure record exists. The closure log records the
-final spec commit, closure action, durable destinations, verification summary,
-residual risks, and follow-up work.
+Closed specs are discoverable through a spec closure log, defaulting to
+`docs/history/spec-closure-log.md` when no repository-specific closure record
+exists. The closure log records the final spec commit, closure action, durable
+destinations, verification summary, residual risks, and follow-up work.
 
 Use `docs/history/spec-archive-index.md` as the compact lookup surface for
 closed spec package archive state. The closure log remains the narrative
-history; the archive index is the machine-checkable index for retained or
-removed packages.
+history; the archive index is the machine-checkable index for removed or
+explicitly retained packages.

@@ -67,8 +67,9 @@ continues.
 ### Migration Is A Decision
 
 Older spec formats may be migrated to the current package shape, but migration
-is a decision gate, not an automatic prerequisite. Archived specs should remain
-historical unless resumed for active work.
+is a decision gate, not an automatic prerequisite. Completed specs should be
+removed from the active docs tree after durable promotion unless an explicit
+archive or retention decision is made.
 
 ### Repository Structure Wins
 

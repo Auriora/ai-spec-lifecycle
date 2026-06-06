@@ -14,13 +14,31 @@ requires visible archived docs.
 
 ## Entries
 
+### 2026-06-06 - 001-spec-lifecycle-manager-skill
+
+- **Spec:** `docs/specs/001-spec-lifecycle-manager-skill/`
+- **Title:** Spec lifecycle manager skill
+- **Final spec commit:** `3f0ab61`
+- **Closure cleanup commit:** pending
+- **Closure action:** removed
+- **Closed by:** platform
+- **Durable docs updated:**
+  - `skills/spec-lifecycle-manager/SKILL.md`
+  - `docs/design/spec-lifecycle-management.md`
+  - `docs/README.md`
+- **Verification summary:** Historical package predates the archive-index
+  workflow; final commit `3f0ab61` preserves the package before removal.
+- **Residual risks:** Original package uses the old spec format and should not
+  be migrated as part of removal.
+- **Follow-up:** None.
+
 ### 2026-06-06 - 012-operating-model-governance-adoption
 
 - **Spec:** `docs/specs/012-operating-model-governance-adoption/`
 - **Title:** Operating model governance adoption
 - **Final spec commit:** `2d17440`
-- **Closure cleanup commit:** `66a5f7b`
-- **Closure action:** retained-as-history
+- **Closure cleanup commit:** pending
+- **Closure action:** removed
 - **Closed by:** platform
 - **Durable docs updated:**
   - `docs/governance/constitution.md`
@@ -36,8 +54,8 @@ requires visible archived docs.
 - **Spec:** `docs/specs/011-spec-archive-index-runtime/`
 - **Title:** Spec archive index runtime
 - **Final spec commit:** `4712010`
-- **Closure cleanup commit:** `25dc62e`
-- **Closure action:** retained-as-history
+- **Closure cleanup commit:** pending
+- **Closure action:** removed
 - **Closed by:** platform
 - **Durable docs updated:**
   - `docs/history/spec-archive-index.md`
@@ -57,8 +75,8 @@ requires visible archived docs.
 - **Spec:** `docs/specs/003-coding-agent-operating-model/`
 - **Title:** Coding agent operating model
 - **Final spec commit:** `7ee157b`
-- **Closure cleanup commit:** `a86eaec`
-- **Closure action:** retained-as-history
+- **Closure cleanup commit:** pending
+- **Closure action:** removed
 - **Closed by:** platform
 - **Durable docs updated:**
   - `docs/design/coding-agent-operating-model.md`
@@ -73,8 +91,8 @@ requires visible archived docs.
 - **Spec:** `docs/specs/010-codex-hook-dogfood/`
 - **Title:** Codex hook dogfood
 - **Final spec commit:** `d1eb6b3`
-- **Closure cleanup commit:** `59b7120`
-- **Closure action:** retained-as-history
+- **Closure cleanup commit:** pending
+- **Closure action:** removed
 - **Closed by:** platform
 - **Durable docs updated:**
   - `docs/reference/spec-lifecycle-runtime.md`
@@ -90,11 +108,10 @@ requires visible archived docs.
 - **Spec:** `docs/specs/002-spec-lifecycle-validation/`
 - **Title:** Spec lifecycle validation
 - **Final spec commit:** `d1eb6b3`
-- **Closure cleanup commit:** `59b7120`
-- **Closure action:** retained-as-history
+- **Closure cleanup commit:** pending
+- **Closure action:** removed
 - **Closed by:** platform
 - **Durable docs updated:**
-  - `docs/specs/002-spec-lifecycle-validation/validation-evidence.md`
   - `skills/spec-lifecycle-manager/SKILL.md`
   - `skills/spec-lifecycle-manager/references/spec-package/`
   - `skills/spec-lifecycle-manager/references/durable-doc-templates/`
@@ -107,8 +124,8 @@ requires visible archived docs.
 - **Spec:** `docs/specs/009-archived-spec-scan-hygiene/`
 - **Title:** Archived spec scan hygiene
 - **Final spec commit:** `1095b7f`
-- **Closure cleanup commit:** `ccba3e9`
-- **Closure action:** retained-as-history
+- **Closure cleanup commit:** pending
+- **Closure action:** removed
 - **Closed by:** platform
 - **Durable docs updated:**
   - `docs/reference/spec-lifecycle-runtime.md`
@@ -125,8 +142,8 @@ requires visible archived docs.
 - **Spec:** `docs/specs/006-backlog-roadmap-templates/`
 - **Title:** Backlog and roadmap templates
 - **Final spec commit:** `1095b7f`
-- **Closure cleanup commit:** `ccba3e9`
-- **Closure action:** retained-as-history
+- **Closure cleanup commit:** pending
+- **Closure action:** removed
 - **Closed by:** platform
 - **Durable docs updated:**
   - `skills/spec-lifecycle-manager/references/durable-doc-templates/backlog.md`
@@ -144,8 +161,8 @@ requires visible archived docs.
 - **Spec:** `docs/specs/005-spec-closure-log-management/`
 - **Title:** Spec closure log management
 - **Final spec commit:** `1095b7f`
-- **Closure cleanup commit:** `ccba3e9`
-- **Closure action:** retained-as-history
+- **Closure cleanup commit:** pending
+- **Closure action:** removed
 - **Closed by:** platform
 - **Durable docs updated:**
   - `docs/design/spec-lifecycle-management.md`
@@ -162,8 +179,8 @@ requires visible archived docs.
 - **Spec:** `docs/specs/008-agent-workbench-spec-lifecycle-install/`
 - **Title:** Agent Workbench spec lifecycle install
 - **Final spec commit:** `59359bb`
-- **Closure cleanup commit:** `29a2d54`
-- **Closure action:** retained-as-history
+- **Closure cleanup commit:** pending
+- **Closure action:** removed
 - **Closed by:** platform
 - **Durable docs updated:**
   - `docs/backlog/README.md`
@@ -177,8 +194,8 @@ requires visible archived docs.
 - **Spec:** `docs/specs/007-spec-lifecycle-mcp-server/`
 - **Title:** Spec lifecycle MCP server
 - **Final spec commit:** `e7485bd`
-- **Closure cleanup commit:** `ea0c6a0`
-- **Closure action:** retained-as-history
+- **Closure cleanup commit:** pending
+- **Closure action:** removed
 - **Closed by:** platform
 - **Durable docs updated:**
   - `docs/reference/spec-lifecycle-runtime.md`
@@ -195,8 +212,8 @@ requires visible archived docs.
 - **Spec:** `docs/specs/004-spec-management-mcp/`
 - **Title:** Spec management MCP
 - **Final spec commit:** `86687b6`
-- **Closure cleanup commit:** `1a72d07`
-- **Closure action:** retained-as-history
+- **Closure cleanup commit:** pending
+- **Closure action:** removed
 - **Closed by:** platform
 - **Durable docs updated:**
   - `docs/reference/spec-lifecycle-runtime.md`

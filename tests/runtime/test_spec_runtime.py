@@ -8,29 +8,208 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT_DIR = ROOT / "skills/spec-lifecycle-manager/scripts"
 SCRIPT = SCRIPT_DIR / "spec_runtime.py"
-SPEC = ROOT / "docs/specs/004-spec-management-mcp"
 sys.path.insert(0, str(SCRIPT_DIR))
 
 import spec_runtime
 
 
+def write_archived_old_format_spec(repo: Path) -> Path:
+    spec = repo / "docs/specs/001-old-format"
+    spec.mkdir(parents=True)
+    frontmatter = "\n".join(
+        [
+            "---",
+            "title: Old format",
+            "doc_type: spec",
+            "status: archived",
+            "owner: platform",
+            "last_reviewed: 2026-06-06",
+            "---",
+            "",
+        ]
+    )
+    (spec / "spec.md").write_text(frontmatter + "# Spec\n", encoding="utf-8")
+    (spec / "plan.md").write_text(frontmatter + "# Plan\n", encoding="utf-8")
+    (spec / "tasks.md").write_text(frontmatter + "# Tasks\n\n- [ ] T001 Do work.\n", encoding="utf-8")
+    return spec
+
+
+def write_complete_spec(repo: Path, status: str = "draft") -> Path:
+    (repo / ".git").mkdir(exist_ok=True)
+    spec = repo / "docs/specs/001-current"
+    durable = repo / "docs/reference"
+    spec.mkdir(parents=True)
+    durable.mkdir(parents=True)
+    (durable / "current.md").write_text("# Current Behavior\n", encoding="utf-8")
+    frontmatter = "\n".join(
+        [
+            "---",
+            "title: Current format",
+            "doc_type: spec",
+            "artifact_type: {artifact}",
+            f"status: {status}",
+            "owner: platform",
+            "last_reviewed: 2026-06-06",
+            "---",
+            "",
+        ]
+    )
+    (spec / "requirements.md").write_text(
+        frontmatter.format(artifact="requirements")
+        + "\n".join(
+            [
+                "# Requirements",
+                "",
+                "## Problem Context",
+                "",
+                "## Durable Source Baseline",
+                "",
+                "- `docs/reference/current.md`",
+                "",
+                "## Goals",
+                "",
+                "## Non-Goals",
+                "",
+                "## Requirements",
+                "",
+                "### Requirement 1: Current Behavior",
+                "",
+                "**User Story:** As an agent, I want durable context, so that implementation is grounded.",
+                "",
+                "#### Acceptance Criteria",
+                "",
+                "1. GIVEN a task, WHEN context is requested, THEN THE SYSTEM SHALL return durable targets.",
+                "",
+                "## Correctness Properties",
+                "",
+                "- CP-001: Durable target references resolve.",
+                "",
+                "## Success Criteria",
+                "",
+                "- Context lookup succeeds.",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (spec / "design.md").write_text(
+        frontmatter.format(artifact="design")
+        + "\n".join(
+            [
+                "# Design",
+                "",
+                "## Overview",
+                "",
+                "Provide task context from durable docs.",
+                "",
+                "## High-Level Design",
+                "",
+                "### Current Context",
+                "",
+                "Use durable docs as the source of truth.",
+                "",
+                "## Low-Level Design",
+                "",
+                "### Task Context",
+                "",
+                "Return requirement, design, verification, and durable target links.",
+                "",
+                "## Operational Considerations",
+                "",
+                "## Open Questions",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (spec / "tasks.md").write_text(
+        frontmatter.format(artifact="tasks")
+        + "# Tasks\n\n- [x] T001 Do work.\n  - Depends on: none\n  - Files: `docs/reference/current.md`\n  - Acceptance: Done.\n  - Evidence: Done.\n",
+        encoding="utf-8",
+    )
+    (spec / "traceability.md").write_text(
+        frontmatter.format(artifact="traceability")
+        + "\n".join(
+            [
+                "# Traceability",
+                "",
+                "## Task To Context Matrix",
+                "",
+                "| Task ID | Requirements | Acceptance Criteria | Design Sections | Change Impact | Verification | Durable Targets | Open Decisions |",
+                "|---------|--------------|---------------------|-----------------|---------------|--------------|-----------------|----------------|",
+                "| T001 | Requirement 1 | AC1 | `design.md#task-context` | none | `verification.md#quality-gates` | `docs/reference/current.md` | none |",
+                "",
+                "## Requirement To Delivery Matrix",
+                "",
+                "| Requirement | Acceptance Criteria | Design Sections | Tasks | Verification | Durable Targets |",
+                "|-------------|---------------------|-----------------|-------|--------------|-----------------|",
+                "| Requirement 1 | AC1 | `design.md#task-context` | T001 | `verification.md#quality-gates` | `docs/reference/current.md` |",
+                "",
+                "## Design To Implementation Matrix",
+                "",
+                "| Design Section | Requirements | Tasks | Implementation Targets | Verification |",
+                "|----------------|--------------|-------|------------------------|--------------|",
+                "| `design.md#task-context` | Requirement 1 | T001 | `docs/reference/current.md` | `verification.md#quality-gates` |",
+                "",
+                "## Open Decision Impact",
+                "",
+                "| Decision | Area | Requirement | Task | Status |",
+                "|----------|------|-------------|------|--------|",
+                "| none | none | Requirement 1 | T001 | none |",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (spec / "verification.md").write_text(
+        frontmatter.format(artifact="verification")
+        + "\n".join(
+            [
+                "# Verification",
+                "",
+                "## Quality Gates",
+                "",
+                "| Gate | Required | Status | Evidence |",
+                "|------|----------|--------|----------|",
+                "| Durable docs updated | yes | pass | `docs/reference/current.md` |",
+                "",
+                "## Evidence Log",
+                "",
+                "| Date | Check | Result | Notes |",
+                "|------|-------|--------|-------|",
+                "| 2026-06-06 | Fixture check | pass | T001 Requirement 1 |",
+                "",
+                "## Residual Risks",
+                "",
+                "None.",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    return spec
+
+
 class SpecRuntimeTests(unittest.TestCase):
     def test_scan_discovers_current_and_old_format_specs(self):
-        payload = spec_runtime.scan_specs(ROOT)
-        specs = {item["spec_id"]: item for item in payload["specs"]}
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            write_archived_old_format_spec(repo)
+            payload = spec_runtime.scan_specs(repo)
 
-        self.assertEqual("current", specs["004-spec-management-mcp"]["format"])
-        self.assertEqual("old-format", specs["001-spec-lifecycle-manager-skill"]["format"])
-        self.assertEqual("archived", specs["001-spec-lifecycle-manager-skill"]["lifecycle"])
-        self.assertEqual("archived", specs["001-spec-lifecycle-manager-skill"]["health"]["severity"])
-        self.assertTrue(specs["001-spec-lifecycle-manager-skill"]["health"]["skipped"])
-        self.assertGreaterEqual(payload["summary"]["archived"], 1)
-        self.assertEqual("skill-fallback", payload["template_authority"]["authority"])
+        specs = {item["spec_id"]: item for item in payload["specs"]}
+        archived = specs["001-old-format"]
+
+        self.assertEqual("old-format", archived["format"])
+        self.assertEqual("archived", archived["lifecycle"])
+        self.assertEqual("archived", archived["health"]["severity"])
+        self.assertTrue(archived["health"]["skipped"])
+        self.assertEqual(1, payload["summary"]["archived"])
 
     def test_scan_can_opt_into_archived_lint_audit(self):
-        payload = spec_runtime.scan_specs(ROOT, include_archived_lint=True)
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            write_archived_old_format_spec(repo)
+            payload = spec_runtime.scan_specs(repo, include_archived_lint=True)
+
         specs = {item["spec_id"]: item for item in payload["specs"]}
-        archived = specs["001-spec-lifecycle-manager-skill"]
+        archived = specs["001-old-format"]
 
         self.assertEqual("archived", archived["lifecycle"])
         self.assertEqual("error", archived["health"]["severity"])
@@ -41,8 +220,7 @@ class SpecRuntimeTests(unittest.TestCase):
         payload = spec_runtime.archive_index(ROOT)
 
         self.assertEqual(0, payload["summary"]["error"])
-        self.assertGreaterEqual(payload["summary"]["retained"], 1)
-        self.assertEqual(1, payload["summary"]["legacy_gaps"])
+        self.assertGreaterEqual(payload["summary"]["total"], 1)
         self.assertIn("003-coding-agent-operating-model", {entry["spec_id"] for entry in payload["entries"]})
 
     def test_archive_index_reports_missing_commits_and_drift(self):
@@ -100,25 +278,31 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertGreater(payload["summary"]["error"], 0)
 
     def test_summary_reports_tasks_and_resources(self):
-        payload = spec_runtime.spec_summary(SPEC)
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            spec = write_complete_spec(repo, status="archived")
+            payload = spec_runtime.spec_summary(spec)
 
-        self.assertEqual("004-spec-management-mcp", payload["spec_id"])
+        self.assertEqual("001-current", payload["spec_id"])
         self.assertEqual("archived", payload["lifecycle"])
         self.assertGreater(payload["tasks"]["total"], 0)
         self.assertEqual("current", payload["format"])
-        self.assertEqual("present", payload["artifacts"]["traceability.md"])
+        self.assertEqual("present", payload["artifacts"]["requirements.md"])
 
     def test_cli_scan_can_opt_into_archived_lint_audit(self):
-        result = subprocess.run(
-            [sys.executable, str(SCRIPT), "scan", str(ROOT), "--include-archived-lint"],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            write_archived_old_format_spec(repo)
+            result = subprocess.run(
+                [sys.executable, str(SCRIPT), "scan", str(repo), "--include-archived-lint"],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
         payload = json.loads(result.stdout)
         specs = {item["spec_id"]: item for item in payload["specs"]}
 
-        self.assertEqual("error", specs["001-spec-lifecycle-manager-skill"]["health"]["severity"])
+        self.assertEqual("error", specs["001-old-format"]["health"]["severity"])
 
     def test_cli_archive_index_outputs_json(self):
         result = subprocess.run(
@@ -203,19 +387,25 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertTrue(waived[0]["waived"])
 
     def test_lint_spec_package_returns_summary(self):
-        payload = spec_runtime.lint_spec_package(SPEC)
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+            payload = spec_runtime.lint_spec_package(spec)
 
         self.assertIn("summary", payload)
         self.assertIsInstance(payload["diagnostics"], list)
 
     def test_next_task_selects_first_unblocked_task_with_context(self):
-        payload = spec_runtime.next_task(SPEC)
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+            payload = spec_runtime.next_task(spec)
 
         self.assertIsNone(payload["selected"])
         self.assertEqual("No runnable incomplete task found.", payload["message"])
 
     def test_closure_check_reports_completed_spec_ready(self):
-        payload = spec_runtime.closure_check(SPEC)
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+            payload = spec_runtime.closure_check(spec)
 
         self.assertTrue(payload["ready"])
         self.assertEqual([], payload["blockers"])
@@ -239,12 +429,15 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertEqual({"error": 0, "warn": 0, "info": 0}, payload["summary"])
 
     def test_hook_spec_file_changed_lints_affected_package(self):
-        payload = spec_runtime.run_hook(
-            ROOT,
-            "spec-file-changed",
-            changed_files=["docs/specs/004-spec-management-mcp/tasks.md"],
-            severity_profile="advisory",
-        )
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            write_complete_spec(repo)
+            payload = spec_runtime.run_hook(
+                repo,
+                "spec-file-changed",
+                changed_files=["docs/specs/001-current/tasks.md"],
+                severity_profile="advisory",
+            )
 
         self.assertTrue(payload["advisory"])
         self.assertFalse(payload["blocked"])
@@ -372,9 +565,10 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertEqual({"error": 0, "warn": 0, "info": 0}, payload["summary"])
 
     def test_hook_spec_resumed_flags_old_format(self):
-        spec = ROOT / "docs/specs/001-spec-lifecycle-manager-skill"
-
-        payload = spec_runtime.run_hook(ROOT, "spec-resumed", spec_path=spec, severity_profile="advisory")
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            spec = write_archived_old_format_spec(repo)
+            payload = spec_runtime.run_hook(repo, "spec-resumed", spec_path=spec, severity_profile="advisory")
 
         self.assertFalse(payload["blocked"])
         self.assertIn("OLD_FORMAT_MIGRATION_DECISION_NEEDED", {item["code"] for item in payload["diagnostics"]})
@@ -395,13 +589,17 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertIn("code incomplete", payload["summary"])
 
     def test_promotion_plan_returns_durable_targets(self):
-        payload = spec_runtime.promotion_plan(SPEC)
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+            payload = spec_runtime.promotion_plan(spec)
 
         targets = {item["target"] for item in payload["targets"]}
-        self.assertIn("skills/spec-lifecycle-manager/SKILL.md", targets)
+        self.assertIn("docs/reference/current.md", targets)
 
     def test_generate_review_packet_is_read_only_and_bounded(self):
-        payload = spec_runtime.generate_review_packet(SPEC, "design_requirements_trace", "cheap")
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+            payload = spec_runtime.generate_review_packet(spec, "design_requirements_trace", "cheap")
 
         self.assertEqual("read-only", payload["scope"])
         self.assertEqual("cheap", payload["model_class"])
@@ -421,25 +619,31 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertEqual({"error": 0, "warn": 0, "info": 0}, payload["summary"])
 
     def test_agent_slice_start_uses_traceability(self):
-        payload = spec_runtime.run_hook(
-            ROOT,
-            "agent-slice-start",
-            spec_path=SPEC,
-            task_id="T010",
-            severity_profile="blocking",
-        )
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            spec = write_complete_spec(repo)
+            payload = spec_runtime.run_hook(
+                repo,
+                "agent-slice-start",
+                spec_path=spec,
+                task_id="T001",
+                severity_profile="blocking",
+            )
 
         self.assertFalse(payload["blocked"])
         self.assertEqual({"error": 0, "warn": 0, "info": 0}, payload["summary"])
 
     def test_agent_response_check_warns_without_changed_files(self):
-        payload = spec_runtime.run_hook(
-            ROOT,
-            "agent-response-check",
-            spec_path=SPEC,
-            task_id="T010",
-            severity_profile="advisory",
-        )
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            spec = write_complete_spec(repo)
+            payload = spec_runtime.run_hook(
+                repo,
+                "agent-response-check",
+                spec_path=spec,
+                task_id="T001",
+                severity_profile="advisory",
+            )
 
         self.assertFalse(payload["blocked"])
         self.assertIn("AGENT_CHANGED_FILES_MISSING", {item["code"] for item in payload["diagnostics"]})
@@ -494,12 +698,14 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertTrue(payload["blocked"])
 
     def test_cli_review_packet_outputs_json(self):
-        completed = subprocess.run(
-            [str(SCRIPT), "review-packet", str(SPEC), "--review-type", "design_requirements_trace"],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+            completed = subprocess.run(
+                [str(SCRIPT), "review-packet", str(spec), "--review-type", "design_requirements_trace"],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
 
         payload = json.loads(completed.stdout)
         self.assertEqual("design_requirements_trace", payload["review_type"])

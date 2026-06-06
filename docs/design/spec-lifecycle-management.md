@@ -225,15 +225,19 @@ A spec can be closed when:
 - task state is accurate;
 - unresolved work is moved to backlog, roadmap, issue tracker, or a follow-up
   spec;
-- the docs index no longer presents the spec as an active implementation package.
+- the docs index no longer presents the spec package as current behavior or
+  active implementation work.
 
-Closure may remove the spec, move it to an archive/history area, or keep a clearly marked historical package if the repository's document lifecycle calls for that.
+Closure should remove the completed spec package from the active docs tree
+after durable promotion. Moving or retaining a visible historical package is an
+exception that requires repository-specific archive policy or an explicit
+decision.
 
 ## Closure Log And Git-Backed Archive
 
-When a repository wants completed spec packages removed from the active docs
-tree, use a durable spec closure log as the breadcrumb to Git history. The
-fallback closure log path is:
+Use a durable spec closure log as the breadcrumb to Git history for completed
+spec packages removed from the active docs tree. The fallback closure log path
+is:
 
 ```text
 docs/history/spec-closure-log.md
@@ -249,7 +253,8 @@ Use this two-commit close flow when removing a spec package:
 1. Complete durable promotion and verification.
 2. Commit the final spec state while the full package is still present.
 3. Record that final spec commit in the closure log.
-4. Remove, archive, or mark the package historical.
+4. Remove the package, or archive/retain it only when explicit policy requires
+   visible historical docs.
 5. Update active indexes so the package is no longer presented as current work.
 6. Commit the cleanup separately.
 
@@ -271,12 +276,12 @@ Closure actions:
 | Action | Meaning |
 | --- | --- |
 | `removed` | Spec package was deleted from the active tree after the final spec commit recorded the full package. |
-| `archived` | Spec package was moved to an archive/history path because policy requires visible historical docs. |
-| `retained-as-history` | Spec remains in place or nearby but is clearly marked historical, archived, or superseded. |
+| `archived` | Spec package was moved to an archive/history path because explicit policy requires visible historical docs. |
+| `retained-as-history` | Spec remains in place or nearby by explicit exception and is clearly marked historical, archived, or superseded. |
 
-Active indexes should list active or intentionally retained specs only. They
-may point readers to the closure log, but they should not become a complete
-closed-spec history.
+Active indexes should list active specs only. They may point readers to the
+closure log or archive index, but they should not list completed spec packages
+as current work or become a complete closed-spec history.
 
 Spec closure logs are implementation-lifecycle records. Product or release
 changelogs may use them as input, but changelogs do not replace closure

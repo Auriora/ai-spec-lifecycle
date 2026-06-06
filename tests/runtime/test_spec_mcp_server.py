@@ -1,11 +1,31 @@
 import json
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SERVER = ROOT / "skills/spec-lifecycle-manager/scripts/spec_mcp_server.py"
+
+
+def write_archived_old_format_spec(repo: Path) -> None:
+    spec = repo / "docs/specs/001-old-format"
+    spec.mkdir(parents=True)
+    frontmatter = "\n".join(
+        [
+            "---",
+            "title: Old format",
+            "doc_type: spec",
+            "status: archived",
+            "owner: platform",
+            "last_reviewed: 2026-06-06",
+            "---",
+            "",
+        ]
+    )
+    (spec / "spec.md").write_text(frontmatter + "# Spec\n", encoding="utf-8")
+    (spec / "tasks.md").write_text(frontmatter + "# Tasks\n\n- [ ] T001 Do work.\n", encoding="utf-8")
 
 
 def rpc(request_id, method, params=None):
@@ -48,23 +68,26 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertIn("archive_index", tools)
         structured = responses[1]["result"]["structuredContent"]
         self.assertIn("specs", structured)
-        self.assertIn("004-spec-management-mcp", {item["spec_id"] for item in structured["specs"]})
+        self.assertEqual(0, structured["summary"]["total"])
         scan_schema = next(tool for tool in responses[0]["result"]["tools"] if tool["name"] == "scan_specs")
         self.assertIn("include_archived_lint", scan_schema["inputSchema"]["properties"])
         self.assertIn("boolean", scan_schema["inputSchema"]["properties"]["include_archived_lint"]["type"])
 
     def test_scan_specs_can_include_archived_lint_audit(self):
-        [response] = self.send(
-            rpc(
-                1,
-                "tools/call",
-                {"name": "scan_specs", "arguments": {"repo_root": str(ROOT), "include_archived_lint": True}},
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            write_archived_old_format_spec(repo)
+            [response] = self.send(
+                rpc(
+                    1,
+                    "tools/call",
+                    {"name": "scan_specs", "arguments": {"repo_root": str(repo), "include_archived_lint": True}},
+                )
             )
-        )
 
         structured = response["result"]["structuredContent"]
         specs = {item["spec_id"]: item for item in structured["specs"]}
-        self.assertEqual("error", specs["001-spec-lifecycle-manager-skill"]["health"]["severity"])
+        self.assertEqual("error", specs["001-old-format"]["health"]["severity"])
 
     def test_resources_list_and_read_active_specs(self):
         responses = self.send(rpc(1, "resources/list"), rpc(2, "resources/read", {"uri": "specs://active"}))

@@ -22,7 +22,8 @@ docs/history/spec-closure-log.md
 ## Purpose
 
 - Keep `docs/specs/` focused on active implementation packages.
-- Preserve discoverability for removed, archived, or retained historical specs.
+- Preserve discoverability for removed specs and for archived or retained
+  historical specs only when explicit repository policy requires them.
 - Record the final spec commit that contains the complete final package before
   removal or cleanup.
 - Point future readers to durable current-state docs rather than temporary
@@ -54,7 +55,7 @@ repository documents another order.
 | --- | --- |
 | `removed` | Spec package was deleted from the active tree after the final spec commit recorded the full package. |
 | `archived` | Spec package was moved to an archive/history path because repository policy requires visible historical docs. |
-| `retained-as-history` | Spec package remains in place or nearby but is clearly marked historical, archived, or superseded. |
+| `retained-as-history` | Spec package remains in place or nearby by explicit exception and is clearly marked historical, archived, or superseded. |
 
 ## Required Checks
 

@@ -118,9 +118,9 @@ The command returns JSON with:
 - `entries`: normalized archive index rows.
 - `legacy_gaps`: archived packages that intentionally predate the closure-log
   workflow.
-- `diagnostics`: malformed rows, missing commit evidence, retained package
-  paths that do not exist, durable destination drift, and closure-log mismatch
-  findings.
+- `diagnostics`: malformed rows, missing commit evidence, removed package paths
+  that still exist, retained package paths that do not exist, durable
+  destination drift, and closure-log mismatch findings.
 - `summary`: error/warn/info counts plus retained, removed, superseded, total,
   and legacy-gap counts.
 

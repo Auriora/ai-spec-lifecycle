@@ -148,7 +148,7 @@ The Task Dependency Graph at the top of `tasks.md` is useful for non-trivial spe
 
 ### Spec Lifetime
 
-Spec packages are temporary delivery scaffolding with a finite lifetime. Durable docs live with the code and describe current implementation state. Before a spec closes, accepted behavior, decisions, operations, and follow-up work must be promoted or routed into the repository's durable docs, backlog, roadmap, or follow-up specs.
+Spec packages are temporary delivery scaffolding with a finite lifetime. Durable docs live with the code and describe current implementation state. Before a spec closes, accepted behavior, decisions, operations, and follow-up work must be promoted or routed into the repository's durable docs, backlog, roadmap, or follow-up specs. After closure, remove the completed spec package from the active docs tree unless explicit repository policy requires a visible historical package.
 
 The durable source of truth should always be referenced from the active spec.
 For repositories that already have a documentation system, keep lifecycle docs
@@ -405,12 +405,13 @@ Before closing, perform a final spec cleanup check:
 4. Confirm active docs no longer point readers to the spec as the source of
    current behavior.
 5. Decide the package disposition according to the target repository's document
-   lifecycle: archive, remove, or retain as a clearly historical record.
+   lifecycle. Prefer `removed` after durable promotion; use `archived` or
+   `retained-as-history` only when explicit repository policy requires visible
+   historical spec packages.
 6. Update active spec indexes, sequencing docs, task boards, or README entries
    so the package no longer appears active.
-7. If the package will be removed from the active tree, require a final spec
-   commit hash that contains the complete final package before removal. Do not
-   remove the package when that commit is missing.
+7. Require a final spec commit hash that contains the complete final package
+   before removal. Do not remove the package when that commit is missing.
 8. Add or update the repository's closure record with spec ID, title, closed
    date, final spec commit, closure action, durable destinations,
    verification summary, residual risks, and follow-up work.
@@ -421,10 +422,10 @@ Use these closure actions consistently:
 
 - `removed`: deleted from the active tree after the final spec commit records
   the full package;
-- `archived`: moved to an archive/history path because repository policy
-  requires visible historical docs;
-- `retained-as-history`: kept in place or nearby but clearly marked
-  historical, archived, or superseded.
+- `archived`: moved to an archive/history path because explicit repository
+  policy requires visible historical docs;
+- `retained-as-history`: kept in place or nearby by explicit exception and
+  clearly marked historical, archived, or superseded.
 
 When reporting closure, include the final spec commit, closure cleanup commit
 if known, durable docs updated, closure action, residual risks, and follow-up

@@ -24,10 +24,10 @@ for active implementation specs.
 
 | ID | Horizon | Status | Outcome | Dependencies | Exit Criteria | Owner | Evidence |
 |----|---------|--------|---------|--------------|---------------|-------|----------|
-| R001 | now | complete | Spec archive index and closure-log runtime support | B003, `docs/specs/011-spec-archive-index-runtime/` | Runtime can validate closure index entries and archived spec cleanup decisions without relying on retained packages alone. | platform | `docs/history/spec-closure-log.md`, `docs/history/spec-archive-index.md` |
+| R001 | now | complete | Spec archive index and closure-log runtime support | B003, `docs/specs/011-spec-archive-index-runtime/` | Runtime can validate closure index entries and removed or explicitly retained spec cleanup decisions. | platform | `docs/history/spec-closure-log.md`, `docs/history/spec-archive-index.md` |
 | R002 | next | complete | Lifecycle hooks remain advisory-only | Advisory hook dogfood evidence, R001 | Decision recorded to keep hooks advisory; any future blocking behavior requires a new focused spec and explicit approval. | platform | `docs/reference/spec-lifecycle-dogfood-evaluation.md` |
 | R003 | later | complete | Coding agent operating model governance adoption | Repeated model use, review evidence | Governance update accepted or explicitly rejected after operating model dogfood. | platform | `docs/governance/constitution.md`, `docs/specs/012-operating-model-governance-adoption/` |
-| R004 | later | proposed | Archived spec audit report | Default archived scan behavior, B006 | Optional report exists for intentionally auditing historical records against current templates. | platform | Future spec or backlog disposition |
+| R004 | later | superseded | Archived spec audit report | Default archived scan behavior, B006 | Superseded by removal-by-default policy for completed specs. | platform | `docs/backlog/README.md` |
 
 ## Decision History
 
