@@ -2,7 +2,7 @@
 title: Spec closure log management verification
 doc_type: spec
 artifact_type: verification
-status: draft
+status: archived
 owner: platform
 last_reviewed: 2026-06-05
 ---
@@ -100,13 +100,13 @@ changelogs.
 - **Cleanup action:** retain as history note
 - **Reason:** 005 validates the closure-log workflow but does not remove 004
   until archived-spec scan behavior and cleanup policy are finalized.
-- **Final spec commit:** `86687b6`
+- **Final spec commit:** `1095b7f`
 - **Closure log path:** `docs/history/spec-closure-log.md`
 - **Closure log entry updated:** yes
-- **Closure cleanup commit:** `1a72d07`
+- **Closure cleanup commit:** pending
 - **Active indexes updated:** yes
 - **Durable docs linked back to evidence where useful:** yes
-- **Residual spec-only content:** 004 remains as retained historical package.
+- **Residual spec-only content:** 005 remains as retained historical package.
 
 ## Ship Or Closure Risk
 
@@ -127,7 +127,7 @@ but does not yet automate final-spec commit validation or active cleanup.
 
 - **Ready for promotion:** yes
 - **Ready for release:** yes
-- **Ready for closure:** yes after validation commands pass.
+- **Ready for closure:** yes; retained as historical evidence.
 
 ## Related Artifacts
 

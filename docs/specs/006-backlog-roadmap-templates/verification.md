@@ -2,7 +2,7 @@
 title: Backlog and roadmap templates verification
 doc_type: spec
 artifact_type: verification
-status: draft
+status: archived
 owner: platform
 last_reviewed: 2026-06-05
 ---
@@ -24,7 +24,7 @@ lifecycle promotion, B001 backlog update, and validation evidence.
 | Automated tests pass or alternate verification recorded | yes | pass | Runtime unit tests passed. |
 | Durable documentation updates identified | yes | pass | Durable template README, lifecycle design, docs index, and routing reference updated. |
 | Durable documentation promoted or explicitly deferred | yes | pass | Backlog/roadmap behavior promoted to durable docs and templates. |
-| Spec cleanup decision recorded | yes | pass | Spec remains active until committed and closure-log cleanup can be decided. |
+| Spec cleanup decision recorded | yes | pass | Spec retained as historical evidence with closure-log entry. |
 | Governance or policy conflicts resolved | yes | pass | Repository-specific planning systems remain authoritative. |
 
 ## Validation Commands
@@ -86,14 +86,14 @@ lifecycle promotion, B001 backlog update, and validation evidence.
 
 - **Cleanup action:** retain as active until committed
 - **Reason:** The package records the implementation evidence for this slice.
-- **Final spec commit:** pending
+- **Final spec commit:** `1095b7f`
 - **Closure log path:** `docs/history/spec-closure-log.md`
-- **Closure log entry updated:** no
+- **Closure log entry updated:** yes
 - **Closure cleanup commit:** pending
 - **Active indexes updated:** yes
 - **Durable docs linked back to evidence where useful:** yes
 - **Residual spec-only content:** Implementation evidence remains in spec 006
-  until closure.
+  as retained history.
 
 ## Ship Or Closure Risk
 
@@ -109,7 +109,7 @@ lifecycle promotion, B001 backlog update, and validation evidence.
 
 - **Ready for promotion:** yes
 - **Ready for release:** yes
-- **Ready for closure:** yes.
+- **Ready for closure:** yes; retained as historical evidence.
 
 ## Related Artifacts
 

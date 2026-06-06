@@ -2,7 +2,7 @@
 title: Spec closure log management research
 doc_type: spec
 artifact_type: research
-status: draft
+status: archived
 owner: platform
 last_reviewed: 2026-06-05
 ---

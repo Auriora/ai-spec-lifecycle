@@ -2,7 +2,7 @@
 title: Archived spec scan hygiene verification
 doc_type: spec
 artifact_type: verification
-status: draft
+status: archived
 owner: platform
 last_reviewed: 2026-06-06
 ---
@@ -83,3 +83,34 @@ MCP exposure, tests, durable docs, and installed skill sync.
 | Default active-health semantics | `docs/reference/spec-lifecycle-runtime.md` | complete | Archived scan behavior section added. |
 | Historical package migration guidance | `docs/design/spec-lifecycle-management.md` | complete | Reconciliation and runtime support sections updated. |
 | MCP audit option | `docs/reference/spec-lifecycle-runtime.md` | complete | `include_archived_lint` documented. |
+| Codex hook advisory guidance | `docs/reference/spec-lifecycle-runtime.md`, `docs/reference/spec-lifecycle-manager-mcp-install.md`, `skills/spec-lifecycle-manager/SKILL.md` | complete | Advisory Codex hook wrapper documented and installed after spec 009 implementation. |
+
+### Spec Cleanup Decision
+
+- **Cleanup action:** retain as history note
+- **Reason:** The package records archived scan hygiene implementation evidence
+  and remains useful for validating scan behavior.
+- **Final spec commit:** `1095b7f`
+- **Closure log path:** `docs/history/spec-closure-log.md`
+- **Closure log entry updated:** yes
+- **Closure cleanup commit:** pending
+- **Active indexes updated:** yes
+- **Durable docs linked back to evidence where useful:** yes
+- **Residual spec-only content:** Implementation evidence remains in spec 009
+  as retained history.
+
+## Ship Or Closure Risk
+
+- **Risk level:** low
+- **Breaking change:** no
+- **Blast radius checked:** yes
+- **Rollback path:** revert runtime scan changes and documentation updates
+- **Requires human review:** optional
+- **Release notes needed:** no
+- **Follow-up issue or spec needed:** yes, Codex hook dogfooding in spec 010
+
+## Readiness Decision
+
+- **Ready for promotion:** yes
+- **Ready for release:** yes
+- **Ready for closure:** yes; retained as historical evidence.

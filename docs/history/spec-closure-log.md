@@ -14,6 +14,61 @@ requires visible archived docs.
 
 ## Entries
 
+### 2026-06-06 - 009-archived-spec-scan-hygiene
+
+- **Spec:** `docs/specs/009-archived-spec-scan-hygiene/`
+- **Title:** Archived spec scan hygiene
+- **Final spec commit:** `1095b7f`
+- **Closure cleanup commit:** pending
+- **Closure action:** retained-as-history
+- **Closed by:** platform
+- **Durable docs updated:**
+  - `docs/reference/spec-lifecycle-runtime.md`
+  - `docs/design/spec-lifecycle-management.md`
+  - `skills/spec-lifecycle-manager/SKILL.md`
+  - `skills/spec-lifecycle-manager/scripts/spec_runtime.py`
+  - `skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`
+- **Verification summary:** Full runtime tests, spec 009 lint, closure-check, default scan, archived scan audit, MCP reload smoke tests, installed skill sync, and `git diff --check` passed.
+- **Residual risks:** Existing third-party scan consumers must treat archived scan health as a skipped historical state.
+- **Follow-up:** `docs/specs/010-codex-hook-dogfood/` tracks advisory Codex hook dogfooding.
+
+### 2026-06-06 - 006-backlog-roadmap-templates
+
+- **Spec:** `docs/specs/006-backlog-roadmap-templates/`
+- **Title:** Backlog and roadmap templates
+- **Final spec commit:** `1095b7f`
+- **Closure cleanup commit:** pending
+- **Closure action:** retained-as-history
+- **Closed by:** platform
+- **Durable docs updated:**
+  - `skills/spec-lifecycle-manager/references/durable-doc-templates/backlog.md`
+  - `skills/spec-lifecycle-manager/references/durable-doc-templates/roadmap.md`
+  - `skills/spec-lifecycle-manager/references/durable-doc-templates/README.md`
+  - `skills/spec-lifecycle-manager/SKILL.md`
+  - `docs/design/spec-lifecycle-management.md`
+  - `docs/backlog/README.md`
+- **Verification summary:** Runtime tests, spec 006 lint, closure-check, and `git diff --check` passed before closure.
+- **Residual risks:** Templates remain fallback guidance; repository-specific planning systems stay authoritative.
+- **Follow-up:** None.
+
+### 2026-06-06 - 005-spec-closure-log-management
+
+- **Spec:** `docs/specs/005-spec-closure-log-management/`
+- **Title:** Spec closure log management
+- **Final spec commit:** `1095b7f`
+- **Closure cleanup commit:** pending
+- **Closure action:** retained-as-history
+- **Closed by:** platform
+- **Durable docs updated:**
+  - `docs/design/spec-lifecycle-management.md`
+  - `docs/README.md`
+  - `docs/history/spec-closure-log.md`
+  - `skills/spec-lifecycle-manager/SKILL.md`
+  - `skills/spec-lifecycle-manager/references/durable-doc-templates/spec-closure-log.md`
+- **Verification summary:** Runtime tests, spec 005 lint, closure-check, and `git diff --check` passed before closure.
+- **Residual risks:** Automated verification that a final spec commit contains the retained or removed package remains future hook/MCP work.
+- **Follow-up:** None.
+
 ### 2026-06-05 - 008-agent-workbench-spec-lifecycle-install
 
 - **Spec:** `docs/specs/008-agent-workbench-spec-lifecycle-install/`
