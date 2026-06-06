@@ -2,7 +2,7 @@
 title: Operating model governance adoption tasks
 doc_type: spec
 artifact_type: tasks
-status: draft
+status: archived
 owner: platform
 last_reviewed: 2026-06-06
 ---
@@ -54,13 +54,15 @@ T001 -> T002 -> T003 -> T004 -> T005 -> T006
     hygiene pass or record residual risk.
   - Evidence: Verification commands recorded.
 
-- [ ] T006 Close spec 012.
+- [x] T006 Close spec 012.
   - Depends on: T005
   - Files: `docs/specs/012-operating-model-governance-adoption/`,
     `docs/history/spec-closure-log.md`, `docs/history/spec-archive-index.md`
   - Acceptance: Final spec commit and cleanup commit are recorded; spec is
     archived as retained history.
-  - Evidence: Pending.
+  - Evidence: Final spec commit `2d17440` recorded; package retained as
+    historical; closure log and archive index updated with cleanup evidence
+    pending this closure commit.
 
 ## Related Artifacts
 

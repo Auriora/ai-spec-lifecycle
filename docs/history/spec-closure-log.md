@@ -14,6 +14,23 @@ requires visible archived docs.
 
 ## Entries
 
+### 2026-06-06 - 012-operating-model-governance-adoption
+
+- **Spec:** `docs/specs/012-operating-model-governance-adoption/`
+- **Title:** Operating model governance adoption
+- **Final spec commit:** `2d17440`
+- **Closure cleanup commit:** pending
+- **Closure action:** retained-as-history
+- **Closed by:** platform
+- **Durable docs updated:**
+  - `docs/governance/constitution.md`
+  - `docs/design/coding-agent-operating-model.md`
+  - `docs/backlog/README.md`
+  - `docs/roadmap/README.md`
+- **Verification summary:** Spec 012 lint, closure-check, scan, archive-index validation, full tests, traceability lookup, and `git diff --check` passed.
+- **Residual risks:** Governance adoption is documentation policy; runtime and hooks do not add new enforcement in this spec.
+- **Follow-up:** None.
+
 ### 2026-06-06 - 011-spec-archive-index-runtime
 
 - **Spec:** `docs/specs/011-spec-archive-index-runtime/`
