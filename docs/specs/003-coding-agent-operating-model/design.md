@@ -4,7 +4,7 @@ doc_type: spec
 artifact_type: design
 status: draft
 owner: platform
-last_reviewed: 2026-06-02
+last_reviewed: 2026-06-06
 ---
 
 # Technical Design
@@ -52,6 +52,44 @@ The developer operator remains the accountable decision-maker.
 | Release readiness | Verification record with risk, rollback, and residual issues. |
 | Documentation handoff | Durable promotion before spec closure. |
 
+### Decision Gates
+
+Escalate to an explicit human decision when work affects security, production
+data, contracts, migrations, governance, lifecycle policy, hooks, MCP surfaces,
+or cross-module architecture.
+
+### Evidence Rules
+
+Completed work needs nearby evidence, either in task entries or in
+`verification.md`. Evidence can be command results, manual verification,
+review disposition, screenshots or logs where relevant, or explicit residual
+risk when validation cannot run.
+
+### Parallelism Rules
+
+Parallel agents are appropriate for bounded read-only investigation,
+independent review, validation design, or non-overlapping implementation
+slices. Conflicting findings must be reconciled before implementation or
+closure continues.
+
+### Metrics
+
+Metrics should stay lightweight: cycle time, rework, evidence quality, review
+findings, hook noise, and closure readiness are useful only when they influence
+future workflow choices.
+
+### Durable Documentation Boundary
+
+The durable destination for the operating model is
+`docs/design/coding-agent-operating-model.md`. Governance updates are deferred
+until the model becomes mandatory policy rather than operating guidance.
+
+### Dogfood Decision
+
+Dogfood on lifecycle cleanup, runtime behavior changes, and Codex hook
+installation showed the model is useful as durable guidance without requiring
+an immediate governance or skill behavior change.
+
 ## Low-Level Design
 
 ### Intake Algorithm
@@ -80,6 +118,14 @@ The developer operator remains the accountable decision-maker.
 - Process overhead must be measured; the workflow should get lighter when it
   does not improve outcomes.
 - External repos with their own templates must remain authoritative.
+
+## Open Questions
+
+- Which metrics are worth collecting automatically rather than recording in
+  task or verification evidence?
+- Should future workflow changes update governance, the skill, or durable
+  design docs first?
+- Which hook findings should remain advisory even after dogfooding?
 
 ## Related Artifacts
 

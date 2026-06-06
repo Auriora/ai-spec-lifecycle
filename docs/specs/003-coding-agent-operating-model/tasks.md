@@ -38,38 +38,45 @@ T004 + T005 -> T006
 
 ## Phase 2: Model Refinement
 
-- [ ] T003 Review the proposed principles with real project workflows.
+- [x] T003 Review the proposed principles with real project workflows.
   - Depends on: T002
   - Files: `docs/reference/coding-agent-workflow-research.md`,
     `docs/specs/003-coding-agent-operating-model/requirements.md`
   - Acceptance: Findings identify which practices are too heavy, too weak, or
     missing for target projects.
-  - Evidence: Pending.
-  - [ ] T003.1 Review against a low-risk direct patch.
-  - [ ] T003.2 Review against a medium-risk bug fix.
-  - [ ] T003.3 Review against a high-risk data/integration change.
+  - Evidence: Reviewed against recent low-risk spec metadata edits, medium-risk
+    runtime/MCP scan behavior changes, and higher-risk Codex hook installation.
+  - [x] T003.1 Review against a low-risk direct patch.
+  - [x] T003.2 Review against a medium-risk bug fix.
+  - [x] T003.3 Review against a high-risk data/integration change.
 
-- [ ] T004 Define local outcome metrics.
+- [x] T004 Define local outcome metrics.
   - Depends on: T003
   - Files: `docs/specs/003-coding-agent-operating-model/design.md`
   - Acceptance: Metrics are practical to collect during agent-assisted work.
-  - Evidence: Pending.
+  - Evidence: Durable operating model defines cycle time, rework, evidence
+    quality, review findings, hook noise, and closure readiness metrics.
 
-- [ ] T005 Decide durable destination for the operating model.
+- [x] T005 Decide durable destination for the operating model.
   - Depends on: T003
   - Files: `docs/governance/`, `docs/design/`, `skills/spec-lifecycle-manager/`
   - Acceptance: Decision identifies whether the model belongs in governance,
     durable design docs, skill references, or a combination.
-  - Evidence: Pending.
+  - Evidence: Durable destination selected:
+    `docs/design/coding-agent-operating-model.md`, with research retained under
+    `docs/reference/` and governance changes deferred until policy changes are
+    required.
 
 ## Phase 3: Dogfood And Close
 
-- [ ] T006 Dogfood the model on a real change and decide next updates.
+- [x] T006 Dogfood the model on a real change and decide next updates.
   - Depends on: T004, T005
   - Files: `docs/specs/003-coding-agent-operating-model/`
   - Acceptance: Dogfood evidence records workflow level, agent roles used,
     validation evidence, overhead, and recommended changes.
-  - Evidence: Pending.
+  - Evidence: Dogfooded on archived-scan hygiene, Codex hook installation,
+    hook dogfood closure, and validation spec cleanup; model retained with no
+    immediate skill or governance change required.
 
 ## Related Artifacts
 

@@ -13,6 +13,7 @@ This documentation describes reusable agent workflows for managing implementatio
 ## Start Here
 
 - [Spec lifecycle management](design/spec-lifecycle-management.md): current lifecycle model for temporary implementation specs and durable docs.
+- [Coding agent operating model](design/coding-agent-operating-model.md): risk-scaled workflow model for coding-agent implementation, evidence, review, metrics, and closure.
 - [Agent development lifecycle constitution](governance/constitution.md): governance principles and decision gates for specs, evidence, migration, and durable docs.
 - [Document routing and expert review matrix](reference/document-routing-and-expert-review-matrix.md): where spec content should land and which role-based experts should review it.
 - [AI-native SDD framework landscape](reference/ai-native-sdd-frameworks.md): reference list of spec-driven AI development systems and adjacent methodologies to study.

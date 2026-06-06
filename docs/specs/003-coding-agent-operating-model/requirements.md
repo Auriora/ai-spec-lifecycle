@@ -33,6 +33,15 @@ Related reference:
 - Standardize on one external coding-agent product.
 - Modify the current skill implementation in this exploration step.
 
+## Durable Source Baseline
+
+| Source | Current behavior relied on | Confidence | Notes |
+|--------|----------------------------|------------|-------|
+| `docs/reference/coding-agent-workflow-research.md` | Research and recommendations for supervised, evidence-driven coding-agent workflows. | high | Primary research baseline for this model. |
+| `docs/design/spec-lifecycle-management.md` | Existing lifecycle model for temporary specs, durable docs, closure, and evidence. | high | The operating model must align with this lifecycle. |
+| `skills/spec-lifecycle-manager/SKILL.md` | Practical agent workflow instructions used in this repository. | high | Durable skill behavior should stay compatible with the model. |
+| `docs/governance/constitution.md` | Governance constraints for lifecycle changes and evidence. | high | Governance remains higher priority than active specs. |
+
 ## Requirements
 
 ### Requirement 1: Risk-Scaled Workflow
@@ -108,6 +117,17 @@ work, so that workflow decisions are based on observed project outcomes.
    can identify which task classes benefit most from agents.
 3. IF a workflow adds overhead without improving quality or speed, THEN it SHALL
    be simplified or reserved for higher-risk work.
+
+## Correctness Properties
+
+- Workflow level selection must scale with change risk and must not force full
+  spec ceremony onto low-risk direct patches.
+- Durable docs remain the source of truth after spec closure.
+- Completed agent tasks require evidence or explicitly recorded residual risk.
+- Parallel agent work must have bounded questions or non-overlapping write
+  scopes.
+- Local metrics must be lightweight enough that measurement does not dominate
+  the work being measured.
 
 ## Success Criteria
 

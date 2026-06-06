@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -8,6 +9,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
+INVALID_FIXTURE_ROOT = ROOT / "tests/fixtures/codex-hook/invalid-spec"
 HOOK = ROOT / "skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py"
 
 
@@ -42,21 +44,25 @@ class CodexSpecLifecycleHookTests(unittest.TestCase):
         self.assertEqual("", result.stderr)
 
     def test_hook_reports_advisory_findings_for_invalid_spec(self):
-        payload = {
-            "hook_event_name": "PostToolUse",
-            "cwd": str(ROOT),
-            "tool_name": "write_file",
-            "tool_input": {
-                "path": "docs/specs/003-coding-agent-operating-model/tasks.md"
-            },
-        }
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            shutil.copytree(INVALID_FIXTURE_ROOT, repo)
+            (repo / ".git").mkdir()
+            payload = {
+                "hook_event_name": "PostToolUse",
+                "cwd": str(repo),
+                "tool_name": "write_file",
+                "tool_input": {
+                    "path": "docs/specs/001-invalid-spec/tasks.md"
+                },
+            }
 
-        result = run_hook(payload)
+            result = run_hook(payload)
         data = json.loads(result.stdout)
         context = data["hookSpecificOutput"]["additionalContext"]
 
         self.assertIn("Spec lifecycle advisory checks found issues.", context)
-        self.assertIn("WARN", context)
+        self.assertRegex(context, r"\b(ERROR|WARN)\b")
 
 
 if __name__ == "__main__":
