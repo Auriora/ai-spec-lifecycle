@@ -37,25 +37,24 @@ T004 -> T005
 - [x] T002 Define Agent Workbench install boundary.
   - Depends on: T001
   - Files: `docs/specs/008-agent-workbench-spec-lifecycle-install/design.md`,
-    `../agent-workbench/docs/reference/agent-dev-lifecycle/spec-lifecycle-manager-mcp-install.md`
+    `docs/reference/spec-lifecycle-manager-mcp-install.md`
   - Acceptance: Guidance states the spec lifecycle MCP server is a separate
     host-level companion server and Agent Workbench plugin must not register or
     copy it.
-  - Evidence: Design and Agent Workbench reference note document the boundary.
+  - Evidence: Design and local reference note document the boundary.
 
 - [x] T003 Add Agent Workbench reference guidance.
   - Depends on: T002
   - Files:
-    `../agent-workbench/docs/reference/agent-dev-lifecycle/spec-lifecycle-manager-mcp-install.md`
+    `docs/reference/spec-lifecycle-manager-mcp-install.md`
   - Acceptance: Reference note includes config snippet, install/sync path,
     validation checklist, and duplicate-instance checks.
-  - Evidence: Agent Workbench reference note added as an external repo artifact;
-    Agent Workbench will manage its commit and lifecycle.
+  - Evidence: Local reference note added under `docs/reference/`.
 
 - [x] T004 Decide hook install policy.
   - Depends on: T003
   - Files:
-    `../agent-workbench/docs/reference/agent-dev-lifecycle/spec-lifecycle-manager-mcp-install.md`,
+    `docs/reference/spec-lifecycle-manager-mcp-install.md`,
     `docs/specs/008-agent-workbench-spec-lifecycle-install/design.md`
   - Acceptance: Hooks are advisory-only by default; blocking hooks require a
     later dogfood pass and explicit promotion decision.

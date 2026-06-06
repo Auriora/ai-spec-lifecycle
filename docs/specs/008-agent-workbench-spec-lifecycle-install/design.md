@@ -22,7 +22,7 @@ remain unchanged.
 | Requirement | Acceptance Criteria | Design Coverage | Validation Approach |
 |-------------|---------------------|-----------------|---------------------|
 | Requirement 1 | AC1, AC2, AC3 | Host-level companion server model | Agent Workbench reference review |
-| Requirement 2 | AC1, AC2, AC3 | New Agent Workbench reference note | File inspection and diff check |
+| Requirement 2 | AC1, AC2, AC3 | New local install reference note | File inspection and diff check |
 | Requirement 3 | AC1, AC2, AC3 | Advisory-only hook policy | Reference note and verification |
 | Requirement 4 | AC1, AC2, AC3 | Validation checklist and live MCP smoke tests | MCP tool calls and config grep |
 | Requirement 5 | AC1, AC2 | Backlog B002 status and follow-up handling | Backlog review |
@@ -49,7 +49,7 @@ promotion planning, and closure checks for `agent-dev-lifecycle`.
 
 - Spec 008 package:
   Records requirements, design, five tasks, traceability, and verification.
-- Agent Workbench reference note:
+- Local install reference note:
   Documents install boundary, config snippet, hook policy, validation
   checklist, and duplicate-instance checks.
 - Backlog:

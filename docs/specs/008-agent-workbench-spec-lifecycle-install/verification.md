@@ -22,8 +22,8 @@ checklist, and B002 backlog closure.
 | Requirements acceptance criteria reviewed | yes | pass | Requirements 1-5 mapped to tasks and durable targets. |
 | Task evidence complete | yes | pass | `tasks.md` records evidence for T001-T005. |
 | Automated tests pass or alternate verification recorded | yes | pass | Live MCP smoke checks and docs hygiene checks recorded. |
-| Durable documentation updates identified | yes | pass | Agent Workbench reference note and backlog update. |
-| Durable documentation promoted or explicitly deferred | yes | pass | Install guidance promoted to an Agent Workbench reference note managed by that repo. |
+| Durable documentation updates identified | yes | pass | Local reference note and backlog update. |
+| Durable documentation promoted or explicitly deferred | yes | pass | Install guidance promoted to a local reference note. |
 | Spec cleanup decision recorded | yes | pass | Closure log records final spec commit `59359bb`; package retained as historical evidence. |
 | Governance or policy conflicts resolved | yes | pass | Agent Workbench host-level MCP architecture preserved. |
 
@@ -59,9 +59,9 @@ checklist, and B002 backlog closure.
 
 | Requirement | Acceptance criteria covered | Evidence | Residual risk |
 |-------------|-----------------------------|----------|---------------|
-| Requirement 1 | AC1, AC2, AC3 | Agent Workbench reference note and design | none |
-| Requirement 2 | AC1, AC2, AC3 | `../agent-workbench/docs/reference/agent-dev-lifecycle/spec-lifecycle-manager-mcp-install.md` | External note is managed by Agent Workbench. |
-| Requirement 3 | AC1, AC2, AC3 | Advisory-only hook policy in design and Agent Workbench reference note | Blocking hook promotion remains future work by design. |
+| Requirement 1 | AC1, AC2, AC3 | Local reference note and design | none |
+| Requirement 2 | AC1, AC2, AC3 | `docs/reference/spec-lifecycle-manager-mcp-install.md` | none |
+| Requirement 3 | AC1, AC2, AC3 | Advisory-only hook policy in design and local reference note | Blocking hook promotion remains future work by design. |
 | Requirement 4 | AC1, AC2, AC3 | MCP smoke checks and duplicate-instance checks | Duplicate check is local to known config/plugin paths. |
 | Requirement 5 | AC1, AC2 | `docs/backlog/README.md` B002 status | none |
 
@@ -71,8 +71,8 @@ checklist, and B002 backlog closure.
   dogfood pass and explicit promotion decision.
 - The install guidance targets the local Codex host configuration. Other MCP
   clients may need equivalent host-level configuration.
-- The Agent Workbench reference note is an external repo artifact and remains
-  under Agent Workbench ownership.
+- The install note includes local host paths; other environments should adapt
+  the host-level MCP entry.
 
 ## Task Evidence
 
@@ -80,7 +80,7 @@ checklist, and B002 backlog closure.
 |---------|--------|----------|-------|
 | T001 | complete | Spec package created. | Five-task package created. |
 | T002 | complete | Install boundary documented. | Host-level companion server model recorded. |
-| T003 | complete | Agent Workbench reference guidance added as an external repo artifact. | Config snippet and validation checklist included; Agent Workbench manages its commit and lifecycle. |
+| T003 | complete | Reference guidance added as a local durable artifact. | Config snippet and validation checklist included. |
 | T004 | complete | Hook policy documented. | Advisory-only by default; blocking requires later decision. |
 | T005 | complete | Validation evidence recorded; B002 marked done. | Final command results updated after execution. |
 
@@ -88,8 +88,8 @@ checklist, and B002 backlog closure.
 
 | Spec content | Durable destination or deferral | Status | Evidence |
 |--------------|---------------------------------|--------|----------|
-| Agent Workbench install guidance | `../agent-workbench/docs/reference/agent-dev-lifecycle/spec-lifecycle-manager-mcp-install.md` | external | Reference note added and left for Agent Workbench to manage. |
-| Hook install policy | Spec design and Agent Workbench reference note | complete | Advisory-only policy documented. |
+| Agent Workbench install guidance | `docs/reference/spec-lifecycle-manager-mcp-install.md` | complete | Reference note added locally. |
+| Hook install policy | Spec design and local reference note | complete | Advisory-only policy documented. |
 | Backlog B002 | `docs/backlog/README.md` | complete | Item marked done. |
 | Blocking hook promotion | future spec or backlog item | deferred | Residual risk recorded. |
 

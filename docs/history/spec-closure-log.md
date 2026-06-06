@@ -24,10 +24,10 @@ requires visible archived docs.
 - **Closed by:** platform
 - **Durable docs updated:**
   - `docs/backlog/README.md`
-  - `../agent-workbench/docs/reference/agent-dev-lifecycle/spec-lifecycle-manager-mcp-install.md` (external repo-managed artifact)
+  - `docs/reference/spec-lifecycle-manager-mcp-install.md`
 - **Verification summary:** MCP `scan_specs`, `prompts_validate`, and `closure_check`; spec 008 lint and closure-check; duplicate host-level MCP entry check; `git diff --check` in both repos.
-- **Residual risks:** Agent Workbench reference note is external and managed by the Agent Workbench repo; blocking spec lifecycle hooks remain future work.
-- **Follow-up:** Agent Workbench repo manages its reference note; create a later focused spec only if blocking hook promotion is desired.
+- **Residual risks:** Install guidance includes local host-level paths; blocking spec lifecycle hooks remain future work.
+- **Follow-up:** Create a later focused spec only if blocking hook promotion is desired.
 
 ### 2026-06-05 - 007-spec-lifecycle-mcp-server
 

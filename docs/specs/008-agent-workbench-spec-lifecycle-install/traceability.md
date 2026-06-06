@@ -14,18 +14,18 @@ last_reviewed: 2026-06-05
 | Task ID | Requirements | Acceptance Criteria | Design Sections | Change Impact | Verification | Durable Targets | Open Decisions |
 |---------|--------------|---------------------|-----------------|---------------|--------------|-----------------|----------------|
 | T001 | Requirement 5 | Requirement 5 AC1 | `design.md#overview` | none | `verification.md#task-evidence` | `docs/specs/008-agent-workbench-spec-lifecycle-install/` | none |
-| T002 | Requirement 1 | Requirement 1 AC1, AC2, AC3 | `design.md#system-architecture`, `design.md#migration-and-compatibility` | none | `verification.md#task-evidence` | `../agent-workbench/docs/reference/agent-dev-lifecycle/spec-lifecycle-manager-mcp-install.md` | none |
-| T003 | Requirement 2, Requirement 4 | Requirement 2 AC1, AC2, AC3; Requirement 4 AC1, AC2, AC3 | `design.md#data-models`, `design.md#data-flow` | none | `verification.md#evidence-log` | `../agent-workbench/docs/reference/agent-dev-lifecycle/spec-lifecycle-manager-mcp-install.md` | none |
-| T004 | Requirement 3 | Requirement 3 AC1, AC2, AC3 | `design.md#algorithms-and-logic`, `design.md#security-trust-and-access` | none | `verification.md#requirement-coverage` | `../agent-workbench/docs/reference/agent-dev-lifecycle/spec-lifecycle-manager-mcp-install.md` | none |
+| T002 | Requirement 1 | Requirement 1 AC1, AC2, AC3 | `design.md#system-architecture`, `design.md#migration-and-compatibility` | none | `verification.md#task-evidence` | `docs/reference/spec-lifecycle-manager-mcp-install.md` | none |
+| T003 | Requirement 2, Requirement 4 | Requirement 2 AC1, AC2, AC3; Requirement 4 AC1, AC2, AC3 | `design.md#data-models`, `design.md#data-flow` | none | `verification.md#evidence-log` | `docs/reference/spec-lifecycle-manager-mcp-install.md` | none |
+| T004 | Requirement 3 | Requirement 3 AC1, AC2, AC3 | `design.md#algorithms-and-logic`, `design.md#security-trust-and-access` | none | `verification.md#requirement-coverage` | `docs/reference/spec-lifecycle-manager-mcp-install.md` | none |
 | T005 | Requirement 4, Requirement 5 | Requirement 4 AC1, AC2, AC3; Requirement 5 AC1, AC2 | `design.md#validation-strategy` | none | `verification.md#evidence-log` | `docs/backlog/README.md`, `docs/specs/008-agent-workbench-spec-lifecycle-install/verification.md` | none |
 
 ## Requirement To Delivery Matrix
 
 | Requirement | Acceptance Criteria | Design Sections | Tasks | Verification | Durable Targets |
 |-------------|---------------------|-----------------|-------|--------------|-----------------|
-| Requirement 1 | AC1, AC2, AC3 | `design.md#system-architecture`, `design.md#migration-and-compatibility` | T002 | `verification.md#requirement-coverage` | Agent Workbench reference note |
-| Requirement 2 | AC1, AC2, AC3 | `design.md#data-models`, `design.md#data-flow` | T003 | `verification.md#requirement-coverage` | Agent Workbench reference note |
-| Requirement 3 | AC1, AC2, AC3 | `design.md#algorithms-and-logic`, `design.md#security-trust-and-access` | T004 | `verification.md#requirement-coverage` | Agent Workbench reference note |
+| Requirement 1 | AC1, AC2, AC3 | `design.md#system-architecture`, `design.md#migration-and-compatibility` | T002 | `verification.md#requirement-coverage` | `docs/reference/spec-lifecycle-manager-mcp-install.md` |
+| Requirement 2 | AC1, AC2, AC3 | `design.md#data-models`, `design.md#data-flow` | T003 | `verification.md#requirement-coverage` | `docs/reference/spec-lifecycle-manager-mcp-install.md` |
+| Requirement 3 | AC1, AC2, AC3 | `design.md#algorithms-and-logic`, `design.md#security-trust-and-access` | T004 | `verification.md#requirement-coverage` | `docs/reference/spec-lifecycle-manager-mcp-install.md` |
 | Requirement 4 | AC1, AC2, AC3 | `design.md#validation-strategy` | T003, T005 | `verification.md#evidence-log` | `verification.md` |
 | Requirement 5 | AC1, AC2 | `design.md#validation-strategy` | T001, T005 | `verification.md#task-evidence` | `docs/backlog/README.md` |
 
@@ -34,7 +34,7 @@ last_reviewed: 2026-06-05
 | Design Section | Requirements | Tasks | Interfaces Or Files | Verification |
 |----------------|--------------|-------|---------------------|--------------|
 | `design.md#overview` | Requirement 5 | T001 | spec package | `verification.md#task-evidence` |
-| `design.md#system-architecture` | Requirement 1 | T002 | Agent Workbench reference note | docs review |
+| `design.md#system-architecture` | Requirement 1 | T002 | local reference note | docs review |
 | `design.md#data-models` | Requirement 2, Requirement 4 | T003 | config snippet and validation checklist | MCP smoke checks |
 | `design.md#data-flow` | Requirement 2 | T003 | host-level Codex config model | docs review |
 | `design.md#algorithms-and-logic` | Requirement 3 | T004 | hook policy | docs review |

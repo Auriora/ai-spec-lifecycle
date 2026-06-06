@@ -69,16 +69,16 @@ not gain a second executable runtime path.
 3. IF both servers are enabled, THEN the guidance SHALL describe them as
    independent companion MCP servers.
 
-### Requirement 2: Agent Workbench Reference Guidance
+### Requirement 2: Spec Lifecycle Install Reference Guidance
 
-**User Story:** As a maintainer, I want Agent Workbench to contain a reference
+**User Story:** As a maintainer, I want this repository to contain a reference
 note for the spec lifecycle server, so that future agents can find the install
-policy from that repo.
+policy from the repository that owns the lifecycle runtime.
 
 #### Acceptance Criteria
 
-1. GIVEN `../agent-workbench/docs/reference/agent-dev-lifecycle/`, WHEN this
-   spec is complete, THEN it SHALL contain a reference note for the
+1. GIVEN `docs/reference/`, WHEN this spec is complete, THEN it SHALL contain
+   a reference note for the
    `spec-lifecycle-manager` MCP install model.
 2. GIVEN the note is read, WHEN a user configures Codex, THEN it SHALL show
    the host-level `mcp_servers.spec-lifecycle-manager` entry.
