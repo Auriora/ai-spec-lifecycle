@@ -19,7 +19,7 @@ requires visible archived docs.
 - **Spec:** `docs/specs/013-agent-backed-lifecycle-tools/`
 - **Title:** Agent-backed lifecycle tools
 - **Final spec commit:** `bb6c436`
-- **Closure cleanup commit:** `c66710c`
+- **Closure cleanup commit:** `6d23a40`
 - **Closure action:** removed
 - **Closed by:** platform
 - **Durable docs updated:**
