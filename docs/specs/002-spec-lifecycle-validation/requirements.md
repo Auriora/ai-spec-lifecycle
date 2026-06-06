@@ -1,6 +1,7 @@
 ---
 title: Spec lifecycle validation requirements
 doc_type: requirements
+artifact_type: requirements
 status: draft
 owner: platform
 last_reviewed: 2026-06-02
@@ -33,6 +34,15 @@ local spec-driven environment can be trusted before wider installation.
 | Fixture repo | Small test repository under `tests/fixtures/skill-validation/` used to exercise one skill scenario. |
 | Prompt trial | A sub-agent run that applies the skill to a fixture with a realistic user prompt. |
 | Review pass | Independent assessment of the skill/templates from one review perspective. |
+
+## Durable Source Baseline
+
+| Source | Current behavior relied on | Confidence | Notes |
+|--------|----------------------------|------------|-------|
+| `skills/spec-lifecycle-manager/SKILL.md` | Defines the reusable lifecycle workflow under validation. | high | Canonical source for the skill. |
+| `skills/spec-lifecycle-manager/references/spec-package/` | Provides fallback spec package templates. | high | Validated for metadata, task shape, and guidance. |
+| `tests/fixtures/skill-validation/` | Provides fixture repositories for skill trials. | high | Used for prompt-trial validation. |
+| `docs/specs/002-spec-lifecycle-validation/validation-evidence.md` | Records trial, review, and static-check evidence. | high | Durable validation evidence for this spec. |
 
 ## Requirements
 

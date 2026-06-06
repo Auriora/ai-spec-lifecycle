@@ -1,9 +1,10 @@
 ---
 title: Spec lifecycle validation verification
 doc_type: verification
+artifact_type: verification
 status: draft
 owner: platform
-last_reviewed: 2026-06-02
+last_reviewed: 2026-06-06
 ---
 
 # Verification
@@ -33,6 +34,22 @@ passes, and dogfood usage.
 | `diff -qr skills/spec-lifecycle-manager .codex/skills/spec-lifecycle-manager` | Confirm repo-local installed skill matches source | pass | No differences returned. |
 | Markdown link resolver | Confirm Markdown links resolve | pass | Returned `markdown-links-ok`. |
 | `rg` static field checks | Confirm required fields and artifacts exist | pass | Found status, evidence, change-impact, verification, ship risk, durable baseline, and open decisions. |
+| `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py lint docs/specs/002-spec-lifecycle-validation` | Current package lint | pass | No diagnostics after package normalization. |
+| `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py closure-check docs/specs/002-spec-lifecycle-validation` | Closure readiness | pass | Ready with no blockers after traceability was added. |
+| `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'` | Full regression tests | pass | 41 tests passed. |
+| `git diff --check` | Diff whitespace hygiene | pass | No whitespace errors reported. |
+
+## Evidence Log
+
+| Date | Evidence | Result | Notes |
+|------|----------|--------|-------|
+| 2026-06-02 | Static consistency checks | pass | Commands recorded in validation commands. |
+| 2026-06-02 | Fixture prompt trials | pass | Six fixture scenarios recorded in `validation-evidence.md`. |
+| 2026-06-02 | Review matrix passes | pass | Four review perspectives recorded; non-blocking fixes applied. |
+| 2026-06-02 | Old-format archived spec dogfood | pass | Migration decision gate selected continue/no migration. |
+| 2026-06-06 | Package normalization | pass | Added current metadata, durable baseline, checklist tasks, and evidence log. |
+| 2026-06-06 | Traceability matrix added | pass | Closure-check passed with no blockers after adding `traceability.md`. |
+| 2026-06-06 | Full regression validation | pass | 41 tests passed. |
 
 ## Requirement Coverage
 
@@ -57,6 +74,7 @@ passes, and dogfood usage.
 | T007 | done | Old-format archived spec trial recorded | |
 | T008 | done | Dogfood assessment recorded | |
 | T009 | done | Task and verification statuses updated | |
+| T010 | done | Package normalized to current lint and closure expectations | Added `traceability.md`. |
 
 ## Manual Or External Verification
 
@@ -97,6 +115,28 @@ remaining risk is workflow drift or over-heavy optional templates.
 - **Ready for promotion:** yes
 - **Ready for release:** yes
 - **Ready for closure:** yes
+
+## Durable Promotion And Cleanup
+
+| Spec content | Durable destination or deferral | Status | Evidence |
+|--------------|---------------------------------|--------|----------|
+| Skill validation findings | `validation-evidence.md` and existing skill docs | complete | Findings recorded and fixes applied. |
+| Static consistency expectations | Runtime tests and lifecycle docs | complete | Follow-up runtime work delivered in later specs. |
+| Validation package metadata | Current spec package | complete | Package normalized to current lint expectations. |
+
+### Spec Cleanup Decision
+
+- **Cleanup action:** retain as history note
+- **Reason:** The package records skill validation evidence and remains useful
+  as historical validation material.
+- **Final spec commit:** pending
+- **Closure log path:** `docs/history/spec-closure-log.md`
+- **Closure log entry updated:** pending
+- **Closure cleanup commit:** pending
+- **Active indexes updated:** yes
+- **Durable docs linked back to evidence where useful:** yes
+- **Residual spec-only content:** Validation evidence remains in spec 002 as
+  retained history after closure.
 
 ## Related Artifacts
 

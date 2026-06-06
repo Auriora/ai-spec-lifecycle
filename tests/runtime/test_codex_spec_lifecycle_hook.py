@@ -47,7 +47,7 @@ class CodexSpecLifecycleHookTests(unittest.TestCase):
             "cwd": str(ROOT),
             "tool_name": "write_file",
             "tool_input": {
-                "path": "docs/specs/002-spec-lifecycle-validation/requirements.md"
+                "path": "docs/specs/003-coding-agent-operating-model/tasks.md"
             },
         }
 
@@ -56,7 +56,7 @@ class CodexSpecLifecycleHookTests(unittest.TestCase):
         context = data["hookSpecificOutput"]["additionalContext"]
 
         self.assertIn("Spec lifecycle advisory checks found issues.", context)
-        self.assertIn("ERROR", context)
+        self.assertIn("WARN", context)
 
 
 if __name__ == "__main__":

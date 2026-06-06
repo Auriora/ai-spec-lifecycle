@@ -29,29 +29,32 @@ T003 -> T004
     exist for dogfood evaluation.
   - Evidence: Spec package created.
 
-- [ ] T002 Record representative hook evidence.
+- [x] T002 Record representative hook evidence.
   - Depends on: T001
   - Files: `docs/specs/010-codex-hook-dogfood/verification.md`,
     `~/.codex/hooks.json`
   - Acceptance: Evidence covers quiet pass, useful finding, and template or
     no-target behavior.
-  - Evidence: Pending.
+  - Evidence: Representative hook payloads recorded in `verification.md`:
+    quiet pass, useful finding, and no-target quiet behavior.
 
 ## Phase 2: Decision
 
-- [ ] T003 Decide hook policy.
+- [x] T003 Decide hook policy.
   - Depends on: T002
   - Files: `docs/specs/010-codex-hook-dogfood/verification.md`,
     `docs/backlog/README.md`
   - Acceptance: Keep/refine/expand/remove/defer decision is recorded; any
     follow-up is routed.
-  - Evidence: Pending.
+  - Evidence: Policy decision recorded in `verification.md`: keep advisory
+    hook globally enabled; do not promote blocking behavior.
 
-- [ ] T004 Validate and close or defer follow-up.
+- [x] T004 Validate and close or defer follow-up.
   - Depends on: T003
   - Files: `docs/specs/010-codex-hook-dogfood/verification.md`
   - Acceptance: Tests, spec lint, closure-check, and diff check are recorded.
-  - Evidence: Pending.
+  - Evidence: Focused hook tests, full regression tests, spec lint,
+    closure-check, and diff check recorded in `verification.md`.
 
 ## Related Artifacts
 
