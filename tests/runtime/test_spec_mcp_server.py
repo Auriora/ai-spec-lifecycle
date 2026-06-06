@@ -137,6 +137,7 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertIn("scan_specs", tools)
         self.assertIn("active_spec_preflight", tools)
         self.assertIn("agent_readiness_packet", tools)
+        self.assertIn("agent_backed_tool", tools)
         self.assertIn("no_active_spec_context", tools)
         self.assertIn("closure_check", tools)
         self.assertIn("archive_index", tools)
@@ -146,6 +147,33 @@ class SpecMcpServerTests(unittest.TestCase):
         scan_schema = next(tool for tool in responses[0]["result"]["tools"] if tool["name"] == "scan_specs")
         self.assertIn("include_archived_lint", scan_schema["inputSchema"]["properties"])
         self.assertIn("boolean", scan_schema["inputSchema"]["properties"]["include_archived_lint"]["type"])
+
+    def test_agent_backed_tool_returns_unavailable_through_mcp(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / ".git").mkdir()
+            write_current_spec(repo)
+            [response] = self.send(
+                rpc(
+                    1,
+                    "tools/call",
+                    {
+                        "name": "agent_backed_tool",
+                        "arguments": {
+                            "repo_root": str(repo),
+                            "spec_path": "001-current",
+                            "tool_name": "closure_risk_review",
+                            "model_class": "cheap",
+                        },
+                    },
+                ),
+                root=repo,
+            )
+
+        payload = response["result"]["structuredContent"]
+        self.assertEqual("unavailable", payload["status"])
+        self.assertEqual("disabled", payload["model_class"])
+        self.assertTrue(payload["advisory"])
 
     def test_active_spec_preflight_and_readiness_tools(self):
         with tempfile.TemporaryDirectory() as tmp:

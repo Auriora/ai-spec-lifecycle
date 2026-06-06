@@ -721,6 +721,39 @@ class SpecRuntimeTests(unittest.TestCase):
 
         self.assertEqual({"error": 0, "warn": 0, "info": 0}, payload["summary"])
 
+    def test_review_packet_schema_comes_from_schema_module(self):
+        import spec_agent_schemas
+
+        self.assertIs(spec_runtime.review_packet_output_schema, spec_agent_schemas.review_packet_output_schema)
+
+    def test_agent_backed_tool_returns_unavailable_when_runner_disabled(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+
+            payload = spec_runtime.agent_backed_tool(spec, "closure_risk_review", model_class="cheap")
+
+        self.assertTrue(payload["advisory"])
+        self.assertEqual("closure_risk_review", payload["tool"])
+        self.assertEqual("unavailable", payload["status"])
+        self.assertEqual("disabled", payload["model_class"])
+        self.assertEqual("runner_unconfigured", payload["result"]["gaps"][0]["code"])
+        self.assertEqual({"error": 0, "warn": 0, "info": 1}, payload["summary"])
+        self.assertIn("packet_id", payload["packet"])
+
+    def test_cli_agent_backed_tool_outputs_unavailable_json(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+            completed = subprocess.run(
+                [str(SCRIPT), "agent-backed-tool", str(spec), "--tool-name", "closure_risk_review", "--model-class", "cheap"],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+        payload = json.loads(completed.stdout)
+        self.assertEqual("unavailable", payload["status"])
+        self.assertEqual("disabled", payload["model_class"])
+
     def test_agent_slice_start_uses_traceability(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)

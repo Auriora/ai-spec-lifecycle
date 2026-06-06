@@ -20,6 +20,7 @@ skills/spec-lifecycle-manager/scripts/spec_runtime.py
 skills/spec-lifecycle-manager/scripts/traceability_lookup.py
 skills/spec-lifecycle-manager/scripts/spec_mcp_server.py
 skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py
+skills/spec-lifecycle-manager/scripts/spec_agent_schemas.py
 skills/spec-lifecycle-manager/prompts/
 ```
 
@@ -43,6 +44,7 @@ tools, resources, and prompts.
 | `reconcile` | Produce classified drift findings with observed facts, inferred diagnosis, recommended action, and blind spots. |
 | `promotion-plan` | Return durable documentation targets inferred from durable baselines and traceability rows. |
 | `review-packet` | Generate a bounded read-only review packet for fast or cheap agent review. |
+| `agent-backed-tool` | Run an advisory agent-backed tool through the disabled runner interface and return structured `unavailable` output until a runner adapter is configured. |
 | `review-result-template` | Emit the expected review-result disposition shape. |
 | `validate-review-result` | Validate accepted, rejected, deferred, and human-decision review-result disposition records. |
 | `hook` | Run lifecycle hook checks over changed files, selected specs, selected task IDs, or review-result files. |
@@ -82,6 +84,7 @@ The server exposes read-only tools that delegate to the existing runtime:
 - `reconcile_spec`
 - `promotion_plan`
 - `review_packet`
+- `agent_backed_tool`
 - `task_context`
 - `traceability_lookup`
 - `prompts_validate`
@@ -294,7 +297,43 @@ Implemented packet types:
 - `governance_conflict_review`
 
 Review outputs remain advisory until the lead agent or operator records a
-disposition.
+disposition. During early dogfooding in this repository, persisted review
+outputs belong under `docs/reviews/spec-lifecycle-manager/`.
+
+## Agent-Backed Tool Runner
+
+`agent-backed-tool` provides the first runner interface for advisory
+agent-backed review tools. The current implementation intentionally does not
+invoke a secondary process. It builds the bounded review packet, returns a
+structured `unavailable` result with an informational diagnostic, and records
+that the local Codex CLI adapter is deferred.
+
+This keeps the initial behavior deterministic while preserving the contract for
+later runner adapters:
+
+```bash
+skills/spec-lifecycle-manager/scripts/spec_runtime.py agent-backed-tool \
+  docs/specs/013-agent-backed-lifecycle-tools \
+  --tool-name closure_risk_review \
+  --model-class cheap
+```
+
+The result is advisory, read-only, and non-mutating. `model_class` records the
+caller's requested class but the returned `model_class` is `disabled` while no
+runner is configured.
+
+Schema helpers for review packets, review-result dispositions, and disabled
+runner results live in `spec_agent_schemas.py` so contracts stay
+dependency-free without expanding the main runtime file.
+
+When a later runner returns a useful but incomplete result, route follow-up work
+to backlog, roadmap, a focused follow-up spec, or a human decision record. Do
+not treat secondary-agent recommendations as accepted repository state until a
+lead agent or maintainer records the disposition.
+
+Write-capable agent-backed tools are out of scope for this runtime contract
+until a separate spec defines sandboxing, permission boundaries, review,
+rollback, and evidence requirements.
 
 ## Operational Notes
 

@@ -8,6 +8,7 @@ payloads that a future MCP server can expose as resources and tools.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -21,6 +22,11 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 import traceability_lookup
+from spec_agent_schemas import (
+    agent_unavailable_result_schema,
+    review_packet_output_schema,
+    review_result_disposition_template,
+)
 
 
 CORE_ARTIFACTS = ["requirements.md", "design.md", "tasks.md"]
@@ -1686,37 +1692,59 @@ def generate_review_packet(spec_path: Path, review_type: str, model_class: str |
     }
 
 
-def review_packet_output_schema() -> dict[str, Any]:
-    return {
-        "review_type": "string",
-        "summary": "string",
-        "findings": [
-            {
-                "severity": "error|warn|info",
-                "artifact": "string",
-                "reference": "string",
-                "finding": "string",
-                "recommendation": "string",
-            }
-        ],
-        "confidence": "low|medium|high",
-        "blind_spots": ["string"],
-    }
+def agent_packet_id(packet: dict[str, Any]) -> str:
+    encoded = json.dumps(packet, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()[:16]
 
 
-def review_result_disposition_template(review_type: str) -> dict[str, Any]:
-    return {
-        "review_type": review_type,
-        "summary": "",
-        "findings": [],
-        "confidence": "medium",
-        "blind_spots": [],
-        "disposition": {
-            "accepted": [],
-            "rejected": [],
-            "deferred": [],
-            "human_decision_required": [],
+def agent_backed_tool(spec_path: Path, tool_name: str, model_class: str | None = None) -> dict[str, Any]:
+    if tool_name not in REVIEW_PACKET_TYPES:
+        raise ValueError(f"Unknown agent-backed tool: {tool_name}")
+    packet = generate_review_packet(spec_path, tool_name, model_class)
+    packet_summary = {
+        "packet_id": agent_packet_id(packet),
+        "inputs": packet["input_artifacts"],
+        "limits": {
+            "scope": packet["scope"],
+            "writes_files": False,
+            "runner": "disabled",
+            "deferred_runner_candidate": "codex-cli",
+            "requested_model_class": model_class or "unspecified",
+            "result_schema": agent_unavailable_result_schema(),
         },
+    }
+    diagnostics = [
+        {
+            "severity": "info",
+            "code": "AGENT_RUNNER_UNCONFIGURED",
+            "message": "Agent runner is disabled; local Codex CLI adapter is deferred.",
+        }
+    ]
+    return {
+        "tool": tool_name,
+        "advisory": True,
+        "status": "unavailable",
+        "model_class": "disabled",
+        "packet": packet_summary,
+        "result": {
+            "observed_facts": [
+                f"Review packet generated for {tool_name}.",
+                "No agent runner is configured for execution.",
+            ],
+            "inferences": [],
+            "recommendations": [
+                "Use the packet with a lead agent or implement an explicit runner adapter in a future task.",
+            ],
+            "gaps": [
+                {
+                    "code": "runner_unconfigured",
+                    "message": "Agent execution is unavailable until a runner adapter is configured.",
+                }
+            ],
+            "confidence": "high",
+        },
+        "diagnostics": diagnostics,
+        "summary": diagnostic_summary(diagnostics),
     }
 
 
@@ -1800,6 +1828,11 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     packet.add_argument("--review-type", choices=sorted(REVIEW_PACKET_TYPES), default="design_requirements_trace")
     packet.add_argument("--model-class")
 
+    agent_tool = sub.add_parser("agent-backed-tool", help="Run an advisory agent-backed tool.")
+    agent_tool.add_argument("spec_path", type=Path)
+    agent_tool.add_argument("--tool-name", choices=sorted(REVIEW_PACKET_TYPES), required=True)
+    agent_tool.add_argument("--model-class")
+
     disposition = sub.add_parser("review-result-template", help="Emit review result disposition template.")
     disposition.add_argument("--review-type", choices=sorted(REVIEW_PACKET_TYPES), default="design_requirements_trace")
 
@@ -1867,6 +1900,8 @@ def main(argv: list[str] | None = None) -> int:
         payload = promotion_plan(args.spec_path.resolve())
     elif args.command == "review-packet":
         payload = generate_review_packet(args.spec_path.resolve(), args.review_type, args.model_class)
+    elif args.command == "agent-backed-tool":
+        payload = agent_backed_tool(args.spec_path.resolve(), args.tool_name, args.model_class)
     elif args.command == "review-result-template":
         payload = review_result_disposition_template(args.review_type)
     elif args.command == "validate-review-result":

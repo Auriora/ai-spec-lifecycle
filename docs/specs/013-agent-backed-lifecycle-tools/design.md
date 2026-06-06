@@ -75,8 +75,12 @@ first if it simplifies testing, with MCP delegating to the same functions.
   - Expose the deterministic foundation tools through read-only MCP schemas.
   - Later expose selected advisory agent-backed tools and pass through
     `model_class` or disabled execution options.
-- `prompts/` or `references/`
-  - Store strict task prompts or schemas for bounded secondary-agent work.
+- `spec_agent_schemas.py`
+  - Store dependency-free Python schema definitions for bounded
+    secondary-agent work and review-result validation.
+- `docs/reviews/spec-lifecycle-manager/`
+  - Store persisted advisory review outputs during early dogfooding so review
+    quality and schema fit can be inspected over time.
 - `docs/reference/spec-lifecycle-runtime.md`
   - Document tool behavior, advisory limits, configuration, and failure modes.
 - `SKILL.md`
@@ -132,10 +136,14 @@ Tool definition:
 1. Caller requests an agent-backed tool.
 2. Runtime resolves active spec or no-active durable context.
 3. Runtime builds a bounded packet from deterministic sources.
-4. Agent runner is invoked only if enabled and configured.
+4. Agent runner is invoked only if enabled and configured. The first runner
+   implementation returns a structured unavailable result; a local Codex CLI
+   adapter is deferred as the first real runner candidate.
 5. Runtime parses the agent output as structured JSON.
 6. Runtime validates schema and references.
-7. Runtime returns advisory result and diagnostics.
+7. Runtime persists review output under `docs/reviews/spec-lifecycle-manager/`
+   when persistence is requested by the tool contract.
+8. Runtime returns advisory result and diagnostics.
 
 ## Low-Level Design
 
@@ -199,22 +207,24 @@ avoid shell execution by secondary agents and should not grant write access.
 ### Migration and Compatibility
 
 Existing deterministic tools continue to work without agent configuration.
-Agent-backed tools must degrade cleanly when no runner is available. MCP clients
-that do not use the new tools should see no behavior change.
+Agent-backed tools must degrade cleanly when no runner is available. The first
+implementation should provide the runner interface and deterministic
+`unavailable` result without invoking a secondary process. A local Codex CLI
+adapter can be added later behind explicit configuration. MCP clients that do
+not use the new tools should see no behavior change.
 
 ## Operational Considerations
 
 - Keep hooks advisory-only.
 - Prefer cheap model class for bounded review; use standard/expert only through
   explicit caller configuration.
-- Cache packets or results later if repeated review cost becomes material.
+- Persist review results under a predefined `docs/reviews/spec-lifecycle-manager/`
+  path during early dogfooding so maintainers can refine prompts, schemas, and
+  review quality.
 - Record accepted recommendations as lead-agent actions, not secondary-agent
   decisions.
 
 ## Open Questions
 
-- Which runner interface should be used first: Codex subagents, local command,
-  provider API, or pluggable adapter?
 - Should the first tool be `closure_risk_review` or
   `draft_traceability_matrix`?
-- Where should raw review results be stored if the user wants audit history?

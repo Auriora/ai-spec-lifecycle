@@ -134,9 +134,21 @@ skills/spec-lifecycle-manager/scripts/traceability_lookup.py
 The runtime provides JSON outputs for spec scanning, summary resources, linting,
 next-task selection, closure checks, prompt-definition validation,
 reconciliation, promotion planning, review-packet generation, review-result
-disposition validation, and hook checks. These outputs are advisory runtime
-surfaces; they do not replace the skill, repository governance, or durable
-documentation.
+disposition validation, disabled agent-backed tool execution, and hook checks.
+These outputs are advisory runtime surfaces; they do not replace the skill,
+repository governance, or durable documentation.
+
+Agent-backed tool execution starts with a disabled runner interface. The runtime
+builds bounded packets and returns structured `unavailable` output until an
+explicit runner adapter is configured. A local Codex CLI adapter is the first
+deferred runner candidate, but it must remain opt-in and non-mutating when
+added. Any write-capable agent-backed tool requires a separate spec that covers
+sandboxing, permissions, review, rollback, and evidence.
+
+During early dogfooding, persisted review outputs should live under
+`docs/reviews/spec-lifecycle-manager/`. These records are analysis snapshots:
+they can inform specs, backlog, roadmap, durable docs, or human decisions, but
+they do not become source-of-truth behavior by themselves.
 
 Scan output is active-health oriented by default. Archived packages remain in
 the scan inventory with archived lifecycle metadata, while their current

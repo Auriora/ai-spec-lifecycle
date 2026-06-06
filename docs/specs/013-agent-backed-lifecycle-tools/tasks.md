@@ -40,11 +40,11 @@ T008 depends on T004-T007
   - Acceptance: Packet includes only relevant spec/durable context and treats reviewed documents as data.
   - Evidence: `agent_readiness_packet` returns task-specific requirements, design, verification, durable targets, open decisions, guardrails, and validation commands; `no_active_spec_context` returns durable docs/history context.
 
-- [ ] T004 Implement disabled/unavailable agent-runner behavior.
+- [x] T004 Implement disabled/unavailable agent-runner behavior.
   - Depends on: T003
-  - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`
-  - Acceptance: Tool returns structured `unavailable` output without mutation when no runner is configured.
-  - Evidence: Pending.
+  - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`, `skills/spec-lifecycle-manager/scripts/spec_agent_schemas.py`
+  - Acceptance: Tool returns structured `unavailable` output without mutation when no runner is configured, uses a separate Python schema module, and leaves local Codex CLI runner support deferred.
+  - Evidence: Added `spec_agent_schemas.py`, `agent_backed_tool`, `agent-backed-tool` CLI, and MCP `agent_backed_tool`; targeted runtime and MCP tests passed on 2026-06-06.
 
 - [x] T005 Expose foundation tools through MCP.
   - Depends on: T003
@@ -60,16 +60,16 @@ T008 depends on T004-T007
   - Acceptance: Tests cover valid payloads, no-active behavior, MCP exposure, and no mutation for deterministic foundation tools.
   - Evidence: Added runtime and MCP tests for active preflight, agent readiness packet, and no-active-spec context.
 
-- [ ] T007 Update durable docs and skill guidance.
+- [x] T007 Update durable docs and skill guidance.
   - Depends on: T005
-  - Files: `docs/reference/spec-lifecycle-runtime.md`, `docs/design/spec-lifecycle-management.md`, `skills/spec-lifecycle-manager/SKILL.md`, optional `AGENTS.md`
-  - Acceptance: Docs explain usage, guardrails, advisory limits, and future write-capable deferral.
-  - Evidence: Pending.
+  - Files: `docs/reference/spec-lifecycle-runtime.md`, `docs/design/spec-lifecycle-management.md`, `docs/reviews/spec-lifecycle-manager/`, `skills/spec-lifecycle-manager/SKILL.md`, optional `AGENTS.md`
+  - Acceptance: Docs explain usage, guardrails, advisory limits, persisted review locations, and future write-capable deferral.
+  - Evidence: Updated runtime reference, lifecycle design, skill guidance, and `docs/reviews/spec-lifecycle-manager/README.md`; lifecycle lint and full test suite passed on 2026-06-06.
 
 ## Phase 4: Closure
 
-- [ ] T008 Reconcile, validate, promote, and close the spec.
+- [x] T008 Reconcile, validate, promote, and close the spec.
   - Depends on: T006, T007
   - Files: `docs/specs/013-agent-backed-lifecycle-tools/verification.md`, `docs/history/spec-closure-log.md`, `docs/history/spec-archive-index.md`
   - Acceptance: Runtime checks, tests, prompts/archive validation, durable promotion, closure log, archive index, and package removal are complete.
-  - Evidence: Pending.
+  - Evidence: Final validation passed on 2026-06-06; durable promotion completed in runtime docs, lifecycle design, skill guidance, review docs, runtime code, MCP adapter, and tests. Closure log, archive index, and package removal are handled by the cleanup commit after this final spec state is committed.

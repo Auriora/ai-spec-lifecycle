@@ -143,6 +143,16 @@ def tool_definitions() -> list[dict[str, Any]]:
             ["spec_path", "task_id"],
         ),
         tool_schema(
+            "agent_backed_tool",
+            "Run an advisory agent-backed tool; returns unavailable when no runner is configured.",
+            {
+                "spec_path": "Spec package path or ID.",
+                "tool_name": "Agent-backed tool name.",
+                "model_class": "Optional model class.",
+            },
+            ["spec_path", "tool_name"],
+        ),
+        tool_schema(
             "no_active_spec_context",
             "Return durable docs, backlog, roadmap, closure-log, and archive-index context when no active spec exists.",
             {"repo_root": "Repository root. Defaults to current working directory."},
@@ -214,6 +224,11 @@ def call_tool(name: str, arguments: dict[str, Any]) -> dict[str, Any]:
         if not task_id:
             raise ValueError("task_id is required")
         return spec_runtime.agent_readiness_packet(spec_path_arg(arguments), str(task_id))
+    if name == "agent_backed_tool":
+        tool_name = arguments.get("tool_name")
+        if not tool_name:
+            raise ValueError("tool_name is required")
+        return spec_runtime.agent_backed_tool(spec_path_arg(arguments), str(tool_name), arguments.get("model_class"))
     if name == "no_active_spec_context":
         return spec_runtime.no_active_spec_context(repo_root_arg(arguments))
     if name == "spec_summary":

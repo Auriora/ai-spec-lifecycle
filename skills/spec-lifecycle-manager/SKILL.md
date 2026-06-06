@@ -272,6 +272,7 @@ skills/spec-lifecycle-manager/scripts/spec_runtime.py hook spec-close-check --sp
 skills/spec-lifecycle-manager/scripts/spec_runtime.py reconcile docs/specs/013-example-active-spec
 skills/spec-lifecycle-manager/scripts/spec_runtime.py promotion-plan docs/specs/013-example-active-spec
 skills/spec-lifecycle-manager/scripts/spec_runtime.py review-packet docs/specs/013-example-active-spec --review-type design_requirements_trace
+skills/spec-lifecycle-manager/scripts/spec_runtime.py agent-backed-tool docs/specs/013-example-active-spec --tool-name closure_risk_review --model-class cheap
 ```
 
 Only run package-specific commands against an active package returned by
@@ -281,6 +282,24 @@ for context instead of substituting a removed package path.
 These helpers are advisory runtime surfaces, not replacements for lifecycle
 judgment. Use their JSON results as structured evidence for reconciliation,
 task selection, lint findings, and closure blockers.
+
+`agent-backed-tool` is also advisory and read-only. The current runner
+implementation is a disabled stub: it builds the bounded review packet and
+returns a structured `unavailable` result instead of invoking a secondary
+process. Treat that result as confirmation that the packet and runner contract
+are available, not as a completed review. A local Codex CLI adapter is a
+deferred future runner candidate and must remain opt-in when added.
+
+When an agent-backed review result is produced or manually recorded during
+dogfooding, persist it under the repository's review documentation area. For
+this repository, use `docs/reviews/spec-lifecycle-manager/`. Keep accepted
+recommendations as lead-agent actions with evidence; route incomplete or risky
+findings to backlog, roadmap, a follow-up spec, or human decision instead of
+silently accepting them.
+
+Do not add write-capable agent-backed tools inside an active implementation
+slice unless a separate explicit spec defines sandboxing, permissions, review,
+rollback, and evidence requirements.
 
 When this skill's `scripts/spec_mcp_server.py` helper is available, it can be
 configured as a local read-only stdio MCP server for clients that support MCP:
