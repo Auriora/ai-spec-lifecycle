@@ -121,20 +121,21 @@ Use this checklist after install, sync, or reload:
 |-------|-------------------|
 | MCP tools visible after reload | Codex exposes `mcp__spec_lifecycle_manager` tools. |
 | Server starts | `initialize` returns server name `spec-lifecycle-manager`. |
-| Spec scan works | `scan_specs` returns `/home/bcherrington/Projects/Auriora/agent-dev-lifecycle`. |
+| Spec scan works | `scan_specs` returns the repository root and the expected active-spec count. |
+| Archive index works | `archive_index` returns no diagnostics for removed package history. |
 | Prompt definitions validate | `prompts_validate` returns no diagnostics. |
-| Closure tool works | `closure_check` returns structured readiness for a known spec. |
+| Package tools resolve live specs | `closure_check`, `task_context`, or `traceability_lookup` work when an active spec exists. |
 | Installed skill is synced | `~/.codex/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py` exists and is executable. |
 | No duplicate MCP instance | `~/.codex/config.toml` has one host-level `mcp_servers.spec-lifecycle-manager` entry and no plugin-provided duplicate. |
 
-Current validation on 2026-06-05:
+Current validation on 2026-06-06:
 
 - `mcp__spec_lifecycle_manager.scan_specs` returned this repository's spec
-  inventory.
+  inventory with zero active specs after completed package removal.
+- `mcp__spec_lifecycle_manager.archive_index` returned removed package history
+  with no diagnostics.
 - `mcp__spec_lifecycle_manager.prompts_validate` returned four prompts with no
   diagnostics.
-- `mcp__spec_lifecycle_manager.closure_check` on spec 007 returned
-  `ready: true` with no blockers.
 - The installed server script is executable.
 - Search found no plugin-provided spec lifecycle MCP server entry.
 
@@ -151,7 +152,7 @@ If the tools are not visible after reload:
 
 ## Related Artifacts
 
-- `docs/specs/008-agent-workbench-spec-lifecycle-install/`
 - `docs/reference/spec-lifecycle-runtime.md`
+- `docs/history/spec-archive-index.md`
 - `../agent-workbench/docs/runbooks/codex-agent-workbench-plugin.md`
 - `../agent-workbench/docs/design/coding-agent-integration-design.md`

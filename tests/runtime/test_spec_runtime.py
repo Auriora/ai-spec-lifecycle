@@ -220,8 +220,29 @@ class SpecRuntimeTests(unittest.TestCase):
         payload = spec_runtime.archive_index(ROOT)
 
         self.assertEqual(0, payload["summary"]["error"])
-        self.assertGreaterEqual(payload["summary"]["total"], 1)
-        self.assertIn("003-coding-agent-operating-model", {entry["spec_id"] for entry in payload["entries"]})
+        self.assertEqual(0, payload["summary"]["warn"])
+        self.assertEqual(12, payload["summary"]["total"])
+        self.assertEqual(12, payload["summary"]["removed"])
+        self.assertEqual(0, payload["summary"]["retained"])
+        self.assertEqual(0, payload["summary"]["superseded"])
+        self.assertEqual(0, payload["summary"]["legacy_gaps"])
+        expected = {
+            "001-spec-lifecycle-manager-skill",
+            "002-spec-lifecycle-validation",
+            "003-coding-agent-operating-model",
+            "004-spec-management-mcp",
+            "005-spec-closure-log-management",
+            "006-backlog-roadmap-templates",
+            "007-spec-lifecycle-mcp-server",
+            "008-agent-workbench-spec-lifecycle-install",
+            "009-archived-spec-scan-hygiene",
+            "010-codex-hook-dogfood",
+            "011-spec-archive-index-runtime",
+            "012-operating-model-governance-adoption",
+        }
+        entries = {entry["spec_id"]: entry for entry in payload["entries"]}
+        self.assertEqual(expected, set(entries))
+        self.assertTrue(all(entry["status"] == "removed" for entry in entries.values()))
 
     def test_archive_index_reports_missing_commits_and_drift(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -288,6 +309,24 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertGreater(payload["tasks"]["total"], 0)
         self.assertEqual("current", payload["format"])
         self.assertEqual("present", payload["artifacts"]["requirements.md"])
+
+    def test_open_decisions_parser_ignores_table_header(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "open-decisions.md"
+            path.write_text(
+                "\n".join(
+                    [
+                        "| Decision | Status |",
+                        "|----------|--------|",
+                        "| D001 | accepted |",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            decisions = spec_runtime.parse_open_decisions(path)
+
+        self.assertEqual([{"id": "D001", "raw": "| D001 | accepted |"}], decisions)
 
     def test_cli_scan_can_opt_into_archived_lint_audit(self):
         with tempfile.TemporaryDirectory() as tmp:

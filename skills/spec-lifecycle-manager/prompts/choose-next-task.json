@@ -14,9 +14,7 @@
     }
   ],
   "resources": [
-    "specs://{spec_id}/summary",
-    "specs://{spec_id}/tasks",
-    "specs://{spec_id}/traceability"
+    "specs://{spec_id}/summary"
   ],
   "tools": [
     "next_task",

@@ -239,7 +239,7 @@ def scan_specs(repo_root: Path, docs_root: str | None = None, include_archived_l
         "resources": {
             "active": "specs://active",
             "summary_pattern": "specs://{spec_id}/summary",
-            "templates": "templates://spec-package/{artifact_type}",
+            "templates": "templates://spec-package",
         },
         "template_authority": template_authority(root),
         "specs": specs,
@@ -322,7 +322,7 @@ def parse_open_decisions(path: Path) -> list[dict[str, str]]:
         return []
     decisions = []
     for line in read_text(path).splitlines():
-        if line.strip().startswith("| D"):
+        if re.match(r"^\|\s*D\d+\b", line.strip()):
             cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
             if cells:
                 decisions.append({"id": cells[0], "raw": line.strip()})

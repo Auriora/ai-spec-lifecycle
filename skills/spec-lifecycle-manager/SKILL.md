@@ -50,6 +50,13 @@ This skill includes two kinds of fallback references:
 
 If no active package exists and the user asks to start one, create the smallest useful `[docs-root]/specs/[###-slug]/` package for the risk level. Use repository-documented package templates when present. If no repository-specific package template exists, use `references/spec-package/` as the fallback package template. If both exist and differ, prefer the repository template and record the template authority decision.
 
+If no active package exists and the user is not asking to start one, do not
+recreate or browse removed spec packages as if they are current work. Use
+durable docs, `docs/backlog/`, `docs/roadmap/`, the closure log, and the spec
+archive index as the current context. Removed package paths in history records
+are evidence pointers to Git history, not active implementation targets, unless
+the user explicitly asks for historical audit or restoration.
+
 If durable documentation must be created or promoted and the target repository
 has no documented durable-doc template system, use
 `references/durable-doc-templates/` as optional fallback guidance. Copy or adapt
@@ -234,7 +241,7 @@ If this skill's `scripts/traceability_lookup.py` helper is available, prefer it
 for the first lookup:
 
 ```bash
-skills/spec-lifecycle-manager/scripts/traceability_lookup.py docs/specs/004-spec-management-mcp --task T012 --format text
+skills/spec-lifecycle-manager/scripts/traceability_lookup.py docs/specs/013-example-active-spec --task T012 --format text
 ```
 
 Run it from the repository root or pass an absolute spec package path. The
@@ -250,18 +257,22 @@ deterministic scanner, linter, next-task, and closure-check passes:
 ```bash
 skills/spec-lifecycle-manager/scripts/spec_runtime.py scan .
 skills/spec-lifecycle-manager/scripts/spec_runtime.py scan . --include-archived-lint
-skills/spec-lifecycle-manager/scripts/spec_runtime.py summary docs/specs/004-spec-management-mcp
-skills/spec-lifecycle-manager/scripts/spec_runtime.py lint docs/specs/004-spec-management-mcp
-skills/spec-lifecycle-manager/scripts/spec_runtime.py next-task docs/specs/004-spec-management-mcp
-skills/spec-lifecycle-manager/scripts/spec_runtime.py closure-check docs/specs/004-spec-management-mcp
+skills/spec-lifecycle-manager/scripts/spec_runtime.py summary docs/specs/013-example-active-spec
+skills/spec-lifecycle-manager/scripts/spec_runtime.py lint docs/specs/013-example-active-spec
+skills/spec-lifecycle-manager/scripts/spec_runtime.py next-task docs/specs/013-example-active-spec
+skills/spec-lifecycle-manager/scripts/spec_runtime.py closure-check docs/specs/013-example-active-spec
 skills/spec-lifecycle-manager/scripts/spec_runtime.py prompts .
-skills/spec-lifecycle-manager/scripts/spec_runtime.py hook spec-file-changed --changed-files docs/specs/004-spec-management-mcp/tasks.md
-skills/spec-lifecycle-manager/scripts/spec_runtime.py hook implementation-task-complete --spec-path docs/specs/004-spec-management-mcp --task-id T009
-skills/spec-lifecycle-manager/scripts/spec_runtime.py hook spec-close-check --spec-path docs/specs/004-spec-management-mcp --severity-profile blocking
-skills/spec-lifecycle-manager/scripts/spec_runtime.py reconcile docs/specs/004-spec-management-mcp
-skills/spec-lifecycle-manager/scripts/spec_runtime.py promotion-plan docs/specs/004-spec-management-mcp
-skills/spec-lifecycle-manager/scripts/spec_runtime.py review-packet docs/specs/004-spec-management-mcp --review-type design_requirements_trace
+skills/spec-lifecycle-manager/scripts/spec_runtime.py hook spec-file-changed --changed-files docs/specs/013-example-active-spec/tasks.md
+skills/spec-lifecycle-manager/scripts/spec_runtime.py hook implementation-task-complete --spec-path docs/specs/013-example-active-spec --task-id T009
+skills/spec-lifecycle-manager/scripts/spec_runtime.py hook spec-close-check --spec-path docs/specs/013-example-active-spec --severity-profile blocking
+skills/spec-lifecycle-manager/scripts/spec_runtime.py reconcile docs/specs/013-example-active-spec
+skills/spec-lifecycle-manager/scripts/spec_runtime.py promotion-plan docs/specs/013-example-active-spec
+skills/spec-lifecycle-manager/scripts/spec_runtime.py review-packet docs/specs/013-example-active-spec --review-type design_requirements_trace
 ```
+
+Only run package-specific commands against an active package returned by
+`scan`. If scan reports no active specs, use durable docs and history indexes
+for context instead of substituting a removed package path.
 
 These helpers are advisory runtime surfaces, not replacements for lifecycle
 judgment. Use their JSON results as structured evidence for reconciliation,

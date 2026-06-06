@@ -13,8 +13,8 @@ INVALID_FIXTURE_ROOT = ROOT / "tests/fixtures/codex-hook/invalid-spec"
 HOOK = ROOT / "skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py"
 
 
-def write_valid_spec(repo: Path) -> None:
-    spec = repo / "docs/specs/001-valid"
+def write_valid_spec(repo: Path, relative: str = "docs/specs/001-valid") -> None:
+    spec = repo / relative
     spec.mkdir(parents=True)
     frontmatter = "\n".join(
         [
@@ -78,6 +78,47 @@ class CodexSpecLifecycleHookTests(unittest.TestCase):
                 "tool_response": {
                     "output": "Updated the following files:\nM docs/specs/001-valid/tasks.md\n"
                 },
+            }
+
+            result = run_hook(payload)
+
+        self.assertEqual("", result.stdout)
+        self.assertEqual("", result.stderr)
+
+    def test_hook_matches_nested_partition_specs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            repo.mkdir()
+            (repo / ".git").mkdir()
+            write_valid_spec(repo, "docs/platform/specs/001-valid")
+            payload = {
+                "hook_event_name": "PostToolUse",
+                "cwd": str(repo),
+                "tool_name": "apply_patch",
+                "tool_response": {
+                    "output": "Updated the following files:\nM docs/platform/specs/001-valid/tasks.md\n"
+                },
+            }
+
+            result = run_hook(payload)
+
+        self.assertEqual("", result.stdout)
+        self.assertEqual("", result.stderr)
+
+    def test_hook_extracts_apply_patch_input_paths(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            repo.mkdir()
+            (repo / ".git").mkdir()
+            write_valid_spec(repo)
+            payload = {
+                "hook_event_name": "PostToolUse",
+                "cwd": str(repo),
+                "tool_name": "apply_patch",
+                "tool_input": {
+                    "patch": "*** Begin Patch\n*** Update File: docs/specs/001-valid/tasks.md\n@@\n*** End Patch\n"
+                },
+                "tool_response": {"output": ""},
             }
 
             result = run_hook(payload)

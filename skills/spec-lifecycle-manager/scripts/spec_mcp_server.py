@@ -74,18 +74,32 @@ def bool_arg(arguments: dict[str, Any], name: str) -> bool:
     return str(value).strip().lower() in {"1", "true", "yes", "on"}
 
 
+def resolve_spec_path(repo_root: Path, value: str) -> Path:
+    """Resolve a live spec path using the same discovery rules as scan_specs."""
+    root = repo_root.resolve()
+    path = Path(value)
+    candidates = []
+    if path.is_absolute():
+        candidates.append(path)
+    else:
+        candidates.extend([Path(value), root / value])
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate.resolve()
+
+    matches = [spec for spec in spec_runtime.discover_spec_paths(root) if spec.name == value]
+    if len(matches) == 1:
+        return matches[0].resolve()
+    if len(matches) > 1:
+        raise ValueError(f"Spec ID is ambiguous across docs partitions: {value}; use a package path.")
+    raise ValueError(f"Active spec not found: {value}. Use scan_specs for live packages or history://spec-archive-index for removed specs.")
+
+
 def spec_path_arg(arguments: dict[str, Any]) -> Path:
     value = arguments.get("spec_path") or arguments.get("spec_id")
     if not value:
         raise ValueError("spec_path or spec_id is required")
-    path = Path(value)
-    if path.exists():
-        return path.resolve()
-    root = repo_root_arg(arguments)
-    candidate = root / "docs" / "specs" / str(value)
-    if candidate.exists():
-        return candidate.resolve()
-    raise ValueError(f"Spec path not found: {value}")
+    return resolve_spec_path(repo_root_arg(arguments), str(value))
 
 
 def path_arg(arguments: dict[str, Any], name: str) -> Path:
@@ -283,7 +297,7 @@ def read_resource(uri: str, repo_root: Path) -> dict[str, Any]:
     spec_match = uri.removeprefix("specs://")
     if "/" in spec_match:
         spec_id, suffix = spec_match.split("/", 1)
-        spec_path = repo_root / "docs" / "specs" / spec_id
+        spec_path = resolve_spec_path(repo_root, spec_id)
         if suffix == "summary":
             return resource_payload(uri, "application/json", json_text(spec_runtime.spec_summary(spec_path)))
         if suffix == "health":

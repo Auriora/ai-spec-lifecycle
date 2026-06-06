@@ -15,7 +15,7 @@
   ],
   "resources": [
     "specs://{spec_id}/health",
-    "templates://spec-package/{artifact_type}"
+    "templates://spec-package"
   ],
   "tools": [
     "lint_spec_package",

@@ -47,4 +47,4 @@ final spec commit that still contains the historical package.
 
 - Closure log: [spec-closure-log.md](spec-closure-log.md)
 - Lifecycle design: [../design/spec-lifecycle-management.md](../design/spec-lifecycle-management.md)
-- Spec inventory: [../specs/](../specs/)
+- Active spec convention: `docs/specs/[###-slug]/`

@@ -1,2 +1,3 @@
 .cache/
 .codex/
+__pycache__

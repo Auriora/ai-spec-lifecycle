@@ -92,6 +92,22 @@ def extract_apply_patch_paths(output: str) -> list[str]:
     return paths
 
 
+def extract_apply_patch_input_paths(payload: dict[str, Any]) -> list[str]:
+    tool_name = str(payload.get("tool_name") or "")
+    tool_input = payload.get("tool_input")
+    if tool_name != "apply_patch" or not isinstance(tool_input, dict):
+        return []
+    patch = tool_input.get("patch")
+    if not isinstance(patch, str):
+        return []
+    paths: list[str] = []
+    for line in patch.splitlines():
+        match = re.match(r"^\*\*\* (?:Add|Update|Delete) File:\s+(.+)$", line.strip())
+        if match:
+            paths.append(match.group(1).strip())
+    return paths
+
+
 def extract_write_tool_paths(payload: dict[str, Any]) -> list[str]:
     tool_name = str(payload.get("tool_name") or "")
     tool_input = payload.get("tool_input")
@@ -107,6 +123,7 @@ def extract_write_tool_paths(payload: dict[str, Any]) -> list[str]:
 
 def extract_changed_files(payload: dict[str, Any], repo_root: Path) -> list[str]:
     paths = extract_apply_patch_paths(decoded_tool_response_output(payload.get("tool_response")))
+    paths.extend(extract_apply_patch_input_paths(payload))
     paths.extend(extract_write_tool_paths(payload))
     normalized: list[str] = []
     for value in paths:
@@ -125,7 +142,9 @@ def extract_changed_files(payload: dict[str, Any], repo_root: Path) -> list[str]
 
 
 def is_spec_file(path: str) -> bool:
-    return path.startswith("docs/specs/") and Path(path).suffix == ".md"
+    relative = Path(path)
+    parts = relative.parts
+    return relative.suffix == ".md" and parts and parts[0] == "docs" and "specs" in parts and parts.index("specs") + 1 < len(parts)
 
 
 def is_task_file(path: str) -> bool:

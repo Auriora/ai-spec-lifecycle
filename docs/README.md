@@ -24,7 +24,6 @@ This documentation describes reusable agent workflows for managing implementatio
 - [Backlog](backlog/README.md): proposed or deferred lifecycle work that is not yet a focused implementation spec.
 - [Roadmap](roadmap/README.md): sequenced lifecycle work, adoption stages, and multi-spec dependencies.
 - [Spec archive index](history/spec-archive-index.md): compact Git-backed index of closed spec package archive state.
-- [Spec lifecycle manager skill spec](specs/001-spec-lifecycle-manager-skill/spec.md): archived implementation and validation history for the reusable skill.
 
 ## Skill Source And Install
 
@@ -89,6 +88,9 @@ python3 skills/spec-lifecycle-manager/scripts/spec_mcp_server.py "$PWD"
 ## Specs
 
 Active implementation specs use `docs/specs/[###-slug]/` by default.
+This path is for live delivery packages only. If `docs/specs/` is empty, use
+durable docs, backlog, roadmap, the closure log, and the archive index for
+current context and historical lookup.
 
 When working inside a repository with its own documentation approach, lifecycle
 material may live under a named docs partition such as

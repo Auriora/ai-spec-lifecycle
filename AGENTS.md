@@ -2,10 +2,12 @@
 
 ## Project Structure & Module Organization
 
-This repository maintains the `spec-lifecycle-manager` skill and its supporting
+This repository maintains the `spec-lifecycle-manager` skill and supporting
 documentation. Durable project docs live under `docs/`: `design/`,
-`governance/`, `reference/`, `history/`, `backlog/`, `roadmap/`, and archived
-implementation specs in `docs/specs/`. Skill source lives in
+`governance/`, `reference/`, `history/`, `backlog/`, and `roadmap/`. Active
+implementation specs, when present, live in `docs/specs/`; closed spec history
+is recorded in `docs/history/spec-closure-log.md` and
+`docs/history/spec-archive-index.md`. Skill source lives in
 `skills/spec-lifecycle-manager/`, with Python runtime helpers in
 `skills/spec-lifecycle-manager/scripts/`, MCP prompt definitions in
 `skills/spec-lifecycle-manager/prompts/`, and fallback templates in
@@ -29,8 +31,9 @@ fixtures under `tests/fixtures/`.
 Use Python 3 standard-library code unless a dependency is already established.
 Keep files ASCII unless existing content requires otherwise. Prefer clear
 functions, deterministic JSON output for runtime tools, and concise Markdown
-frontmatter for docs. Spec package names use `docs/specs/[###-slug]/`; task IDs
-use stable forms such as `T001` and `T001.1`.
+frontmatter for docs. Active spec package names use
+`docs/specs/[###-slug]/`; task IDs use stable forms such as `T001` and
+`T001.1`.
 
 ## Testing Guidelines
 
@@ -54,5 +57,8 @@ follow-up backlog items.
 Review this file and any deeper `AGENTS.md` before changing files. For lifecycle
 work, use the `spec-lifecycle-manager` skill and do not implement from
 `tasks.md` alone; review relevant requirements, design, traceability,
-verification, and governance first. If a session lacks repository instructions,
-ask the user to run `/init` once rather than repeating the reminder.
+verification, and governance first. Run `spec_runtime.py scan .` before
+lifecycle work; if there are no active specs, use durable docs, backlog,
+roadmap, the closure log, and the archive index instead of deleted packages.
+If a session lacks repository instructions, ask the user to run `/init` once
+rather than repeating the reminder.

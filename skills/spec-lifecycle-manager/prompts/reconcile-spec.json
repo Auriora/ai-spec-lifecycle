@@ -15,8 +15,6 @@
   ],
   "resources": [
     "specs://{spec_id}/summary",
-    "specs://{spec_id}/tasks",
-    "specs://{spec_id}/traceability",
     "governance://constitution"
   ],
   "tools": [
