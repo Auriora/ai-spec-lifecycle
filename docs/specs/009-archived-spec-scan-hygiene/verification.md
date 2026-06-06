@@ -93,7 +93,7 @@ MCP exposure, tests, durable docs, and installed skill sync.
 - **Final spec commit:** `1095b7f`
 - **Closure log path:** `docs/history/spec-closure-log.md`
 - **Closure log entry updated:** yes
-- **Closure cleanup commit:** pending
+- **Closure cleanup commit:** `ccba3e9`
 - **Active indexes updated:** yes
 - **Durable docs linked back to evidence where useful:** yes
 - **Residual spec-only content:** Implementation evidence remains in spec 009

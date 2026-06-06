@@ -68,7 +68,7 @@ dogfood closure-log entry creation.
 | T004 | complete | Skill, routing, lifecycle, and verification guidance updated. | Final spec commit required before removal. |
 | T005 | complete | Durable lifecycle docs promoted. | Active index and changelog boundaries documented. |
 | T006 | complete | Validation requirements/evidence updated. | Static checks added. |
-| T007 | complete | Closure log entry for 004 added using final spec commit `86687b6`. | Cleanup commit pending. |
+| T007 | complete | Closure log entry for 004 added using final spec commit `86687b6`. | Cleanup commit recorded. |
 
 ## Manual Or External Verification
 
@@ -103,7 +103,7 @@ changelogs.
 - **Final spec commit:** `1095b7f`
 - **Closure log path:** `docs/history/spec-closure-log.md`
 - **Closure log entry updated:** yes
-- **Closure cleanup commit:** pending
+- **Closure cleanup commit:** `ccba3e9`
 - **Active indexes updated:** yes
 - **Durable docs linked back to evidence where useful:** yes
 - **Residual spec-only content:** 005 remains as retained historical package.

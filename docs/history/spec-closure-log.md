@@ -19,7 +19,7 @@ requires visible archived docs.
 - **Spec:** `docs/specs/009-archived-spec-scan-hygiene/`
 - **Title:** Archived spec scan hygiene
 - **Final spec commit:** `1095b7f`
-- **Closure cleanup commit:** pending
+- **Closure cleanup commit:** `ccba3e9`
 - **Closure action:** retained-as-history
 - **Closed by:** platform
 - **Durable docs updated:**
@@ -37,7 +37,7 @@ requires visible archived docs.
 - **Spec:** `docs/specs/006-backlog-roadmap-templates/`
 - **Title:** Backlog and roadmap templates
 - **Final spec commit:** `1095b7f`
-- **Closure cleanup commit:** pending
+- **Closure cleanup commit:** `ccba3e9`
 - **Closure action:** retained-as-history
 - **Closed by:** platform
 - **Durable docs updated:**
@@ -56,7 +56,7 @@ requires visible archived docs.
 - **Spec:** `docs/specs/005-spec-closure-log-management/`
 - **Title:** Spec closure log management
 - **Final spec commit:** `1095b7f`
-- **Closure cleanup commit:** pending
+- **Closure cleanup commit:** `ccba3e9`
 - **Closure action:** retained-as-history
 - **Closed by:** platform
 - **Durable docs updated:**
