@@ -21,15 +21,42 @@ class SpecRuntimeTests(unittest.TestCase):
 
         self.assertEqual("current", specs["004-spec-management-mcp"]["format"])
         self.assertEqual("old-format", specs["001-spec-lifecycle-manager-skill"]["format"])
+        self.assertEqual("archived", specs["001-spec-lifecycle-manager-skill"]["lifecycle"])
+        self.assertEqual("archived", specs["001-spec-lifecycle-manager-skill"]["health"]["severity"])
+        self.assertTrue(specs["001-spec-lifecycle-manager-skill"]["health"]["skipped"])
+        self.assertGreaterEqual(payload["summary"]["archived"], 1)
         self.assertEqual("skill-fallback", payload["template_authority"]["authority"])
+
+    def test_scan_can_opt_into_archived_lint_audit(self):
+        payload = spec_runtime.scan_specs(ROOT, include_archived_lint=True)
+        specs = {item["spec_id"]: item for item in payload["specs"]}
+        archived = specs["001-spec-lifecycle-manager-skill"]
+
+        self.assertEqual("archived", archived["lifecycle"])
+        self.assertEqual("error", archived["health"]["severity"])
+        self.assertFalse(archived["health"]["skipped"])
+        self.assertGreater(archived["health"]["diagnostic_count"], 0)
 
     def test_summary_reports_tasks_and_resources(self):
         payload = spec_runtime.spec_summary(SPEC)
 
         self.assertEqual("004-spec-management-mcp", payload["spec_id"])
+        self.assertEqual("archived", payload["lifecycle"])
         self.assertGreater(payload["tasks"]["total"], 0)
         self.assertEqual("current", payload["format"])
         self.assertEqual("present", payload["artifacts"]["traceability.md"])
+
+    def test_cli_scan_can_opt_into_archived_lint_audit(self):
+        result = subprocess.run(
+            [sys.executable, str(SCRIPT), "scan", str(ROOT), "--include-archived-lint"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        payload = json.loads(result.stdout)
+        specs = {item["spec_id"]: item for item in payload["specs"]}
+
+        self.assertEqual("error", specs["001-spec-lifecycle-manager-skill"]["health"]["severity"])
 
     def test_lint_doc_reports_completed_task_without_evidence(self):
         with tempfile.TemporaryDirectory() as tmp:

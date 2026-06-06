@@ -48,6 +48,22 @@ class SpecMcpServerTests(unittest.TestCase):
         structured = responses[1]["result"]["structuredContent"]
         self.assertIn("specs", structured)
         self.assertIn("004-spec-management-mcp", {item["spec_id"] for item in structured["specs"]})
+        scan_schema = next(tool for tool in responses[0]["result"]["tools"] if tool["name"] == "scan_specs")
+        self.assertIn("include_archived_lint", scan_schema["inputSchema"]["properties"])
+        self.assertIn("boolean", scan_schema["inputSchema"]["properties"]["include_archived_lint"]["type"])
+
+    def test_scan_specs_can_include_archived_lint_audit(self):
+        [response] = self.send(
+            rpc(
+                1,
+                "tools/call",
+                {"name": "scan_specs", "arguments": {"repo_root": str(ROOT), "include_archived_lint": True}},
+            )
+        )
+
+        structured = response["result"]["structuredContent"]
+        specs = {item["spec_id"]: item for item in structured["specs"]}
+        self.assertEqual("error", specs["001-spec-lifecycle-manager-skill"]["health"]["severity"])
 
     def test_resources_list_and_read_active_specs(self):
         responses = self.send(rpc(1, "resources/list"), rpc(2, "resources/read", {"uri": "specs://active"}))

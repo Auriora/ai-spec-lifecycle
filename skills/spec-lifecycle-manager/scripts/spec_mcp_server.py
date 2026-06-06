@@ -65,6 +65,15 @@ def repo_root_arg(arguments: dict[str, Any]) -> Path:
     return Path(arguments.get("repo_root") or Path.cwd()).resolve()
 
 
+def bool_arg(arguments: dict[str, Any], name: str) -> bool:
+    value = arguments.get(name)
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return False
+    return str(value).strip().lower() in {"1", "true", "yes", "on"}
+
+
 def spec_path_arg(arguments: dict[str, Any]) -> Path:
     value = arguments.get("spec_path") or arguments.get("spec_id")
     if not value:
@@ -94,7 +103,14 @@ def tool_definitions() -> list[dict[str, Any]]:
         tool_schema(
             "scan_specs",
             "Discover spec packages, artifact inventory, health, and template authority.",
-            {"repo_root": "Repository root. Defaults to current working directory.", "docs_root": "Optional docs root."},
+            {
+                "repo_root": "Repository root. Defaults to current working directory.",
+                "docs_root": "Optional docs root.",
+                "include_archived_lint": {
+                    "type": ["boolean", "string"],
+                    "description": "Set true to run authoring lint against archived specs during scan.",
+                },
+            },
         ),
         tool_schema("spec_summary", "Return a specs://{spec_id}/summary style payload.", {"spec_path": "Spec package path or ID."}, ["spec_path"]),
         tool_schema("lint_spec_package", "Lint a spec package.", {"spec_path": "Spec package path or ID."}, ["spec_path"]),
@@ -130,13 +146,17 @@ def tool_definitions() -> list[dict[str, Any]]:
     ]
 
 
-def tool_schema(name: str, description: str, properties: dict[str, str], required: list[str] | None = None) -> dict[str, Any]:
+def tool_schema(name: str, description: str, properties: dict[str, Any], required: list[str] | None = None) -> dict[str, Any]:
+    schema_properties = {
+        key: value if isinstance(value, dict) else {"type": "string", "description": value}
+        for key, value in properties.items()
+    }
     return {
         "name": name,
         "description": description,
         "inputSchema": {
             "type": "object",
-            "properties": {key: {"type": "string", "description": value} for key, value in properties.items()},
+            "properties": schema_properties,
             "required": required or [],
             "additionalProperties": False,
         },
@@ -145,7 +165,11 @@ def tool_schema(name: str, description: str, properties: dict[str, str], require
 
 def call_tool(name: str, arguments: dict[str, Any]) -> dict[str, Any]:
     if name == "scan_specs":
-        return spec_runtime.scan_specs(repo_root_arg(arguments), arguments.get("docs_root"))
+        return spec_runtime.scan_specs(
+            repo_root_arg(arguments),
+            arguments.get("docs_root"),
+            include_archived_lint=bool_arg(arguments, "include_archived_lint"),
+        )
     if name == "spec_summary":
         return spec_runtime.spec_summary(spec_path_arg(arguments))
     if name == "lint_spec_package":

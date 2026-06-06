@@ -185,6 +185,12 @@ updating templates:
 
 Do not force migration for archived specs, mid-task collaboration, or small changes where migration would create more risk than value. Do not migrate repository templates wholesale just because this skill prefers a richer package shape. Template migration must be selective: identify the specific document classes affected, the existing docs that would be impacted, required field additions, compatibility risks, and whether old packages should remain untouched.
 
+Archived, closed, or superseded specs are historical delivery records. Default
+runtime scans keep them visible in inventory but exclude them from active
+authoring lint health. Use explicit lint or scan audit mode only when
+intentionally reviewing old records, and make a visible resumption, migration,
+or cleanup decision before modernizing archived packages.
+
 Do not trust frontmatter status alone. Reconcile it against repository indexes, sequencing docs, task state, governance constraints, code, tests, config, and durable-doc evidence sections.
 
 Treat governance, constitution, policy, `AGENTS.md`, and documented repository principles as higher-priority constraints. If the spec conflicts with them, stop for a decision unless the user explicitly asks to update the governance source.
@@ -238,6 +244,7 @@ deterministic scanner, linter, next-task, and closure-check passes:
 
 ```bash
 skills/spec-lifecycle-manager/scripts/spec_runtime.py scan .
+skills/spec-lifecycle-manager/scripts/spec_runtime.py scan . --include-archived-lint
 skills/spec-lifecycle-manager/scripts/spec_runtime.py summary docs/specs/004-spec-management-mcp
 skills/spec-lifecycle-manager/scripts/spec_runtime.py lint docs/specs/004-spec-management-mcp
 skills/spec-lifecycle-manager/scripts/spec_runtime.py next-task docs/specs/004-spec-management-mcp

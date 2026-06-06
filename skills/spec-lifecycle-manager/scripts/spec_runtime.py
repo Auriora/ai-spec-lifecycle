@@ -33,6 +33,7 @@ OPTIONAL_ARTIFACTS = [
     "traceability.md",
 ]
 SPEC_ARTIFACTS = CORE_ARTIFACTS + OPTIONAL_ARTIFACTS
+ARCHIVED_STATUSES = {"archived", "closed", "superseded"}
 REQUIRED_PROMPTS = ["reconcile-spec", "choose-next-task", "task-context", "lint-spec"]
 REVIEW_PACKET_TYPES = {
     "requirements_template_review": "Does the requirements artifact satisfy required sections and EARS clarity?",
@@ -145,6 +146,10 @@ def spec_status(spec_path: Path) -> str:
     return "unknown"
 
 
+def spec_lifecycle(status: str) -> str:
+    return "archived" if status.lower() in ARCHIVED_STATUSES else "active"
+
+
 def docs_roots(repo_root: Path, docs_root: str | None = None) -> list[Path]:
     if docs_root:
         return [(repo_root / docs_root).resolve()]
@@ -192,24 +197,28 @@ def template_authority(repo_root: Path) -> dict[str, Any]:
     }
 
 
-def scan_specs(repo_root: Path, docs_root: str | None = None) -> dict[str, Any]:
+def scan_specs(repo_root: Path, docs_root: str | None = None, include_archived_lint: bool = False) -> dict[str, Any]:
     root = repo_root.resolve()
     specs = []
     for spec_path in discover_spec_paths(root, docs_root):
         inventory = artifact_inventory(spec_path)
+        status = spec_status(spec_path)
+        lifecycle = spec_lifecycle(status)
         specs.append(
             {
                 "spec_id": spec_path.name,
                 "path": str(spec_path),
-                "status": spec_status(spec_path),
+                "status": status,
+                "lifecycle": lifecycle,
                 "format": spec_format(inventory),
                 "artifacts": inventory,
-                "health": health_summary(spec_path),
+                "health": health_summary(spec_path, include_archived_lint=include_archived_lint),
             }
         )
     return {
         "repo_root": str(root),
         "docs_root": docs_root or "docs",
+        "summary": scan_health_summary(specs),
         "resources": {
             "active": "specs://active",
             "summary_pattern": "specs://{spec_id}/summary",
@@ -220,14 +229,35 @@ def scan_specs(repo_root: Path, docs_root: str | None = None) -> dict[str, Any]:
     }
 
 
-def health_summary(spec_path: Path) -> dict[str, Any]:
+def scan_health_summary(specs: list[dict[str, Any]]) -> dict[str, int]:
+    active = [item for item in specs if item["lifecycle"] == "active"]
+    archived = [item for item in specs if item["lifecycle"] == "archived"]
+    return {
+        "total": len(specs),
+        "active": len(active),
+        "archived": len(archived),
+        "active_pass": sum(1 for item in active if item["health"]["severity"] == "pass"),
+        "active_warn": sum(1 for item in active if item["health"]["severity"] == "warn"),
+        "active_error": sum(1 for item in active if item["health"]["severity"] == "error"),
+    }
+
+
+def health_summary(spec_path: Path, include_archived_lint: bool = False) -> dict[str, Any]:
+    status = spec_status(spec_path)
+    if spec_lifecycle(status) == "archived" and not include_archived_lint:
+        return {
+            "severity": "archived",
+            "diagnostic_count": 0,
+            "skipped": True,
+            "reason": "Archived spec excluded from active authoring lint; run lint directly or scan with include_archived_lint to audit.",
+        }
     diagnostics = lint_spec_package(spec_path, include_summary=False)
     severity_rank = {"error": 3, "warn": 2, "info": 1}
     max_severity = "pass"
     for item in diagnostics:
         if severity_rank.get(item["severity"], 0) > severity_rank.get(max_severity, 0):
             max_severity = item["severity"]
-    return {"severity": max_severity, "diagnostic_count": len(diagnostics)}
+    return {"severity": max_severity, "diagnostic_count": len(diagnostics), "skipped": False}
 
 
 def spec_summary(spec_path: Path) -> dict[str, Any]:
@@ -236,10 +266,12 @@ def spec_summary(spec_path: Path) -> dict[str, Any]:
     by_id = {task.task_id: task for task in tasks}
     open_decisions = parse_open_decisions(spec_path / "open-decisions.md")
     durable_refs = durable_source_refs(spec_path / "requirements.md")
+    status = spec_status(spec_path)
     return {
         "spec_id": spec_path.name,
         "path": str(spec_path.resolve()),
-        "status": spec_status(spec_path),
+        "status": status,
+        "lifecycle": spec_lifecycle(status),
         "format": spec_format(inventory),
         "artifacts": inventory,
         "tasks": {
@@ -1265,6 +1297,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     scan = sub.add_parser("scan", help="Scan active spec packages.")
     scan.add_argument("repo_root", type=Path, nargs="?", default=Path.cwd())
     scan.add_argument("--docs-root")
+    scan.add_argument("--include-archived-lint", action="store_true", help="Run authoring lint against archived specs during scan.")
 
     summary = sub.add_parser("summary", help="Return specs://{id}/summary style payload.")
     summary.add_argument("spec_path", type=Path)
@@ -1329,7 +1362,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv or sys.argv[1:])
     if args.command == "scan":
-        payload = scan_specs(args.repo_root, args.docs_root)
+        payload = scan_specs(args.repo_root, args.docs_root, include_archived_lint=args.include_archived_lint)
     elif args.command == "summary":
         payload = spec_summary(args.spec_path.resolve())
     elif args.command == "lint":

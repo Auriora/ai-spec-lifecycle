@@ -114,6 +114,13 @@ old format for the current slice, migrate before implementation, or create a
 follow-up migration task. Archived specs should remain historical unless
 resumed.
 
+Archived, closed, or superseded packages are historical delivery records. They
+should remain visible to inventory and closure-log workflows, but default
+active-health scans should not require them to satisfy newer authoring lint
+templates. Agents should use explicit lint or archived scan audit mode when
+reviewing historical packages, and should only modernize them after a visible
+resumption, migration, or cleanup decision.
+
 ## Runtime Support
 
 The `spec-lifecycle-manager` skill includes a dependency-free CLI runtime for
@@ -130,6 +137,11 @@ reconciliation, promotion planning, review-packet generation, review-result
 disposition validation, and hook checks. These outputs are advisory runtime
 surfaces; they do not replace the skill, repository governance, or durable
 documentation.
+
+Scan output is active-health oriented by default. Archived packages remain in
+the scan inventory with archived lifecycle metadata, while their current
+authoring lint is skipped unless the caller explicitly requests archived lint
+audit mode.
 
 See [Spec lifecycle runtime](../reference/spec-lifecycle-runtime.md) for the
 current command surface and hook modes.

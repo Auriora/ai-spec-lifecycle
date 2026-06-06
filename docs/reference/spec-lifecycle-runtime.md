@@ -30,7 +30,7 @@ tools, resources, and prompts.
 
 | Command | Purpose |
 | --- | --- |
-| `scan` | Discover spec packages, classify current versus old-format packages, and report artifact inventory, health, and template authority. |
+| `scan` | Discover spec packages, classify current versus old-format packages, and report artifact inventory, lifecycle, active-health summary, health, and template authority. |
 | `summary` | Return a `specs://{spec_id}/summary`-style payload with task counts, artifact state, open decisions, durable-source references, and health. |
 | `lint` | Run deterministic document or package lint checks for frontmatter, required sections, task IDs, dependencies, evidence, optional artifacts, and waivers. |
 | `next-task` | Select the next runnable task whose dependencies are complete with evidence and include traceability context when available. |
@@ -76,6 +76,12 @@ The server exposes read-only tools that delegate to the existing runtime:
 - `task_context`
 - `traceability_lookup`
 - `prompts_validate`
+
+`scan_specs` accepts optional `repo_root`, `docs_root`, and
+`include_archived_lint` arguments. By default, archived packages remain visible
+in scan inventory but are excluded from active authoring lint. Set
+`include_archived_lint` to `true` only when intentionally auditing historical
+packages against the current templates.
 
 The server does not expose write tools. It does not create specs, edit task
 evidence, update durable docs, archive packages, remove files, or commit.
@@ -143,6 +149,45 @@ The hook runner supports advisory and blocking profiles.
 These hooks are not installed into Git hooks, Codex hooks, or Agent Workbench
 yet. They are reusable CLI checks that future hook installers can call.
 
+## Archived Spec Scan Behavior
+
+Archived, closed, or superseded spec packages are historical delivery records.
+Default repository scans keep them in the `specs` inventory and classify their
+`lifecycle` as `archived`, but scan health skips current authoring lint for
+those packages. This keeps active-health checks focused on active work and
+avoids treating old delivery evidence as a current implementation failure.
+
+Default archived scan health uses this shape:
+
+```json
+{
+  "severity": "archived",
+  "diagnostic_count": 0,
+  "skipped": true,
+  "reason": "Archived spec excluded from active authoring lint; run lint directly or scan with include_archived_lint to audit."
+}
+```
+
+The scan payload also includes a `summary` bucket with `total`, `active`,
+`archived`, `active_pass`, `active_warn`, and `active_error` counts.
+
+Use explicit audit mode when old records need to be reviewed against the
+current lint rules:
+
+```bash
+skills/spec-lifecycle-manager/scripts/spec_runtime.py scan . --include-archived-lint
+```
+
+Direct lint remains strict for every package, including archived packages:
+
+```bash
+skills/spec-lifecycle-manager/scripts/spec_runtime.py lint docs/specs/001-spec-lifecycle-manager-skill
+```
+
+Do not migrate archived packages automatically just because scan or lint can
+find modern template diagnostics. If a historical package must be changed,
+first make a visible resumption, migration, or cleanup decision.
+
 ## Review Packets
 
 Review packets are bounded, read-only inputs for secondary agents. They include
@@ -168,6 +213,8 @@ disposition.
 - The runtime does not execute commands found in spec text.
 - JSON outputs are intended to be stable enough for hooks and MCP wrapping.
 - Archived or old-format specs are detected but not migrated automatically.
+- Archived packages are excluded from active-health scan lint by default;
+  explicit lint and scan audit modes remain available.
 - Closure-log and Git-backed archive behavior is covered by the separate
   `005-spec-closure-log-management` spec.
 - The stdio MCP adapter is read-only and dependency-free. It is not yet packaged
