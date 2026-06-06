@@ -126,6 +126,27 @@ def tool_definitions() -> list[dict[str, Any]]:
                 },
             },
         ),
+        tool_schema(
+            "active_spec_preflight",
+            "Return active spec, next task, required context, open decisions, and validation commands.",
+            {
+                "repo_root": "Repository root. Defaults to current working directory.",
+                "spec_path": "Optional spec package path or ID when multiple active specs exist.",
+                "task_id": "Optional task ID such as T004.",
+                "docs_root": "Optional docs root.",
+            },
+        ),
+        tool_schema(
+            "agent_readiness_packet",
+            "Return bounded implementation context for a task before coding.",
+            {"spec_path": "Spec package path or ID.", "task_id": "Task ID such as T004."},
+            ["spec_path", "task_id"],
+        ),
+        tool_schema(
+            "no_active_spec_context",
+            "Return durable docs, backlog, roadmap, closure-log, and archive-index context when no active spec exists.",
+            {"repo_root": "Repository root. Defaults to current working directory."},
+        ),
         tool_schema("spec_summary", "Return a specs://{spec_id}/summary style payload.", {"spec_path": "Spec package path or ID."}, ["spec_path"]),
         tool_schema("lint_spec_package", "Lint a spec package.", {"spec_path": "Spec package path or ID."}, ["spec_path"]),
         tool_schema(
@@ -185,6 +206,16 @@ def call_tool(name: str, arguments: dict[str, Any]) -> dict[str, Any]:
             arguments.get("docs_root"),
             include_archived_lint=bool_arg(arguments, "include_archived_lint"),
         )
+    if name == "active_spec_preflight":
+        spec_path = spec_path_arg(arguments) if arguments.get("spec_path") or arguments.get("spec_id") else None
+        return spec_runtime.active_spec_preflight(repo_root_arg(arguments), spec_path, arguments.get("task_id"), arguments.get("docs_root"))
+    if name == "agent_readiness_packet":
+        task_id = arguments.get("task_id")
+        if not task_id:
+            raise ValueError("task_id is required")
+        return spec_runtime.agent_readiness_packet(spec_path_arg(arguments), str(task_id))
+    if name == "no_active_spec_context":
+        return spec_runtime.no_active_spec_context(repo_root_arg(arguments))
     if name == "spec_summary":
         return spec_runtime.spec_summary(spec_path_arg(arguments))
     if name == "lint_spec_package":

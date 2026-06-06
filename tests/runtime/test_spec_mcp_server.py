@@ -59,6 +59,39 @@ def write_current_spec(repo: Path, relative: str = "docs/specs/001-current") -> 
         + "# Tasks\n\n- [ ] T001 Do work.\n  - Depends on: none\n  - Files: `docs/reference/current.md`\n  - Acceptance: Done.\n  - Evidence: Pending.\n",
         encoding="utf-8",
     )
+    (spec / "traceability.md").write_text(
+        artifact_frontmatter("traceability")
+        + "\n".join(
+            [
+                "# Traceability Matrix",
+                "",
+                "## Task To Context Matrix",
+                "",
+                "| Task ID | Requirements | Acceptance Criteria | Design Sections | Change Impact | Verification | Durable Targets | Open Decisions |",
+                "|---------|--------------|---------------------|-----------------|---------------|--------------|-----------------|----------------|",
+                "| T001 | Requirement 1 | AC1 | `design.md#low-level-design` | none | `verification.md#quality-gates` | `docs/reference/current.md` | none |",
+                "",
+                "## Requirement To Delivery Matrix",
+                "",
+                "| Requirement | Acceptance Criteria | Design Sections | Tasks | Verification | Durable Targets |",
+                "|-------------|---------------------|-----------------|-------|--------------|-----------------|",
+                "| Requirement 1 | AC1 | `design.md#low-level-design` | T001 | `verification.md#quality-gates` | `docs/reference/current.md` |",
+                "",
+                "## Design To Implementation Matrix",
+                "",
+                "| Design Section | Requirements | Tasks | Interfaces Or Files | Verification |",
+                "|----------------|--------------|-------|---------------------|--------------|",
+                "| `design.md#low-level-design` | Requirement 1 | T001 | `docs/reference/current.md` | `verification.md#quality-gates` |",
+                "",
+                "## Open Decision Impact",
+                "",
+                "| Decision ID | Blocks | Affected Requirements | Affected Tasks | Resolution Needed |",
+                "|-------------|--------|-----------------------|----------------|-------------------|",
+                "| none | none | Requirement 1 | T001 | none |",
+            ]
+        ),
+        encoding="utf-8",
+    )
     return spec
 
 
@@ -91,13 +124,20 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertIn("prompts", result["capabilities"])
 
     def test_tools_list_and_call_scan_specs(self):
-        responses = self.send(
-            rpc(1, "tools/list"),
-            rpc(2, "tools/call", {"name": "scan_specs", "arguments": {"repo_root": str(ROOT)}}),
-        )
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / ".git").mkdir()
+            responses = self.send(
+                rpc(1, "tools/list"),
+                rpc(2, "tools/call", {"name": "scan_specs", "arguments": {"repo_root": str(repo)}}),
+                root=repo,
+            )
 
         tools = {tool["name"] for tool in responses[0]["result"]["tools"]}
         self.assertIn("scan_specs", tools)
+        self.assertIn("active_spec_preflight", tools)
+        self.assertIn("agent_readiness_packet", tools)
+        self.assertIn("no_active_spec_context", tools)
         self.assertIn("closure_check", tools)
         self.assertIn("archive_index", tools)
         structured = responses[1]["result"]["structuredContent"]
@@ -106,6 +146,37 @@ class SpecMcpServerTests(unittest.TestCase):
         scan_schema = next(tool for tool in responses[0]["result"]["tools"] if tool["name"] == "scan_specs")
         self.assertIn("include_archived_lint", scan_schema["inputSchema"]["properties"])
         self.assertIn("boolean", scan_schema["inputSchema"]["properties"]["include_archived_lint"]["type"])
+
+    def test_active_spec_preflight_and_readiness_tools(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / ".git").mkdir()
+            write_current_spec(repo)
+            responses = self.send(
+                rpc(1, "tools/call", {"name": "active_spec_preflight", "arguments": {"repo_root": str(repo)}}),
+                rpc(2, "tools/call", {"name": "agent_readiness_packet", "arguments": {"repo_root": str(repo), "spec_path": "001-current", "task_id": "T001"}}),
+                root=repo,
+            )
+
+        preflight = responses[0]["result"]["structuredContent"]
+        readiness = responses[1]["result"]["structuredContent"]
+        self.assertEqual("ready", preflight["status"])
+        self.assertEqual("001-current", preflight["selected_spec"]["spec_id"])
+        self.assertEqual("T001", readiness["task_id"])
+        self.assertIn("Requirement 1", {item["id"] for item in readiness["required_review"]["requirements"]})
+
+    def test_no_active_spec_context_tool(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / ".git").mkdir()
+            [response] = self.send(
+                rpc(1, "tools/call", {"name": "no_active_spec_context", "arguments": {"repo_root": str(repo)}}),
+                root=repo,
+            )
+
+        payload = response["result"]["structuredContent"]
+        self.assertEqual("no_active_spec", payload["status"])
+        self.assertIn("archive_index_summary", payload)
 
     def test_scan_specs_can_include_archived_lint_audit(self):
         with tempfile.TemporaryDirectory() as tmp:

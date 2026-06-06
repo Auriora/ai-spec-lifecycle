@@ -12,32 +12,33 @@ last_reviewed: 2026-06-06
 ## Task Dependency Graph
 
 ```text
-T001 -> T002 -> T003 -> T004 -> T005 -> T006
-              \-> T007
+T001 -> T002 -> T003 -> T005 -> T006
+T004 -> T006
+T007 depends on T005
 T008 depends on T004-T007
 ```
 
 ## Phase 1: Scope and Contract
 
-- [ ] T001 Select the first agent-backed tool for implementation.
+- [x] T001 Select the first foundation tools for implementation.
   - Depends on: none
   - Files: `docs/specs/013-agent-backed-lifecycle-tools/design.md`, `docs/specs/013-agent-backed-lifecycle-tools/open-decisions.md`
-  - Acceptance: Decision records whether the first tool is `closure_risk_review`, `draft_traceability_matrix`, `promotion_draft`, or `agent_readiness_packet`, with rationale.
-  - Evidence: Pending.
+  - Acceptance: Decision records whether the first tool is `closure_risk_review`, `draft_traceability_matrix`, `promotion_draft`, `agent_readiness_packet`, or a deterministic foundation tool, with rationale.
+  - Evidence: D001 accepted deterministic `active_spec_preflight`, `agent_readiness_packet`, and `no_active_spec_context` as the first implementation slice.
 
-- [ ] T002 Define the shared advisory result schema and validation rules.
+- [x] T002 Define deterministic workflow payload schemas.
   - Depends on: T001
-  - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`, selected schema or prompt files
-  - Acceptance: Schema captures status, advisory flag, packet metadata, observed facts, inferences, recommendations, gaps, confidence, diagnostics, and summary.
-  - Evidence: Pending.
+  - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`
+  - Acceptance: Payloads capture status, selected spec, next task, readiness context, no-active context, guidance, gaps, and validation commands.
+  - Evidence: Implemented deterministic payload builders in `spec_runtime.py` for active preflight, readiness packets, and no-active-spec context.
 
 ## Phase 2: Runtime and MCP
 
-- [ ] T003 Implement bounded packet generation for the selected tool.
+- [x] T003 Implement bounded packet generation for deterministic foundation tools.
   - Depends on: T002
   - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`
   - Acceptance: Packet includes only relevant spec/durable context and treats reviewed documents as data.
-  - Evidence: Pending.
+  - Evidence: `agent_readiness_packet` returns task-specific requirements, design, verification, durable targets, open decisions, guardrails, and validation commands; `no_active_spec_context` returns durable docs/history context.
 
 - [ ] T004 Implement disabled/unavailable agent-runner behavior.
   - Depends on: T003
@@ -45,19 +46,19 @@ T008 depends on T004-T007
   - Acceptance: Tool returns structured `unavailable` output without mutation when no runner is configured.
   - Evidence: Pending.
 
-- [ ] T005 Expose the selected tool through MCP.
-  - Depends on: T004
+- [x] T005 Expose foundation tools through MCP.
+  - Depends on: T003
   - Files: `skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`, `docs/reference/spec-lifecycle-runtime.md`
   - Acceptance: MCP tool schema marks the tool advisory/read-only and accepts needed inputs such as `spec_path`, `review_type`, and `model_class`.
-  - Evidence: Pending.
+  - Evidence: MCP now exposes `active_spec_preflight`, `agent_readiness_packet`, and `no_active_spec_context` as read-only deterministic tools.
 
 ## Phase 3: Validation and Guidance
 
-- [ ] T006 Add deterministic validation and tests.
-  - Depends on: T004, T005
+- [x] T006 Add deterministic validation and tests.
+  - Depends on: T003, T005
   - Files: `tests/runtime/`, `skills/spec-lifecycle-manager/scripts/spec_runtime.py`
-  - Acceptance: Tests cover valid schema, invalid output, disabled runner, removed spec handling, and no mutation.
-  - Evidence: Pending.
+  - Acceptance: Tests cover valid payloads, no-active behavior, MCP exposure, and no mutation for deterministic foundation tools.
+  - Evidence: Added runtime and MCP tests for active preflight, agent readiness packet, and no-active-spec context.
 
 - [ ] T007 Update durable docs and skill guidance.
   - Depends on: T005

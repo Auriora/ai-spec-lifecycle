@@ -20,12 +20,15 @@ last_reviewed: 2026-06-06
 | Prompt validation | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py prompts .` | No diagnostics. | Pending |
 | Archive validation | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py archive-index .` | No diagnostics before closure; updated after closure. | Pending |
 | Whitespace | `git diff --check` | Clean. | Pending |
+| Active spec preflight | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py active-spec-preflight . --task-id T001` | Returns active spec 013 and readiness packet for T001. | Passed 2026-06-06 |
+| Agent readiness packet | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py agent-readiness-packet docs/specs/013-agent-backed-lifecycle-tools --task-id T001` | Returns bounded task context with no gaps. | Passed 2026-06-06 |
 
 ## Evidence Log
 
 | Date | Task | Evidence |
 |------|------|----------|
 | 2026-06-06 | Spec creation | Initial requirements, design, change impact, tasks, traceability, verification, and open decisions created. |
+| 2026-06-06 | T001-T006 deterministic foundation tools | Implemented `active_spec_preflight`, `agent_readiness_packet`, and `no_active_spec_context` in CLI/runtime and MCP surfaces. Focused runtime and MCP tests passed. |
 
 ## Residual Risks
 

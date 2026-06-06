@@ -19,6 +19,8 @@ judgment.
 
 ## Goals
 
+- Add deterministic preflight and readiness tools as the foundation for later
+  agent-backed lifecycle tools.
 - Add an extensible model for agent-backed lifecycle tools.
 - Keep low-cost agent outputs advisory, structured, and deterministically
   validated.
@@ -80,9 +82,9 @@ surface.
 #### Acceptance Criteria
 
 1. GIVEN the first implementation scope is selected, THEN the system SHALL
-   prioritize at least one end-to-end tool from `closure_risk_review`,
-   `draft_traceability_matrix`, `promotion_draft`, or
-   `agent_readiness_packet`.
+   prioritize deterministic workflow tools such as `active_spec_preflight`,
+   `agent_readiness_packet`, and `no_active_spec_context` before adding
+   low-cost agent execution.
 2. GIVEN a tool uses an active spec, WHEN it resolves the target, THEN the
    system SHALL use the existing active-spec resolver and fail cleanly for
    removed or nonexistent specs.

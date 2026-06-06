@@ -17,10 +17,10 @@ specs, building bounded packets, validating output shape and references, and
 returning structured results. Secondary agents only perform constrained review
 or drafting work over the packet they receive.
 
-The first implementation should favor one end-to-end tool with high value and
-low mutation risk. Recommended candidates are `closure_risk_review` or
-`draft_traceability_matrix`; both can be bounded by existing artifacts and
-validated deterministically.
+The first implementation creates deterministic workflow tools that answer
+"what next?", prepare task-specific implementation context, and handle the
+no-active-spec case. These tools are the foundation for later low-cost agent
+reviewers such as `closure_risk_review` or `draft_traceability_matrix`.
 
 ## Requirement Coverage
 
@@ -51,17 +51,30 @@ The runtime should expose the same behavior through CLI and MCP where
 practical. MCP tools remain read-only and advisory. CLI support can be added
 first if it simplifies testing, with MCP delegating to the same functions.
 
+### Deterministic Foundation Tools
+
+- `active_spec_preflight`: scans the repository, selects the single active spec
+  when unambiguous, returns next task context, open decisions, an optional
+  readiness packet, and validation commands.
+- `agent_readiness_packet`: given a live spec and task ID, returns bounded
+  requirements, acceptance criteria, design, verification, durable target, and
+  open-decision context before implementation.
+- `no_active_spec_context`: returns durable docs, backlog, roadmap, closure log,
+  archive index summary, validation commands, and guidance when no active spec
+  exists.
+
 ### Components and Changes
 
 - `spec_runtime.py`
   - Add data structures and functions for agent-backed tool definitions,
     packet construction, disabled execution, output validation, and result
     normalization.
-  - Add a CLI command such as `agent-review` or a focused command such as
-    `closure-risk-review`.
+  - Add deterministic CLI commands for active-spec preflight, agent readiness
+    packets, and no-active-spec context.
 - `spec_mcp_server.py`
-  - Expose the selected advisory tool and pass through `model_class` or
-    disabled execution options.
+  - Expose the deterministic foundation tools through read-only MCP schemas.
+  - Later expose selected advisory agent-backed tools and pass through
+    `model_class` or disabled execution options.
 - `prompts/` or `references/`
   - Store strict task prompts or schemas for bounded secondary-agent work.
 - `docs/reference/spec-lifecycle-runtime.md`
@@ -158,6 +171,14 @@ Initial MCP tool schema should include:
   "review_type": "Selected bounded agent-backed review type.",
   "model_class": "Optional cheap, standard, expert, or disabled class."
 }
+```
+
+Deterministic foundation tool signatures:
+
+```text
+active_spec_preflight(repo_root: Path, spec_path: Path | None, task_id: str | None, docs_root: str | None) -> dict
+agent_readiness_packet(spec_path: Path, task_id: str) -> dict
+no_active_spec_context(repo_root: Path) -> dict
 ```
 
 ### Error Handling

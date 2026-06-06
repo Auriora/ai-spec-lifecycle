@@ -310,6 +310,70 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertEqual("current", payload["format"])
         self.assertEqual("present", payload["artifacts"]["requirements.md"])
 
+    def test_agent_readiness_packet_returns_task_context(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+            payload = spec_runtime.agent_readiness_packet(spec, "T001")
+
+        self.assertEqual("ready", payload["status"])
+        self.assertTrue(payload["advisory"])
+        self.assertEqual("T001", payload["task"]["task_id"])
+        self.assertIn("Requirement 1", {item["id"] for item in payload["required_review"]["requirements"]})
+        self.assertIn("docs/reference/current.md", payload["required_review"]["durable_targets"])
+        self.assertTrue(any("traceability_lookup.py" in command for command in payload["validation_commands"]))
+
+    def test_active_spec_preflight_selects_single_active_spec(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            write_complete_spec(repo)
+            payload = spec_runtime.active_spec_preflight(repo, task_id="T001")
+
+        self.assertEqual("ready", payload["status"])
+        self.assertEqual(1, payload["scan_summary"]["active"])
+        self.assertEqual("001-current", payload["selected_spec"]["spec_id"])
+        self.assertEqual("T001", payload["agent_readiness_packet"]["task_id"])
+        self.assertIsNotNone(payload["agent_readiness_packet"])
+
+    def test_no_active_spec_context_uses_durable_history(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / ".git").mkdir()
+            (repo / "docs/history").mkdir(parents=True)
+            (repo / "docs/backlog").mkdir(parents=True)
+            (repo / "docs/roadmap").mkdir(parents=True)
+            (repo / "docs/history/spec-archive-index.md").write_text(
+                "\n".join(
+                    [
+                        "# Spec Archive Index",
+                        "",
+                        "## Entries",
+                        "",
+                        "| Spec ID | Title | Package path | Status | Final spec commit | Cleanup commit | Closure action | Durable destinations | Verification |",
+                        "|---------|-------|--------------|--------|-------------------|----------------|----------------|----------------------|--------------|",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            (repo / "docs/history/spec-closure-log.md").write_text("# Spec Closure Log\n", encoding="utf-8")
+            (repo / "docs/backlog/README.md").write_text("# Backlog\n", encoding="utf-8")
+            (repo / "docs/roadmap/README.md").write_text("# Roadmap\n", encoding="utf-8")
+            payload = spec_runtime.no_active_spec_context(repo)
+
+        self.assertEqual("no_active_spec", payload["status"])
+        self.assertIn("docs/backlog/README.md", payload["durable_context"])
+        self.assertIn("docs/history/spec-archive-index.md", payload["durable_context"])
+        self.assertTrue(any("scan" in command for command in payload["validation_commands"]))
+
+    def test_active_spec_preflight_returns_no_active_context(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / ".git").mkdir()
+            payload = spec_runtime.active_spec_preflight(repo)
+
+        self.assertEqual("no_active_spec", payload["status"])
+        self.assertIsNotNone(payload["no_active_spec_context"])
+        self.assertEqual(0, payload["scan_summary"]["active"])
+
     def test_open_decisions_parser_ignores_table_header(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "open-decisions.md"

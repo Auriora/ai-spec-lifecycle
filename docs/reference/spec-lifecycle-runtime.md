@@ -35,6 +35,9 @@ tools, resources, and prompts.
 | `summary` | Return a `specs://{spec_id}/summary`-style payload with task counts, artifact state, open decisions, durable-source references, and health. |
 | `lint` | Run deterministic document or package lint checks for frontmatter, required sections, task IDs, dependencies, evidence, optional artifacts, and waivers. |
 | `next-task` | Select the next runnable task whose dependencies are complete with evidence and include traceability context when available. |
+| `active-spec-preflight` | Return the active spec, next task, readiness context, no-active fallback context, guidance, and validation commands. |
+| `agent-readiness-packet` | Return bounded implementation context for a specific task before coding. |
+| `no-active-spec-context` | Return durable docs, backlog, roadmap, closure-log, and archive-index context when no active spec exists. |
 | `closure-check` | Report whether a spec is ready to close and list blockers. |
 | `prompts` | Validate declarative prompt definitions under `skills/spec-lifecycle-manager/prompts/`. |
 | `reconcile` | Produce classified drift findings with observed facts, inferred diagnosis, recommended action, and blind spots. |
@@ -67,6 +70,9 @@ argument should be the repository root whose specs should be exposed.
 The server exposes read-only tools that delegate to the existing runtime:
 
 - `scan_specs`
+- `active_spec_preflight`
+- `agent_readiness_packet`
+- `no_active_spec_context`
 - `spec_summary`
 - `lint_spec_package`
 - `lint_doc`
@@ -88,6 +94,12 @@ packages against the current templates.
 
 The server does not expose write tools. It does not create specs, edit task
 evidence, update durable docs, archive packages, remove files, or commit.
+
+`active_spec_preflight`, `agent_readiness_packet`, and
+`no_active_spec_context` are deterministic workflow tools. They compose scan,
+next-task, traceability, durable-doc, closure-log, and archive-index context so
+agents can decide what to read before implementation. They do not invoke
+secondary agents and do not mutate files.
 
 ### MCP Resources
 

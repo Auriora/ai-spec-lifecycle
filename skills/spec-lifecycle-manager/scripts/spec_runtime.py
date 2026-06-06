@@ -878,6 +878,178 @@ def next_task(spec_path: Path) -> dict[str, Any]:
     }
 
 
+def active_spec_items(repo_root: Path, docs_root: str | None = None) -> list[dict[str, Any]]:
+    scan = scan_specs(repo_root, docs_root)
+    return [item for item in scan["specs"] if item["lifecycle"] == "active"]
+
+
+def active_spec_preflight(
+    repo_root: Path,
+    spec_path: Path | None = None,
+    task_id: str | None = None,
+    docs_root: str | None = None,
+) -> dict[str, Any]:
+    root = repo_root.resolve()
+    scan = scan_specs(root, docs_root)
+    active_specs = [item for item in scan["specs"] if item["lifecycle"] == "active"]
+    if not active_specs and spec_path is None:
+        context = no_active_spec_context(root)
+        return {
+            "repo_root": str(root),
+            "status": "no_active_spec",
+            "scan_summary": scan["summary"],
+            "active_specs": [],
+            "selected_spec": None,
+            "next_task": None,
+            "agent_readiness_packet": None,
+            "no_active_spec_context": context,
+            "validation_commands": context["validation_commands"],
+            "guidance": context["guidance"],
+        }
+    if spec_path is None and len(active_specs) != 1:
+        return {
+            "repo_root": str(root),
+            "status": "spec_selection_required",
+            "scan_summary": scan["summary"],
+            "active_specs": active_specs,
+            "selected_spec": None,
+            "next_task": None,
+            "agent_readiness_packet": None,
+            "validation_commands": ["Select one active spec, then rerun preflight with --spec-path."],
+            "guidance": ["Multiple active specs exist; do not infer the implementation target from task names alone."],
+        }
+
+    if spec_path is None:
+        selected_path = Path(active_specs[0]["path"]).resolve()
+    elif spec_path.is_absolute():
+        selected_path = spec_path.resolve()
+    else:
+        selected_path = (root / spec_path).resolve()
+    summary = spec_summary(selected_path)
+    lint_result = lint_spec_package(selected_path)
+    assert isinstance(lint_result, dict)
+    task_payload_result = (
+        agent_readiness_packet(selected_path, task_id)
+        if task_id
+        else None
+    )
+    next_payload = next_task(selected_path)
+    selected_task_id = task_id or (next_payload.get("selected") or {}).get("task_id")
+    if task_payload_result is None and selected_task_id:
+        task_payload_result = agent_readiness_packet(selected_path, selected_task_id)
+    return {
+        "repo_root": str(root),
+        "status": "ready",
+        "scan_summary": scan["summary"],
+        "active_specs": active_specs,
+        "selected_spec": {
+            "spec_id": selected_path.name,
+            "path": str(selected_path),
+            "summary": summary,
+            "health": lint_result["summary"],
+        },
+        "next_task": next_payload,
+        "agent_readiness_packet": task_payload_result,
+        "no_active_spec_context": None,
+        "validation_commands": validation_commands_for_spec(selected_path),
+        "guidance": [
+            "Review requirements, design, traceability, verification, durable targets, and open decisions before implementation.",
+            "Treat tasks.md as an execution index, not the full specification.",
+        ],
+    }
+
+
+def agent_readiness_packet(spec_path: Path, task_id: str) -> dict[str, Any]:
+    spec = spec_path.resolve()
+    tasks = {task.task_id: task for task in parse_tasks(spec / "tasks.md")}
+    task = tasks.get(task_id)
+    context = traceability_context(spec, task_id)
+    gaps = list(context.get("gaps", []))
+    if task is None:
+        gaps.append(
+            {
+                "severity": "error",
+                "code": "TASK_NOT_FOUND",
+                "message": f"Task not found in tasks.md: {task_id}",
+            }
+        )
+    artifacts = artifact_inventory(spec)
+    return {
+        "spec_path": str(spec),
+        "task_id": task_id,
+        "advisory": True,
+        "status": "ready" if not any(item.get("severity") == "error" for item in gaps) else "gaps",
+        "task": task_payload(task) if task else None,
+        "traceability_context": context,
+        "required_review": {
+            "artifacts": [name for name in ["requirements.md", "design.md", "tasks.md", "traceability.md", "verification.md", "change-impact.md", "open-decisions.md"] if artifacts.get(name) == "present"],
+            "requirements": context.get("requirements", []),
+            "acceptance_criteria": context.get("acceptance_criteria", []),
+            "design_sections": context.get("design_sections", []),
+            "verification": context.get("verification", []),
+            "durable_targets": context.get("durable_targets", []),
+            "open_decisions": context.get("open_decisions", []),
+        },
+        "validation_commands": validation_commands_for_spec(spec, task_id),
+        "guardrails": [
+            "Do not implement from the task line alone.",
+            "Resolve traceability gaps or unresolved open decisions before coding.",
+            "Record concrete evidence before marking a task complete.",
+        ],
+        "gaps": gaps,
+    }
+
+
+def no_active_spec_context(repo_root: Path) -> dict[str, Any]:
+    root = repo_root.resolve()
+    archive = archive_index(root)
+    durable_candidates = [
+        "AGENTS.md",
+        "docs/README.md",
+        "docs/governance/constitution.md",
+        "docs/design/spec-lifecycle-management.md",
+        "docs/design/coding-agent-operating-model.md",
+        "docs/reference/spec-lifecycle-runtime.md",
+        "docs/backlog/README.md",
+        "docs/roadmap/README.md",
+        "docs/history/spec-closure-log.md",
+        "docs/history/spec-archive-index.md",
+    ]
+    existing = [path for path in durable_candidates if (root / path).exists()]
+    return {
+        "repo_root": str(root),
+        "status": "no_active_spec",
+        "durable_context": existing,
+        "archive_index_summary": archive["summary"],
+        "archive_index_path": archive["path"],
+        "removed_spec_count": archive["summary"].get("removed", 0),
+        "validation_commands": [
+            "PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py scan .",
+            "PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py archive-index .",
+            "PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py prompts .",
+        ],
+        "guidance": [
+            "No active spec package is present; use durable docs, backlog, roadmap, closure log, and archive index as context.",
+            "Removed spec package paths are historical evidence pointers, not active implementation targets.",
+            "Create a new spec package only when the user asks to start implementation-ready lifecycle work.",
+        ],
+    }
+
+
+def validation_commands_for_spec(spec_path: Path, task_id: str | None = None) -> list[str]:
+    rel = spec_path.as_posix()
+    commands = [
+        f"PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py lint {rel}",
+        f"PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py next-task {rel}",
+        f"PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py closure-check {rel}",
+        "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'",
+        "git diff --check",
+    ]
+    if task_id:
+        commands.insert(1, f"PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/traceability_lookup.py {rel} --task {task_id} --format text")
+    return commands
+
+
 def traceability_context(spec_path: Path, task_id: str) -> dict[str, Any]:
     if not (spec_path / "traceability.md").exists():
         return {
@@ -1601,6 +1773,19 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     next_cmd = sub.add_parser("next-task", help="Return the next runnable task with context.")
     next_cmd.add_argument("spec_path", type=Path)
 
+    preflight = sub.add_parser("active-spec-preflight", help="Return active spec, next task, required context, and validation commands.")
+    preflight.add_argument("repo_root", type=Path, nargs="?", default=Path.cwd())
+    preflight.add_argument("--spec-path", type=Path)
+    preflight.add_argument("--task-id")
+    preflight.add_argument("--docs-root")
+
+    readiness = sub.add_parser("agent-readiness-packet", help="Return bounded implementation context for a task.")
+    readiness.add_argument("spec_path", type=Path)
+    readiness.add_argument("--task-id", required=True)
+
+    no_active = sub.add_parser("no-active-spec-context", help="Return durable context to use when no active spec exists.")
+    no_active.add_argument("repo_root", type=Path, nargs="?", default=Path.cwd())
+
     closure = sub.add_parser("closure-check", help="Check spec closure readiness.")
     closure.add_argument("spec_path", type=Path)
 
@@ -1668,6 +1853,12 @@ def main(argv: list[str] | None = None) -> int:
             payload = {"path": str(args.path.resolve()), "diagnostics": diagnostics, "summary": diagnostic_summary(diagnostics)}
     elif args.command == "next-task":
         payload = next_task(args.spec_path.resolve())
+    elif args.command == "active-spec-preflight":
+        payload = active_spec_preflight(args.repo_root, args.spec_path, args.task_id, args.docs_root)
+    elif args.command == "agent-readiness-packet":
+        payload = agent_readiness_packet(args.spec_path.resolve(), args.task_id)
+    elif args.command == "no-active-spec-context":
+        payload = no_active_spec_context(args.repo_root)
     elif args.command == "closure-check":
         payload = closure_check(args.spec_path.resolve())
     elif args.command == "reconcile":

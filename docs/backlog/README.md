@@ -40,6 +40,7 @@ spec or that should not block the active spec currently being delivered.
 | B023 | candidate | Validation plan builder | Validation feedback and closure evidence needs | Generate a focused validation plan from changed files, task context, risk level, and durable-doc impact. |
 | B024 | candidate | Review result router | Expert and subagent review feedback workflow | Route review findings to accept, reject, defer, backlog, follow-up spec, or human decision with rationale and evidence links. |
 | B025 | candidate | OpenTelemetry and Jaeger tracing | User request; Agent Workbench reference implementation | Add disabled-by-default OpenTelemetry tracing for MCP tools and executable runtime code, with configurable OTLP HTTP export to Jaeger or a collector. Use `../agent-workbench/docs/design/observability-debugging-design.md` and `../agent-workbench/src/infrastructure/telemetry/` as reference implementation inputs. |
+| B026 | candidate | Distribution packaging for GHCR | User request | Package the skill, MCP server, scripts, prompts, and install metadata for distribution through GitHub Container Registry. Define versioning, image/package layout, install or sync commands, provenance, and compatibility checks. |
 
 ## Candidate Priorities
 
@@ -52,6 +53,7 @@ dogfooding, not on factual claims from conversation content.
 | P1 | B007 | Provides task-specific implementation context and reinforces the rule that `tasks.md` is not the source of truth. |
 | P1 | B016 | Reduces repeated commit/sync/install drift after skill changes. |
 | P1 | B018 | Prevents old or removed spec packages from confusing agents when no active spec exists. |
+| P2 | B026 | Makes the skill/MCP easier to install and update outside this repository; should define GHCR package shape before broader adoption. |
 | P2 | B015 | Converts repeated corrections and workflow friction into candidate improvements without treating history as authoritative. |
 | P2 | B014 | Supports bounded feature discovery from selected history as advisory input only. |
 | P2 | B023 | Improves evidence quality by deriving validation plans from actual task and file context. |
