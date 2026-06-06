@@ -132,7 +132,7 @@ remaining risk is workflow drift or over-heavy optional templates.
 - **Final spec commit:** `d1eb6b3`
 - **Closure log path:** `docs/history/spec-closure-log.md`
 - **Closure log entry updated:** yes
-- **Closure cleanup commit:** pending
+- **Closure cleanup commit:** `59b7120`
 - **Active indexes updated:** yes
 - **Durable docs linked back to evidence where useful:** yes
 - **Residual spec-only content:** Validation evidence remains in spec 002 as

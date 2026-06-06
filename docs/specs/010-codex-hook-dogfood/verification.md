@@ -89,7 +89,7 @@ hook after installation into global Codex `PostToolUse` hooks.
 - **Final spec commit:** `d1eb6b3`
 - **Closure log path:** `docs/history/spec-closure-log.md`
 - **Closure log entry updated:** yes
-- **Closure cleanup commit:** pending
+- **Closure cleanup commit:** `59b7120`
 - **Active indexes updated:** yes
 - **Durable docs linked back to evidence where useful:** yes
 - **Residual spec-only content:** Dogfood evidence remains in spec 010 as

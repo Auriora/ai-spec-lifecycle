@@ -19,7 +19,7 @@ requires visible archived docs.
 - **Spec:** `docs/specs/010-codex-hook-dogfood/`
 - **Title:** Codex hook dogfood
 - **Final spec commit:** `d1eb6b3`
-- **Closure cleanup commit:** pending
+- **Closure cleanup commit:** `59b7120`
 - **Closure action:** retained-as-history
 - **Closed by:** platform
 - **Durable docs updated:**
@@ -36,7 +36,7 @@ requires visible archived docs.
 - **Spec:** `docs/specs/002-spec-lifecycle-validation/`
 - **Title:** Spec lifecycle validation
 - **Final spec commit:** `d1eb6b3`
-- **Closure cleanup commit:** pending
+- **Closure cleanup commit:** `59b7120`
 - **Closure action:** retained-as-history
 - **Closed by:** platform
 - **Durable docs updated:**
