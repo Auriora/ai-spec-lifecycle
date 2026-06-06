@@ -175,6 +175,30 @@ remove_old_codex_config() {
     ' "$config_path" > "$temp_config"
     mv "$temp_config" "$config_path"
   fi
+
+  python3 - "$config_path" <<'PY'
+from pathlib import Path
+import re
+import sys
+
+config_path = Path(sys.argv[1])
+lines = config_path.read_text(encoding="utf-8").splitlines()
+header_pattern = re.compile(r"^\s*\[([^\]]+)\]\s*$")
+remove_prefix = "mcp_servers.spec-lifecycle-manager"
+
+kept: list[str] = []
+removing = False
+for line in lines:
+    match = header_pattern.match(line)
+    if match:
+        table = match.group(1)
+        removing = table == remove_prefix or table.startswith(remove_prefix + ".")
+    if not removing:
+        kept.append(line)
+
+text = "\n".join(kept).rstrip() + "\n"
+config_path.write_text(text, encoding="utf-8")
+PY
 }
 
 remove_old_codex_hooks_json() {
