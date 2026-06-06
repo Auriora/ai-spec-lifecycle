@@ -12,6 +12,14 @@ This note records external verification and dogfood feedback for the
 `spec-lifecycle-manager` skill, MCP server, runtime tools, and advisory hooks.
 Use it to inform later hook-promotion and workflow-simplification decisions.
 
+## Current Hook Policy
+
+Lifecycle hooks remain advisory-only. External verification found the current
+hooks useful and low-noise, but the project owner decided not to promote them
+to blocking behavior. Any future blocking hook proposal must be handled as a
+new focused spec with explicit approval, false-positive handling, and rollback
+guidance.
+
 ## 2026-06-06 External Verification 1
 
 Scope:
