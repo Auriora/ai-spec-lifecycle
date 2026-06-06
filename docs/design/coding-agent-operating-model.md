@@ -119,3 +119,17 @@ Recent lifecycle work validated this model across:
 
 The model is kept as durable design guidance. Governance changes are deferred
 until this model becomes mandatory policy rather than operating guidance.
+
+## Governance Adoption
+
+Selected operating-model rules are now governance in
+`docs/governance/constitution.md`:
+
+- agents must use full spec context before implementation;
+- risky work requires explicit decision-gate handling;
+- parallel agent work must be bounded and conflicts reconciled;
+- completed work needs evidence and durable promotion before closure.
+
+Workflow levels, agent-role descriptions, metrics, and dogfood examples remain
+design guidance. They inform how agents work, but they are not mandatory policy
+unless the constitution states the rule directly.

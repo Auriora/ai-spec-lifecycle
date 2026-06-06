@@ -26,7 +26,7 @@ for active implementation specs.
 |----|---------|--------|---------|--------------|---------------|-------|----------|
 | R001 | now | complete | Spec archive index and closure-log runtime support | B003, `docs/specs/011-spec-archive-index-runtime/` | Runtime can validate closure index entries and archived spec cleanup decisions without relying on retained packages alone. | platform | `docs/history/spec-closure-log.md`, `docs/history/spec-archive-index.md` |
 | R002 | next | deferred | Blocking lifecycle hook promotion decision | Advisory hook dogfood evidence, R001 | Decision recorded to keep hooks advisory or promote selected checks to blocking profile. | platform | Closure log or follow-up spec |
-| R003 | later | accepted | Coding agent operating model governance adoption | Repeated model use, review evidence | Governance update accepted or explicitly rejected after operating model dogfood. | platform | ADR, governance update, or backlog disposition |
+| R003 | later | complete | Coding agent operating model governance adoption | Repeated model use, review evidence | Governance update accepted or explicitly rejected after operating model dogfood. | platform | `docs/governance/constitution.md`, `docs/specs/012-operating-model-governance-adoption/` |
 | R004 | later | proposed | Archived spec audit report | Default archived scan behavior, B006 | Optional report exists for intentionally auditing historical records against current templates. | platform | Future spec or backlog disposition |
 
 ## Decision History
@@ -36,6 +36,7 @@ for active implementation specs.
 | 2026-06-06 | Create a durable roadmap before opening new lifecycle work. | Gives future agents an explicit sequencing surface instead of inferring priorities from archived specs. | `docs/backlog/README.md`, `docs/specs/011-spec-archive-index-runtime/` |
 | 2026-06-06 | Promote spec archive index work before blocking hook promotion. | Archive/index support reduces closure ambiguity and gives hooks/runtime a stronger evidence surface. | B003, R001 |
 | 2026-06-06 | Complete archive index runtime before considering blocking hooks. | R001 is complete; R002 remains deferred until advisory hook noise is reviewed. | `docs/specs/011-spec-archive-index-runtime/`, closure log |
+| 2026-06-06 | Adopt selected coding-agent operating-model rules into governance. | R003 is complete; flexible workflow mechanics remain design guidance. | `docs/governance/constitution.md`, `docs/design/coding-agent-operating-model.md` |
 
 ## Routing Rules
 

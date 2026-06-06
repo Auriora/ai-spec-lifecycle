@@ -3,7 +3,7 @@ title: Agent development lifecycle constitution
 doc_type: governance
 status: active
 owner: platform
-last_reviewed: 2026-06-02
+last_reviewed: 2026-06-06
 ---
 
 # Agent Development Lifecycle Constitution
@@ -38,6 +38,31 @@ Tasks move to `done` only when acceptance criteria are met and evidence is
 recorded. Evidence can be automated test output, validation commands, review
 notes, logs, screenshots, commits, or documented manual verification with
 residual risk.
+
+### Spec Context Before Implementation
+
+When an active spec exists, agents must not implement from `tasks.md` alone.
+Task entries are execution indexes. Agents must review the relevant
+requirements, acceptance criteria, design, verification expectations, durable
+source baseline, traceability context when present, and open decisions before
+implementation or closure.
+
+### Risk Gates Require Decisions
+
+Work that affects security, privacy, credentials, production data,
+migrations, public contracts, schemas, governance, lifecycle policy, hooks,
+MCP surfaces, or cross-module architecture requires explicit decision-gate
+handling before implementation proceeds. If governance conflicts with an
+active spec or durable design doc, governance takes precedence unless the user
+explicitly requests a governance update.
+
+### Parallel Agent Work Is Bounded
+
+Parallel agents and subagents may be used for bounded read-only investigation,
+independent review, validation design, or non-overlapping implementation
+slices. Overlapping write scopes or conflicting findings must be reconciled by
+the lead agent or developer operator before implementation or closure
+continues.
 
 ### Migration Is A Decision
 
