@@ -71,7 +71,31 @@ Then restart or reload Codex.
 
 ## Hook Policy
 
-Spec lifecycle hooks are advisory-only by default.
+Spec lifecycle hooks are advisory-only by default. The installed skill includes
+an advisory Codex `PostToolUse` wrapper:
+
+```text
+~/.codex/skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py
+```
+
+Install it by adding the command to a global Codex `PostToolUse` hook that
+matches write tools:
+
+```json
+{
+  "matcher": "^(apply_patch|write_file|create_file)$",
+  "hooks": [
+    {
+      "type": "command",
+      "command": "python3 /home/bcherrington/.codex/skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py",
+      "statusMessage": "running spec lifecycle advisory hook"
+    }
+  ]
+}
+```
+
+The wrapper stays quiet on pass and emits additional context only for advisory
+spec lifecycle diagnostics.
 
 Do not install blocking hooks for spec lifecycle checks until a later dogfood
 pass proves low false-positive risk and records an explicit promotion decision.

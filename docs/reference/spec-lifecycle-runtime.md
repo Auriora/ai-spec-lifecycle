@@ -19,6 +19,7 @@ Current implementation:
 skills/spec-lifecycle-manager/scripts/spec_runtime.py
 skills/spec-lifecycle-manager/scripts/traceability_lookup.py
 skills/spec-lifecycle-manager/scripts/spec_mcp_server.py
+skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py
 skills/spec-lifecycle-manager/prompts/
 ```
 
@@ -146,8 +147,50 @@ The hook runner supports advisory and blocking profiles.
 | `review-packet-dispatch` | Validate bounded read-only review packet shape before dispatch. |
 | `review-result-recorded` | Validate review-result disposition records. |
 
-These hooks are not installed into Git hooks, Codex hooks, or Agent Workbench
-yet. They are reusable CLI checks that future hook installers can call.
+These runtime checks are reusable by Git hooks, Codex hooks, Agent Workbench
+hooks, or direct CLI invocations. Blocking profile adoption should remain a
+separate dogfood and promotion decision.
+
+## Codex Hook Wrapper
+
+`codex_spec_lifecycle_hook.py` is an advisory Codex `PostToolUse` wrapper. It
+parses Codex write-tool payloads, extracts changed files, and calls the
+runtime hook checks for relevant spec lifecycle files:
+
+| Changed file | Runtime hook |
+| --- | --- |
+| `docs/specs/**/*.md` | `spec-file-changed` |
+| `docs/specs/**/tasks.md` | `task-checkbox-changed` |
+| `docs/templates/**/*.md` or `skills/spec-lifecycle-manager/references/**/*.md` | `template-changed` |
+
+The wrapper is quiet when checks pass. When advisory diagnostics are found, it
+emits Codex `additionalContext` for the current turn and exits with status 0.
+It does not block edits, modify files, update task evidence, or install itself.
+
+Recommended global Codex hook entry:
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "^(apply_patch|write_file|create_file)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /home/bcherrington/.codex/skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py",
+            "statusMessage": "running spec lifecycle advisory hook"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+If another `PostToolUse` entry already matches write tools, append this hook to
+that entry's `hooks` list or add a second matching entry. Keep the hook
+advisory until false-positive behavior has been dogfooded.
 
 ## Archived Spec Scan Behavior
 

@@ -276,6 +276,12 @@ durable docs, archive packages, remove files, or commit. Use the Skill for
 lifecycle judgment and the MCP server for structured context and deterministic
 checks.
 
+When this skill's `scripts/codex_spec_lifecycle_hook.py` helper is installed
+as a Codex `PostToolUse` hook, it provides advisory checks for changed spec
+packages, task evidence, and templates after write tools. It should stay
+advisory-only during dogfooding: quiet on pass, additional context on findings,
+and no blocking behavior.
+
 Before choosing the slice, compare task checkboxes, subtasks, acceptance
 criteria, and evidence against actual code, tests, config, and durable-doc
 evidence. Call out status-stale candidates when validation or review is the
