@@ -89,7 +89,7 @@ destination decision, dogfood evidence, and closure readiness.
 - **Final spec commit:** `7ee157b`
 - **Closure log path:** `docs/history/spec-closure-log.md`
 - **Closure log entry updated:** yes
-- **Closure cleanup commit:** pending
+- **Closure cleanup commit:** `a86eaec`
 - **Active indexes updated:** yes
 - **Durable docs linked back to evidence where useful:** yes
 - **Residual spec-only content:** Exploration evidence remains in spec 003 as

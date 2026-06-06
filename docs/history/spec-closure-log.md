@@ -19,7 +19,7 @@ requires visible archived docs.
 - **Spec:** `docs/specs/003-coding-agent-operating-model/`
 - **Title:** Coding agent operating model
 - **Final spec commit:** `7ee157b`
-- **Closure cleanup commit:** pending
+- **Closure cleanup commit:** `a86eaec`
 - **Closure action:** retained-as-history
 - **Closed by:** platform
 - **Durable docs updated:**
