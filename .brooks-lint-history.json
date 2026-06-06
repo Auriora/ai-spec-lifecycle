@@ -1,0 +1,46 @@
+[
+  {
+    "date": "2026-06-06",
+    "mode": "Architecture Audit",
+    "score": 84,
+    "findings": {
+      "critical": 0,
+      "warning": 3,
+      "suggestion": 1
+    },
+    "scope": "entire project"
+  },
+  {
+    "date": "2026-06-06",
+    "mode": "Tech Debt Assessment",
+    "score": 84,
+    "findings": {
+      "critical": 0,
+      "warning": 3,
+      "suggestion": 1
+    },
+    "scope": "entire project"
+  },
+  {
+    "date": "2026-06-06",
+    "mode": "Health Dashboard",
+    "score": 93,
+    "findings": {
+      "critical": 0,
+      "warning": 4,
+      "suggestion": 1
+    },
+    "scope": "entire project"
+  },
+  {
+    "date": "2026-06-06",
+    "mode": "Test Quality Review",
+    "score": 89,
+    "findings": {
+      "critical": 0,
+      "warning": 2,
+      "suggestion": 1
+    },
+    "scope": "tests/"
+  }
+]
