@@ -38,39 +38,44 @@ T001 -> T002 -> T003 -> T004 -> T005 -> T006
 
 ## Phase 2: Runtime Support
 
-- [ ] T003 Implement archive index parser and validator.
+- [x] T003 Implement archive index parser and validator.
   - Depends on: T002
   - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`,
     `tests/runtime/test_spec_runtime.py`
   - Acceptance: Runtime returns entries, summary counts, and diagnostics for
     malformed, missing, or drifting archive index data.
-  - Evidence: Pending.
+  - Evidence: Added `archive_index()` parser/validator and tests covering the
+    current index plus malformed missing-commit/drift cases.
 
-- [ ] T004 Add CLI command and hook-ready diagnostics.
+- [x] T004 Add CLI command and hook-ready diagnostics.
   - Depends on: T003
   - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`,
     `docs/reference/spec-lifecycle-runtime.md`
   - Acceptance: `spec_runtime.py archive-index .` emits deterministic JSON and
     command documentation is updated.
-  - Evidence: Pending.
+  - Evidence: `spec_runtime.py archive-index .` emits deterministic JSON with
+    9 retained entries, 1 legacy gap, and 0 diagnostics; runtime reference
+    docs updated.
 
-- [ ] T005 Expose archive index through MCP.
+- [x] T005 Expose archive index through MCP.
   - Depends on: T004
   - Files: `skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`,
     `tests/runtime/test_spec_mcp_server.py`,
     `docs/reference/spec-lifecycle-runtime.md`
   - Acceptance: MCP exposes read-only archive index state through a tool or
     resource.
-  - Evidence: Pending.
+  - Evidence: MCP server exposes `archive_index` tool and
+    `history://spec-archive-index` resource; MCP tests cover both surfaces.
 
 ## Phase 3: Validation And Close
 
-- [ ] T006 Validate archive index against current closed specs.
+- [x] T006 Validate archive index against current closed specs.
   - Depends on: T005
   - Files: `docs/history/spec-archive-index.md`,
     `docs/specs/011-spec-archive-index-runtime/verification.md`
   - Acceptance: Current archived specs are indexed without removing packages.
-  - Evidence: Pending.
+  - Evidence: Archive index validation reports 9 retained closed-spec entries,
+    1 legacy gap for spec 001, and 0 diagnostics; no packages removed.
 
 - [x] T007 Update roadmap and backlog disposition.
   - Depends on: T002

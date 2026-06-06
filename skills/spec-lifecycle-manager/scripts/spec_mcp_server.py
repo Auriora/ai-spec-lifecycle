@@ -122,6 +122,7 @@ def tool_definitions() -> list[dict[str, Any]]:
         ),
         tool_schema("next_task", "Select the next runnable task with traceability context.", {"spec_path": "Spec package path or ID."}, ["spec_path"]),
         tool_schema("closure_check", "Check closure readiness and blockers.", {"spec_path": "Spec package path or ID."}, ["spec_path"]),
+        tool_schema("archive_index", "Validate spec archive index and closure-log consistency.", {"repo_root": "Repository root. Defaults to current working directory."}),
         tool_schema("reconcile_spec", "Generate a classified reconciliation report.", {"spec_path": "Spec package path or ID."}, ["spec_path"]),
         tool_schema("promotion_plan", "Generate durable documentation promotion targets.", {"spec_path": "Spec package path or ID."}, ["spec_path"]),
         tool_schema(
@@ -184,6 +185,8 @@ def call_tool(name: str, arguments: dict[str, Any]) -> dict[str, Any]:
         return spec_runtime.next_task(spec_path_arg(arguments))
     if name == "closure_check":
         return spec_runtime.closure_check(spec_path_arg(arguments))
+    if name == "archive_index":
+        return spec_runtime.archive_index(repo_root_arg(arguments))
     if name == "reconcile_spec":
         return spec_runtime.reconcile_spec(spec_path_arg(arguments))
     if name == "promotion_plan":
@@ -228,6 +231,12 @@ def list_resources(repo_root: Path) -> list[dict[str, str]]:
             "mimeType": "text/markdown",
         },
         {
+            "uri": "history://spec-archive-index",
+            "name": "Spec archive index",
+            "description": "Closed spec package archive index validation payload.",
+            "mimeType": "application/json",
+        },
+        {
             "uri": "templates://spec-package",
             "name": "Spec package templates",
             "description": "Fallback spec package template inventory.",
@@ -263,6 +272,9 @@ def read_resource(uri: str, repo_root: Path) -> dict[str, Any]:
         path = repo_root / "docs" / "governance" / "constitution.md"
         text = path.read_text(encoding="utf-8") if path.exists() else ""
         return resource_payload(uri, "text/markdown", text)
+    if uri == "history://spec-archive-index":
+        payload = spec_runtime.archive_index(repo_root)
+        return resource_payload(uri, "application/json", json_text(payload))
     if uri == "templates://spec-package":
         template_dir = repo_root / "skills" / "spec-lifecycle-manager" / "references" / "spec-package"
         payload = {"path": str(template_dir), "templates": sorted(path.name for path in template_dir.glob("*.md")) if template_dir.exists() else []}

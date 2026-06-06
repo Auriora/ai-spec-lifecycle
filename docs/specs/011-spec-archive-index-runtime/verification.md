@@ -30,10 +30,12 @@ validation, MCP exposure, current closed-spec indexing, and closure readiness.
 
 | Command | Purpose | Result | Evidence |
 |---------|---------|--------|----------|
-| `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py lint docs/specs/011-spec-archive-index-runtime` | Spec package lint | pass | 0 diagnostics after T002/T007 docs updates. |
-| `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py next-task docs/specs/011-spec-archive-index-runtime` | Next task selection | pass | Selected T003 with no traceability gaps. |
-| `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py closure-check docs/specs/011-spec-archive-index-runtime` | Closure readiness | expected blocked | T003, T004, T005, T006, and T008 are incomplete. |
-| `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'` | Full regression tests | pass | 41 tests passed. |
+| `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py lint docs/specs/011-spec-archive-index-runtime` | Spec package lint | pass | 0 diagnostics after T003-T006 updates. |
+| `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py next-task docs/specs/011-spec-archive-index-runtime` | Next task selection | pass | Selected T008 with no traceability gaps after T003-T006 completion. |
+| `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py archive-index .` | Archive index validation | pass | 9 retained entries, 1 legacy gap, 0 diagnostics. |
+| `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime tests.runtime.test_spec_mcp_server` | Focused runtime and MCP tests | pass | 37 tests passed. |
+| `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py closure-check docs/specs/011-spec-archive-index-runtime` | Closure readiness | expected blocked | Only T008 remains incomplete until closure. |
+| `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'` | Full regression tests | pass | 45 tests passed. |
 | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py scan .` | Active scan | pass | Spec 011 is the only active spec and has pass health. |
 | `git diff --check` | Diff whitespace hygiene | pass | No whitespace errors. |
 
@@ -43,6 +45,7 @@ validation, MCP exposure, current closed-spec indexing, and closure readiness.
 |------|----------|--------|-------|
 | 2026-06-06 | Spec package created | pass | Requirements, design, tasks, traceability, and verification created. |
 | 2026-06-06 | Durable planning and archive-index baseline added | pass | Roadmap, backlog, archive index, lifecycle design, and docs index updated. |
+| 2026-06-06 | Archive index runtime and MCP support added | pass | CLI, parser, validator, MCP tool/resource, docs, and tests completed for T003-T006. |
 
 ## Task Evidence
 
@@ -50,10 +53,10 @@ validation, MCP exposure, current closed-spec indexing, and closure readiness.
 |---------|--------|----------|-------|
 | T001 | complete | Spec package created as active roadmap item R001. | |
 | T002 | complete | Archive index durable doc created and linked from lifecycle docs and docs index. | |
-| T003 | pending | | |
-| T004 | pending | | |
-| T005 | pending | | |
-| T006 | pending | | |
+| T003 | complete | Runtime parser/validator implemented and tested. | Commit syntax and path consistency only; no Git object inspection. |
+| T004 | complete | CLI command and runtime docs added. | `archive-index` returns deterministic JSON. |
+| T005 | complete | MCP tool/resource exposed and tested. | Read-only. |
+| T006 | complete | Current archive index validates cleanly. | 9 retained entries, 1 legacy gap, no removals. |
 | T007 | complete | B003 promoted to spec 011; R001 marked active; later work routed to backlog/roadmap. | |
 | T008 | pending | | |
 
@@ -63,15 +66,15 @@ validation, MCP exposure, current closed-spec indexing, and closure readiness.
 |--------------|---------------------------------|--------|----------|
 | Archive index format | `docs/history/spec-archive-index.md` | complete | Initial index created for specs with closure-log evidence. |
 | Lifecycle cleanup rules | `docs/design/spec-lifecycle-management.md` | complete | Archive-index role documented. |
-| Runtime command and MCP surface | `docs/reference/spec-lifecycle-runtime.md` | pending | |
+| Runtime command and MCP surface | `docs/reference/spec-lifecycle-runtime.md` | complete | `archive-index`, `archive_index`, and `history://spec-archive-index` documented. |
 | Planning status | `docs/backlog/README.md`, `docs/roadmap/README.md` | partial | Initial roadmap/backlog entries created. |
 
 ## Residual Risks
 
 - Spec 001 predates the closure-log workflow and is intentionally listed as a
   legacy gap until a separate audit records or rejects reconstructed evidence.
-- Runtime validation is not implemented yet, so the initial archive index is
-  manually curated.
+- Runtime validation checks commit syntax and path consistency, not Git object
+  history.
 - This spec does not remove retained archived packages.
 
 ### Spec Cleanup Decision

@@ -37,6 +37,68 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertFalse(archived["health"]["skipped"])
         self.assertGreater(archived["health"]["diagnostic_count"], 0)
 
+    def test_archive_index_validates_current_index(self):
+        payload = spec_runtime.archive_index(ROOT)
+
+        self.assertEqual({"error": 0, "warn": 0, "info": 0}, {key: payload["summary"][key] for key in ["error", "warn", "info"]})
+        self.assertGreaterEqual(payload["summary"]["retained"], 1)
+        self.assertEqual(1, payload["summary"]["legacy_gaps"])
+        self.assertIn("003-coding-agent-operating-model", {entry["spec_id"] for entry in payload["entries"]})
+
+    def test_archive_index_reports_missing_commits_and_drift(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            history = repo / "docs/history"
+            spec = repo / "docs/specs/001-example"
+            durable = repo / "docs/design"
+            history.mkdir(parents=True)
+            spec.mkdir(parents=True)
+            durable.mkdir(parents=True)
+            (durable / "example.md").write_text("# Example\n", encoding="utf-8")
+            (history / "spec-closure-log.md").write_text(
+                "\n".join(
+                    [
+                        "# Spec Closure Log",
+                        "",
+                        "## Entries",
+                        "",
+                        "### 2026-06-06 - 001-example",
+                        "",
+                        "- **Spec:** `docs/specs/001-example/`",
+                        "- **Title:** Example",
+                        "- **Final spec commit:** `abc1234`",
+                        "- **Closure cleanup commit:** `def5678`",
+                        "- **Closure action:** retained-as-history",
+                        "- **Durable docs updated:**",
+                        "  - `docs/design/example.md`",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            (history / "spec-archive-index.md").write_text(
+                "\n".join(
+                    [
+                        "# Spec Archive Index",
+                        "",
+                        "## Entries",
+                        "",
+                        "| Spec ID | Title | Package path | Status | Final spec commit | Cleanup commit | Closure action | Durable destinations | Verification |",
+                        "|---------|-------|--------------|--------|-------------------|----------------|----------------|----------------------|--------------|",
+                        "| 001-example | Different title | `docs/specs/001-example/` | retained | pending | zzzzzzz | retained-as-history | `docs/design/missing.md` | `docs/history/spec-closure-log.md` |",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            payload = spec_runtime.archive_index(repo)
+
+        codes = {item["code"] for item in payload["diagnostics"]}
+        self.assertIn("ARCHIVE_INDEX_FINAL_COMMIT_MISSING", codes)
+        self.assertIn("ARCHIVE_INDEX_CLEANUP_COMMIT_INVALID", codes)
+        self.assertIn("ARCHIVE_INDEX_DURABLE_DESTINATION_MISSING", codes)
+        self.assertIn("ARCHIVE_INDEX_CLOSURE_LOG_DRIFT", codes)
+        self.assertGreater(payload["summary"]["error"], 0)
+
     def test_summary_reports_tasks_and_resources(self):
         payload = spec_runtime.spec_summary(SPEC)
 
@@ -57,6 +119,18 @@ class SpecRuntimeTests(unittest.TestCase):
         specs = {item["spec_id"]: item for item in payload["specs"]}
 
         self.assertEqual("error", specs["001-spec-lifecycle-manager-skill"]["health"]["severity"])
+
+    def test_cli_archive_index_outputs_json(self):
+        result = subprocess.run(
+            [sys.executable, str(SCRIPT), "archive-index", str(ROOT)],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+        payload = json.loads(result.stdout)
+        self.assertEqual(0, payload["summary"]["error"])
+        self.assertIn("entries", payload)
 
     def test_lint_doc_reports_completed_task_without_evidence(self):
         with tempfile.TemporaryDirectory() as tmp:

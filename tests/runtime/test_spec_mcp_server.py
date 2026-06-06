@@ -45,6 +45,7 @@ class SpecMcpServerTests(unittest.TestCase):
         tools = {tool["name"] for tool in responses[0]["result"]["tools"]}
         self.assertIn("scan_specs", tools)
         self.assertIn("closure_check", tools)
+        self.assertIn("archive_index", tools)
         structured = responses[1]["result"]["structuredContent"]
         self.assertIn("specs", structured)
         self.assertIn("004-spec-management-mcp", {item["spec_id"] for item in structured["specs"]})
@@ -73,6 +74,21 @@ class SpecMcpServerTests(unittest.TestCase):
         content = responses[1]["result"]["contents"][0]
         payload = json.loads(content["text"])
         self.assertIn("specs", payload)
+
+    def test_archive_index_tool_and_resource(self):
+        responses = self.send(
+            rpc(1, "tools/call", {"name": "archive_index", "arguments": {"repo_root": str(ROOT)}}),
+            rpc(2, "resources/list"),
+            rpc(3, "resources/read", {"uri": "history://spec-archive-index"}),
+        )
+
+        tool_payload = responses[0]["result"]["structuredContent"]
+        self.assertEqual(0, tool_payload["summary"]["error"])
+        self.assertIn("entries", tool_payload)
+        uris = {resource["uri"] for resource in responses[1]["result"]["resources"]}
+        self.assertIn("history://spec-archive-index", uris)
+        resource_payload = json.loads(responses[2]["result"]["contents"][0]["text"])
+        self.assertEqual(0, resource_payload["summary"]["error"])
 
     def test_prompts_list_and_get(self):
         responses = self.send(

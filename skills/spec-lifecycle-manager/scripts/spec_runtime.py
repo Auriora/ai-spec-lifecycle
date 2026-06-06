@@ -48,6 +48,9 @@ HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$", re.MULTILINE)
 TASK_RE = re.compile(r"\bT\d{3}(?:\.\d+)?\b")
 REQ_RE = re.compile(r"\bRequirement\s+\d+[A-Z]?\b", re.IGNORECASE)
 TASK_LINE_RE = re.compile(r"^\s*-\s+\[([ xX])\]\s+(T\d{3}(?:\.\d+)?)\b(.*)$")
+COMMIT_RE = re.compile(r"^[0-9a-f]{7,40}$", re.IGNORECASE)
+ARCHIVE_STATUSES = {"retained", "removed", "superseded"}
+ARCHIVE_ACTIONS = {"retained-as-history", "removed-after-index", "archived", "removed", "superseded"}
 
 
 @dataclass
@@ -66,6 +69,20 @@ class Task:
     def verified(self) -> bool:
         evidence = self.evidence.strip().lower()
         return self.complete and bool(evidence) and evidence not in {"pending", "pending."}
+
+
+@dataclass
+class ArchiveIndexEntry:
+    spec_id: str
+    title: str
+    package_path: str
+    status: str
+    final_spec_commit: str
+    cleanup_commit: str
+    closure_action: str
+    durable_destinations: list[str]
+    verification: list[str]
+    line: int
 
 
 def read_text(path: Path) -> str:
@@ -484,6 +501,281 @@ def diagnostic_summary(diagnostics: list[dict[str, Any]]) -> dict[str, int]:
     for item in diagnostics:
         summary[item["severity"]] = summary.get(item["severity"], 0) + 1
     return summary
+
+
+def strip_markdown_value(value: str) -> str:
+    return value.strip().strip("`").strip()
+
+
+def split_semicolon_refs(value: str) -> list[str]:
+    text = strip_markdown_value(value)
+    if text.lower() in {"", "none", "n/a"}:
+        return []
+    return [strip_markdown_value(part) for part in text.split(";") if strip_markdown_value(part)]
+
+
+def markdown_table_after_heading(path: Path, heading: str) -> tuple[list[dict[str, str]], list[int]]:
+    if not path.exists():
+        return [], []
+    lines = read_text(path).splitlines()
+    start = None
+    for idx, line in enumerate(lines):
+        if line.strip().lower() == f"## {heading}".lower():
+            start = idx + 1
+            break
+    if start is None:
+        return [], []
+    table: list[tuple[int, str]] = []
+    for idx in range(start, len(lines)):
+        line = lines[idx]
+        if line.startswith("## ") and table:
+            break
+        if line.strip().startswith("|"):
+            table.append((idx + 1, line))
+        elif table and line.strip():
+            break
+    if len(table) < 2:
+        return [], []
+    headers = [cell.strip() for cell in table[0][1].strip().strip("|").split("|")]
+    rows: list[dict[str, str]] = []
+    row_lines: list[int] = []
+    for line_number, row in table[2:]:
+        cells = [cell.strip() for cell in row.strip().strip("|").split("|")]
+        if len(cells) != len(headers):
+            continue
+        rows.append(dict(zip(headers, cells, strict=True)))
+        row_lines.append(line_number)
+    return rows, row_lines
+
+
+def parse_archive_index(repo_root: Path) -> tuple[Path, list[ArchiveIndexEntry], list[dict[str, Any]], list[dict[str, str]]]:
+    root = repo_root.resolve()
+    path = root / "docs" / "history" / "spec-archive-index.md"
+    diagnostics: list[dict[str, Any]] = []
+    entries: list[ArchiveIndexEntry] = []
+    legacy_gaps: list[dict[str, str]] = []
+    if not path.exists():
+        diagnostics.append(diagnostic("error", "ARCHIVE_INDEX_MISSING", path, "Spec archive index is missing.", waivable=False))
+        return path, entries, diagnostics, legacy_gaps
+    rows, line_numbers = markdown_table_after_heading(path, "Entries")
+    if not rows:
+        diagnostics.append(diagnostic("error", "ARCHIVE_INDEX_ENTRIES_MISSING", path, "Archive index has no entries table.", waivable=False))
+    required = [
+        "Spec ID",
+        "Title",
+        "Package path",
+        "Status",
+        "Final spec commit",
+        "Cleanup commit",
+        "Closure action",
+        "Durable destinations",
+        "Verification",
+    ]
+    for row, line_number in zip(rows, line_numbers, strict=True):
+        missing = [field for field in required if field not in row]
+        if missing:
+            diagnostics.append(
+                diagnostic("error", "ARCHIVE_INDEX_FIELD_MISSING", path, f"Archive index row missing fields: {', '.join(missing)}", line_number, "archive", waivable=False)
+            )
+            continue
+        entries.append(
+            ArchiveIndexEntry(
+                spec_id=strip_markdown_value(row["Spec ID"]),
+                title=strip_markdown_value(row["Title"]),
+                package_path=strip_markdown_value(row["Package path"]),
+                status=strip_markdown_value(row["Status"]).lower(),
+                final_spec_commit=strip_markdown_value(row["Final spec commit"]),
+                cleanup_commit=strip_markdown_value(row["Cleanup commit"]),
+                closure_action=strip_markdown_value(row["Closure action"]),
+                durable_destinations=split_semicolon_refs(row["Durable destinations"]),
+                verification=split_semicolon_refs(row["Verification"]),
+                line=line_number,
+            )
+        )
+    gap_rows, _gap_lines = markdown_table_after_heading(path, "Legacy Gaps")
+    for row in gap_rows:
+        legacy_gaps.append({key: strip_markdown_value(value) for key, value in row.items()})
+    return path, entries, diagnostics, legacy_gaps
+
+
+def parse_closure_log(repo_root: Path) -> tuple[Path, dict[str, dict[str, Any]], list[dict[str, Any]]]:
+    path = repo_root.resolve() / "docs" / "history" / "spec-closure-log.md"
+    diagnostics: list[dict[str, Any]] = []
+    entries: dict[str, dict[str, Any]] = {}
+    if not path.exists():
+        diagnostics.append(diagnostic("warn", "CLOSURE_LOG_MISSING", path, "Spec closure log is missing."))
+        return path, entries, diagnostics
+    current: dict[str, Any] | None = None
+    current_field: str | None = None
+    for idx, line in enumerate(read_text(path).splitlines(), start=1):
+        heading = re.match(r"^###\s+\d{4}-\d{2}-\d{2}\s+-\s+(.+?)\s*$", line)
+        if heading:
+            spec_id = heading.group(1).strip()
+            current = {"spec_id": spec_id, "line": idx, "durable_destinations": []}
+            entries[spec_id] = current
+            current_field = None
+            continue
+        if current is None:
+            continue
+        field = re.match(r"^-\s+\*\*(.+?):\*\*\s*(.*)$", line)
+        if field:
+            label = field.group(1).strip().lower().replace(" ", "_")
+            value = strip_markdown_value(field.group(2).strip())
+            current_field = label
+            if label == "spec":
+                current["package_path"] = value
+            elif label == "title":
+                current["title"] = value
+            elif label == "final_spec_commit":
+                current["final_spec_commit"] = value
+            elif label == "closure_cleanup_commit":
+                current["cleanup_commit"] = value
+            elif label == "closure_action":
+                current["closure_action"] = value
+            continue
+        durable_item = re.match(r"^\s+-\s+`([^`]+)`\s*$", line)
+        if current_field == "durable_docs_updated" and durable_item:
+            current.setdefault("durable_destinations", []).append(durable_item.group(1).strip())
+    return path, entries, diagnostics
+
+
+def path_exists_for_archive_ref(repo_root: Path, ref: str) -> bool:
+    text = ref.strip()
+    if not text or text.lower() in {"none", "n/a"}:
+        return True
+    if re.match(r"^[a-z]+://", text) or text.startswith("external:"):
+        return True
+    return (repo_root / text).exists()
+
+
+def validate_archive_index_entry(
+    repo_root: Path,
+    path: Path,
+    entry: ArchiveIndexEntry,
+    closure_entries: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
+    diagnostics: list[dict[str, Any]] = []
+    line = entry.line
+    if not entry.spec_id:
+        diagnostics.append(diagnostic("error", "ARCHIVE_INDEX_SPEC_ID_MISSING", path, "Archive index row missing Spec ID.", line, "archive", waivable=False))
+    if entry.status not in ARCHIVE_STATUSES:
+        diagnostics.append(diagnostic("error", "ARCHIVE_INDEX_STATUS_INVALID", path, f"{entry.spec_id} has invalid status: {entry.status}", line, "archive", waivable=False))
+    if not entry.final_spec_commit or entry.final_spec_commit.lower() == "pending":
+        diagnostics.append(diagnostic("error", "ARCHIVE_INDEX_FINAL_COMMIT_MISSING", path, f"{entry.spec_id} is missing final spec commit evidence.", line, "archive", waivable=False))
+    elif not COMMIT_RE.match(entry.final_spec_commit):
+        diagnostics.append(diagnostic("error", "ARCHIVE_INDEX_FINAL_COMMIT_INVALID", path, f"{entry.spec_id} final spec commit is not a valid short or full hash.", line, "archive", waivable=False))
+    if not entry.cleanup_commit or entry.cleanup_commit.lower() == "pending":
+        diagnostics.append(diagnostic("warn", "ARCHIVE_INDEX_CLEANUP_COMMIT_PENDING", path, f"{entry.spec_id} cleanup commit is pending.", line, "archive"))
+    elif not COMMIT_RE.match(entry.cleanup_commit):
+        diagnostics.append(diagnostic("error", "ARCHIVE_INDEX_CLEANUP_COMMIT_INVALID", path, f"{entry.spec_id} cleanup commit is not a valid short or full hash.", line, "archive", waivable=False))
+    if entry.closure_action not in ARCHIVE_ACTIONS:
+        diagnostics.append(diagnostic("warn", "ARCHIVE_INDEX_ACTION_UNKNOWN", path, f"{entry.spec_id} has unrecognized closure action: {entry.closure_action}", line, "archive"))
+    package_exists = path_exists_for_archive_ref(repo_root, entry.package_path)
+    if entry.status == "retained" and not package_exists:
+        diagnostics.append(diagnostic("error", "ARCHIVE_INDEX_RETAINED_PATH_MISSING", path, f"{entry.spec_id} is retained but package path is missing: {entry.package_path}", line, "archive", waivable=False))
+    if entry.status == "removed" and package_exists:
+        diagnostics.append(diagnostic("warn", "ARCHIVE_INDEX_REMOVED_PATH_PRESENT", path, f"{entry.spec_id} is marked removed but package path still exists: {entry.package_path}", line, "archive"))
+    for ref in entry.durable_destinations:
+        if not path_exists_for_archive_ref(repo_root, ref):
+            diagnostics.append(diagnostic("warn", "ARCHIVE_INDEX_DURABLE_DESTINATION_MISSING", path, f"{entry.spec_id} durable destination does not exist: {ref}", line, "archive"))
+    for ref in entry.verification:
+        if not path_exists_for_archive_ref(repo_root, ref):
+            diagnostics.append(diagnostic("warn", "ARCHIVE_INDEX_VERIFICATION_REF_MISSING", path, f"{entry.spec_id} verification reference does not exist: {ref}", line, "archive"))
+
+    closure = closure_entries.get(entry.spec_id)
+    if not closure:
+        diagnostics.append(diagnostic("warn", "ARCHIVE_INDEX_CLOSURE_LOG_ENTRY_MISSING", path, f"{entry.spec_id} has no matching closure-log entry.", line, "archive"))
+        return diagnostics
+    comparisons = {
+        "title": entry.title,
+        "package_path": entry.package_path,
+        "final_spec_commit": entry.final_spec_commit,
+        "cleanup_commit": entry.cleanup_commit,
+        "closure_action": entry.closure_action,
+    }
+    for field, expected in comparisons.items():
+        actual = closure.get(field, "")
+        if actual and expected and actual != expected:
+            diagnostics.append(
+                diagnostic(
+                    "error",
+                    "ARCHIVE_INDEX_CLOSURE_LOG_DRIFT",
+                    path,
+                    f"{entry.spec_id} {field} differs from closure log: index={expected!r}, closure_log={actual!r}.",
+                    line,
+                    "archive",
+                    waivable=False,
+                )
+            )
+    closure_destinations = set(closure.get("durable_destinations", []))
+    index_destinations = set(entry.durable_destinations)
+    missing_from_index = sorted(closure_destinations - index_destinations)
+    if missing_from_index:
+        diagnostics.append(
+            diagnostic(
+                "warn",
+                "ARCHIVE_INDEX_DURABLE_DESTINATION_DRIFT",
+                path,
+                f"{entry.spec_id} closure-log durable destinations missing from archive index: {', '.join(missing_from_index)}",
+                line,
+                "archive",
+            )
+        )
+    return diagnostics
+
+
+def archive_index(repo_root: Path) -> dict[str, Any]:
+    root = repo_root.resolve()
+    index_path, entries, diagnostics, legacy_gaps = parse_archive_index(root)
+    _closure_path, closure_entries, closure_diagnostics = parse_closure_log(root)
+    diagnostics.extend(closure_diagnostics)
+    seen: set[str] = set()
+    duplicates: set[str] = set()
+    for entry in entries:
+        if entry.spec_id in seen:
+            duplicates.add(entry.spec_id)
+        seen.add(entry.spec_id)
+        diagnostics.extend(validate_archive_index_entry(root, index_path, entry, closure_entries))
+    for spec_id in sorted(duplicates):
+        diagnostics.append(diagnostic("error", "ARCHIVE_INDEX_SPEC_DUPLICATE", index_path, f"Duplicate archive index entry: {spec_id}", waivable=False))
+    indexed = {entry.spec_id for entry in entries}
+    legacy = {row.get("Spec ID", "") for row in legacy_gaps}
+    missing_index = sorted(set(closure_entries) - indexed - legacy)
+    for spec_id in missing_index:
+        diagnostics.append(diagnostic("warn", "ARCHIVE_INDEX_ENTRY_MISSING", index_path, f"Closure-log spec is missing from archive index: {spec_id}"))
+    summary = diagnostic_summary(diagnostics)
+    summary.update(
+        {
+            "total": len(entries),
+            "retained": sum(1 for entry in entries if entry.status == "retained"),
+            "removed": sum(1 for entry in entries if entry.status == "removed"),
+            "superseded": sum(1 for entry in entries if entry.status == "superseded"),
+            "legacy_gaps": len(legacy_gaps),
+        }
+    )
+    return {
+        "repo_root": str(root),
+        "path": str(index_path),
+        "entries": [archive_entry_payload(entry) for entry in entries],
+        "legacy_gaps": legacy_gaps,
+        "diagnostics": diagnostics,
+        "summary": summary,
+    }
+
+
+def archive_entry_payload(entry: ArchiveIndexEntry) -> dict[str, Any]:
+    return {
+        "spec_id": entry.spec_id,
+        "title": entry.title,
+        "package_path": entry.package_path,
+        "status": entry.status,
+        "final_spec_commit": entry.final_spec_commit,
+        "cleanup_commit": entry.cleanup_commit,
+        "closure_action": entry.closure_action,
+        "durable_destinations": entry.durable_destinations,
+        "verification": entry.verification,
+        "line": entry.line,
+    }
 
 
 def parse_tasks(path: Path) -> list[Task]:
@@ -1332,6 +1624,9 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     prompts = sub.add_parser("prompts", help="List and validate prompt definitions.")
     prompts.add_argument("repo_root", type=Path, nargs="?", default=Path.cwd())
 
+    archive = sub.add_parser("archive-index", help="Validate spec archive index and closure-log consistency.")
+    archive.add_argument("repo_root", type=Path, nargs="?", default=Path.cwd())
+
     hook = sub.add_parser("hook", help="Run a spec lifecycle hook.")
     hook.add_argument(
         "hook_name",
@@ -1387,6 +1682,8 @@ def main(argv: list[str] | None = None) -> int:
         payload = validate_review_result(args.path.resolve())
     elif args.command == "prompts":
         payload = load_prompt_definitions(args.repo_root)
+    elif args.command == "archive-index":
+        payload = archive_index(args.repo_root)
     elif args.command == "hook":
         payload = run_hook(
             args.repo_root,
