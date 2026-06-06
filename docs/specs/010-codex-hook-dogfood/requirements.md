@@ -2,7 +2,7 @@
 title: Codex hook dogfood requirements
 doc_type: spec
 artifact_type: requirements
-status: draft
+status: archived
 owner: platform
 last_reviewed: 2026-06-06
 ---

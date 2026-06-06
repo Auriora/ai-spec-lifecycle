@@ -2,7 +2,7 @@
 title: Spec lifecycle validation requirements
 doc_type: requirements
 artifact_type: requirements
-status: draft
+status: archived
 owner: platform
 last_reviewed: 2026-06-02
 ---

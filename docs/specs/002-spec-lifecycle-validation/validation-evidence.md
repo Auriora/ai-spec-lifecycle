@@ -1,7 +1,7 @@
 ---
 title: Spec lifecycle validation evidence
 doc_type: review
-status: draft
+status: archived
 owner: platform
 last_reviewed: 2026-06-02
 ---

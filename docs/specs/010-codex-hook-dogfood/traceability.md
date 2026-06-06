@@ -2,7 +2,7 @@
 title: Codex hook dogfood traceability
 doc_type: spec
 artifact_type: traceability
-status: draft
+status: archived
 owner: platform
 last_reviewed: 2026-06-06
 ---

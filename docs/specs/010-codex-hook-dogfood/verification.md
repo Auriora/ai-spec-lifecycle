@@ -2,7 +2,7 @@
 title: Codex hook dogfood verification
 doc_type: spec
 artifact_type: verification
-status: draft
+status: archived
 owner: platform
 last_reviewed: 2026-06-06
 ---
@@ -86,9 +86,9 @@ hook after installation into global Codex `PostToolUse` hooks.
 - **Cleanup action:** retain as history note
 - **Reason:** The package records Codex hook dogfood evidence and policy
   decision.
-- **Final spec commit:** pending
+- **Final spec commit:** `d1eb6b3`
 - **Closure log path:** `docs/history/spec-closure-log.md`
-- **Closure log entry updated:** pending
+- **Closure log entry updated:** yes
 - **Closure cleanup commit:** pending
 - **Active indexes updated:** yes
 - **Durable docs linked back to evidence where useful:** yes

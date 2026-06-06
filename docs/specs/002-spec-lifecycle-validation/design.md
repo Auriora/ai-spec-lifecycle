@@ -2,7 +2,7 @@
 title: Spec lifecycle validation design
 doc_type: design
 artifact_type: design
-status: draft
+status: archived
 owner: platform
 last_reviewed: 2026-06-02
 ---

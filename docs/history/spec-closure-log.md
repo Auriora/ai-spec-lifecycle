@@ -14,6 +14,40 @@ requires visible archived docs.
 
 ## Entries
 
+### 2026-06-06 - 010-codex-hook-dogfood
+
+- **Spec:** `docs/specs/010-codex-hook-dogfood/`
+- **Title:** Codex hook dogfood
+- **Final spec commit:** `d1eb6b3`
+- **Closure cleanup commit:** pending
+- **Closure action:** retained-as-history
+- **Closed by:** platform
+- **Durable docs updated:**
+  - `docs/reference/spec-lifecycle-runtime.md`
+  - `docs/reference/spec-lifecycle-manager-mcp-install.md`
+  - `skills/spec-lifecycle-manager/SKILL.md`
+  - `skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py`
+- **Verification summary:** Focused Codex hook tests, full runtime tests, spec 010 lint, closure-check, representative hook payload dogfood, and `git diff --check` passed.
+- **Residual risks:** Real-world template edit evidence remains limited; blocking hook promotion remains out of scope.
+- **Follow-up:** Revisit only if repeated hook noise appears or blocking hook promotion is proposed.
+
+### 2026-06-06 - 002-spec-lifecycle-validation
+
+- **Spec:** `docs/specs/002-spec-lifecycle-validation/`
+- **Title:** Spec lifecycle validation
+- **Final spec commit:** `d1eb6b3`
+- **Closure cleanup commit:** pending
+- **Closure action:** retained-as-history
+- **Closed by:** platform
+- **Durable docs updated:**
+  - `docs/specs/002-spec-lifecycle-validation/validation-evidence.md`
+  - `skills/spec-lifecycle-manager/SKILL.md`
+  - `skills/spec-lifecycle-manager/references/spec-package/`
+  - `skills/spec-lifecycle-manager/references/durable-doc-templates/`
+- **Verification summary:** Full runtime tests, spec 002 lint, closure-check, traceability matrix, and `git diff --check` passed.
+- **Residual risks:** Prompt trials were read-only mental applications of the skill; future scripted validation can be added if workflow churn justifies it.
+- **Follow-up:** None.
+
 ### 2026-06-06 - 009-archived-spec-scan-hygiene
 
 - **Spec:** `docs/specs/009-archived-spec-scan-hygiene/`
