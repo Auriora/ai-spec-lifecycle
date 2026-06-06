@@ -1,0 +1,40 @@
+{
+  "name": "spec-lifecycle-manager",
+  "version": "0.1.0",
+  "description": "Codex wrapper for the Spec Lifecycle Manager skill and MCP runtime.",
+  "author": {
+    "name": "Auriora",
+    "email": "noreply@example.com",
+    "url": "https://github.com/bcherrington"
+  },
+  "homepage": "https://github.com/bcherrington/agent-dev-lifecycle/tree/main/plugins/spec-lifecycle-manager",
+  "repository": "https://github.com/bcherrington/agent-dev-lifecycle",
+  "license": "MIT",
+  "keywords": [
+    "agents",
+    "codex",
+    "mcp",
+    "specs",
+    "lifecycle"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Spec Lifecycle Manager",
+    "shortDescription": "Lifecycle guidance and runtime checks for AI-assisted specs.",
+    "longDescription": "Packages Codex guidance for the Spec Lifecycle Manager skill. The installer syncs the full skill runtime into the user Codex home and configures the read-only MCP server as a host-level entry.",
+    "developerName": "Auriora",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Interactive"
+    ],
+    "websiteURL": "https://github.com/bcherrington/agent-dev-lifecycle/tree/main/plugins/spec-lifecycle-manager",
+    "privacyPolicyURL": "https://opensource.org/licenses/MIT",
+    "termsOfServiceURL": "https://opensource.org/licenses/MIT",
+    "defaultPrompt": [
+      "Scan active lifecycle specs.",
+      "Get task context before coding.",
+      "Check spec closure readiness."
+    ],
+    "brandColor": "#0F766E"
+  }
+}
