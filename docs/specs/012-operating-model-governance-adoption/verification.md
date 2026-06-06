@@ -77,7 +77,7 @@ agent operating model, planning updates, and spec closure readiness.
 - **Final spec commit:** `2d17440`
 - **Closure log path:** `docs/history/spec-closure-log.md`
 - **Closure log entry updated:** yes
-- **Closure cleanup commit:** pending
+- **Closure cleanup commit:** `66a5f7b`
 - **Active indexes updated:** yes
 - **Durable docs linked back to evidence where useful:** yes
 - **Residual spec-only content:** Spec 012 retained as historical
