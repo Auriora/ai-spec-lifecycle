@@ -221,13 +221,14 @@ class SpecRuntimeTests(unittest.TestCase):
 
         self.assertEqual(0, payload["summary"]["error"])
         self.assertEqual(0, payload["summary"]["warn"])
-        self.assertEqual(12, payload["summary"]["total"])
-        self.assertEqual(12, payload["summary"]["removed"])
+        self.assertEqual(13, payload["summary"]["total"])
+        self.assertEqual(13, payload["summary"]["removed"])
         self.assertEqual(0, payload["summary"]["retained"])
         self.assertEqual(0, payload["summary"]["superseded"])
         self.assertEqual(0, payload["summary"]["legacy_gaps"])
         expected = {
             "001-spec-lifecycle-manager-skill",
+            "013-agent-backed-lifecycle-tools",
             "002-spec-lifecycle-validation",
             "003-coding-agent-operating-model",
             "004-spec-management-mcp",

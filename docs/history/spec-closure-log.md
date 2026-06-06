@@ -14,6 +14,32 @@ requires visible archived docs.
 
 ## Entries
 
+### 2026-06-06 - 013-agent-backed-lifecycle-tools
+
+- **Spec:** `docs/specs/013-agent-backed-lifecycle-tools/`
+- **Title:** Agent-backed lifecycle tools
+- **Final spec commit:** `bb6c436`
+- **Closure cleanup commit:** `c66710c`
+- **Closure action:** removed
+- **Closed by:** platform
+- **Durable docs updated:**
+  - `docs/reference/spec-lifecycle-runtime.md`
+  - `docs/design/spec-lifecycle-management.md`
+  - `docs/reviews/spec-lifecycle-manager/README.md`
+  - `skills/spec-lifecycle-manager/SKILL.md`
+  - `skills/spec-lifecycle-manager/scripts/spec_agent_schemas.py`
+  - `skills/spec-lifecycle-manager/scripts/spec_runtime.py`
+  - `skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`
+  - `tests/runtime/test_spec_runtime.py`
+  - `tests/runtime/test_spec_mcp_server.py`
+- **Verification summary:** Full unit suite, spec scan, spec lint, review-doc
+  lint, prompt validation, archive-index validation, closure-check, and
+  `git diff --check` passed before cleanup.
+- **Residual risks:** Local Codex CLI runner remains intentionally deferred;
+  persisted review records are a dogfood aid and not source-of-truth behavior.
+- **Follow-up:** Add a focused local Codex CLI adapter spec if real secondary
+  execution is needed.
+
 ### 2026-06-06 - 001-spec-lifecycle-manager-skill
 
 - **Spec:** `docs/specs/001-spec-lifecycle-manager-skill/`
