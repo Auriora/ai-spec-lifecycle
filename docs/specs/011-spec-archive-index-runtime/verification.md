@@ -86,7 +86,7 @@ validation, MCP exposure, current closed-spec indexing, and closure readiness.
 - **Final spec commit:** `4712010`
 - **Closure log path:** `docs/history/spec-closure-log.md`
 - **Closure log entry updated:** yes
-- **Closure cleanup commit:** pending
+- **Closure cleanup commit:** `25dc62e`
 - **Active indexes updated:** yes
 - **Durable docs linked back to evidence where useful:** yes
 - **Residual spec-only content:** Spec 011 retained as historical
