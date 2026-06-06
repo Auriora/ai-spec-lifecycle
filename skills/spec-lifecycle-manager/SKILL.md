@@ -37,7 +37,12 @@ This skill includes two kinds of fallback references:
 
 ## Start
 
-1. Read applicable repo instructions such as `AGENTS.md`.
+1. Read applicable repo instructions before changing files. Start with root
+   `AGENTS.md` when present, then read any deeper `AGENTS.md` files that govern
+   the target paths. If no repository instructions are available in the session,
+   give the user one short hint to run `/init` so future agents can discover
+   repository guidance; do not repeat that hint after it has been given in the
+   same session.
 2. Inspect repository documentation direction such as `docs/README.md`, `docs/templates/`, governance or constitution docs, document lifecycle notes, indexes, existing docs, and whether a lifecycle partition such as `docs/<name>/` is used.
 3. Locate the active spec package under the chosen docs root, defaulting to `docs/specs/[###-slug]/`.
 4. Read available spec artifacts: `requirements.md`, `design.md`, `tasks.md`, plus optional `change-impact.md`, `verification.md`, `research.md`, `quickstart.md`, `open-decisions.md`, `traceability.md`, contracts, checklists, and sequencing docs when present. If `spec.md` or `plan.md` are found instead, the package uses the old format; handle that through the migration decision gate in Reconcile.
