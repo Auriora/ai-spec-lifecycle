@@ -1,119 +1,104 @@
 ---
-title: Spec lifecycle manager MCP install
+title: Spec lifecycle manager plugin install
 doc_type: reference
 status: active
 owner: platform
-last_reviewed: 2026-06-05
+last_reviewed: 2026-06-06
 ---
 
-# Spec Lifecycle Manager MCP Install
+# Spec Lifecycle Manager Plugin Install
 
 ## Purpose
 
-Record how the `spec-lifecycle-manager` MCP server is installed and validated
-alongside Agent Workbench for this repository. Once installed and visible,
-Codex agents should use the MCP tools for lifecycle context and deterministic
-checks before running the underlying `.py` scripts directly.
+Record how the `spec-lifecycle-manager` Codex plugin is packaged, installed,
+and validated for this repository.
 
 ## Supported Model
 
-Use the spec lifecycle MCP server as a host-level companion server. Do not
-package it inside the Agent Workbench plugin and do not copy its runtime into
-Agent Workbench.
+Use the spec lifecycle runtime as a self-contained Codex plugin. The plugin
+bundles the skill, MCP server definition, prompt definitions, templates,
+runtime scripts, and advisory hooks under:
+
+```text
+plugins/spec-lifecycle-manager/
+```
 
 Supported boundaries:
 
 | Surface | Role | Install path |
 |---------|------|--------------|
 | Agent Workbench MCP | Repo context, coding-agent runtime support, validation planning, and workspace-aware guidance. | Host-level `mcp_servers.agent-workbench` entry. |
-| Spec lifecycle MCP | Spec inventory, linting, traceability context, prompt definitions, promotion planning, and closure checks for this repository. | Host-level `mcp_servers.spec-lifecycle-manager` entry. |
-| Agent Workbench plugin | Skill and optional quiet hook wrapper for Agent Workbench. | Plugin install only; no executable MCP server registration. |
-| Spec lifecycle skill | Workflow guidance and installed MCP server script. | `~/.codex/skills/spec-lifecycle-manager/`. |
+| Spec lifecycle plugin | Spec lifecycle skill, read-only MCP tools, prompt definitions, templates, and advisory hooks. | Plugin cache under `~/.codex/plugins/cache/<marketplace>/spec-lifecycle-manager/<version>/`. |
+| Spec lifecycle MCP | Spec inventory, linting, traceability context, prompt definitions, promotion planning, and closure checks. | Plugin-scoped `.mcp.json`, not a host-level `mcp_servers` entry. |
+| Spec lifecycle hooks | Advisory lifecycle checks after write tools. | Plugin-scoped `hooks/hooks.json`, subject to normal Codex plugin hook trust. |
 
-This preserves the Agent Workbench architecture rule: executable MCP runtimes
-are configured at the Codex host level, while plugins package instructions and
-optional hook artifacts.
+Do not install a separate `~/.codex/skills/spec-lifecycle-manager/` copy for
+normal operation. Do not add a host-level
+`[mcp_servers.spec-lifecycle-manager]` block unless debugging a local runtime
+outside the plugin. The package installer removes the old managed global skill,
+MCP, and hook entries before installing the plugin bundle.
 
-## Codex Configuration
+## Plugin Layout
 
-The local host-level Codex entry is:
-
-```toml
-[mcp_servers.spec-lifecycle-manager]
-command = "python3"
-args = [
-  "/home/bcherrington/.codex/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py",
-  "/home/bcherrington/Projects/Auriora/agent-dev-lifecycle"
-]
-startup_timeout_sec = 30.0
+```text
+plugins/spec-lifecycle-manager/
+  .codex-plugin/plugin.json
+  .mcp.json
+  hooks/hooks.json
+  skills/spec-lifecycle-manager/
+    SKILL.md
+    agents/
+    prompts/
+    references/
+    scripts/
 ```
 
-The first argument points at the installed skill server script. The second
-argument fixes the server to this repository.
+The manifest points to bundled components with plugin-root-relative paths:
 
-Do not add this server to:
+- `skills`: `./skills/`
+- `mcpServers`: `./.mcp.json`
+- `hooks`: `./hooks/hooks.json`
 
-- `../agent-workbench/plugins/agent-workbench/.codex-plugin/plugin.json`;
-- Agent Workbench plugin cache metadata;
-- Agent Workbench runtime source;
-- cache-relative plugin paths.
+## Install Flow
 
-## Skill Sync
-
-After changes under `skills/spec-lifecycle-manager/`, sync the installed skill
-before validating the MCP server:
+Use the package installer from this repository:
 
 ```bash
-rsync -a --delete \
-  /home/bcherrington/Projects/Auriora/agent-dev-lifecycle/skills/spec-lifecycle-manager/ \
-  /home/bcherrington/.codex/skills/spec-lifecycle-manager/
+scripts/install-spec-lifecycle-manager-package.sh
 ```
 
-Then restart or reload Codex.
+The installer:
+
+- removes the old managed standalone skill copy at
+  `~/.codex/skills/spec-lifecycle-manager/`;
+- removes the old managed host-level MCP config block when present;
+- removes the old managed global advisory hook when present;
+- copies the self-contained plugin to the local marketplace plugin directory;
+- updates the local marketplace entry; and
+- runs `codex plugin add spec-lifecycle-manager@<marketplace-name>`.
+
+The plugin has no third-party runtime dependencies. It requires Python 3.9 or
+newer and otherwise uses the Python standard library.
 
 ## Hook Policy
 
-Spec lifecycle hooks are advisory-only by default. The installed skill includes
-an advisory Codex `PostToolUse` wrapper:
+Spec lifecycle hooks are advisory-only. The bundled hook file is:
 
 ```text
-~/.codex/skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py
+plugins/spec-lifecycle-manager/hooks/hooks.json
 ```
 
-Install it by adding the command to a global Codex `PostToolUse` hook that
-matches write tools:
+The hook runs:
 
-```json
-{
-  "matcher": "^(apply_patch|write_file|create_file)$",
-  "hooks": [
-    {
-      "type": "command",
-      "command": "python3 /home/bcherrington/.codex/skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py",
-      "statusMessage": "running spec lifecycle advisory hook"
-    }
-  ]
-}
+```text
+python3 "${PLUGIN_ROOT}/skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py"
 ```
 
-The wrapper stays quiet on pass and emits additional context only for advisory
-spec lifecycle diagnostics.
-
-Do not install blocking hooks for spec lifecycle checks until a later dogfood
-pass proves low false-positive risk and records an explicit promotion decision.
-If blocking behavior is proposed, create a focused spec or backlog item that
-defines:
-
-- event source and payload;
-- command and timeout;
-- severity profile;
-- false-positive handling;
-- rollback path;
-- validation evidence.
-
-Agent Workbench hooks remain governed by Agent Workbench's own hook design and
-runbook. The spec lifecycle server should not silently change Agent Workbench
-hook behavior.
+Plugin-bundled hooks follow Codex's plugin hook trust flow. They should stay
+quiet on pass and emit additional context only for advisory lifecycle
+diagnostics. Future blocking behavior requires a focused spec or backlog item
+that defines event source, payload, command, timeout, severity profile,
+false-positive handling, rollback path, and validation evidence.
 
 ## Validation Checklist
 
@@ -121,41 +106,31 @@ Use this checklist after install, sync, or reload:
 
 | Check | Expected evidence |
 |-------|-------------------|
-| MCP tools visible after reload | Codex exposes `mcp__spec_lifecycle_manager` tools. |
-| MCP-first guidance synced | Installed skill tells agents to prefer MCP tools and treat scripts as implementation, validation, CI, explicit recovery, or debugging surfaces. |
+| Plugin validates | `plugin-creator` validation passes for `plugins/spec-lifecycle-manager`. |
+| Plugin is self-contained | `skills/`, `.mcp.json`, `hooks/hooks.json`, scripts, prompts, and references exist under the plugin root. |
+| MCP tools visible after reload | Codex exposes plugin-scoped `spec-lifecycle-manager` MCP tools. |
 | Server starts | `initialize` returns server name `spec-lifecycle-manager`. |
-| Spec scan works | `scan_specs` returns the repository root and the expected active-spec count. |
+| Spec scan works | `scan_specs` returns the target repository root and expected active-spec count when `repo_root` is supplied or inferred. |
 | Archive index works | `archive_index` returns no diagnostics for removed package history. |
 | Prompt definitions validate | `prompts_validate` returns no diagnostics. |
 | Package tools resolve live specs | `closure_check`, `task_context`, or `traceability_lookup` work when an active spec exists. |
-| Installed skill is synced | `~/.codex/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py` exists and is executable. |
-| No duplicate MCP instance | `~/.codex/config.toml` has one host-level `mcp_servers.spec-lifecycle-manager` entry and no plugin-provided duplicate. |
-
-Current validation on 2026-06-06:
-
-- `mcp__spec_lifecycle_manager.scan_specs` returned this repository's spec
-  inventory with zero active specs after completed package removal.
-- `mcp__spec_lifecycle_manager.archive_index` returned removed package history
-  with no diagnostics.
-- `mcp__spec_lifecycle_manager.prompts_validate` returned four prompts with no
-  diagnostics.
-- The installed server script is executable.
-- Search found no plugin-provided spec lifecycle MCP server entry.
+| No old standalone skill remains | `~/.codex/skills/spec-lifecycle-manager/` is absent after installer cleanup. |
+| No old managed host MCP remains | `~/.codex/config.toml` does not contain the old installer-managed `mcp_servers.spec-lifecycle-manager` block. |
 
 ## Troubleshooting
 
 If the tools are not visible after reload:
 
-1. Confirm `~/.codex/config.toml` parses as TOML.
-2. Confirm the installed server script exists and is executable.
-3. Run the server command manually with an `initialize` request.
-4. Confirm no duplicate plugin-provided MCP server is shadowing the host-level
-   entry.
-5. Restart Codex after config or skill sync changes.
+1. Confirm the plugin appears in `codex plugin list`.
+2. Confirm the installed plugin cache contains `.mcp.json`.
+3. Confirm the plugin is enabled.
+4. Confirm no old host-level `mcp_servers.spec-lifecycle-manager` entry is
+   shadowing the plugin-provided server.
+5. Restart Codex after plugin reinstall or hook trust changes.
 
 ## Related Artifacts
 
 - `docs/reference/spec-lifecycle-runtime.md`
 - `docs/history/spec-archive-index.md`
-- `../agent-workbench/docs/runbooks/codex-agent-workbench-plugin.md`
-- `../agent-workbench/docs/design/coding-agent-integration-design.md`
+- `plugins/spec-lifecycle-manager/.codex-plugin/plugin.json`
+- `plugins/spec-lifecycle-manager/.mcp.json`

@@ -22,8 +22,8 @@ Options:
   --marketplace-root <path>
                         Local marketplace root. Defaults to ~.
   --repo-root <path>    Repository root exposed by the MCP server. Defaults to source root.
-  --skip-codex-config   Copy files without editing Codex config.toml.
-  --skip-codex-hooks    Copy files without editing Codex hooks.json.
+  --skip-codex-config   Do not remove old host-level Codex MCP config.
+  --skip-codex-hooks    Do not remove old global Codex hook config.
   --skip-marketplace    Copy files without editing the local marketplace.
   --skip-plugin-add     Do not run `codex plugin add` after copying files.
   --dry-run             Print planned actions without writing files.
@@ -89,21 +89,21 @@ REPO_ROOT="$(cd "$REPO_ROOT" && pwd)"
 CODEX_HOME="$(mkdir -p "$CODEX_HOME" && cd "$CODEX_HOME" && pwd)"
 MARKETPLACE_ROOT="$(mkdir -p "$MARKETPLACE_ROOT" && cd "$MARKETPLACE_ROOT" && pwd)"
 
-SKILL_INSTALL_ROOT="$CODEX_HOME/skills/spec-lifecycle-manager"
 PLUGIN_INSTALL_ROOT="$CODEX_HOME/plugins/spec-lifecycle-manager"
 MARKETPLACE_PLUGIN_ROOT="$MARKETPLACE_ROOT/plugins/spec-lifecycle-manager"
 MARKETPLACE_JSON="$MARKETPLACE_ROOT/.agents/plugins/marketplace.json"
 
 required_paths=(
-  "skills/spec-lifecycle-manager/SKILL.md"
-  "skills/spec-lifecycle-manager/scripts/spec_runtime.py"
-  "skills/spec-lifecycle-manager/scripts/spec_mcp_server.py"
-  "skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py"
-  "skills/spec-lifecycle-manager/scripts/traceability_lookup.py"
-  "skills/spec-lifecycle-manager/prompts"
-  "skills/spec-lifecycle-manager/references"
   "plugins/spec-lifecycle-manager/.codex-plugin/plugin.json"
   "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/SKILL.md"
+  "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/spec_runtime.py"
+  "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py"
+  "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py"
+  "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/traceability_lookup.py"
+  "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/prompts"
+  "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/references"
+  "plugins/spec-lifecycle-manager/.mcp.json"
+  "plugins/spec-lifecycle-manager/hooks/hooks.json"
   "packaging/spec-lifecycle-manager/package-manifest.json"
 )
 
@@ -154,14 +154,16 @@ copy_tree() {
   run cp -a "$source_path" "$destination_path"
 }
 
-write_codex_config() {
+remove_old_codex_config() {
   local config_path="$CODEX_HOME/config.toml"
-  local server_path="$SKILL_INSTALL_ROOT/scripts/spec_mcp_server.py"
   if [ "$DRY_RUN" -eq 1 ]; then
-    echo "dry-run: rewrite Spec Lifecycle Manager MCP config block in $config_path"
+    echo "dry-run: remove old Spec Lifecycle Manager MCP config block from $config_path"
     return
   fi
 
+  if [ ! -e "$config_path" ]; then
+    return
+  fi
   touch "$config_path"
   if grep -q "BEGIN Spec Lifecycle Manager package install" "$config_path"; then
     local temp_config
@@ -173,49 +175,25 @@ write_codex_config() {
     ' "$config_path" > "$temp_config"
     mv "$temp_config" "$config_path"
   fi
-
-  python3 - "$config_path" "$server_path" "$REPO_ROOT" <<'PY'
-from pathlib import Path
-import sys
-
-config_path = Path(sys.argv[1])
-server_path = sys.argv[2]
-repo_root = sys.argv[3]
-text = config_path.read_text(encoding="utf-8")
-
-marker = "[mcp_servers.spec-lifecycle-manager]"
-if marker in text and "BEGIN Spec Lifecycle Manager package install" not in text:
-    # Preserve an existing hand-managed entry instead of creating duplicates.
-    raise SystemExit(0)
-
-block = f"""
-
-# BEGIN Spec Lifecycle Manager package install
-[mcp_servers.spec-lifecycle-manager]
-command = "python3"
-args = ["{server_path}", "{repo_root}"]
-startup_timeout_sec = 30.0
-# END Spec Lifecycle Manager package install
-"""
-config_path.write_text(text.rstrip() + block + "\n", encoding="utf-8")
-PY
 }
 
-write_codex_hooks_json() {
+remove_old_codex_hooks_json() {
   local hooks_json="$CODEX_HOME/hooks.json"
-  local hook_script="$SKILL_INSTALL_ROOT/scripts/codex_spec_lifecycle_hook.py"
   if [ "$DRY_RUN" -eq 1 ]; then
-    echo "dry-run: merge Spec Lifecycle Manager hook into $hooks_json"
+    echo "dry-run: remove old global Spec Lifecycle Manager hook from $hooks_json"
     return
   fi
 
-  HOOKS_JSON="$hooks_json" HOOK_SCRIPT="$hook_script" python3 - <<'PY'
+  if [ ! -e "$hooks_json" ]; then
+    return
+  fi
+
+  HOOKS_JSON="$hooks_json" python3 - <<'PY'
 import json
 import os
 from pathlib import Path
 
 hooks_json = Path(os.environ["HOOKS_JSON"])
-hook_script = os.environ["HOOK_SCRIPT"]
 
 data = {"hooks": {}}
 if hooks_json.exists():
@@ -228,7 +206,7 @@ if not isinstance(hooks, dict):
 
 entries = hooks.get("PostToolUse")
 if not isinstance(entries, list):
-    entries = []
+    raise SystemExit(0)
 
 def keep_entry(entry):
     if not isinstance(entry, dict):
@@ -243,17 +221,10 @@ def keep_entry(entry):
     return bool(entry["hooks"])
 
 entries = [entry for entry in entries if keep_entry(entry)]
-entries.insert(0, {
-    "matcher": "^(apply_patch|write_file|create_file)$",
-    "hooks": [
-        {
-            "type": "command",
-            "command": f"python3 {hook_script}",
-            "statusMessage": "running spec lifecycle advisory hook"
-        }
-    ]
-})
-hooks["PostToolUse"] = entries
+if entries:
+    hooks["PostToolUse"] = entries
+else:
+    hooks.pop("PostToolUse", None)
 
 hooks_json.parent.mkdir(parents=True, exist_ok=True)
 hooks_json.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
@@ -318,20 +289,35 @@ install_codex_plugin() {
   run codex plugin add "spec-lifecycle-manager@$MARKETPLACE_NAME"
 }
 
+remove_old_skill_install() {
+  local old_skill_root="$CODEX_HOME/skills/spec-lifecycle-manager"
+  if [ "$DRY_RUN" -eq 1 ]; then
+    echo "dry-run: remove old standalone skill install from $old_skill_root"
+    return
+  fi
+  if [ -e "$old_skill_root" ]; then
+    run rm -rf "$old_skill_root"
+  fi
+}
+
 ensure_python
-copy_tree "$SOURCE_ROOT/skills/spec-lifecycle-manager" "$SKILL_INSTALL_ROOT"
+remove_old_skill_install
 copy_tree "$SOURCE_ROOT/plugins/spec-lifecycle-manager" "$PLUGIN_INSTALL_ROOT"
 copy_tree "$SOURCE_ROOT/plugins/spec-lifecycle-manager" "$MARKETPLACE_PLUGIN_ROOT"
-run chmod +x "$SKILL_INSTALL_ROOT/scripts/spec_runtime.py"
-run chmod +x "$SKILL_INSTALL_ROOT/scripts/spec_mcp_server.py"
-run chmod +x "$SKILL_INSTALL_ROOT/scripts/codex_spec_lifecycle_hook.py"
-run chmod +x "$SKILL_INSTALL_ROOT/scripts/traceability_lookup.py"
+run chmod +x "$PLUGIN_INSTALL_ROOT/skills/spec-lifecycle-manager/scripts/spec_runtime.py"
+run chmod +x "$PLUGIN_INSTALL_ROOT/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py"
+run chmod +x "$PLUGIN_INSTALL_ROOT/skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py"
+run chmod +x "$PLUGIN_INSTALL_ROOT/skills/spec-lifecycle-manager/scripts/traceability_lookup.py"
+run chmod +x "$MARKETPLACE_PLUGIN_ROOT/skills/spec-lifecycle-manager/scripts/spec_runtime.py"
+run chmod +x "$MARKETPLACE_PLUGIN_ROOT/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py"
+run chmod +x "$MARKETPLACE_PLUGIN_ROOT/skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py"
+run chmod +x "$MARKETPLACE_PLUGIN_ROOT/skills/spec-lifecycle-manager/scripts/traceability_lookup.py"
 
 if [ "$WRITE_CODEX_CONFIG" -eq 1 ]; then
-  write_codex_config
+  remove_old_codex_config
 fi
 if [ "$WRITE_CODEX_HOOKS" -eq 1 ]; then
-  write_codex_hooks_json
+  remove_old_codex_hooks_json
 fi
 if [ "$WRITE_MARKETPLACE" -eq 1 ]; then
   write_marketplace_json

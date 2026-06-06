@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "^(apply_patch|Edit|Write|write_file|create_file)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${PLUGIN_ROOT}/skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py\"",
+            "timeout": 10,
+            "statusMessage": "Checking spec lifecycle advisory feedback"
+          }
+        ]
+      }
+    ]
+  }
+}

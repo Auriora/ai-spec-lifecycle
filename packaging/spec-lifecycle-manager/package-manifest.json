@@ -1,19 +1,18 @@
 {
   "name": "spec-lifecycle-manager",
-  "version": "0.1.0",
+  "version": "0.1.0+codex.20260606221001",
   "registry": "local",
   "installer": "scripts/install-spec-lifecycle-manager-package.sh",
-  "entrypoint": "python3 ~/.codex/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py <repo-root>",
+  "entrypoint": "plugin-bundled mcpServers entry: plugins/spec-lifecycle-manager/.mcp.json",
   "dependency_install": {
     "python": ">=3.9",
     "install_command": "none",
     "runtime_dependencies": [
-      "Python 3 standard library"
+    "Python 3 standard library"
     ],
     "dev_dependencies": []
   },
   "components": [
-    "skills/spec-lifecycle-manager",
     "plugins/spec-lifecycle-manager",
     "docs/reference/spec-lifecycle-runtime.md",
     "docs/reference/spec-lifecycle-manager-mcp-install.md",
@@ -22,7 +21,7 @@
   "codex": {
     "mcp_server_id": "spec-lifecycle-manager",
     "plugin_manifest": "plugins/spec-lifecycle-manager/.codex-plugin/plugin.json",
-    "skill_path": "skills/spec-lifecycle-manager",
+    "skill_path": "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager",
     "hook_config_fallback": "scripts/install-spec-lifecycle-manager-package.sh"
   }
 }

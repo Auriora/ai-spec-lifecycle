@@ -324,7 +324,7 @@ it as a local read-only stdio MCP server for clients that support MCP:
 
 ```bash
 python3 skills/spec-lifecycle-manager/scripts/spec_mcp_server.py /path/to/repo
-python3 ~/.codex/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py /path/to/repo
+python3 plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py /path/to/repo
 ```
 
 The MCP server exposes the existing runtime as resources, tools, and prompts.

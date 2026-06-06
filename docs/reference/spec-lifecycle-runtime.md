@@ -60,14 +60,16 @@ Run the local stdio MCP server from the repository source:
 python3 skills/spec-lifecycle-manager/scripts/spec_mcp_server.py /path/to/repo
 ```
 
-Run it from an installed skill:
+Run it from the bundled plugin source:
 
 ```bash
-python3 ~/.codex/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py /path/to/repo
+python3 plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py /path/to/repo
 ```
 
-Configure MCP clients to use the command as a local stdio server. The first
-argument should be the repository root whose specs should be exposed.
+The Codex plugin defines the installed MCP server in
+`plugins/spec-lifecycle-manager/.mcp.json`. Direct CLI invocation is for local
+validation, CI, or MCP debugging. The first optional argument is the repository
+root whose specs should be exposed.
 
 ### MCP-First Usage
 

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Spec Lifecycle Manager"
+  short_description: "Manage specs through implementation and closure"
+  default_prompt: "Use $spec-lifecycle-manager to reconcile an active spec package, choose the next implementation slice, and identify durable documentation updates."
+policy:
+  allow_implicit_invocation: true
