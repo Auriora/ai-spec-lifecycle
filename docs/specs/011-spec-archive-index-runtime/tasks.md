@@ -2,7 +2,7 @@
 title: Spec archive index runtime tasks
 doc_type: spec
 artifact_type: tasks
-status: draft
+status: archived
 owner: platform
 last_reviewed: 2026-06-06
 ---
@@ -84,13 +84,15 @@ T001 -> T002 -> T003 -> T004 -> T005 -> T006
   - Evidence: B003 is promoted to spec 011 and R001 is the active roadmap item;
     later hook/governance/audit work remains deferred or proposed.
 
-- [ ] T008 Close spec 011.
+- [x] T008 Close spec 011.
   - Depends on: T006, T007
   - Files: `docs/specs/011-spec-archive-index-runtime/`,
     `docs/history/spec-closure-log.md`
   - Acceptance: Durable docs promoted, tests pass, closure log updated, and
     retained/removed package decision recorded.
-  - Evidence: Pending.
+  - Evidence: Final spec commit `4712010` recorded; package retained as
+    historical; closure log and archive index updated with cleanup evidence
+    pending this closure commit.
 
 ## Related Artifacts
 

@@ -14,6 +14,27 @@ requires visible archived docs.
 
 ## Entries
 
+### 2026-06-06 - 011-spec-archive-index-runtime
+
+- **Spec:** `docs/specs/011-spec-archive-index-runtime/`
+- **Title:** Spec archive index runtime
+- **Final spec commit:** `4712010`
+- **Closure cleanup commit:** pending
+- **Closure action:** retained-as-history
+- **Closed by:** platform
+- **Durable docs updated:**
+  - `docs/history/spec-archive-index.md`
+  - `docs/design/spec-lifecycle-management.md`
+  - `docs/reference/spec-lifecycle-runtime.md`
+  - `docs/backlog/README.md`
+  - `docs/roadmap/README.md`
+  - `docs/README.md`
+  - `skills/spec-lifecycle-manager/scripts/spec_runtime.py`
+  - `skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`
+- **Verification summary:** Archive index validation, spec 011 lint, closure-check, full runtime tests, focused MCP/runtime tests, scan, and `git diff --check` passed.
+- **Residual risks:** Commit fields are syntax-checked, but Git object history is not inspected; spec 001 remains a documented legacy gap.
+- **Follow-up:** Consider stricter Git object validation only if removal of retained archived packages is planned.
+
 ### 2026-06-06 - 003-coding-agent-operating-model
 
 - **Spec:** `docs/specs/003-coding-agent-operating-model/`

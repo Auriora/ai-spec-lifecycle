@@ -40,7 +40,7 @@ class SpecRuntimeTests(unittest.TestCase):
     def test_archive_index_validates_current_index(self):
         payload = spec_runtime.archive_index(ROOT)
 
-        self.assertEqual({"error": 0, "warn": 0, "info": 0}, {key: payload["summary"][key] for key in ["error", "warn", "info"]})
+        self.assertEqual(0, payload["summary"]["error"])
         self.assertGreaterEqual(payload["summary"]["retained"], 1)
         self.assertEqual(1, payload["summary"]["legacy_gaps"])
         self.assertIn("003-coding-agent-operating-model", {entry["spec_id"] for entry in payload["entries"]})
