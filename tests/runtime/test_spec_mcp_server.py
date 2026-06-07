@@ -148,6 +148,29 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertIn("include_archived_lint", scan_schema["inputSchema"]["properties"])
         self.assertIn("boolean", scan_schema["inputSchema"]["properties"]["include_archived_lint"]["type"])
 
+    def test_spec_path_tools_advertise_repo_root(self):
+        [response] = self.send(rpc(1, "tools/list"))
+
+        tools = {tool["name"]: tool for tool in response["result"]["tools"]}
+        for name in [
+            "agent_readiness_packet",
+            "agent_backed_tool",
+            "spec_summary",
+            "lint_spec_package",
+            "next_task",
+            "closure_check",
+            "reconcile_spec",
+            "promotion_plan",
+            "review_packet",
+            "task_context",
+            "traceability_lookup",
+        ]:
+            with self.subTest(tool=name):
+                schema = tools[name]["inputSchema"]
+                self.assertIn("repo_root", schema["properties"])
+                self.assertIn("spec_path", schema["properties"])
+                self.assertIn("spec_path", schema["required"])
+
     def test_agent_backed_tool_returns_unavailable_through_mcp(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)

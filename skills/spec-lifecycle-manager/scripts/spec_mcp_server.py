@@ -24,6 +24,11 @@ import traceability_lookup
 PROTOCOL_VERSION = "2025-06-18"
 SERVER_NAME = "spec-lifecycle-manager"
 SERVER_VERSION = "0.1.0"
+REPO_ROOT_PROPERTY = "Repository root. Defaults to current working directory."
+SPEC_PATH_PROPERTIES = {
+    "repo_root": REPO_ROOT_PROPERTY,
+    "spec_path": "Spec package path or ID.",
+}
 
 
 def find_repo_root(path: Path | None = None) -> Path:
@@ -118,7 +123,7 @@ def tool_definitions() -> list[dict[str, Any]]:
             "scan_specs",
             "Discover spec packages, artifact inventory, health, and template authority.",
             {
-                "repo_root": "Repository root. Defaults to current working directory.",
+                "repo_root": REPO_ROOT_PROPERTY,
                 "docs_root": "Optional docs root.",
                 "include_archived_lint": {
                     "type": ["boolean", "string"],
@@ -130,7 +135,7 @@ def tool_definitions() -> list[dict[str, Any]]:
             "active_spec_preflight",
             "Return active spec, next task, required context, open decisions, and validation commands.",
             {
-                "repo_root": "Repository root. Defaults to current working directory.",
+                "repo_root": REPO_ROOT_PROPERTY,
                 "spec_path": "Optional spec package path or ID when multiple active specs exist.",
                 "task_id": "Optional task ID such as T004.",
                 "docs_root": "Optional docs root.",
@@ -139,14 +144,14 @@ def tool_definitions() -> list[dict[str, Any]]:
         tool_schema(
             "agent_readiness_packet",
             "Return bounded implementation context for a task before coding.",
-            {"spec_path": "Spec package path or ID.", "task_id": "Task ID such as T004."},
+            {**SPEC_PATH_PROPERTIES, "task_id": "Task ID such as T004."},
             ["spec_path", "task_id"],
         ),
         tool_schema(
             "agent_backed_tool",
             "Run an advisory agent-backed tool; returns unavailable when no runner is configured.",
             {
-                "spec_path": "Spec package path or ID.",
+                **SPEC_PATH_PROPERTIES,
                 "tool_name": "Agent-backed tool name.",
                 "model_class": "Optional model class.",
             },
@@ -155,40 +160,40 @@ def tool_definitions() -> list[dict[str, Any]]:
         tool_schema(
             "no_active_spec_context",
             "Return durable docs, backlog, roadmap, closure-log, and archive-index context when no active spec exists.",
-            {"repo_root": "Repository root. Defaults to current working directory."},
+            {"repo_root": REPO_ROOT_PROPERTY},
         ),
-        tool_schema("spec_summary", "Return a specs://{spec_id}/summary style payload.", {"spec_path": "Spec package path or ID."}, ["spec_path"]),
-        tool_schema("lint_spec_package", "Lint a spec package.", {"spec_path": "Spec package path or ID."}, ["spec_path"]),
+        tool_schema("spec_summary", "Return a specs://{spec_id}/summary style payload.", SPEC_PATH_PROPERTIES, ["spec_path"]),
+        tool_schema("lint_spec_package", "Lint a spec package.", SPEC_PATH_PROPERTIES, ["spec_path"]),
         tool_schema(
             "lint_doc",
             "Lint a single spec or template document.",
             {"path": "Document path.", "artifact_type": "Optional artifact type override.", "repo_root": "Repository root for relative paths."},
             ["path"],
         ),
-        tool_schema("next_task", "Select the next runnable task with traceability context.", {"spec_path": "Spec package path or ID."}, ["spec_path"]),
-        tool_schema("closure_check", "Check closure readiness and blockers.", {"spec_path": "Spec package path or ID."}, ["spec_path"]),
-        tool_schema("archive_index", "Validate spec archive index and closure-log consistency.", {"repo_root": "Repository root. Defaults to current working directory."}),
-        tool_schema("reconcile_spec", "Generate a classified reconciliation report.", {"spec_path": "Spec package path or ID."}, ["spec_path"]),
-        tool_schema("promotion_plan", "Generate durable documentation promotion targets.", {"spec_path": "Spec package path or ID."}, ["spec_path"]),
+        tool_schema("next_task", "Select the next runnable task with traceability context.", SPEC_PATH_PROPERTIES, ["spec_path"]),
+        tool_schema("closure_check", "Check closure readiness and blockers.", SPEC_PATH_PROPERTIES, ["spec_path"]),
+        tool_schema("archive_index", "Validate spec archive index and closure-log consistency.", {"repo_root": REPO_ROOT_PROPERTY}),
+        tool_schema("reconcile_spec", "Generate a classified reconciliation report.", SPEC_PATH_PROPERTIES, ["spec_path"]),
+        tool_schema("promotion_plan", "Generate durable documentation promotion targets.", SPEC_PATH_PROPERTIES, ["spec_path"]),
         tool_schema(
             "review_packet",
             "Generate a bounded read-only review packet.",
-            {"spec_path": "Spec package path or ID.", "review_type": "Review packet type.", "model_class": "Optional model class."},
+            {**SPEC_PATH_PROPERTIES, "review_type": "Review packet type.", "model_class": "Optional model class."},
             ["spec_path"],
         ),
         tool_schema(
             "task_context",
             "Return task traceability context.",
-            {"spec_path": "Spec package path or ID.", "task_id": "Task ID such as T004."},
+            {**SPEC_PATH_PROPERTIES, "task_id": "Task ID such as T004."},
             ["spec_path", "task_id"],
         ),
         tool_schema(
             "traceability_lookup",
             "Lookup task, requirement, or design traceability.",
-            {"spec_path": "Spec package path or ID.", "task_id": "Task ID.", "requirement": "Requirement ID.", "design": "Design section reference."},
+            {**SPEC_PATH_PROPERTIES, "task_id": "Task ID.", "requirement": "Requirement ID.", "design": "Design section reference."},
             ["spec_path"],
         ),
-        tool_schema("prompts_validate", "List and validate prompt definitions.", {"repo_root": "Repository root. Defaults to current working directory."}),
+        tool_schema("prompts_validate", "List and validate prompt definitions.", {"repo_root": REPO_ROOT_PROPERTY}),
     ]
 
 
