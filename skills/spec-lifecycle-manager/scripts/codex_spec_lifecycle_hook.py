@@ -277,5 +277,19 @@ def main() -> int:
     return 0
 
 
+def run_advisory_hook(main_func=main) -> int:
+    try:
+        return main_func()
+    except Exception as exc:  # noqa: BLE001 - Codex advisory hooks must never break tool flow.
+        append_log(
+            {
+                "status": "hook_failed",
+                "error_type": type(exc).__name__,
+                "message": str(exc)[:500],
+            }
+        )
+        return 0
+
+
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(run_advisory_hook())

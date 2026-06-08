@@ -1,4 +1,5 @@
 import json
+import importlib.util
 import os
 import shutil
 import subprocess
@@ -11,6 +12,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 INVALID_FIXTURE_ROOT = ROOT / "tests/fixtures/codex-hook/invalid-spec"
 HOOK = ROOT / "skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py"
+
+HOOK_SPEC = importlib.util.spec_from_file_location("codex_spec_lifecycle_hook", HOOK)
+assert HOOK_SPEC is not None
+hook_module = importlib.util.module_from_spec(HOOK_SPEC)
+assert HOOK_SPEC.loader is not None
+HOOK_SPEC.loader.exec_module(hook_module)
 
 
 def write_valid_spec(repo: Path, relative: str = "docs/specs/001-valid") -> None:
@@ -146,6 +153,28 @@ class CodexSpecLifecycleHookTests(unittest.TestCase):
 
         self.assertIn("Spec lifecycle advisory checks found issues.", context)
         self.assertRegex(context, r"\b(ERROR|WARN)\b")
+
+    def test_hook_wrapper_logs_unexpected_errors_without_failing_codex(self):
+        def fail() -> int:
+            raise RuntimeError("forced hook failure")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            log_path = Path(tmp) / "hook.log.jsonl"
+            previous_log = os.environ.get("SPEC_LIFECYCLE_HOOK_LOG")
+            os.environ["SPEC_LIFECYCLE_HOOK_LOG"] = str(log_path)
+            try:
+                result = hook_module.run_advisory_hook(fail)
+            finally:
+                if previous_log is None:
+                    os.environ.pop("SPEC_LIFECYCLE_HOOK_LOG", None)
+                else:
+                    os.environ["SPEC_LIFECYCLE_HOOK_LOG"] = previous_log
+
+            records = [json.loads(line) for line in log_path.read_text(encoding="utf-8").splitlines()]
+
+        self.assertEqual(0, result)
+        self.assertEqual("hook_failed", records[0]["status"])
+        self.assertEqual("RuntimeError", records[0]["error_type"])
 
 
 if __name__ == "__main__":
