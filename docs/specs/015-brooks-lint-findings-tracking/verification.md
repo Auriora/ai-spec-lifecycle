@@ -33,6 +33,7 @@ schema and plugin package sync if plugin runtime files change.
 | 2026-06-06 | Brooks-Debt check | Tech Debt Assessment completed with score 84/100, 3 warnings, 1 suggestion; findings added to research and design seed lists. | pending validation |
 | 2026-06-06 | Brooks-Health check | Health Dashboard completed with composite score 93/100; dimension scores and `BL-HEALTH-001` through `BL-HEALTH-005` added to research and design seed lists. | pending validation |
 | 2026-06-06 | Brooks-Test check | Test Quality Review completed with score 89/100, 2 warnings, 1 suggestion; suite map and `BL-TEST-001` through `BL-TEST-003` added to research and design seed lists. | pending validation |
+| 2026-06-09 | T001 | Added durable Brooks-Lint register schema in `docs/reviews/brooks-lint/README.md`; accepted D004 mode-specific ID namespace. | pass |
 
 ## Residual Risks
 

@@ -37,6 +37,8 @@ Use `BL-<MODE>-<NNN>`:
 
 - `BL-ARCH-001` for architecture audit findings.
 - `BL-REVIEW-001` for review findings.
+- `BL-DEBT-001` for technical debt findings.
+- `BL-HEALTH-001` for health dashboard findings.
 - `BL-TEST-001` for test-quality findings.
 - Future Brooks skills can add mode prefixes when needed.
 

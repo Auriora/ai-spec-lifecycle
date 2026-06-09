@@ -11,12 +11,15 @@ last_reviewed: 2026-06-06
 
 ## Phase 1: Register Definition
 
-- [ ] T001 Define the durable Brooks findings register.
+- [x] T001 Define the durable Brooks findings register.
   - Requirements: Requirement 1, Requirement 3
   - Acceptance: Register schema includes stable IDs, mode, scope, severity,
     state, Symptom, Source, Consequence, Remedy, references, triage, and
     verification fields.
-  - Evidence:
+  - Evidence: Added `docs/reviews/brooks-lint/README.md` with the durable
+    register schema, accepted mode-specific ID namespaces, mode-specific
+    fields, state model, duplicate handling, and maintenance rules; D004 is
+    accepted in `open-decisions.md`.
 
 - [ ] T002 Decide how Brooks score history is handled.
   - Requirements: Requirement 4
