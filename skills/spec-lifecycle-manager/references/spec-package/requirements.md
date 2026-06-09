@@ -64,7 +64,10 @@ become the source of truth after promotion.
 ## Correctness Properties
 
 Properties that must hold for the system to be considered correct. These inform
-property-based testing.
+property-based testing and should be referenced from task-level test work when
+they apply. Use the target repository's normal property-test tool when one is
+already accepted; otherwise record the dependency decision in `design.md` or
+`open-decisions.md`.
 
 - **CP-001**: [Invariant or property description]
 - **CP-002**: [Invariant or property description]

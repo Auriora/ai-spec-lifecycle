@@ -115,7 +115,12 @@ Structure requirements as user stories with EARS acceptance criteria:
 
 EARS keywords: GIVEN/WHEN/THEN (behavioral), WHERE (context-dependent), WHILE (state-dependent), IF/THEN (conditional), SHALL (unconditional).
 
-Include a Correctness Properties section listing invariants that must hold for property-based testing.
+Include a Correctness Properties section listing invariants that must hold for
+property-based testing. Keep the property IDs stable enough to reference from
+test tasks. The skill is language-neutral: use the target repository's normal
+property-test tool when one exists, such as Hypothesis for Python, fast-check
+for TypeScript, proptest or quickcheck for Rust, Go fuzzing, or FsCheck for
+.NET.
 
 Always reference durable source-of-truth documents that describe current
 behavior before the change. If no durable source exists, record that gap and
@@ -160,6 +165,15 @@ Task expectations:
 - Add `Depends on:`, `Files:`, `Acceptance:`, and `Evidence:` bullets where they materially improve execution or reconciliation.
 - Check off subtasks as work progresses, but check off the parent task only when acceptance criteria are met and evidence is recorded.
 - Record skipped work with an explicit reason instead of silently deleting it.
+- Use explicit checkpoint tasks when a phase boundary, subsystem boundary,
+  validation pause, or human decision point needs evidence before proceeding.
+  A checkpoint task should list the validation commands or reviews to run and
+  record whether any user question, residual risk, or follow-up remains.
+- When requirements define Correctness Properties, carry them into property-test
+  tasks or subtasks. Name the linked properties, requirements, expected
+  invariants, test framework if known, and evidence required. Do not require a
+  third-party property-test dependency when the target repository has no accepted
+  dependency path; route that decision through design or open decisions.
 
 The Task Dependency Graph at the top of `tasks.md` is useful for non-trivial specs, but it should support the checklist rather than replace it. Phases provide visual grouping; dependency notes and the graph provide execution order.
 
