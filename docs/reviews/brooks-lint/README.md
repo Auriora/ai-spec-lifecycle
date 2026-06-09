@@ -46,6 +46,29 @@ finding instead of creating a duplicate.
 | `dismissed` | Finding is not actionable for this repository. | Record rationale. |
 | `resolved` | Finding has been fixed or otherwise closed. | Record verification evidence and commit or doc reference. |
 
+## Score History Relationship
+
+`.brooks-lint-history.json` records score snapshots from Brooks runs when that
+file is present. Treat it as optional supporting score-history evidence, not as
+the durable finding register.
+
+Use score history to answer trend questions such as "did the health score move
+after this remediation?" or "which Brooks mode changed between runs?" Use this
+Markdown register to answer finding questions such as "what is the issue?",
+"where is it?", "what state is it in?", "why was it deferred?", and "what
+evidence resolved it?"
+
+Rules:
+
+- The register must remain usable when `.brooks-lint-history.json` is absent,
+  stale, local-only, or generated differently by a future Brooks run.
+- Score changes should be explained by updates to finding state, evidence, or
+  scope when possible.
+- A score snapshot without a corresponding finding detail is not enough to
+  accept, defer, dismiss, or resolve a finding.
+- If the history file is tracked in this repository, keep it as supporting
+  evidence only; do not make it the source of truth for finding fields.
+
 ## Register Schema
 
 Each finding entry should include these fields:

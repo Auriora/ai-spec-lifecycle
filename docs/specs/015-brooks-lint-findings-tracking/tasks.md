@@ -21,12 +21,15 @@ last_reviewed: 2026-06-06
     fields, state model, duplicate handling, and maintenance rules; D004 is
     accepted in `open-decisions.md`.
 
-- [ ] T002 Decide how Brooks score history is handled.
+- [x] T002 Decide how Brooks score history is handled.
   - Requirements: Requirement 4
   - Depends on: T001
   - Acceptance: `.brooks-lint-history.json` treatment is documented as committed
     artifact, ignored local telemetry, or optional supporting evidence.
-  - Evidence:
+  - Evidence: Accepted D002 as optional supporting score-history evidence in
+    `open-decisions.md`; documented the relationship between score history and
+    the durable register in `docs/reviews/brooks-lint/README.md` and
+    `change-impact.md`.
 
 ## Phase 2: Seed Findings
 
