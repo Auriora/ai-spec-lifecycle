@@ -15,3 +15,14 @@ They are declarative so a future MCP adapter can expose them through
 Prompts are convenience entry points. The `spec-lifecycle-manager` skill remains
 the authoritative workflow guide, and the deterministic runtime helpers remain
 the source for scanner, lint, next-task, closure, and traceability payloads.
+
+Implemented prompt definitions:
+
+- `choose-next-task`
+- `lifecycle-complete`
+- `lifecycle-status`
+- `lifecycle-triage`
+- `lifecycle-validate`
+- `lint-spec`
+- `reconcile-spec`
+- `task-context`

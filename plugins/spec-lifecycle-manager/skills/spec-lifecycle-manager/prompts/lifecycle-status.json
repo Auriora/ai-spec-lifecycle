@@ -1,0 +1,40 @@
+{
+  "name": "lifecycle-status",
+  "description": "Report current spec lifecycle status and the next safe action.",
+  "arguments": [
+    {
+      "name": "repo_root",
+      "required": false,
+      "description": "Repository root. Defaults to the current workspace when omitted."
+    },
+    {
+      "name": "spec_id",
+      "required": false,
+      "description": "Optional active spec package ID or path when multiple active specs exist."
+    }
+  ],
+  "resources": [
+    "specs://active",
+    "history://spec-archive-index"
+  ],
+  "tools": [
+    "active_spec_preflight",
+    "no_active_spec_context",
+    "scan_specs"
+  ],
+  "instructions": [
+    "Use the spec-lifecycle-manager skill.",
+    "Call active_spec_preflight first when MCP tools are available.",
+    "If multiple active specs exist, ask for or report the required spec selection instead of guessing.",
+    "If no active spec exists, use no_active_spec_context and summarize durable docs, backlog, roadmap, closure log, and archive index context."
+  ],
+  "return_format": [
+    "status",
+    "active_specs",
+    "selected_spec",
+    "next_task",
+    "blockers",
+    "recommended_next_action"
+  ],
+  "client_support_recovery": "If MCP tools are unavailable, run spec_runtime.py scan or active-spec-preflight from the repository root."
+}

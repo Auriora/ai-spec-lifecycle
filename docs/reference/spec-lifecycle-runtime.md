@@ -180,11 +180,26 @@ Implemented definitions:
 - `choose-next-task`
 - `task-context`
 - `lint-spec`
+- `lifecycle-status`
+- `lifecycle-validate`
+- `lifecycle-complete`
+- `lifecycle-triage`
 
 The definitions include names, descriptions, arguments, resource references,
 tool references, instructions, return formats, and client-support recovery
 guidance. The stdio MCP server exposes these definitions through
 `prompts/list` and `prompts/get`.
+
+Lifecycle prompts are convenience aliases:
+
+- `lifecycle-status` routes "what next" and status requests to active preflight
+  or no-active-spec context.
+- `lifecycle-validate` routes validation requests to scan, lint, prompts,
+  archive-index, and closure checks.
+- `lifecycle-complete` routes completion requests through durable promotion and
+  closure readiness before cleanup.
+- `lifecycle-triage` classifies requests as `trivial`, `small`,
+  `spec-needed`, `review`, or `closure` before choosing a workflow.
 
 ## Hook Modes
 

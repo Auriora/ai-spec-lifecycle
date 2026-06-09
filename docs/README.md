@@ -20,6 +20,7 @@ This documentation describes reusable agent workflows for managing implementatio
 - [AI-native SDD framework landscape](reference/ai-native-sdd-frameworks.md): reference list of spec-driven AI development systems and adjacent methodologies to study.
 - [Coding agent workflow research](reference/coding-agent-workflow-research.md): evidence and recommendations for operator-guided coding-agent workflows.
 - [Spec lifecycle runtime](reference/spec-lifecycle-runtime.md): deterministic CLI helper surface for spec scanning, linting, task context, hooks, prompts, reconciliation, promotion planning, and review packets.
+- [Plugin comparison improvements](reference/plugin-comparison-improvements.md): adopted, deferred, and rejected ideas from workflow/plugin comparisons including Praxis, Spec Driven, Superpowers, Codex plugin docs, and Kiro notes.
 - [Spec lifecycle manager MCP install](reference/spec-lifecycle-manager-mcp-install.md): local host-level MCP install, validation, and Agent Workbench companion-server boundary.
 - [Spec lifecycle dogfood evaluation](reference/spec-lifecycle-dogfood-evaluation.md): external verification and dogfood feedback for the skill, MCP server, runtime tools, and advisory hooks.
 - [Backlog](backlog/README.md): proposed or deferred lifecycle work that is not yet a focused implementation spec.

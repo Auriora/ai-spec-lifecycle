@@ -1,0 +1,42 @@
+{
+  "name": "lifecycle-validate",
+  "description": "Select and run the deterministic validation path for lifecycle work.",
+  "arguments": [
+    {
+      "name": "spec_id",
+      "required": false,
+      "description": "Optional active spec package ID or path."
+    },
+    {
+      "name": "scope",
+      "required": false,
+      "description": "Optional validation scope such as spec, prompts, archive, plugin, or closure."
+    }
+  ],
+  "resources": [
+    "specs://{spec_id}/health",
+    "history://spec-archive-index"
+  ],
+  "tools": [
+    "scan_specs",
+    "lint_spec_package",
+    "closure_check",
+    "archive_index",
+    "prompts_validate"
+  ],
+  "instructions": [
+    "Use the spec-lifecycle-manager skill.",
+    "Prefer MCP validation tools before direct scripts when they are available.",
+    "Report the validation commands or MCP tools used, diagnostics, and residual risk.",
+    "Do not mark tasks complete unless evidence is concrete and linked to the relevant task or closure gate."
+  ],
+  "return_format": [
+    "validation_scope",
+    "checks_run",
+    "diagnostics",
+    "evidence",
+    "residual_risk",
+    "next_action"
+  ],
+  "client_support_recovery": "If MCP tools are unavailable, run the matching spec_runtime.py scan, lint, prompts, archive-index, or closure-check command."
+}

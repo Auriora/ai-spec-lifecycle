@@ -817,7 +817,7 @@ class SpecRuntimeTests(unittest.TestCase):
         )
 
         payload = json.loads(completed.stdout)
-        self.assertEqual(4, len(payload["prompts"]))
+        self.assertEqual(8, len(payload["prompts"]))
 
     def test_cli_spec_close_hook_exits_nonzero_when_blocking(self):
         with tempfile.TemporaryDirectory() as tmp:

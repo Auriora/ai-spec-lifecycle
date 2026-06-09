@@ -177,6 +177,43 @@ Task expectations:
 
 The Task Dependency Graph at the top of `tasks.md` is useful for non-trivial specs, but it should support the checklist rather than replace it. Phases provide visual grouping; dependency notes and the graph provide execution order.
 
+### Lifecycle Triage
+
+Use the lightest lifecycle path that fits the risk:
+
+- `trivial`: typo, formatting, or narrow local edit with no lifecycle impact.
+  Follow repository instructions, edit directly, and validate proportionately.
+- `small`: bounded change with known files and low durable-doc impact. Use
+  focused context and validation; do not create a spec by default.
+- `spec-needed`: behavior change, cross-module change, plugin packaging change,
+  governance-sensitive work, unclear acceptance criteria, migration, or
+  operational risk. Create or continue an active spec.
+- `review`: read-only audit, comparison, investigation, or code review. Use the
+  relevant review stance and deterministic context before suggesting changes.
+- `closure`: request to complete, close, archive, or reconcile lifecycle state.
+  Use closure readiness, durable promotion, and archive-index workflow.
+
+The `lifecycle-triage` prompt is a convenience entry point for this routing
+model. It is advisory and does not replace user instructions or repository
+governance.
+
+### Lifecycle Gates
+
+Use these gate names when reporting readiness:
+
+- `ready_to_implement`: requirements, design, traceability, open decisions, and
+  validation expectations are coherent enough to start an implementation slice.
+- `ready_to_validate`: implementation tasks have evidence and the validation
+  plan identifies required commands or review methods.
+- `ready_to_close`: tasks are complete with evidence, decisions are resolved or
+  deferred, durable docs are promoted, and closure blockers are clear.
+- `ready_to_archive`: closure log and archive index entries are prepared and
+  the active package can be removed after a final spec commit.
+
+If a gate is not ready, report concrete blockers and the evidence needed to
+clear them. Runtime-enforced gate fields are intentionally deferred until a
+focused spec defines schema and compatibility behavior.
+
 ### Spec Lifetime
 
 Spec packages are temporary delivery scaffolding with a finite lifetime. Durable docs live with the code and describe current implementation state. Before a spec closes, accepted behavior, decisions, operations, and follow-up work must be promoted or routed into the repository's durable docs, backlog, roadmap, or follow-up specs. After closure, remove the completed spec package from the active docs tree unless explicit repository policy requires a visible historical package.
