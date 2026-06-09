@@ -19,7 +19,7 @@ requires visible archived docs.
 - **Spec:** `docs/specs/014-plugin-comparison-improvements/`
 - **Title:** Plugin comparison improvements
 - **Final spec commit:** `356c335`
-- **Closure cleanup commit:** `pending`
+- **Closure cleanup commit:** `d7edc98`
 - **Closure action:** removed
 - **Closed by:** platform
 - **Durable docs updated:**
