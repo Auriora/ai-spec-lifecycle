@@ -14,6 +14,36 @@ requires visible archived docs.
 
 ## Entries
 
+### 2026-06-09 - 014-plugin-comparison-improvements
+
+- **Spec:** `docs/specs/014-plugin-comparison-improvements/`
+- **Title:** Plugin comparison improvements
+- **Final spec commit:** `356c335`
+- **Closure cleanup commit:** `pending`
+- **Closure action:** removed
+- **Closed by:** platform
+- **Durable docs updated:**
+  - `docs/reference/plugin-comparison-improvements.md`
+  - `docs/reference/spec-lifecycle-runtime.md`
+  - `docs/README.md`
+  - `skills/spec-lifecycle-manager/SKILL.md`
+  - `skills/spec-lifecycle-manager/prompts/`
+  - `skills/spec-lifecycle-manager/references/spec-package/`
+  - `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/SKILL.md`
+  - `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/prompts/`
+  - `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/references/spec-package/`
+  - `docs/backlog/README.md`
+  - `tests/runtime/test_spec_runtime.py`
+- **Verification summary:** Spec lint and closure-check passed; full unit
+  suite passed; lifecycle scan, prompt validation, archive-index validation,
+  plugin validation, and `git diff --check` passed before cleanup.
+- **Residual risks:** Lifecycle triage and gate fields are documented guidance
+  and prompt aliases, not deterministic runtime schema. Runtime phase-gate
+  checks, workflow mode contracts, approval policies, Kiro import support, and
+  hook-derived audits remain backlog candidates.
+- **Follow-up:** Implement roadmap `R005` / backlog `B016` commit sync guard
+  next, then `B026` distribution packaging if still accepted.
+
 ### 2026-06-06 - 013-agent-backed-lifecycle-tools
 
 - **Spec:** `docs/specs/013-agent-backed-lifecycle-tools/`
