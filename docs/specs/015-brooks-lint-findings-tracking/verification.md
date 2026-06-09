@@ -4,7 +4,7 @@ doc_type: spec
 artifact_type: verification
 status: draft
 owner: platform
-last_reviewed: 2026-06-06
+last_reviewed: 2026-06-09
 ---
 
 # Verification
@@ -35,6 +35,7 @@ schema and plugin package sync if plugin runtime files change.
 | 2026-06-06 | Brooks-Test check | Test Quality Review completed with score 89/100, 2 warnings, 1 suggestion; suite map and `BL-TEST-001` through `BL-TEST-003` added to research and design seed lists. | pending validation |
 | 2026-06-09 | T001 | Added durable Brooks-Lint register schema in `docs/reviews/brooks-lint/README.md`; accepted D004 mode-specific ID namespace. | pass |
 | 2026-06-09 | T002 | Accepted D002: `.brooks-lint-history.json` is optional supporting score-history evidence, while the Markdown register remains the durable finding source of truth. | pass |
+| 2026-06-09 | T003 | Seeded `docs/reviews/brooks-lint/README.md` with `BL-ARCH-001` through `BL-ARCH-004`, `BL-DEBT-001` through `BL-DEBT-004`, `BL-HEALTH-001` through `BL-HEALTH-005`, and `BL-TEST-001` through `BL-TEST-003`; all seed findings preserve required fields and remain `needs-decision` pending T005 triage. | pass |
 
 ## Residual Risks
 

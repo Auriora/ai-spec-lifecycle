@@ -126,9 +126,420 @@ Preserve these fields when Brooks-Test provides them:
 
 ## Findings
 
-Seed findings from the first Brooks architecture, debt, health, and test-quality
-passes will be added by the active implementation spec after this schema is in
-place.
+All seed findings below are recorded from the first Brooks runs on
+2026-06-06. They remain `needs-decision` until the triage pass records whether
+each finding is accepted, deferred, dismissed, or resolved.
+
+### Architecture Audit Findings
+
+#### BL-ARCH-001 - `spec_runtime.py` lifecycle god module
+
+- Mode: Architecture Audit
+- Date first seen: 2026-06-06
+- Last seen: 2026-06-06
+- Scope: lifecycle runtime CLI and helper commands
+- Severity: warning
+- State: needs-decision
+- Symptom: `spec_runtime.py` concentrates scan, lint, task, closure, archive,
+  prompt, review, and hook support behavior in one module.
+- Source: Broad command dispatch and lifecycle helper functions share the same
+  runtime file.
+- Consequence: Changes to one lifecycle concern have a wide blast radius, and
+  future additions can make the runtime harder to test or reason about.
+- Remedy: Split stable lifecycle concerns into focused modules or facades when
+  adjacent runtime changes justify the move.
+- Repository references:
+  `skills/spec-lifecycle-manager/scripts/spec_runtime.py`,
+  `tests/runtime/test_spec_runtime.py`.
+- Brooks attribution: Architecture Audit score 84/100; first run reported 3
+  warnings and 1 suggestion.
+- Triage rationale: Pending T005 triage.
+- Destination: Pending T006 routing if accepted or deferred.
+- Verification: Pending.
+
+#### BL-ARCH-002 - Bundled plugin copy can drift from development skill
+
+- Mode: Architecture Audit
+- Date first seen: 2026-06-06
+- Last seen: 2026-06-06
+- Scope: source skill and bundled plugin package
+- Severity: warning
+- State: needs-decision
+- Symptom: The development skill tree and bundled plugin copy can diverge.
+- Source: The repository keeps source files under
+  `skills/spec-lifecycle-manager/` and bundled plugin files under
+  `plugins/spec-lifecycle-manager/`.
+- Consequence: Users can install a plugin that does not match the maintained
+  source skill, especially after manual sync or packaging changes.
+- Remedy: Keep sync validation visible and route any remaining package-drift
+  risk to installer or packaging work.
+- Repository references:
+  `skills/spec-lifecycle-manager/`,
+  `plugins/spec-lifecycle-manager/`,
+  `tests/runtime/test_spec_plugin_package.py`.
+- Brooks attribution: Architecture Audit score 84/100; duplication and
+  package-boundary risk.
+- Triage rationale: Pending T005 triage.
+- Destination: Pending T006 routing if accepted or deferred.
+- Verification: Pending.
+
+#### BL-ARCH-003 - Installer concentrates deployment concerns
+
+- Mode: Architecture Audit
+- Date first seen: 2026-06-06
+- Last seen: 2026-06-06
+- Scope: local plugin installer
+- Severity: warning
+- State: needs-decision
+- Symptom: The installer handles package copy, Codex cleanup, marketplace
+  edits, and plugin registration in one script.
+- Source: `scripts/install-spec-lifecycle-manager-package.sh` orchestrates
+  several deployment concerns directly.
+- Consequence: A small installer change can affect unrelated installation
+  behavior and make validation or rollback less obvious.
+- Remedy: Split installer phases or add stronger phase-level validation before
+  making further installer behavior changes.
+- Repository references:
+  `scripts/install-spec-lifecycle-manager-package.sh`,
+  `docs/reference/spec-lifecycle-manager-package.md`.
+- Brooks attribution: Architecture Audit score 84/100; dependency-disorder
+  signal.
+- Triage rationale: Pending T005 triage.
+- Destination: Pending T006 routing if accepted or deferred.
+- Verification: Pending.
+
+#### BL-ARCH-004 - Hook runtime execution is hardwired to subprocess
+
+- Mode: Architecture Audit
+- Date first seen: 2026-06-06
+- Last seen: 2026-06-06
+- Scope: Codex hook adapter
+- Severity: suggestion
+- State: needs-decision
+- Symptom: Hook checks shell out to the lifecycle runtime through a hardwired
+  subprocess boundary.
+- Source: `codex_spec_lifecycle_hook.py` executes runtime behavior through
+  subprocess calls instead of a direct testable adapter contract.
+- Consequence: Hook behavior is harder to exercise without command-output
+  fixtures, and runtime contract changes may only surface through integration
+  tests.
+- Remedy: Introduce a narrow hook runner abstraction if hook behavior expands
+  beyond the current command adapter.
+- Repository references:
+  `skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py`,
+  `tests/runtime/test_codex_spec_lifecycle_hook.py`.
+- Brooks attribution: Architecture Audit score 84/100; subprocess-boundary
+  suggestion.
+- Triage rationale: Pending T005 triage.
+- Destination: Pending T006 routing if accepted or deferred.
+- Verification: Pending.
+
+### Technical Debt Findings
+
+#### BL-DEBT-001 - Lifecycle runtime responsibility concentration
+
+- Mode: Tech Debt Assessment
+- Date first seen: 2026-06-06
+- Last seen: 2026-06-06
+- Scope: lifecycle runtime CLI and helpers
+- Severity: warning
+- State: needs-decision
+- Symptom: `spec_runtime.py` concentrates many lifecycle responsibilities.
+- Source: Multiple lifecycle commands and helper domains are implemented in
+  one runtime module.
+- Consequence: Maintainers must load many unrelated concepts to make local
+  changes, increasing review cost and regression risk.
+- Remedy: Extract focused runtime modules when adding or materially changing
+  lifecycle behavior.
+- Repository references:
+  `skills/spec-lifecycle-manager/scripts/spec_runtime.py`,
+  `tests/runtime/`.
+- Brooks attribution: Tech Debt Assessment score 84/100; risk code Cognitive
+  Overload; pain 2; spread 3; priority 6; classification Scheduled debt;
+  intent accidental.
+- Triage rationale: Pending T005 triage.
+- Destination: Pending T006 routing if accepted or deferred.
+- Verification: Pending.
+
+#### BL-DEBT-002 - Development and bundled skill duplication
+
+- Mode: Tech Debt Assessment
+- Date first seen: 2026-06-06
+- Last seen: 2026-06-06
+- Scope: source skill, bundled plugin, and package sync
+- Severity: warning
+- State: needs-decision
+- Symptom: Development skill and bundled plugin trees can drift.
+- Source: Maintained source and packaged plugin content live in separate
+  directory trees.
+- Consequence: Packaging fixes can be missed, duplicated manually, or shipped
+  inconsistently between development and installed surfaces.
+- Remedy: Preserve package-sync validation and consider a single authoritative
+  package assembly path.
+- Repository references:
+  `skills/spec-lifecycle-manager/`,
+  `plugins/spec-lifecycle-manager/`,
+  `tests/runtime/test_spec_plugin_package.py`.
+- Brooks attribution: Tech Debt Assessment score 84/100; risk code Knowledge
+  Duplication; pain 2; spread 3; priority 6; classification Scheduled debt;
+  intent accidental.
+- Triage rationale: Pending T005 triage.
+- Destination: Pending T006 routing if accepted or deferred.
+- Verification: Pending.
+
+#### BL-DEBT-003 - Installer change propagation risk
+
+- Mode: Tech Debt Assessment
+- Date first seen: 2026-06-06
+- Last seen: 2026-06-06
+- Scope: local installer orchestration
+- Severity: warning
+- State: needs-decision
+- Symptom: Installer changes mix package copy, Codex cleanup, marketplace
+  edits, and plugin registration.
+- Source: The install script owns several separate deployment responsibilities.
+- Consequence: Installer changes can propagate through unrelated local state,
+  making regressions harder to isolate.
+- Remedy: Separate installer responsibilities or add phase-specific tests and
+  rollback notes before expanding installer behavior.
+- Repository references:
+  `scripts/install-spec-lifecycle-manager-package.sh`,
+  `tests/runtime/test_spec_plugin_package.py`.
+- Brooks attribution: Tech Debt Assessment score 84/100; risk code Change
+  Propagation; pain 2; spread 2; priority 4; classification Scheduled debt;
+  intent accidental.
+- Triage rationale: Pending T005 triage.
+- Destination: Pending T006 routing if accepted or deferred.
+- Verification: Pending.
+
+#### BL-DEBT-004 - Hook subprocess boundary debt
+
+- Mode: Tech Debt Assessment
+- Date first seen: 2026-06-06
+- Last seen: 2026-06-06
+- Scope: Codex hook runtime checks
+- Severity: suggestion
+- State: needs-decision
+- Symptom: Hook checks shell out through a hardwired subprocess boundary.
+- Source: Hook code delegates to the lifecycle runtime through command
+  execution.
+- Consequence: Tests couple to process behavior and exact output contracts,
+  which can make future hook changes more brittle.
+- Remedy: Monitor the boundary and introduce an adapter only when hook behavior
+  grows beyond current command execution.
+- Repository references:
+  `skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py`,
+  `tests/runtime/test_codex_spec_lifecycle_hook.py`.
+- Brooks attribution: Tech Debt Assessment score 84/100; risk code Dependency
+  Disorder; pain 1; spread 2; priority 2; classification Monitored debt;
+  intent accidental.
+- Triage rationale: Pending T005 triage.
+- Destination: Pending T006 routing if accepted or deferred.
+- Verification: Pending.
+
+### Health Dashboard Findings
+
+#### BL-HEALTH-001 - Installer fan-out dependency signal
+
+- Mode: Health Dashboard
+- Date first seen: 2026-06-06
+- Last seen: 2026-06-06
+- Scope: installer dependencies and local Codex state changes
+- Severity: warning
+- State: needs-decision
+- Symptom: Installer fan-out is the main dependency-disorder signal.
+- Source: The install script touches package content, installed plugin state,
+  marketplace state, and cleanup behavior.
+- Consequence: Health can degrade if installer responsibilities keep expanding
+  without clearer validation boundaries.
+- Remedy: Route installer hardening or decomposition if the triage pass accepts
+  this finding.
+- Repository references:
+  `scripts/install-spec-lifecycle-manager-package.sh`,
+  `docs/reference/spec-lifecycle-manager-package.md`.
+- Brooks attribution: Health Dashboard composite score 93/100; dimension
+  Architecture; dimension score 95/100; code-quality skipped; weighting moved
+  package and installer risk into Architecture.
+- Triage rationale: Pending T005 triage.
+- Destination: Pending T006 routing if accepted or deferred.
+- Verification: Pending.
+
+#### BL-HEALTH-002 - `spec_runtime.py` maintainability hotspot
+
+- Mode: Health Dashboard
+- Date first seen: 2026-06-06
+- Last seen: 2026-06-06
+- Scope: lifecycle runtime maintainability
+- Severity: warning
+- State: needs-decision
+- Symptom: `spec_runtime.py` remains the top maintainability hotspot.
+- Source: Runtime responsibilities and command support are concentrated in one
+  module.
+- Consequence: The runtime can become harder to evolve safely as additional
+  lifecycle features land.
+- Remedy: Keep runtime changes small and extract focused modules when a
+  cohesive boundary becomes clear.
+- Repository references:
+  `skills/spec-lifecycle-manager/scripts/spec_runtime.py`,
+  `tests/runtime/test_spec_runtime.py`.
+- Brooks attribution: Health Dashboard composite score 93/100; dimension Tech
+  Debt; dimension score 85/100; code-quality skipped.
+- Triage rationale: Pending T005 triage.
+- Destination: Pending T006 routing if accepted or deferred.
+- Verification: Pending.
+
+#### BL-HEALTH-003 - Skill and plugin duplication drift risk
+
+- Mode: Health Dashboard
+- Date first seen: 2026-06-06
+- Last seen: 2026-06-06
+- Scope: skill source, bundled plugin package, and install path
+- Severity: warning
+- State: needs-decision
+- Symptom: Skill/plugin duplication remains a drift risk.
+- Source: Development and packaged copies are maintained separately.
+- Consequence: Health can regress if packaged plugin behavior differs from the
+  source skill or documented install workflow.
+- Remedy: Keep package-sync evidence current and route any remaining drift risk
+  after triage.
+- Repository references:
+  `skills/spec-lifecycle-manager/`,
+  `plugins/spec-lifecycle-manager/`,
+  `tests/runtime/test_spec_plugin_package.py`.
+- Brooks attribution: Health Dashboard composite score 93/100; dimension Tech
+  Debt; dimension score 85/100; code-quality skipped.
+- Triage rationale: Pending T005 triage.
+- Destination: Pending T006 routing if accepted or deferred.
+- Verification: Pending.
+
+#### BL-HEALTH-004 - Installer orchestration scheduled debt
+
+- Mode: Health Dashboard
+- Date first seen: 2026-06-06
+- Last seen: 2026-06-06
+- Scope: installer orchestration
+- Severity: warning
+- State: needs-decision
+- Symptom: Installer orchestration remains scheduled debt.
+- Source: The installer still combines multiple local deployment operations.
+- Consequence: Future installer changes may require broader validation than the
+  apparent edit size suggests.
+- Remedy: Defer or route installer decomposition based on T005 triage and T006
+  planning.
+- Repository references:
+  `scripts/install-spec-lifecycle-manager-package.sh`.
+- Brooks attribution: Health Dashboard composite score 93/100; dimension Tech
+  Debt; dimension score 85/100; code-quality skipped.
+- Triage rationale: Pending T005 triage.
+- Destination: Pending T006 routing if accepted or deferred.
+- Verification: Pending.
+
+#### BL-HEALTH-005 - Subprocess-heavy CLI and hook tests
+
+- Mode: Health Dashboard
+- Date first seen: 2026-06-06
+- Last seen: 2026-06-06
+- Scope: runtime CLI and hook tests
+- Severity: suggestion
+- State: needs-decision
+- Symptom: CLI and hook tests rely on subprocess fixtures in several places.
+- Source: Runtime and hook behavior are validated through process-level command
+  execution and captured output.
+- Consequence: Minor output or process-boundary changes can create test churn
+  even when lifecycle behavior remains correct.
+- Remedy: Preserve current integration coverage, and add narrower unit
+  contracts only if subprocess coupling starts slowing changes.
+- Repository references:
+  `tests/runtime/`,
+  `skills/spec-lifecycle-manager/scripts/spec_runtime.py`,
+  `skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py`.
+- Brooks attribution: Health Dashboard composite score 93/100; dimension Test
+  Quality; dimension score 99/100; code-quality skipped.
+- Triage rationale: Pending T005 triage.
+- Destination: Pending T006 routing if accepted or deferred.
+- Verification: Pending.
+
+### Test Quality Findings
+
+#### BL-TEST-001 - Duplicated spec-package fixture builders
+
+- Mode: Test Quality Review
+- Date first seen: 2026-06-06
+- Last seen: 2026-06-06
+- Scope: runtime, MCP, hook, and traceability tests
+- Severity: warning
+- State: needs-decision
+- Symptom: Spec-package fixture builders are duplicated across runtime, MCP,
+  hook, and traceability tests.
+- Source: Several test files construct similar spec package directories and
+  artifacts locally.
+- Consequence: Schema or lifecycle fixture changes must be repeated in multiple
+  places, increasing the chance of stale tests.
+- Remedy: Introduce a shared fixture builder when the next fixture-heavy change
+  touches multiple suites.
+- Repository references:
+  `tests/runtime/`,
+  `tests/traceability/`.
+- Brooks attribution: Test Quality Review score 89/100; risk code Test
+  Duplication; suite map covers runtime, MCP adapter, traceability lookup,
+  Codex hook, and plugin package; test layer integration/unit mix; coverage gap
+  reusable fixture layer.
+- Triage rationale: Pending T005 triage.
+- Destination: Pending T006 routing if accepted or deferred.
+- Verification: Pending.
+
+#### BL-TEST-002 - Plugin package coverage gap
+
+- Mode: Test Quality Review
+- Date first seen: 2026-06-06
+- Last seen: 2026-06-06
+- Scope: plugin package tests and installer behavior
+- Severity: warning
+- State: needs-decision
+- Symptom: Plugin package tests verify component presence but not full
+  development-skill to bundled-plugin sync or installer behavior.
+- Source: Package tests focus on required files and manifest wiring.
+- Consequence: A package can appear structurally valid while still drifting
+  from the source skill or missing installer cleanup behavior.
+- Remedy: Confirm whether later package-sync work resolved this gap; if not,
+  add sync or installer behavior coverage.
+- Repository references:
+  `tests/runtime/test_spec_plugin_package.py`,
+  `skills/spec-lifecycle-manager/`,
+  `plugins/spec-lifecycle-manager/`,
+  `scripts/install-spec-lifecycle-manager-package.sh`.
+- Brooks attribution: Test Quality Review score 89/100; risk code Coverage
+  Illusion; coverage areas plugin package and installer behavior; coverage gap
+  full plugin/source sync and installer behavior.
+- Triage rationale: Pending T005 triage.
+- Destination: Pending T006 routing if accepted or deferred.
+- Verification: Pending.
+
+#### BL-TEST-003 - Subprocess and output-coupled tests
+
+- Mode: Test Quality Review
+- Date first seen: 2026-06-06
+- Last seen: 2026-06-06
+- Scope: CLI and hook test boundaries
+- Severity: suggestion
+- State: needs-decision
+- Symptom: CLI and hook tests rely on subprocess boundaries and exact
+  stdout/stderr behavior.
+- Source: Tests exercise commands through subprocesses and assert output
+  details.
+- Consequence: Tests can become brittle when command presentation changes but
+  lifecycle semantics do not.
+- Remedy: Keep process-level tests for integration confidence and add narrower
+  semantic tests if output churn becomes a maintenance problem.
+- Repository references:
+  `tests/runtime/test_codex_spec_lifecycle_hook.py`,
+  `tests/runtime/test_spec_runtime.py`.
+- Brooks attribution: Test Quality Review score 89/100; risk code Test
+  Brittleness; suite map covers runtime CLI and hook behavior; coverage area
+  command execution.
+- Triage rationale: Pending T005 triage.
+- Destination: Pending T006 routing if accepted or deferred.
+- Verification: Pending.
 
 ## Maintenance Rules
 

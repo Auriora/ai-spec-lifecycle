@@ -4,7 +4,7 @@ doc_type: spec
 artifact_type: tasks
 status: draft
 owner: platform
-last_reviewed: 2026-06-06
+last_reviewed: 2026-06-09
 ---
 
 # Tasks
@@ -33,14 +33,20 @@ last_reviewed: 2026-06-06
 
 ## Phase 2: Seed Findings
 
-- [ ] T003 Seed the register with the first Brooks architecture audit findings.
+- [x] T003 Seed the register with the first Brooks architecture audit findings.
   - Requirements: Requirement 1, Requirement 2, Requirement 3
   - Depends on: T001
   - Acceptance: `BL-ARCH-001` through `BL-ARCH-004`, `BL-DEBT-001` through
     `BL-DEBT-004`, `BL-HEALTH-001` through `BL-HEALTH-005`, and
     `BL-TEST-001` through `BL-TEST-003` are recorded with current state,
     references, and mode-specific fields where applicable.
-  - Evidence:
+  - Evidence: Added `BL-ARCH-001` through `BL-ARCH-004`,
+    `BL-DEBT-001` through `BL-DEBT-004`, `BL-HEALTH-001` through
+    `BL-HEALTH-005`, and `BL-TEST-001` through `BL-TEST-003` to
+    `docs/reviews/brooks-lint/README.md`; each seed finding preserves mode,
+    scope, severity, state, symptom, source, consequence, remedy, repository
+    references, Brooks attribution, pending triage rationale, pending
+    destination, and pending verification.
 
 - [ ] T004 Add validation or documented maintenance rules for future Brooks runs.
   - Requirements: Requirement 2, Requirement 3, Requirement 4
