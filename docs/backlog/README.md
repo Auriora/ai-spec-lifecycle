@@ -3,7 +3,7 @@ title: Agent development lifecycle backlog
 doc_type: backlog
 status: active
 owner: platform
-last_reviewed: 2026-06-06
+last_reviewed: 2026-06-11
 ---
 
 # Backlog
@@ -30,7 +30,7 @@ spec or that should not block the active spec currently being delivered.
 | B013 | candidate | Handoff packet | Archive index entry `013-agent-backed-lifecycle-tools`; active preflight and readiness packet runtime; Kiro resumability review | Produce a concise continuation packet for another coding agent without forcing it to reread the whole repository. See Kiro-inspired candidate details. |
 | B014 | candidate | Conversation-history feature discovery review | Bounded local Codex history scan; user request | Use selected conversation history only as advisory feature-discovery input. Look for repeated corrections, frustration signals, sequencing prompts, and misunderstood workflows; do not treat history content as factual requirements or implement it directly. |
 | B015 | candidate | Workflow friction report | Bounded local Codex history scan; user request | Summarize repeated lifecycle friction from conversation history, external feedback, and closure evidence into candidate tool, template, or guidance changes. Treat findings as suggestions only. |
-| B016 | candidate | Commit sync guard | Commit/sync/install repetition in local history; user workflow | Detect commits or working-tree changes that touch `skills/spec-lifecycle-manager/`, compare source against the installed `~/.codex/skills/spec-lifecycle-manager/` copy, and remind or automate the installer when drift exists. |
+| B016 | done | Commit sync guard | Commit/sync/install repetition in local history; user workflow | Runtime `sync-guard` now reports source skill versus bundled plugin parity, bundled plugin versus installed cache parity, running MCP reload advisory, and recent commit evidence without mutating install state. |
 | B017 | done | Active spec preflight | Frequent "what next" prompts; spec-context skip corrections; `docs/reference/spec-lifecycle-runtime.md` | Runtime and MCP expose `active_spec_preflight`, returning active spec selection, next task, readiness context, no-active context, MCP-first interface, and validation commands. |
 | B018 | done | No-active-spec context packet | Completed spec package confusion; removed-spec policy; `docs/reference/spec-lifecycle-runtime.md` | Runtime and MCP expose `no_active_spec_context`, returning durable docs, backlog, roadmap, closure log, archive index, MCP-first interface, and validation commands when no active spec exists. |
 | B019 | candidate | Spec candidate builder | Backlog and conversation-derived feature ideas; Kiro rough-idea-to-spec review | Turn backlog, rough ideas, or advisory discovery notes into a draft spec skeleton with requirements, design prompts, tasks, traceability, and verification placeholders. See Kiro-inspired candidate details. |

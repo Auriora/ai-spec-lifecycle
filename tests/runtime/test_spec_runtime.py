@@ -1,4 +1,6 @@
 import json
+import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -11,6 +13,46 @@ SCRIPT = SCRIPT_DIR / "spec_runtime.py"
 sys.path.insert(0, str(SCRIPT_DIR))
 
 import spec_runtime
+
+
+GIT_ENV = {
+    "GIT_AUTHOR_NAME": "Test User",
+    "GIT_AUTHOR_EMAIL": "test@example.com",
+    "GIT_COMMITTER_NAME": "Test User",
+    "GIT_COMMITTER_EMAIL": "test@example.com",
+}
+
+
+def run_git(repo: Path, *args: str) -> None:
+    if shutil.which("git") is None:
+        raise unittest.SkipTest("git is required for sync guard tests")
+    subprocess.run(["git", *args], cwd=repo, check=True, env={**os.environ, **GIT_ENV}, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+
+def write_sync_guard_repo(repo: Path, codex_home: Path, include_cache: bool = True) -> None:
+    source = repo / "skills/spec-lifecycle-manager"
+    bundled = repo / "plugins/spec-lifecycle-manager"
+    bundled_skill = bundled / "skills/spec-lifecycle-manager"
+    source.mkdir(parents=True)
+    bundled_skill.mkdir(parents=True)
+    (bundled / ".codex-plugin").mkdir(parents=True)
+    (repo / "scripts").mkdir()
+    (repo / "packaging/spec-lifecycle-manager").mkdir(parents=True)
+    (source / "SKILL.md").write_text("name: spec-lifecycle-manager\n", encoding="utf-8")
+    (source / "scripts").mkdir()
+    (source / "scripts/spec_runtime.py").write_text("print('runtime')\n", encoding="utf-8")
+    shutil.copytree(source, bundled_skill, dirs_exist_ok=True)
+    (bundled / ".codex-plugin/plugin.json").write_text('{"name": "spec-lifecycle-manager"}\n', encoding="utf-8")
+    (repo / "scripts/install-spec-lifecycle-manager-package.sh").write_text("#!/usr/bin/env bash\n", encoding="utf-8")
+    (repo / "packaging/spec-lifecycle-manager/package-manifest.json").write_text('{"name": "spec-lifecycle-manager"}\n', encoding="utf-8")
+    if include_cache:
+        cache = codex_home / "plugins/cache/auriora-local/spec-lifecycle-manager/0.1.0+test"
+        shutil.copytree(bundled, cache, dirs_exist_ok=True)
+
+
+def commit_all(repo: Path, message: str) -> None:
+    run_git(repo, "add", ".")
+    run_git(repo, "commit", "-m", message)
 
 
 def write_archived_old_format_spec(repo: Path) -> Path:
@@ -187,6 +229,85 @@ def write_complete_spec(repo: Path, status: str = "draft") -> Path:
 
 
 class SpecRuntimeTests(unittest.TestCase):
+    def test_sync_guard_reports_clean_source_bundle_and_cache_parity(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            codex_home = Path(tmp) / "codex"
+            repo.mkdir()
+            write_sync_guard_repo(repo, codex_home)
+            run_git(repo, "init")
+            commit_all(repo, "initial package")
+
+            payload = spec_runtime.sync_guard(repo, codex_home, commit_count=1)
+
+        self.assertEqual("in_sync", payload["source_bundle_parity"]["status"])
+        self.assertEqual("in_sync", payload["bundle_cache_parity"]["status"])
+        self.assertEqual("ok", payload["commit_evidence"]["status"])
+        self.assertEqual(0, payload["summary"]["error"])
+
+    def test_sync_guard_is_not_applicable_outside_package_repo(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "target-repo"
+            codex_home = Path(tmp) / "codex"
+            repo.mkdir()
+            (repo / ".git").mkdir()
+            (repo / "docs").mkdir()
+
+            payload = spec_runtime.sync_guard(repo, codex_home, commit_count=1)
+
+        self.assertEqual("not_applicable", payload["status"])
+        self.assertEqual("not_applicable", payload["applicability"]["status"])
+        self.assertEqual([], payload["findings"])
+        self.assertIn("plugins/spec-lifecycle-manager/.codex-plugin/plugin.json", payload["applicability"]["missing_paths"])
+
+    def test_sync_guard_reports_source_bundle_drift(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            codex_home = Path(tmp) / "codex"
+            repo.mkdir()
+            write_sync_guard_repo(repo, codex_home)
+            run_git(repo, "init")
+            commit_all(repo, "initial package")
+            (repo / "skills/spec-lifecycle-manager/SKILL.md").write_text("name: changed\n", encoding="utf-8")
+
+            payload = spec_runtime.sync_guard(repo, codex_home, commit_count=1)
+
+        self.assertEqual("drift", payload["source_bundle_parity"]["status"])
+        self.assertIn("SKILL.md", payload["source_bundle_parity"]["content_differences"])
+        self.assertTrue(any(item["code"] == "SOURCE_BUNDLE_DRIFT" for item in payload["findings"]))
+
+    def test_sync_guard_reports_missing_installed_cache(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            codex_home = Path(tmp) / "codex"
+            repo.mkdir()
+            write_sync_guard_repo(repo, codex_home, include_cache=False)
+            run_git(repo, "init")
+            commit_all(repo, "initial package")
+
+            payload = spec_runtime.sync_guard(repo, codex_home, commit_count=1)
+
+        self.assertEqual("missing", payload["bundle_cache_parity"]["status"])
+        self.assertEqual(0, payload["bundle_cache_parity"]["candidate_count"])
+        self.assertTrue(any(item["code"] == "BUNDLE_CACHE_DRIFT" for item in payload["findings"]))
+
+    def test_sync_guard_reports_skill_commit_without_sync_evidence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            codex_home = Path(tmp) / "codex"
+            repo.mkdir()
+            write_sync_guard_repo(repo, codex_home)
+            run_git(repo, "init")
+            commit_all(repo, "initial package")
+            (repo / "skills/spec-lifecycle-manager/SKILL.md").write_text("name: changed\n", encoding="utf-8")
+            commit_all(repo, "change source skill only")
+
+            payload = spec_runtime.sync_guard(repo, codex_home, commit_count=1)
+
+        self.assertEqual("missing_evidence", payload["commit_evidence"]["status"])
+        self.assertEqual(1, payload["commit_evidence"]["source_skill_commit_count"])
+        self.assertFalse(payload["commit_evidence"]["commits"][0]["touched_sync_evidence"])
+
     def test_scan_discovers_current_and_old_format_specs(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)

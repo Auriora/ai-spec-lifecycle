@@ -28,7 +28,7 @@ for active implementation specs.
 | R002 | next | complete | Lifecycle hooks remain advisory-only | Advisory hook dogfood evidence, R001 | Decision recorded to keep hooks advisory; any future blocking behavior requires a new focused spec and explicit approval. | platform | `docs/reference/spec-lifecycle-dogfood-evaluation.md` |
 | R003 | later | complete | Coding agent operating model governance adoption | Repeated model use, review evidence | Governance update accepted or explicitly rejected after operating model dogfood. | platform | `docs/governance/constitution.md`, archive index entry `012-operating-model-governance-adoption` |
 | R004 | later | superseded | Archived spec audit report | Default archived scan behavior, B006 | Superseded by removal-by-default policy for completed specs. | platform | `docs/backlog/README.md` |
-| R005 | next | planned | Commit sync guard | B016, MCP-first installed skill workflow | Source and installed skill/plugin drift is detectable after commits that touch `skills/spec-lifecycle-manager/`, and agents report whether `~/.codex` is current before claiming lifecycle packaging work is complete. | platform | `docs/backlog/README.md`, `scripts/install-spec-lifecycle-manager-package.sh` |
+| R005 | delivered | done | Commit sync guard | B016, MCP-first installed skill workflow | Runtime `sync-guard` detects source/bundled plugin drift, installed cache drift, running MCP reload advisories, and recent skill-changing commits that lack package or install evidence. | platform | `docs/backlog/README.md`, `skills/spec-lifecycle-manager/scripts/spec_runtime.py`, `docs/reference/spec-lifecycle-manager-mcp-install.md` |
 
 ## Decision History
 

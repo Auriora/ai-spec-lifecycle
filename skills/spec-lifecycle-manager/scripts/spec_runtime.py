@@ -10,7 +10,9 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
+import subprocess
 import sys
 from dataclasses import dataclass
 from datetime import date
@@ -57,6 +59,17 @@ TASK_LINE_RE = re.compile(r"^\s*-\s+\[([ xX])\]\s+(T\d{3}(?:\.\d+)?)\b(.*)$")
 COMMIT_RE = re.compile(r"^[0-9a-f]{7,40}$", re.IGNORECASE)
 ARCHIVE_STATUSES = {"retained", "removed", "superseded"}
 ARCHIVE_ACTIONS = {"retained-as-history", "removed-after-index", "archived", "removed", "superseded"}
+SYNC_GUARD_EXCLUDE_NAMES = {"__pycache__", ".DS_Store"}
+SYNC_GUARD_EXCLUDE_SUFFIXES = {".pyc"}
+SYNC_EVIDENCE_PREFIXES = (
+    "plugins/spec-lifecycle-manager/",
+    "packaging/spec-lifecycle-manager/",
+)
+SYNC_EVIDENCE_PATHS = {
+    "scripts/install-spec-lifecycle-manager-package.sh",
+    "docs/reference/spec-lifecycle-manager-mcp-install.md",
+    "docs/reference/spec-lifecycle-runtime.md",
+}
 
 
 @dataclass
@@ -781,6 +794,266 @@ def archive_entry_payload(entry: ArchiveIndexEntry) -> dict[str, Any]:
         "durable_destinations": entry.durable_destinations,
         "verification": entry.verification,
         "line": entry.line,
+    }
+
+
+def sync_guard_file_manifest(root: Path) -> tuple[dict[str, str], list[dict[str, Any]]]:
+    diagnostics: list[dict[str, Any]] = []
+    manifest: dict[str, str] = {}
+    if not root.exists():
+        return manifest, [{"severity": "error", "code": "PATH_MISSING", "path": str(root), "message": "Path does not exist."}]
+    if not root.is_dir():
+        return manifest, [{"severity": "error", "code": "PATH_NOT_DIRECTORY", "path": str(root), "message": "Path is not a directory."}]
+
+    for path in sorted(root.rglob("*")):
+        relative_parts = path.relative_to(root).parts
+        if any(part in SYNC_GUARD_EXCLUDE_NAMES for part in relative_parts):
+            continue
+        if path.is_dir() or path.suffix in SYNC_GUARD_EXCLUDE_SUFFIXES:
+            continue
+        try:
+            digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        except OSError as exc:
+            diagnostics.append({"severity": "error", "code": "FILE_READ_FAILED", "path": str(path), "message": str(exc)})
+            continue
+        manifest[path.relative_to(root).as_posix()] = digest
+    return manifest, diagnostics
+
+
+def compare_sync_trees(left: Path, right: Path, left_label: str, right_label: str) -> dict[str, Any]:
+    left_manifest, left_diagnostics = sync_guard_file_manifest(left)
+    right_manifest, right_diagnostics = sync_guard_file_manifest(right)
+    diagnostics = left_diagnostics + right_diagnostics
+    if diagnostics:
+        return {
+            "status": "missing" if any(item["code"].startswith("PATH_") for item in diagnostics) else "error",
+            "severity": "error" if any(item["severity"] == "error" for item in diagnostics) else "warn",
+            "left": {"label": left_label, "path": str(left), "file_count": len(left_manifest)},
+            "right": {"label": right_label, "path": str(right), "file_count": len(right_manifest)},
+            "missing_from_right": [],
+            "missing_from_left": [],
+            "content_differences": [],
+            "diagnostics": diagnostics,
+        }
+
+    left_files = set(left_manifest)
+    right_files = set(right_manifest)
+    shared = left_files & right_files
+    content_differences = sorted(path for path in shared if left_manifest[path] != right_manifest[path])
+    missing_from_right = sorted(left_files - right_files)
+    missing_from_left = sorted(right_files - left_files)
+    in_sync = not missing_from_right and not missing_from_left and not content_differences
+    return {
+        "status": "in_sync" if in_sync else "drift",
+        "severity": "pass" if in_sync else "warn",
+        "left": {"label": left_label, "path": str(left), "file_count": len(left_manifest)},
+        "right": {"label": right_label, "path": str(right), "file_count": len(right_manifest)},
+        "missing_from_right": missing_from_right,
+        "missing_from_left": missing_from_left,
+        "content_differences": content_differences,
+        "diagnostics": [],
+    }
+
+
+def discover_plugin_cache_candidates(codex_home: Path) -> list[Path]:
+    cache_root = codex_home / "plugins" / "cache"
+    if not cache_root.exists():
+        return []
+    candidates = [
+        path
+        for path in cache_root.glob("*/spec-lifecycle-manager/*")
+        if path.is_dir() and (path / ".codex-plugin" / "plugin.json").exists()
+    ]
+    return sorted(candidates, key=lambda path: (path.stat().st_mtime, str(path)), reverse=True)
+
+
+def sync_guard_applicability(repo_root: Path) -> dict[str, Any]:
+    required = [
+        "skills/spec-lifecycle-manager/SKILL.md",
+        "plugins/spec-lifecycle-manager/.codex-plugin/plugin.json",
+        "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/SKILL.md",
+        "scripts/install-spec-lifecycle-manager-package.sh",
+        "packaging/spec-lifecycle-manager/package-manifest.json",
+    ]
+    missing = [path for path in required if not (repo_root / path).exists()]
+    return {
+        "status": "applicable" if not missing else "not_applicable",
+        "required_paths": required,
+        "missing_paths": missing,
+        "reason": "Repository contains the Spec Lifecycle Manager package source and install evidence."
+        if not missing
+        else "sync-guard applies only to the agent-dev-lifecycle Spec Lifecycle Manager package repository.",
+    }
+
+
+def reload_advisory(source_bundle: dict[str, Any], bundle_cache: dict[str, Any]) -> dict[str, Any]:
+    if source_bundle["status"] != "in_sync":
+        return {
+            "status": "recommended_after_sync_and_install",
+            "reason": "Source skill and bundled plugin skill differ; sync and install before relying on MCP or hook code.",
+        }
+    if bundle_cache["status"] != "in_sync":
+        return {
+            "status": "recommended_after_install",
+            "reason": "Bundled plugin and installed cache differ or cache is missing; reload Codex after install so plugin-scoped MCP and hooks use the refreshed package.",
+        }
+    return {
+        "status": "not_required_by_guard",
+        "reason": "Source, bundled plugin, and installed cache parity checks are clean.",
+    }
+
+
+
+def run_git_log(repo_root: Path, commit_count: int) -> tuple[str | None, str | None]:
+    try:
+        result = subprocess.run(
+            ["git", "log", f"-n{commit_count}", "--name-only", "--format=%H%x09%s"],
+            cwd=repo_root,
+            check=False,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+    except OSError as exc:
+        return None, str(exc)
+    if result.returncode != 0:
+        return None, result.stderr.strip() or f"git log exited with {result.returncode}"
+    return result.stdout, None
+
+
+def commit_touched_sync_evidence(paths: list[str]) -> bool:
+    return any(path in SYNC_EVIDENCE_PATHS or any(path.startswith(prefix) for prefix in SYNC_EVIDENCE_PREFIXES) for path in paths)
+
+
+def commit_sync_evidence(repo_root: Path, commit_count: int) -> dict[str, Any]:
+    output, error = run_git_log(repo_root, commit_count)
+    if error:
+        return {"status": "unknown", "reason": error, "commit_count": commit_count, "commits": []}
+
+    commits: list[dict[str, Any]] = []
+    current: dict[str, Any] | None = None
+    for line in (output or "").splitlines():
+        if "\t" in line and re.match(r"^[0-9a-f]{7,40}\t", line, re.IGNORECASE):
+            commit_hash, subject = line.split("\t", 1)
+            current = {"commit": commit_hash, "subject": subject, "paths": []}
+            commits.append(current)
+        elif current is not None and line.strip():
+            current["paths"].append(line.strip())
+
+    source_commits = []
+    for item in commits:
+        paths = item["paths"]
+        if not any(path.startswith("skills/spec-lifecycle-manager/") for path in paths):
+            continue
+        source_commits.append(
+            {
+                "commit": item["commit"],
+                "subject": item["subject"],
+                "touched_source_skill": True,
+                "touched_sync_evidence": commit_touched_sync_evidence(paths),
+                "sync_evidence_paths": [
+                    path
+                    for path in paths
+                    if path in SYNC_EVIDENCE_PATHS or any(path.startswith(prefix) for prefix in SYNC_EVIDENCE_PREFIXES)
+                ],
+            }
+        )
+
+    missing_evidence = [item for item in source_commits if not item["touched_sync_evidence"]]
+    return {
+        "status": "missing_evidence" if missing_evidence else "ok",
+        "commit_count": commit_count,
+        "source_skill_commit_count": len(source_commits),
+        "commits": source_commits,
+    }
+
+
+def sync_guard(repo_root: Path, codex_home: Path | None = None, commit_count: int = 5) -> dict[str, Any]:
+    root = repo_root.resolve()
+    home = (codex_home or Path(os.environ.get("CODEX_HOME", "~/.codex")).expanduser()).resolve()
+    applicability = sync_guard_applicability(root)
+    if applicability["status"] != "applicable":
+        return {
+            "repo_root": str(root),
+            "codex_home": str(home),
+            "status": "not_applicable",
+            "applicability": applicability,
+            "findings": [],
+            "summary": {"error": 0, "warn": 0, "pass": 0},
+            "recommendations": [],
+        }
+
+    source_skill = root / "skills" / "spec-lifecycle-manager"
+    bundled_plugin = root / "plugins" / "spec-lifecycle-manager"
+    bundled_skill = bundled_plugin / "skills" / "spec-lifecycle-manager"
+    cache_candidates = discover_plugin_cache_candidates(home)
+    selected_cache = cache_candidates[0] if cache_candidates else None
+
+    source_bundle = compare_sync_trees(source_skill, bundled_skill, "source_skill", "bundled_plugin_skill")
+    if selected_cache:
+        bundle_cache = compare_sync_trees(bundled_plugin, selected_cache, "bundled_plugin", "installed_cache")
+    else:
+        bundle_cache = {
+            "status": "missing",
+            "severity": "warn",
+            "left": {"label": "bundled_plugin", "path": str(bundled_plugin)},
+            "right": {"label": "installed_cache", "path": None},
+            "missing_from_right": [],
+            "missing_from_left": [],
+            "content_differences": [],
+            "diagnostics": [
+                {
+                    "severity": "warn",
+                    "code": "INSTALLED_CACHE_MISSING",
+                    "message": f"No installed spec-lifecycle-manager plugin cache found under {home / 'plugins' / 'cache'}.",
+                }
+            ],
+        }
+    reload = reload_advisory(source_bundle, bundle_cache)
+    commits = commit_sync_evidence(root, max(commit_count, 0))
+
+    findings: list[dict[str, Any]] = []
+    if source_bundle["status"] != "in_sync":
+        findings.append({"severity": source_bundle["severity"], "code": "SOURCE_BUNDLE_DRIFT", "message": "Source skill and bundled plugin skill are not in sync."})
+    if bundle_cache["status"] != "in_sync":
+        findings.append({"severity": bundle_cache["severity"], "code": "BUNDLE_CACHE_DRIFT", "message": "Bundled plugin and installed plugin cache are not in sync or cache is missing."})
+    if reload["status"] != "not_required_by_guard":
+        findings.append({"severity": "warn", "code": "MCP_RELOAD_MAY_BE_REQUIRED", "message": reload["reason"]})
+    if commits["status"] == "missing_evidence":
+        findings.append({"severity": "warn", "code": "COMMIT_SYNC_EVIDENCE_MISSING", "message": "A recent commit touched the source skill without package or install evidence paths."})
+    if commits["status"] == "unknown":
+        findings.append({"severity": "warn", "code": "COMMIT_EVIDENCE_UNKNOWN", "message": "Git commit evidence could not be inspected."})
+
+    summary = {
+        "error": sum(1 for item in findings if item["severity"] == "error"),
+        "warn": sum(1 for item in findings if item["severity"] == "warn"),
+        "pass": 1 if not findings else 0,
+    }
+    recommendations = []
+    if source_bundle["status"] != "in_sync":
+        recommendations.append("Sync plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager from skills/spec-lifecycle-manager before packaging.")
+    if bundle_cache["status"] != "in_sync":
+        recommendations.append("Run scripts/install-spec-lifecycle-manager-package.sh, then reload Codex if MCP tools or hooks should use the new package.")
+    if commits["status"] == "missing_evidence":
+        recommendations.append("Review recent skill-changing commits and include package, installer, manifest, or install/runtime doc evidence where applicable.")
+
+    return {
+        "repo_root": str(root),
+        "codex_home": str(home),
+        "status": "pass" if not findings else "findings",
+        "applicability": applicability,
+        "source_bundle_parity": source_bundle,
+        "bundle_cache_parity": {
+            **bundle_cache,
+            "cache_candidates": [str(path) for path in cache_candidates],
+            "selected_cache": str(selected_cache) if selected_cache else None,
+            "candidate_count": len(cache_candidates),
+        },
+        "reload_advisory": reload,
+        "commit_evidence": commits,
+        "findings": findings,
+        "summary": summary,
+        "recommendations": recommendations,
     }
 
 
@@ -1869,6 +2142,11 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     archive = sub.add_parser("archive-index", help="Validate spec archive index and closure-log consistency.")
     archive.add_argument("repo_root", type=Path, nargs="?", default=Path.cwd())
 
+    sync = sub.add_parser("sync-guard", help="Report source, package, install, MCP reload, and commit sync state.")
+    sync.add_argument("repo_root", type=Path, nargs="?", default=Path.cwd())
+    sync.add_argument("--codex-home", type=Path)
+    sync.add_argument("--commits", type=int, default=5)
+
     hook = sub.add_parser("hook", help="Run a spec lifecycle hook.")
     hook.add_argument(
         "hook_name",
@@ -1934,6 +2212,8 @@ def main(argv: list[str] | None = None) -> int:
         payload = load_prompt_definitions(args.repo_root)
     elif args.command == "archive-index":
         payload = archive_index(args.repo_root)
+    elif args.command == "sync-guard":
+        payload = sync_guard(args.repo_root, args.codex_home, args.commits)
     elif args.command == "hook":
         payload = run_hook(
             args.repo_root,

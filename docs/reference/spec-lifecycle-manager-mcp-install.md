@@ -3,7 +3,7 @@ title: Spec lifecycle manager plugin install
 doc_type: reference
 status: active
 owner: platform
-last_reviewed: 2026-06-06
+last_reviewed: 2026-06-11
 ---
 
 # Spec Lifecycle Manager Plugin Install
@@ -102,7 +102,7 @@ false-positive handling, rollback path, and validation evidence.
 
 ## Validation Checklist
 
-Use this checklist after install, sync, or reload:
+Use this checklist in this repository after install, sync, or reload:
 
 | Check | Expected evidence |
 |-------|-------------------|
@@ -115,6 +115,7 @@ Use this checklist after install, sync, or reload:
 | Archive index works | `archive_index` returns no diagnostics for removed package history. |
 | Prompt definitions validate | `prompts_validate` returns no diagnostics. |
 | Package tools resolve live specs | `closure_check`, `task_context`, or `traceability_lookup` work when an active spec exists. |
+| Sync guard is reviewed | In this repository, `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py sync-guard .` reports source/bundle parity, installed cache state, reload advisory, and recent commit evidence. |
 | No old standalone skill remains | `~/.codex/skills/spec-lifecycle-manager/` is absent after installer cleanup. |
 | No old managed host MCP remains | `~/.codex/config.toml` does not contain the old installer-managed `mcp_servers.spec-lifecycle-manager` block. |
 
@@ -127,7 +128,10 @@ If the tools are not visible after reload:
 3. Confirm the plugin is enabled.
 4. Confirm no old host-level `mcp_servers.spec-lifecycle-manager` entry is
    shadowing the plugin-provided server.
-5. Restart Codex after plugin reinstall or hook trust changes.
+5. Run `sync-guard` to compare source, bundled plugin, installed cache, and
+   reload advisory state.
+6. Restart Codex after plugin reinstall, hook trust changes, or a sync guard
+   reload advisory.
 
 ## Related Artifacts
 

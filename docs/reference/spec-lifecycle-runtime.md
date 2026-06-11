@@ -3,7 +3,7 @@ title: Spec lifecycle runtime
 doc_type: reference
 status: active
 owner: platform
-last_reviewed: 2026-06-06
+last_reviewed: 2026-06-11
 ---
 
 # Spec Lifecycle Runtime
@@ -51,6 +51,7 @@ not available.
 | `validate-review-result` | Validate accepted, rejected, deferred, and human-decision review-result disposition records. |
 | `hook` | Run lifecycle hook checks over changed files, selected specs, selected task IDs, or review-result files. |
 | `archive-index` | Validate `docs/history/spec-archive-index.md` entries, retained/removed package state, closure-log consistency, commit evidence fields, and durable destination references. |
+| `sync-guard` | Report read-only source skill, bundled plugin, installed cache, MCP reload, and recent commit sync state. |
 
 ## MCP Server
 
@@ -166,6 +167,46 @@ The command returns JSON with:
 The first implementation validates commit field syntax and repository path
 consistency. It does not inspect Git object history; stricter Git object
 validation can be added later as an explicit mode if needed.
+
+## Sync Guard
+
+`sync-guard` is a maintainer validation command for this
+`agent-dev-lifecycle` repository. Run it after changing the source skill,
+bundled plugin, package manifests, installer, or install/runtime docs, and
+before claiming the local Codex plugin install is current.
+
+It is not a generic lifecycle check for target repositories that merely use the
+skill. When run outside the Spec Lifecycle Manager package repository, it
+returns `status: "not_applicable"` instead of reporting missing package paths as
+drift.
+
+The command validates local packaging and install freshness without mutating
+files, Codex config, installed caches, or runtime sessions:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py sync-guard .
+```
+
+The command returns JSON with:
+
+- `applicability`: reports whether the current repository is the Spec Lifecycle
+  Manager package repository.
+- `source_bundle_parity`: compares `skills/spec-lifecycle-manager/` with
+  `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/`.
+- `bundle_cache_parity`: compares `plugins/spec-lifecycle-manager/` with the
+  newest installed cache candidate under
+  `$CODEX_HOME/plugins/cache/*/spec-lifecycle-manager/*/`.
+- `reload_advisory`: reports whether parity state suggests Codex should be
+  reloaded after sync and install.
+- `commit_evidence`: reviews recent commits touching
+  `skills/spec-lifecycle-manager/` and reports whether the same commit touched
+  package, installer, manifest, or install/runtime documentation evidence.
+- `findings`, `summary`, and `recommendations`: advisory next actions such as
+  syncing the bundled plugin, running the package installer, or reloading Codex
+  after install.
+
+Use `--codex-home <path>` for fixture validation or non-default Codex homes,
+and `--commits <N>` to adjust recent commit evidence depth.
 
 ## Traceability Lookup
 
