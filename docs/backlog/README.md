@@ -59,6 +59,8 @@ spec or that should not block the active spec currently being delivered.
 | B042 | candidate | Runtime modularization | Brooks-Lint findings tracking spec `015-brooks-lint-findings-tracking`; `BL-ARCH-001`, `BL-DEBT-001`, `BL-HEALTH-002` | Split `spec_runtime.py` into focused modules or facades only when adjacent runtime changes create a clear boundary; avoid speculative refactoring. |
 | B043 | candidate | Shared lifecycle test fixtures | Brooks-Lint findings tracking spec `015-brooks-lint-findings-tracking`; `BL-TEST-001` | Introduce shared spec-package fixture builders when a future fixture-heavy change touches runtime, MCP, hook, and traceability suites together. |
 | B044 | active | npm publish and release workflow | B026 residual risk; user request; active spec `022-npm-publish-release-workflow` | Add GitHub Actions CI/CD for validation, packaged release artifacts, guarded npm publish, GitHub release evidence, and install verification. |
+| B045 | candidate | Closure artifact exception policy | User discussion about completed specs blocked by missing `verification.md` or `traceability.md`; B008, B012, B023 | Consider lifecycle rules that distinguish missing evidence from missing preferred artifact containers. Support minimal final closure artifacts, explicit waivers, or evidence consolidation when tasks and durable promotion are complete but closure checks block on absent optional package files. |
+| B046 | active | Hierarchical spec authoring hook guidance | User report of noisy `PostToolUse` findings when creating spec files; advisory hook dogfood; active spec `023-hierarchical-spec-authoring-hooks` | Make spec-file write hooks aware of authoring order so they warn only about missing prerequisite artifacts above the current file in the hierarchy, recommend the next needed document, and point to relevant MCP tools or template resources instead of dumping unrelated package-wide findings. See hook candidate details. |
 
 ## Kiro-Inspired Candidate Details
 
@@ -260,6 +262,23 @@ validation patterns.
 - Candidate hook events: `agent-stop`, explicit `handoff-requested`, or
   post-task checkpoint.
 
+### B046 Hierarchical Spec Authoring Hook Guidance
+
+- Reduce `PostToolUse` noise while an agent is creating a spec package one file
+  at a time.
+- Treat spec artifacts as an authoring hierarchy. For example, when
+  `design.md` is written, check for prerequisite context such as a package
+  root, `requirements.md`, and relevant research, but do not emit warnings for
+  every downstream artifact that may be created later.
+- Recommend the next missing document or validation step rather than returning
+  the full package lint result while the package is still being authored.
+- Include relevant helper surfaces in the advisory output, such as
+  `templates://spec-package`, `scan_specs`, `lint_spec_package`,
+  `active_spec_preflight`, or the matching prompt.
+- Keep completed-task evidence checks focused on changed `tasks.md` content or
+  explicit task-completion events so old package-wide task findings do not
+  overwhelm early spec-authoring feedback.
+
 ## Candidate Priorities
 
 Priority is based on recurring friction signals from local history and project
@@ -286,6 +305,8 @@ dogfooding, not on factual claims from conversation content.
 | P2 | B038 | Reduces context-loss errors before implementation by forcing task, requirement, design, and verification reloads through existing traceability surfaces. |
 | P2 | B039 | Generalizes fallback-discipline and secrets concerns into a repository-policy review without hard-coding AWS-datalake behavior. |
 | P2 | B040 | Helps route broad prompts into direct patch, spec, or governance paths before agents start broad work. |
+| P2 | B045 | Clarifies how closure should handle functionally complete specs that lack preferred artifact files, reducing unnecessary retroactive documentation while preserving evidence quality. |
+| P2 | B046 | Reduces noisy hook output during incremental spec creation by making warnings hierarchy-aware and action-oriented. |
 | P3 | B009 | Useful for richer specs, but lower priority than preflight because traceability can already be hand-authored. |
 | P3 | B013 | Helps continuation between agents now that the preflight/context model exists. |
 | P3 | B022 | Valuable hygiene once agent instructions and MCP docs change more often. |
