@@ -404,10 +404,26 @@ Implemented packet types:
 
 - `requirements_template_review`
 - `design_requirements_trace`
+- `implementation_review`
 - `task_dependency_review`
 - `promotion_target_review`
 - `closure_risk_review`
 - `governance_conflict_review`
+- `generic_review`
+
+`review_type` is optional. When omitted, the runtime uses
+`design_requirements_trace`. Natural workflow aliases are accepted and resolved
+to canonical packet IDs. In particular, `implementation`,
+`implementation-review`, `implementation-readiness`, and
+`implementation-readiness-review` map to `implementation_review`. Unknown
+non-empty values map to `generic_review`; the original caller value is retained
+as `requested_review_type` and the mapping details are returned in
+`review_type_resolution`.
+
+The MCP `review_packet.review_type` schema publishes the default, canonical
+packet IDs, alias map, and generic fallback behavior. It is intentionally not a
+hard JSON Schema enum so callers can use aliases and still receive deterministic
+generic fallback behavior.
 
 Review outputs remain advisory until the lead agent or operator records a
 disposition. During early dogfooding in this repository, persisted review

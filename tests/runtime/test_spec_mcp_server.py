@@ -180,6 +180,63 @@ class SpecMcpServerTests(unittest.TestCase):
                 self.assertIn("spec_path", schema["properties"])
                 self.assertIn("spec_path", schema["required"])
 
+    def test_review_packet_schema_publishes_type_mapping(self):
+        [response] = self.send(rpc(1, "tools/list"))
+
+        tools = {tool["name"]: tool for tool in response["result"]["tools"]}
+        review_type = tools["review_packet"]["inputSchema"]["properties"]["review_type"]
+        canonical = {item["value"] for item in review_type["x-canonical-review-types"]}
+        aliases = {item["value"]: item["maps_to"] for item in review_type["x-review-type-aliases"]}
+
+        self.assertEqual("design_requirements_trace", review_type["default"])
+        self.assertIn("implementation_review", canonical)
+        self.assertIn("generic_review", canonical)
+        self.assertEqual("implementation_review", aliases["implementation"])
+        self.assertEqual("implementation_review", aliases["implementation-readiness"])
+        self.assertIn("generic_review", review_type["x-unknown-type-behavior"])
+
+    def test_review_packet_maps_aliases_through_mcp(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / ".git").mkdir()
+            write_current_spec(repo)
+            responses = self.send(
+                rpc(
+                    1,
+                    "tools/call",
+                    {
+                        "name": "review_packet",
+                        "arguments": {
+                            "repo_root": str(repo),
+                            "spec_path": "001-current",
+                            "review_type": "implementation-readiness",
+                            "model_class": "coding",
+                        },
+                    },
+                ),
+                rpc(
+                    2,
+                    "tools/call",
+                    {
+                        "name": "review_packet",
+                        "arguments": {
+                            "repo_root": str(repo),
+                            "spec_path": "001-current",
+                            "review_type": "release-polish",
+                            "model_class": "coding",
+                        },
+                    },
+                ),
+                root=repo,
+            )
+
+        implementation = responses[0]["result"]["structuredContent"]
+        generic = responses[1]["result"]["structuredContent"]
+        self.assertEqual("implementation_review", implementation["review_type"])
+        self.assertEqual("implementation-readiness", implementation["requested_review_type"])
+        self.assertEqual("generic_review", generic["review_type"])
+        self.assertEqual("release-polish", generic["requested_review_type"])
+
     def test_agent_backed_tool_returns_unavailable_through_mcp(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)

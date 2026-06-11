@@ -943,6 +943,29 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertIn("expected_output_schema", payload)
         self.assertIn("requirements.md", payload["input_artifacts"])
 
+    def test_generate_review_packet_maps_implementation_aliases(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+            implementation = spec_runtime.generate_review_packet(spec, "implementation", "coding")
+            readiness = spec_runtime.generate_review_packet(spec, "implementation-readiness", "coding")
+
+        for payload, requested in [(implementation, "implementation"), (readiness, "implementation-readiness")]:
+            with self.subTest(requested=requested):
+                self.assertEqual("implementation_review", payload["review_type"])
+                self.assertEqual(requested, payload["requested_review_type"])
+                self.assertEqual("implementation_review", payload["review_type_resolution"]["resolved"])
+                self.assertIn(payload["review_type_resolution"]["source"], {"alias", "alias_normalized"})
+
+    def test_generate_review_packet_maps_unknown_type_to_generic_review(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+            payload = spec_runtime.generate_review_packet(spec, "release-polish", "coding")
+
+        self.assertEqual("generic_review", payload["review_type"])
+        self.assertEqual("release-polish", payload["requested_review_type"])
+        self.assertEqual("generic_fallback", payload["review_type_resolution"]["source"])
+        self.assertIn("implementation", payload["review_type_resolution"]["aliases"])
+
     def test_validate_review_result_disposition(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "review-result.json"

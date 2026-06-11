@@ -29,8 +29,11 @@ last_reviewed: 2026-06-11
 | `packaging/spec-lifecycle-manager/Containerfile` | Remove superseded Docker image packaging artifact. |
 | `packaging/spec-lifecycle-manager/ghcr-package.json` | Remove superseded GHCR image packaging artifact. |
 | `skills/spec-lifecycle-manager/scripts/spec_runtime.py` | Validate npm package contract. |
+| `skills/spec-lifecycle-manager/scripts/spec_runtime.py` | Map review packet aliases and unknown values to published canonical packet IDs. |
+| `skills/spec-lifecycle-manager/scripts/spec_mcp_server.py` | Publish review packet type default, canonical IDs, aliases, and generic fallback behavior in MCP tool schemas. |
 | `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/spec_runtime.py` | Keep bundled runtime in sync. |
 | `tests/runtime/test_spec_runtime.py` | Add package contract validation tests. |
+| `tests/runtime/test_spec_mcp_server.py` | Add MCP schema and review type mapping regression tests. |
 | `tests/runtime/test_spec_plugin_package.py` | Add npm package metadata and `npm pack --dry-run` tests. |
 
 ## Promotion Targets

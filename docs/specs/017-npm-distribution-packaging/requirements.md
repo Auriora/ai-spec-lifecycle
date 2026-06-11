@@ -22,6 +22,8 @@ npm package with an `npx` installer command.
 - Support `npx @auriora/ai-spec-lifecycle install`.
 - Include a Claude Code plugin wrapper for users who want to load the package
   through Claude Code plugin support.
+- Publish and tolerate review packet type mappings so MCP callers do not need
+  to guess hidden internal IDs.
 - Keep package contents aligned with `plugins/spec-lifecycle-manager/`.
 - Validate npm package metadata and tarball contents without publishing.
 - Update durable docs and backlog language away from Docker/GHCR as the primary
@@ -42,6 +44,7 @@ npm package with an `npx` installer command.
 | Plugin bundle | The self-contained plugin tree under `plugins/spec-lifecycle-manager/`. |
 | Package contract | Metadata, layout, install command, and validation rules for distribution. |
 | Provenance | Repository, commit, version, source path, and validation metadata that identify the package source. |
+| Review packet type | Canonical review packet template ID used by the runtime and MCP `review_packet` tool. |
 
 ## Durable Source Baseline
 
@@ -135,6 +138,25 @@ manually wiring the MCP command.
 3. WHERE hooks are packaged, THE SYSTEM SHALL keep them advisory-only and
    rooted at `${CLAUDE_PLUGIN_ROOT}`.
 
+### Requirement 6: Review Packet Type Mapping
+
+**User Story:** As an MCP caller, I want review packet types and aliases to be
+published and forgiving, so that natural implementation review requests do not
+fail with hidden internal enum errors.
+
+#### Acceptance Criteria
+
+1. GIVEN `review_packet` receives `review_type` values such as
+   `implementation` or `implementation-readiness`, WHEN the packet is
+   generated, THEN the runtime SHALL resolve them to `implementation_review`
+   and preserve the requested value in the payload.
+2. GIVEN `review_packet` receives any other unknown non-empty review type, WHEN
+   the packet is generated, THEN the runtime SHALL resolve it to
+   `generic_review` and preserve the requested value in the payload.
+3. WHERE the MCP tool schema exposes review packet inputs, THE SYSTEM SHALL
+   publish the default, canonical review packet types, alias mapping, and
+   unknown-value fallback behavior.
+
 ## Correctness Properties
 
 - **CP-001**: Package validation is deterministic for the same repository tree.
@@ -143,6 +165,8 @@ manually wiring the MCP command.
 - **CP-003**: Required package files are reported by repo-relative path.
 - **CP-004**: `npm pack --dry-run --json` includes the installer bin, package
   contract, existing installer script, and plugin bundle.
+- **CP-005**: Review packet type resolution is deterministic for the same input
+  string.
 
 ## Technical Context
 
@@ -163,6 +187,8 @@ manually wiring the MCP command.
 - `npm pack --dry-run --json` includes the required distribution payload.
 - `spec_runtime.py package-contract .` validates npm package shape.
 - Install docs distinguish local install from npm package install.
+- `review_packet` maps implementation-style and unknown review type values
+  without throwing runtime enum errors.
 
 ## Related Artifacts
 

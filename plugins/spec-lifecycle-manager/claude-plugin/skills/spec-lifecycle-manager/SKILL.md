@@ -347,8 +347,16 @@ skills/spec-lifecycle-manager/scripts/spec_runtime.py hook spec-close-check --sp
 skills/spec-lifecycle-manager/scripts/spec_runtime.py reconcile docs/specs/013-example-active-spec
 skills/spec-lifecycle-manager/scripts/spec_runtime.py promotion-plan docs/specs/013-example-active-spec
 skills/spec-lifecycle-manager/scripts/spec_runtime.py review-packet docs/specs/013-example-active-spec --review-type design_requirements_trace
+skills/spec-lifecycle-manager/scripts/spec_runtime.py review-packet docs/specs/013-example-active-spec --review-type implementation
 skills/spec-lifecycle-manager/scripts/spec_runtime.py agent-backed-tool docs/specs/013-example-active-spec --tool-name closure_risk_review --model-class cheap
 ```
+
+Review packet type values are canonical packet IDs, not free-form workflow
+phases. If omitted, `review_type` defaults to `design_requirements_trace`.
+Implementation-style aliases such as `implementation` and
+`implementation-readiness` map to `implementation_review`; unknown non-empty
+values map to `generic_review` and are preserved in the returned packet as
+`requested_review_type`.
 
 Only run package-specific commands against an active package returned by
 `scan`. If scan reports no active specs, use durable docs and history indexes

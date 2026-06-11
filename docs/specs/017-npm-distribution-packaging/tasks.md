@@ -12,7 +12,7 @@ last_reviewed: 2026-06-11
 ## Task Dependency Graph
 
 ```text
-T001 -> T002 -> T003 -> T004 -> T005 -> T006 -> T007 -> T008
+T001 -> T002 -> T003 -> T004 -> T005 -> T006 -> T007 -> T008 -> T009
 ```
 
 ## Tasks
@@ -106,3 +106,21 @@ T001 -> T002 -> T003 -> T004 -> T005 -> T006 -> T007 -> T008
     npm pack dry-run included the Claude plugin payload; full unittest suite
     passed; sync-guard reported source/bundle parity with installed cache drift
     pending reinstall; whitespace validation passed.
+
+- [x] T009 Fix review packet type mapping.
+  - Depends on: T008
+  - Requirement: Requirement 6
+  - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`,
+    `skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`,
+    `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/`,
+    `plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/`,
+    `docs/reference/spec-lifecycle-runtime.md`,
+    `tests/runtime/test_spec_runtime.py`,
+    `tests/runtime/test_spec_mcp_server.py`
+  - Acceptance: `implementation` and `implementation-readiness` map to
+    `implementation_review`; unknown non-empty values map to `generic_review`;
+    MCP schema publishes canonical IDs, aliases, default, and fallback
+    behavior.
+  - Evidence: Focused runtime/MCP tests passed; direct CLI review-packet calls
+    for `implementation-readiness` and `release-polish` returned
+    `implementation_review` and `generic_review` respectively.

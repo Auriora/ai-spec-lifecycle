@@ -46,10 +46,42 @@ REQUIRED_PROMPTS = ["reconcile-spec", "choose-next-task", "task-context", "lint-
 REVIEW_PACKET_TYPES = {
     "requirements_template_review": "Does the requirements artifact satisfy required sections and EARS clarity?",
     "design_requirements_trace": "Does the design cover every requirement and success criterion?",
+    "implementation_review": "Does the spec provide enough implementation context, task evidence, and validation direction for coding or implementation review?",
     "task_dependency_review": "Are task dependencies safe and executable?",
     "promotion_target_review": "Which durable docs need updates before closure?",
     "closure_risk_review": "What closure blockers or residual risks remain?",
     "governance_conflict_review": "Does the spec conflict with constitution or repo instructions?",
+    "generic_review": "What material lifecycle risks, gaps, or inconsistencies are visible in the listed spec artifacts?",
+}
+REVIEW_PACKET_ALIASES = {
+    "implementation": "implementation_review",
+    "implementation-review": "implementation_review",
+    "implementation_readiness": "implementation_review",
+    "implementation-readiness": "implementation_review",
+    "implementation-readiness-review": "implementation_review",
+    "implementation_readiness_review": "implementation_review",
+    "readiness": "implementation_review",
+    "ready-to-implement": "implementation_review",
+    "ready_to_implement": "implementation_review",
+    "design": "design_requirements_trace",
+    "trace": "design_requirements_trace",
+    "design-review": "design_requirements_trace",
+    "design_review": "design_requirements_trace",
+    "task": "task_dependency_review",
+    "tasks": "task_dependency_review",
+    "dependency": "task_dependency_review",
+    "dependencies": "task_dependency_review",
+    "promotion": "promotion_target_review",
+    "durable-docs": "promotion_target_review",
+    "durable_docs": "promotion_target_review",
+    "closure": "closure_risk_review",
+    "closure-risk": "closure_risk_review",
+    "closure_risk": "closure_risk_review",
+    "governance": "governance_conflict_review",
+    "policy": "governance_conflict_review",
+    "requirements": "requirements_template_review",
+    "requirements-review": "requirements_template_review",
+    "requirements_review": "requirements_template_review",
 }
 FRONTMATTER_RE = re.compile(r"\A---\n(.*?)\n---\n", re.DOTALL)
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$", re.MULTILINE)
@@ -2095,13 +2127,57 @@ def promotion_plan(spec_path: Path) -> dict[str, Any]:
     }
 
 
-def generate_review_packet(spec_path: Path, review_type: str, model_class: str | None = None) -> dict[str, Any]:
-    if review_type not in REVIEW_PACKET_TYPES:
-        raise ValueError(f"Unknown review packet type: {review_type}")
+def normalize_review_packet_type(review_type: str | None) -> tuple[str, dict[str, Any]]:
+    requested = (review_type or "").strip() or "design_requirements_trace"
+    key = requested.lower().replace(" ", "_")
+    normalized_key = key.replace("-", "_")
+    if key in REVIEW_PACKET_TYPES:
+        resolved = key
+        source = "canonical"
+    elif normalized_key in REVIEW_PACKET_TYPES:
+        resolved = normalized_key
+        source = "canonical_normalized"
+    elif key in REVIEW_PACKET_ALIASES:
+        resolved = REVIEW_PACKET_ALIASES[key]
+        source = "alias"
+    elif normalized_key in REVIEW_PACKET_ALIASES:
+        resolved = REVIEW_PACKET_ALIASES[normalized_key]
+        source = "alias_normalized"
+    else:
+        resolved = "generic_review"
+        source = "generic_fallback"
+    return resolved, {
+        "requested": requested,
+        "resolved": resolved,
+        "source": source,
+        "canonical_types": sorted(REVIEW_PACKET_TYPES),
+        "aliases": {alias: REVIEW_PACKET_ALIASES[alias] for alias in sorted(REVIEW_PACKET_ALIASES)},
+        "default": "design_requirements_trace",
+        "generic_fallback": "generic_review",
+    }
+
+
+def review_packet_type_contract() -> dict[str, Any]:
     return {
+        "default": "design_requirements_trace",
+        "canonical_types": [
+            {"value": key, "question": REVIEW_PACKET_TYPES[key]}
+            for key in sorted(REVIEW_PACKET_TYPES)
+        ],
+        "aliases": [
+            {"value": key, "maps_to": REVIEW_PACKET_ALIASES[key]}
+            for key in sorted(REVIEW_PACKET_ALIASES)
+        ],
+        "unknown_type_behavior": "Any unrecognized non-empty review_type maps to generic_review and is preserved as requested_review_type.",
+    }
+
+
+def generate_review_packet(spec_path: Path, review_type: str | None, model_class: str | None = None) -> dict[str, Any]:
+    resolved_type, resolution = normalize_review_packet_type(review_type)
+    payload = {
         "spec_path": str(spec_path.resolve()),
-        "review_type": review_type,
-        "question": REVIEW_PACKET_TYPES[review_type],
+        "review_type": resolved_type,
+        "question": REVIEW_PACKET_TYPES[resolved_type],
         "model_class": model_class or "unspecified",
         "scope": "read-only",
         "input_artifacts": [name for name in SPEC_ARTIFACTS if (spec_path / name).exists()],
@@ -2118,6 +2194,10 @@ def generate_review_packet(spec_path: Path, review_type: str, model_class: str |
         ],
         "expected_output_schema": review_packet_output_schema(),
     }
+    if resolution["requested"] != resolved_type:
+        payload["requested_review_type"] = resolution["requested"]
+        payload["review_type_resolution"] = resolution
+    return payload
 
 
 def agent_packet_id(packet: dict[str, Any]) -> str:
@@ -2126,8 +2206,7 @@ def agent_packet_id(packet: dict[str, Any]) -> str:
 
 
 def agent_backed_tool(spec_path: Path, tool_name: str, model_class: str | None = None) -> dict[str, Any]:
-    if tool_name not in REVIEW_PACKET_TYPES:
-        raise ValueError(f"Unknown agent-backed tool: {tool_name}")
+    resolved_tool, resolution = normalize_review_packet_type(tool_name)
     packet = generate_review_packet(spec_path, tool_name, model_class)
     packet_summary = {
         "packet_id": agent_packet_id(packet),
@@ -2149,14 +2228,16 @@ def agent_backed_tool(spec_path: Path, tool_name: str, model_class: str | None =
         }
     ]
     return {
-        "tool": tool_name,
+        "tool": resolved_tool,
+        "requested_tool_name": resolution["requested"] if resolution["requested"] != resolved_tool else resolved_tool,
+        "tool_name_resolution": resolution,
         "advisory": True,
         "status": "unavailable",
         "model_class": "disabled",
         "packet": packet_summary,
         "result": {
             "observed_facts": [
-                f"Review packet generated for {tool_name}.",
+                f"Review packet generated for {resolved_tool}.",
                 "No agent runner is configured for execution.",
             ],
             "inferences": [],
@@ -2253,16 +2334,16 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 
     packet = sub.add_parser("review-packet", help="Generate a bounded review packet.")
     packet.add_argument("spec_path", type=Path)
-    packet.add_argument("--review-type", choices=sorted(REVIEW_PACKET_TYPES), default="design_requirements_trace")
+    packet.add_argument("--review-type", default="design_requirements_trace")
     packet.add_argument("--model-class")
 
     agent_tool = sub.add_parser("agent-backed-tool", help="Run an advisory agent-backed tool.")
     agent_tool.add_argument("spec_path", type=Path)
-    agent_tool.add_argument("--tool-name", choices=sorted(REVIEW_PACKET_TYPES), required=True)
+    agent_tool.add_argument("--tool-name", required=True)
     agent_tool.add_argument("--model-class")
 
     disposition = sub.add_parser("review-result-template", help="Emit review result disposition template.")
-    disposition.add_argument("--review-type", choices=sorted(REVIEW_PACKET_TYPES), default="design_requirements_trace")
+    disposition.add_argument("--review-type", default="design_requirements_trace")
 
     validate_result = sub.add_parser("validate-review-result", help="Validate a review result disposition file.")
     validate_result.add_argument("path", type=Path)

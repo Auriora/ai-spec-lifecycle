@@ -37,6 +37,20 @@ SPEC_PATH_PROPERTIES = {
     "repo_root": REPO_ROOT_PROPERTY,
     "spec_path": "Spec package path or ID.",
 }
+REVIEW_PACKET_TYPE_CONTRACT = spec_runtime.review_packet_type_contract()
+REVIEW_TYPE_PROPERTY = {
+    "type": "string",
+    "description": (
+        "Optional review packet template ID. Defaults to design_requirements_trace. "
+        "Implementation-style aliases such as implementation and implementation-readiness "
+        "map to implementation_review. Unknown values map to generic_review and are "
+        "preserved as requested_review_type."
+    ),
+    "default": REVIEW_PACKET_TYPE_CONTRACT["default"],
+    "x-canonical-review-types": REVIEW_PACKET_TYPE_CONTRACT["canonical_types"],
+    "x-review-type-aliases": REVIEW_PACKET_TYPE_CONTRACT["aliases"],
+    "x-unknown-type-behavior": REVIEW_PACKET_TYPE_CONTRACT["unknown_type_behavior"],
+}
 
 
 def find_repo_root(path: Path | None = None) -> Path:
@@ -207,7 +221,7 @@ def tool_definitions() -> list[dict[str, Any]]:
             "Run an advisory agent-backed tool; returns unavailable when no runner is configured.",
             {
                 **SPEC_PATH_PROPERTIES,
-                "tool_name": "Agent-backed tool name.",
+                "tool_name": REVIEW_TYPE_PROPERTY,
                 "model_class": "Optional model class.",
             },
             ["spec_path", "tool_name"],
@@ -232,8 +246,8 @@ def tool_definitions() -> list[dict[str, Any]]:
         tool_schema("promotion_plan", "Generate durable documentation promotion targets.", SPEC_PATH_PROPERTIES, ["spec_path"]),
         tool_schema(
             "review_packet",
-            "Generate a bounded read-only review packet.",
-            {**SPEC_PATH_PROPERTIES, "review_type": "Review packet type.", "model_class": "Optional model class."},
+            "Generate a bounded read-only review packet. review_type is optional; omit it for design_requirements_trace.",
+            {**SPEC_PATH_PROPERTIES, "review_type": REVIEW_TYPE_PROPERTY, "model_class": "Optional model class."},
             ["spec_path"],
         ),
         tool_schema(

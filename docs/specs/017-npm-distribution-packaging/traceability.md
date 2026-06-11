@@ -21,6 +21,7 @@ last_reviewed: 2026-06-11
 | T006 | Requirement 1; Requirement 2; Requirement 3; Requirement 4 | All | `design.md#validation-strategy` | `change-impact.md#promotion-targets` | `verification.md#evidence-log` | `docs/specs/017-npm-distribution-packaging/verification.md` | none |
 | T007 | Requirement 5 | All | `design.md#claude-code-plugin` | `change-impact.md#proposed-changes` | `verification.md#evidence-log` | `plugins/spec-lifecycle-manager/claude-plugin/`; `packaging/spec-lifecycle-manager/npm-package.json`; `tests/runtime/test_spec_plugin_package.py` | none |
 | T008 | Requirement 1; Requirement 2; Requirement 5 | All | `design.md#validation-strategy` | `change-impact.md#promotion-targets` | `verification.md#evidence-log` | `docs/specs/017-npm-distribution-packaging/verification.md` | none |
+| T009 | Requirement 6 | All | `design.md#review-packet-type-mapping` | `change-impact.md#proposed-changes` | `verification.md#evidence-log` | `skills/spec-lifecycle-manager/scripts/spec_runtime.py`; `skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`; `docs/reference/spec-lifecycle-runtime.md`; `tests/runtime/test_spec_runtime.py`; `tests/runtime/test_spec_mcp_server.py` | none |
 
 ## Requirement To Delivery Matrix
 
@@ -31,6 +32,7 @@ last_reviewed: 2026-06-11
 | Requirement 3 | AC1-AC3 | `design.md#npm-installer-bin` | T002, T004, T006 | `verification.md#evidence-log` | `packaging/spec-lifecycle-manager/npm-install.js`; `package.json` |
 | Requirement 4 | AC1-AC3 | `design.md#operational-considerations` | T003, T005, T006 | `verification.md#evidence-log` | `docs/reference/spec-lifecycle-runtime.md`; `docs/reference/spec-lifecycle-manager-mcp-install.md`; `docs/backlog/README.md` |
 | Requirement 5 | AC1-AC3 | `design.md#claude-code-plugin` | T007, T008 | `verification.md#evidence-log` | `plugins/spec-lifecycle-manager/claude-plugin/`; `docs/reference/spec-lifecycle-manager-mcp-install.md` |
+| Requirement 6 | AC1-AC3 | `design.md#review-packet-type-mapping` | T009 | `verification.md#evidence-log` | `skills/spec-lifecycle-manager/scripts/spec_runtime.py`; `skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`; `docs/reference/spec-lifecycle-runtime.md` |
 
 ## Design To Implementation Matrix
 
@@ -42,6 +44,7 @@ last_reviewed: 2026-06-11
 | `design.md#operational-considerations` | Requirement 4 | T003, T005 | `docs/reference/spec-lifecycle-manager-mcp-install.md`; `docs/backlog/README.md` | Docs review and package contract command. |
 | `design.md#validation-strategy` | Requirement 1; Requirement 2; Requirement 3; Requirement 4 | T006 | `verification.md` | Full validation set. |
 | `design.md#claude-code-plugin` | Requirement 5 | T007 | `plugins/spec-lifecycle-manager/claude-plugin/` | Package tests and npm pack dry-run. |
+| `design.md#review-packet-type-mapping` | Requirement 6 | T009 | `skills/spec-lifecycle-manager/scripts/spec_runtime.py`; `skills/spec-lifecycle-manager/scripts/spec_mcp_server.py` | Runtime and MCP server tests. |
 
 ## Open Decision Impact
 

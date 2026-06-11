@@ -24,6 +24,8 @@ The package payload remains the self-contained plugin tree under
 | Requirement 2 | AC1-AC3 | Required path validation and source/bundle parity. | Focused runtime tests and package validation command. |
 | Requirement 3 | AC1-AC3 | Node bin wrapper around existing installer. | Unit/package tests and `npm pack --dry-run --json`. |
 | Requirement 4 | AC1-AC3 | Install docs and backlog update. | Spec closure validation and docs diff. |
+| Requirement 5 | AC1-AC3 | Claude plugin wrapper under the npm payload. | Package tests and npm pack dry-run. |
+| Requirement 6 | AC1-AC3 | Review packet type canonical IDs, aliases, and generic fallback. | Runtime and MCP server tests. |
 
 ## High-Level Design
 
@@ -52,6 +54,9 @@ image experiment is superseded by this design and should not be pushed.
   and invokes `scripts/install-spec-lifecycle-manager-package.sh --source`.
 - **Claude Code plugin wrapper:** Claude plugin manifest, MCP config, skill,
   and advisory hook config under `plugins/spec-lifecycle-manager/claude-plugin/`.
+- **Review packet type mapping:** Runtime helper resolves natural review type
+  aliases to canonical packet IDs and exposes mapping metadata through MCP tool
+  schemas.
 - **Runtime validation:** Read-only command validates npm contract, `package.json`,
   required paths, source/bundle parity, package metadata, and optional Git
   provenance.
@@ -137,6 +142,32 @@ The MCP config launches `./skills/spec-lifecycle-manager/scripts/spec_mcp_server
 with `python3`. The hook config invokes the bundled advisory lifecycle hook via
 `${CLAUDE_PLUGIN_ROOT}`.
 
+### Review Packet Type Mapping
+
+`review_packet` defaults to `design_requirements_trace` when no `review_type`
+is supplied. Canonical review packet IDs include:
+
+- `requirements_template_review`
+- `design_requirements_trace`
+- `implementation_review`
+- `task_dependency_review`
+- `promotion_target_review`
+- `closure_risk_review`
+- `governance_conflict_review`
+- `generic_review`
+
+The runtime accepts natural aliases and records how they were resolved.
+Implementation-style aliases, including `implementation`,
+`implementation-review`, `implementation-readiness`, and
+`implementation-readiness-review`, resolve to `implementation_review`.
+Unrecognized non-empty values resolve to `generic_review`; the original value
+is retained as `requested_review_type`.
+
+The MCP schema publishes the default, canonical packet IDs, alias map, and
+unknown-value behavior as metadata. It does not use a hard JSON Schema `enum`
+because strict enum validation would prevent alias and generic fallback
+resolution before the runtime receives the call.
+
 ### Runtime Command
 
 ```bash
@@ -177,6 +208,7 @@ that installer instead of duplicating Codex plugin installation logic.
 | Focused package-contract tests | Requirements 1-3 | `verification.md` | Does not prove npm publish. |
 | `npm pack --dry-run --json` | Tarball contents | `verification.md` | Does not prove registry install. |
 | Claude plugin package tests | Claude manifest, MCP, hook, and skill payload | `verification.md` | Does not prove runtime loading inside Claude. |
+| Review packet mapping tests | Implementation aliases, generic fallback, and MCP schema publication | `verification.md` | Does not run a secondary reviewing model. |
 | Full unit suite | Runtime regression | `verification.md` | None expected. |
 | Manual package-contract command | Local package state | `verification.md` | Git provenance depends on local Git availability. |
 | Sync guard | Source/bundle/cache parity | `verification.md` | Installed cache may need reinstall after runtime changes. |
