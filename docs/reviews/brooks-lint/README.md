@@ -126,9 +126,10 @@ Preserve these fields when Brooks-Test provides them:
 
 ## Findings
 
-All seed findings below are recorded from the first Brooks runs on
-2026-06-06. They remain `needs-decision` until the triage pass records whether
-each finding is accepted, deferred, dismissed, or resolved.
+All seed findings below were recorded from the first Brooks runs on
+2026-06-06 and triaged on 2026-06-11. Findings that describe the same
+underlying issue are linked to the same durable backlog or no-action route
+instead of creating duplicate remediation work.
 
 ### Architecture Audit Findings
 
@@ -139,7 +140,7 @@ each finding is accepted, deferred, dismissed, or resolved.
 - Last seen: 2026-06-06
 - Scope: lifecycle runtime CLI and helper commands
 - Severity: warning
-- State: needs-decision
+- State: deferred
 - Symptom: `spec_runtime.py` concentrates scan, lint, task, closure, archive,
   prompt, review, and hook support behavior in one module.
 - Source: Broad command dispatch and lifecycle helper functions share the same
@@ -153,9 +154,9 @@ each finding is accepted, deferred, dismissed, or resolved.
   `tests/runtime/test_spec_runtime.py`.
 - Brooks attribution: Architecture Audit score 84/100; first run reported 3
   warnings and 1 suggestion.
-- Triage rationale: Pending T005 triage.
-- Destination: Pending T006 routing if accepted or deferred.
-- Verification: Pending.
+- Triage rationale: Valid structural risk, but not urgent enough to refactor inside this tracking spec.
+- Destination: B042 runtime modularization candidate.
+- Verification: Deferred; validate when B042 is promoted.
 
 #### BL-ARCH-002 - Bundled plugin copy can drift from development skill
 
@@ -164,7 +165,7 @@ each finding is accepted, deferred, dismissed, or resolved.
 - Last seen: 2026-06-06
 - Scope: source skill and bundled plugin package
 - Severity: warning
-- State: needs-decision
+- State: accepted
 - Symptom: The development skill tree and bundled plugin copy can diverge.
 - Source: The repository keeps source files under
   `skills/spec-lifecycle-manager/` and bundled plugin files under
@@ -179,9 +180,12 @@ each finding is accepted, deferred, dismissed, or resolved.
   `tests/runtime/test_spec_plugin_package.py`.
 - Brooks attribution: Architecture Audit score 84/100; duplication and
   package-boundary risk.
-- Triage rationale: Pending T005 triage.
-- Destination: Pending T006 routing if accepted or deferred.
-- Verification: Pending.
+- Triage rationale: Valid packaging risk. Existing parity tests reduce drift,
+  but commit-time install/cache drift remains a planned lifecycle hardening
+  item.
+- Destination: B016 commit sync guard; roadmap R005.
+- Verification: Existing parity coverage in
+  `tests/runtime/test_spec_plugin_package.py`; B016/R005 remains open.
 
 #### BL-ARCH-003 - Installer concentrates deployment concerns
 
@@ -190,7 +194,7 @@ each finding is accepted, deferred, dismissed, or resolved.
 - Last seen: 2026-06-06
 - Scope: local plugin installer
 - Severity: warning
-- State: needs-decision
+- State: deferred
 - Symptom: The installer handles package copy, Codex cleanup, marketplace
   edits, and plugin registration in one script.
 - Source: `scripts/install-spec-lifecycle-manager-package.sh` orchestrates
@@ -204,9 +208,11 @@ each finding is accepted, deferred, dismissed, or resolved.
   `docs/reference/spec-lifecycle-manager-package.md`.
 - Brooks attribution: Architecture Audit score 84/100; dependency-disorder
   signal.
-- Triage rationale: Pending T005 triage.
-- Destination: Pending T006 routing if accepted or deferred.
-- Verification: Pending.
+- Triage rationale: Valid installer coupling risk, but decomposition should be
+  handled with packaging/distribution work instead of this findings register
+  spec.
+- Destination: B026 distribution packaging for GHCR.
+- Verification: Deferred; validate when B026 is promoted.
 
 #### BL-ARCH-004 - Hook runtime execution is hardwired to subprocess
 
@@ -215,7 +221,7 @@ each finding is accepted, deferred, dismissed, or resolved.
 - Last seen: 2026-06-06
 - Scope: Codex hook adapter
 - Severity: suggestion
-- State: needs-decision
+- State: dismissed
 - Symptom: Hook checks shell out to the lifecycle runtime through a hardwired
   subprocess boundary.
 - Source: `codex_spec_lifecycle_hook.py` executes runtime behavior through
@@ -230,9 +236,12 @@ each finding is accepted, deferred, dismissed, or resolved.
   `tests/runtime/test_codex_spec_lifecycle_hook.py`.
 - Brooks attribution: Architecture Audit score 84/100; subprocess-boundary
   suggestion.
-- Triage rationale: Pending T005 triage.
-- Destination: Pending T006 routing if accepted or deferred.
-- Verification: Pending.
+- Triage rationale: Current subprocess boundary is acceptable while the hook
+  remains a thin command adapter. Introducing an abstraction now would add more
+  ceremony than value.
+- Destination: Explicit no-action decision in this register; revisit only if
+  hook behavior expands.
+- Verification: Existing hook tests remain the validation surface.
 
 ### Technical Debt Findings
 
@@ -243,7 +252,7 @@ each finding is accepted, deferred, dismissed, or resolved.
 - Last seen: 2026-06-06
 - Scope: lifecycle runtime CLI and helpers
 - Severity: warning
-- State: needs-decision
+- State: deferred
 - Symptom: `spec_runtime.py` concentrates many lifecycle responsibilities.
 - Source: Multiple lifecycle commands and helper domains are implemented in
   one runtime module.
@@ -257,9 +266,10 @@ each finding is accepted, deferred, dismissed, or resolved.
 - Brooks attribution: Tech Debt Assessment score 84/100; risk code Cognitive
   Overload; pain 2; spread 3; priority 6; classification Scheduled debt;
   intent accidental.
-- Triage rationale: Pending T005 triage.
-- Destination: Pending T006 routing if accepted or deferred.
-- Verification: Pending.
+- Triage rationale: Same underlying runtime concentration as BL-ARCH-001,
+  independently confirmed by Brooks-Debt.
+- Destination: B042 runtime modularization candidate.
+- Verification: Deferred; validate when B042 is promoted.
 
 #### BL-DEBT-002 - Development and bundled skill duplication
 
@@ -268,7 +278,7 @@ each finding is accepted, deferred, dismissed, or resolved.
 - Last seen: 2026-06-06
 - Scope: source skill, bundled plugin, and package sync
 - Severity: warning
-- State: needs-decision
+- State: accepted
 - Symptom: Development skill and bundled plugin trees can drift.
 - Source: Maintained source and packaged plugin content live in separate
   directory trees.
@@ -283,9 +293,11 @@ each finding is accepted, deferred, dismissed, or resolved.
 - Brooks attribution: Tech Debt Assessment score 84/100; risk code Knowledge
   Duplication; pain 2; spread 3; priority 6; classification Scheduled debt;
   intent accidental.
-- Triage rationale: Pending T005 triage.
-- Destination: Pending T006 routing if accepted or deferred.
-- Verification: Pending.
+- Triage rationale: Same packaging drift risk as BL-ARCH-002, independently
+  confirmed by Brooks-Debt.
+- Destination: B016 commit sync guard; roadmap R005.
+- Verification: Existing parity coverage in
+  `tests/runtime/test_spec_plugin_package.py`; B016/R005 remains open.
 
 #### BL-DEBT-003 - Installer change propagation risk
 
@@ -294,7 +306,7 @@ each finding is accepted, deferred, dismissed, or resolved.
 - Last seen: 2026-06-06
 - Scope: local installer orchestration
 - Severity: warning
-- State: needs-decision
+- State: deferred
 - Symptom: Installer changes mix package copy, Codex cleanup, marketplace
   edits, and plugin registration.
 - Source: The install script owns several separate deployment responsibilities.
@@ -308,9 +320,10 @@ each finding is accepted, deferred, dismissed, or resolved.
 - Brooks attribution: Tech Debt Assessment score 84/100; risk code Change
   Propagation; pain 2; spread 2; priority 4; classification Scheduled debt;
   intent accidental.
-- Triage rationale: Pending T005 triage.
-- Destination: Pending T006 routing if accepted or deferred.
-- Verification: Pending.
+- Triage rationale: Same installer coupling risk as BL-ARCH-003, independently
+  confirmed by Brooks-Debt.
+- Destination: B026 distribution packaging for GHCR.
+- Verification: Deferred; validate when B026 is promoted.
 
 #### BL-DEBT-004 - Hook subprocess boundary debt
 
@@ -319,7 +332,7 @@ each finding is accepted, deferred, dismissed, or resolved.
 - Last seen: 2026-06-06
 - Scope: Codex hook runtime checks
 - Severity: suggestion
-- State: needs-decision
+- State: dismissed
 - Symptom: Hook checks shell out through a hardwired subprocess boundary.
 - Source: Hook code delegates to the lifecycle runtime through command
   execution.
@@ -333,9 +346,11 @@ each finding is accepted, deferred, dismissed, or resolved.
 - Brooks attribution: Tech Debt Assessment score 84/100; risk code Dependency
   Disorder; pain 1; spread 2; priority 2; classification Monitored debt;
   intent accidental.
-- Triage rationale: Pending T005 triage.
-- Destination: Pending T006 routing if accepted or deferred.
-- Verification: Pending.
+- Triage rationale: Same subprocess-boundary concern as BL-ARCH-004. The debt
+  is low-priority monitored debt and does not justify a backlog item now.
+- Destination: Explicit no-action decision in this register; revisit only if
+  hook behavior expands.
+- Verification: Existing hook tests remain the validation surface.
 
 ### Health Dashboard Findings
 
@@ -346,7 +361,7 @@ each finding is accepted, deferred, dismissed, or resolved.
 - Last seen: 2026-06-06
 - Scope: installer dependencies and local Codex state changes
 - Severity: warning
-- State: needs-decision
+- State: deferred
 - Symptom: Installer fan-out is the main dependency-disorder signal.
 - Source: The install script touches package content, installed plugin state,
   marketplace state, and cleanup behavior.
@@ -360,9 +375,10 @@ each finding is accepted, deferred, dismissed, or resolved.
 - Brooks attribution: Health Dashboard composite score 93/100; dimension
   Architecture; dimension score 95/100; code-quality skipped; weighting moved
   package and installer risk into Architecture.
-- Triage rationale: Pending T005 triage.
-- Destination: Pending T006 routing if accepted or deferred.
-- Verification: Pending.
+- Triage rationale: Same installer coupling risk as BL-ARCH-003 and
+  BL-DEBT-003, seen through the health dashboard.
+- Destination: B026 distribution packaging for GHCR.
+- Verification: Deferred; validate when B026 is promoted.
 
 #### BL-HEALTH-002 - `spec_runtime.py` maintainability hotspot
 
@@ -371,7 +387,7 @@ each finding is accepted, deferred, dismissed, or resolved.
 - Last seen: 2026-06-06
 - Scope: lifecycle runtime maintainability
 - Severity: warning
-- State: needs-decision
+- State: deferred
 - Symptom: `spec_runtime.py` remains the top maintainability hotspot.
 - Source: Runtime responsibilities and command support are concentrated in one
   module.
@@ -384,9 +400,10 @@ each finding is accepted, deferred, dismissed, or resolved.
   `tests/runtime/test_spec_runtime.py`.
 - Brooks attribution: Health Dashboard composite score 93/100; dimension Tech
   Debt; dimension score 85/100; code-quality skipped.
-- Triage rationale: Pending T005 triage.
-- Destination: Pending T006 routing if accepted or deferred.
-- Verification: Pending.
+- Triage rationale: Same runtime concentration risk as BL-ARCH-001 and
+  BL-DEBT-001, seen through the health dashboard.
+- Destination: B042 runtime modularization candidate.
+- Verification: Deferred; validate when B042 is promoted.
 
 #### BL-HEALTH-003 - Skill and plugin duplication drift risk
 
@@ -395,7 +412,7 @@ each finding is accepted, deferred, dismissed, or resolved.
 - Last seen: 2026-06-06
 - Scope: skill source, bundled plugin package, and install path
 - Severity: warning
-- State: needs-decision
+- State: accepted
 - Symptom: Skill/plugin duplication remains a drift risk.
 - Source: Development and packaged copies are maintained separately.
 - Consequence: Health can regress if packaged plugin behavior differs from the
@@ -408,9 +425,11 @@ each finding is accepted, deferred, dismissed, or resolved.
   `tests/runtime/test_spec_plugin_package.py`.
 - Brooks attribution: Health Dashboard composite score 93/100; dimension Tech
   Debt; dimension score 85/100; code-quality skipped.
-- Triage rationale: Pending T005 triage.
-- Destination: Pending T006 routing if accepted or deferred.
-- Verification: Pending.
+- Triage rationale: Same packaging drift risk as BL-ARCH-002 and BL-DEBT-002,
+  seen through the health dashboard.
+- Destination: B016 commit sync guard; roadmap R005.
+- Verification: Existing parity coverage in
+  `tests/runtime/test_spec_plugin_package.py`; B016/R005 remains open.
 
 #### BL-HEALTH-004 - Installer orchestration scheduled debt
 
@@ -419,7 +438,7 @@ each finding is accepted, deferred, dismissed, or resolved.
 - Last seen: 2026-06-06
 - Scope: installer orchestration
 - Severity: warning
-- State: needs-decision
+- State: deferred
 - Symptom: Installer orchestration remains scheduled debt.
 - Source: The installer still combines multiple local deployment operations.
 - Consequence: Future installer changes may require broader validation than the
@@ -430,9 +449,10 @@ each finding is accepted, deferred, dismissed, or resolved.
   `scripts/install-spec-lifecycle-manager-package.sh`.
 - Brooks attribution: Health Dashboard composite score 93/100; dimension Tech
   Debt; dimension score 85/100; code-quality skipped.
-- Triage rationale: Pending T005 triage.
-- Destination: Pending T006 routing if accepted or deferred.
-- Verification: Pending.
+- Triage rationale: Same installer orchestration risk as BL-ARCH-003,
+  BL-DEBT-003, and BL-HEALTH-001.
+- Destination: B026 distribution packaging for GHCR.
+- Verification: Deferred; validate when B026 is promoted.
 
 #### BL-HEALTH-005 - Subprocess-heavy CLI and hook tests
 
@@ -441,7 +461,7 @@ each finding is accepted, deferred, dismissed, or resolved.
 - Last seen: 2026-06-06
 - Scope: runtime CLI and hook tests
 - Severity: suggestion
-- State: needs-decision
+- State: dismissed
 - Symptom: CLI and hook tests rely on subprocess fixtures in several places.
 - Source: Runtime and hook behavior are validated through process-level command
   execution and captured output.
@@ -455,9 +475,11 @@ each finding is accepted, deferred, dismissed, or resolved.
   `skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py`.
 - Brooks attribution: Health Dashboard composite score 93/100; dimension Test
   Quality; dimension score 99/100; code-quality skipped.
-- Triage rationale: Pending T005 triage.
-- Destination: Pending T006 routing if accepted or deferred.
-- Verification: Pending.
+- Triage rationale: Current subprocess-heavy checks provide useful integration
+  confidence. Add narrower tests only if output churn becomes a real
+  maintenance cost.
+- Destination: Explicit no-action decision in this register.
+- Verification: Existing runtime and hook tests remain the validation surface.
 
 ### Test Quality Findings
 
@@ -468,7 +490,7 @@ each finding is accepted, deferred, dismissed, or resolved.
 - Last seen: 2026-06-06
 - Scope: runtime, MCP, hook, and traceability tests
 - Severity: warning
-- State: needs-decision
+- State: deferred
 - Symptom: Spec-package fixture builders are duplicated across runtime, MCP,
   hook, and traceability tests.
 - Source: Several test files construct similar spec package directories and
@@ -484,9 +506,10 @@ each finding is accepted, deferred, dismissed, or resolved.
   Duplication; suite map covers runtime, MCP adapter, traceability lookup,
   Codex hook, and plugin package; test layer integration/unit mix; coverage gap
   reusable fixture layer.
-- Triage rationale: Pending T005 triage.
-- Destination: Pending T006 routing if accepted or deferred.
-- Verification: Pending.
+- Triage rationale: Valid test-maintenance risk, but best handled when the
+  next fixture-heavy change touches multiple suites.
+- Destination: B043 shared lifecycle test fixtures.
+- Verification: Deferred; validate when B043 is promoted.
 
 #### BL-TEST-002 - Plugin package coverage gap
 
@@ -495,7 +518,7 @@ each finding is accepted, deferred, dismissed, or resolved.
 - Last seen: 2026-06-06
 - Scope: plugin package tests and installer behavior
 - Severity: warning
-- State: needs-decision
+- State: accepted
 - Symptom: Plugin package tests verify component presence but not full
   development-skill to bundled-plugin sync or installer behavior.
 - Source: Package tests focus on required files and manifest wiring.
@@ -511,9 +534,12 @@ each finding is accepted, deferred, dismissed, or resolved.
 - Brooks attribution: Test Quality Review score 89/100; risk code Coverage
   Illusion; coverage areas plugin package and installer behavior; coverage gap
   full plugin/source sync and installer behavior.
-- Triage rationale: Pending T005 triage.
-- Destination: Pending T006 routing if accepted or deferred.
-- Verification: Pending.
+- Triage rationale: Source-to-bundled skill parity is now covered, while
+  broader installer/distribution behavior remains planned work.
+- Destination: B016 commit sync guard and B026 distribution packaging.
+- Verification: Existing parity coverage in
+  `tests/runtime/test_spec_plugin_package.py`; installer behavior remains
+  routed to B026.
 
 #### BL-TEST-003 - Subprocess and output-coupled tests
 
@@ -522,7 +548,7 @@ each finding is accepted, deferred, dismissed, or resolved.
 - Last seen: 2026-06-06
 - Scope: CLI and hook test boundaries
 - Severity: suggestion
-- State: needs-decision
+- State: dismissed
 - Symptom: CLI and hook tests rely on subprocess boundaries and exact
   stdout/stderr behavior.
 - Source: Tests exercise commands through subprocesses and assert output
@@ -537,12 +563,16 @@ each finding is accepted, deferred, dismissed, or resolved.
 - Brooks attribution: Test Quality Review score 89/100; risk code Test
   Brittleness; suite map covers runtime CLI and hook behavior; coverage area
   command execution.
-- Triage rationale: Pending T005 triage.
-- Destination: Pending T006 routing if accepted or deferred.
-- Verification: Pending.
+- Triage rationale: Same subprocess-boundary concern as BL-ARCH-004,
+  BL-DEBT-004, and BL-HEALTH-005. Current integration tests are acceptable.
+- Destination: Explicit no-action decision in this register.
+- Verification: Existing runtime and hook tests remain the validation surface.
 
 ## Maintenance Rules
 
+- Validation mode is Markdown-only first. Maintainers should review the fields
+  below during Brooks triage and closure checks; runtime validation should be
+  added only if repeated Brooks runs show real register drift.
 - Keep findings stable even when the wording is refined.
 - Update an existing finding when a later run reports the same structural issue.
 - Do not treat score changes alone as durable findings; record the concrete

@@ -56,6 +56,8 @@ spec or that should not block the active spec currently being delivered.
 | B039 | candidate | Policy-sensitive write review | Kiro fallback discipline and secrets hook recommendations; `AGENTS.md`; governance docs | Add an advisory pre-write or post-write review that flags possible fallback-discipline violations, secret material, silent degradation paths, and policy conflicts using repository steering context. See hook candidate details. |
 | B040 | candidate | Prompt scope triage hook | Kiro promptSubmit scope recommendation; workflow mode contract B029; steering context B033 | When a request spans multiple subsystem or lifecycle boundaries, return an advisory scope warning and suggest whether to narrow, open a spec, or trigger a governance gate. See hook candidate details. |
 | B041 | candidate | Session handoff hook | Kiro agentStop context-preservation recommendation; handoff packet B013 | On session stop or explicit handoff, generate a concise read-only summary of completed work, pending tasks, decisions, blockers, and validation evidence for the next session. See hook candidate details. |
+| B042 | candidate | Runtime modularization | Brooks-Lint findings tracking spec `015-brooks-lint-findings-tracking`; `BL-ARCH-001`, `BL-DEBT-001`, `BL-HEALTH-002` | Split `spec_runtime.py` into focused modules or facades only when adjacent runtime changes create a clear boundary; avoid speculative refactoring. |
+| B043 | candidate | Shared lifecycle test fixtures | Brooks-Lint findings tracking spec `015-brooks-lint-findings-tracking`; `BL-TEST-001` | Introduce shared spec-package fixture builders when a future fixture-heavy change touches runtime, MCP, hook, and traceability suites together. |
 
 ## Kiro-Inspired Candidate Details
 
@@ -285,6 +287,8 @@ dogfooding, not on factual claims from conversation content.
 | P3 | B009 | Useful for richer specs, but lower priority than preflight because traceability can already be hand-authored. |
 | P3 | B013 | Helps continuation between agents now that the preflight/context model exists. |
 | P3 | B022 | Valuable hygiene once agent instructions and MCP docs change more often. |
+| P3 | B042 | Useful when runtime changes reveal stable module boundaries; should not lead with speculative refactoring. |
+| P3 | B043 | Reduces fixture drift once enough related test changes justify a shared helper. |
 | P3 | B011 | Useful for governance hygiene, but can be noisy without strong routing rules. |
 | P3 | B020 | Builds on decision extraction and should follow clearer ADR guidance. |
 | P3 | B021 | Best after several more template pain points accumulate. |

@@ -48,39 +48,52 @@ last_reviewed: 2026-06-09
     references, Brooks attribution, pending triage rationale, pending
     destination, and pending verification.
 
-- [ ] T004 Add validation or documented maintenance rules for future Brooks runs.
+- [x] T004 Add validation or documented maintenance rules for future Brooks runs.
   - Requirements: Requirement 2, Requirement 3, Requirement 4
   - Depends on: T001, T002, T003
   - Acceptance: Future Brooks skill runs have clear append/reconcile rules, and
     runtime validation is added only if D001 accepts it.
-  - Evidence:
+  - Evidence: Accepted D001 as Markdown-only first in `open-decisions.md`;
+    retained register maintenance rules in `docs/reviews/brooks-lint/README.md`
+    for stable IDs, repeated-run reconciliation, score-history handling,
+    dismissal visibility, routing before closure, and verification before
+    resolution. No runtime validation was added.
 
 ## Phase 3: Triage and Promotion
 
-- [ ] T005 Triage seed findings into accepted, deferred, dismissed, or resolved.
+- [x] T005 Triage seed findings into accepted, deferred, dismissed, or resolved.
   - Requirements: Requirement 2, Requirement 5
   - Depends on: T003
   - Acceptance: Each seed finding has a triage state and rationale.
-  - Evidence:
+  - Evidence: Updated every seed finding in
+    `docs/reviews/brooks-lint/README.md` from `needs-decision` to accepted,
+    deferred, or dismissed with a concrete triage rationale.
 
-- [ ] T006 Route accepted and deferred findings to tasks, backlog, roadmap, or
+- [x] T006 Route accepted and deferred findings to tasks, backlog, roadmap, or
       explicit no-action decisions.
   - Requirements: Requirement 2, Requirement 5
   - Depends on: T005
   - Acceptance: No tracked seed finding remains without a destination or
     rationale.
-  - Evidence:
+  - Evidence: Accepted D003 in `open-decisions.md`; routed drift findings to
+    B016/R005, installer and distribution findings to B026, runtime
+    modularization findings to B042, test fixture findings to B043, and
+    subprocess-boundary findings to explicit no-action decisions in the
+    register.
 
 ## Phase 4: Verification and Closure
 
-- [ ] T007 Validate lifecycle health and any runtime or plugin changes.
+- [x] T007 Validate lifecycle health and any runtime or plugin changes.
   - Requirements: Requirement 3, Requirement 4, Requirement 5
   - Depends on: T004, T006
   - Acceptance: Required validation commands pass and evidence is recorded.
-  - Evidence:
+  - Evidence: Full validation passed on 2026-06-11; see `verification.md`.
 
-- [ ] T008 Promote durable outcomes and prepare closure.
+- [x] T008 Promote durable outcomes and prepare closure.
   - Requirements: Requirement 5
   - Depends on: T007
   - Acceptance: Register, backlog, roadmap, and closure targets are current.
-  - Evidence:
+  - Evidence: Durable outcomes were promoted to
+    `docs/reviews/brooks-lint/README.md` and `docs/backlog/README.md`; roadmap
+    links reuse existing R005. Closure log and archive index updates are
+    prepared for the cleanup commit after the final spec commit.

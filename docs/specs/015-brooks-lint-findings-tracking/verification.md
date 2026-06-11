@@ -29,21 +29,26 @@ schema and plugin package sync if plugin runtime files change.
 
 | Date | Task | Evidence | Result |
 |------|------|----------|--------|
-| 2026-06-06 | Spec authoring | Initial spec package created. | pending validation |
-| 2026-06-06 | Brooks-Debt check | Tech Debt Assessment completed with score 84/100, 3 warnings, 1 suggestion; findings added to research and design seed lists. | pending validation |
-| 2026-06-06 | Brooks-Health check | Health Dashboard completed with composite score 93/100; dimension scores and `BL-HEALTH-001` through `BL-HEALTH-005` added to research and design seed lists. | pending validation |
-| 2026-06-06 | Brooks-Test check | Test Quality Review completed with score 89/100, 2 warnings, 1 suggestion; suite map and `BL-TEST-001` through `BL-TEST-003` added to research and design seed lists. | pending validation |
+| 2026-06-06 | Spec authoring | Initial spec package created. | superseded by final validation |
+| 2026-06-06 | Brooks-Debt check | Tech Debt Assessment completed with score 84/100, 3 warnings, 1 suggestion; findings added to research and design seed lists. | captured as seed input |
+| 2026-06-06 | Brooks-Health check | Health Dashboard completed with composite score 93/100; dimension scores and `BL-HEALTH-001` through `BL-HEALTH-005` added to research and design seed lists. | captured as seed input |
+| 2026-06-06 | Brooks-Test check | Test Quality Review completed with score 89/100, 2 warnings, 1 suggestion; suite map and `BL-TEST-001` through `BL-TEST-003` added to research and design seed lists. | captured as seed input |
 | 2026-06-09 | T001 | Added durable Brooks-Lint register schema in `docs/reviews/brooks-lint/README.md`; accepted D004 mode-specific ID namespace. | pass |
 | 2026-06-09 | T002 | Accepted D002: `.brooks-lint-history.json` is optional supporting score-history evidence, while the Markdown register remains the durable finding source of truth. | pass |
-| 2026-06-09 | T003 | Seeded `docs/reviews/brooks-lint/README.md` with `BL-ARCH-001` through `BL-ARCH-004`, `BL-DEBT-001` through `BL-DEBT-004`, `BL-HEALTH-001` through `BL-HEALTH-005`, and `BL-TEST-001` through `BL-TEST-003`; all seed findings preserve required fields and remain `needs-decision` pending T005 triage. | pass |
+| 2026-06-09 | T003 | Seeded `docs/reviews/brooks-lint/README.md` with `BL-ARCH-001` through `BL-ARCH-004`, `BL-DEBT-001` through `BL-DEBT-004`, `BL-HEALTH-001` through `BL-HEALTH-005`, and `BL-TEST-001` through `BL-TEST-003`; all seed findings preserve required fields. | pass |
+| 2026-06-11 | T004 | Accepted D001 as Markdown-only first and documented maintenance rules in `docs/reviews/brooks-lint/README.md`; no runtime validation was added. | pass |
+| 2026-06-11 | T005 | Triaged all seed findings into accepted, deferred, or dismissed states with rationales in `docs/reviews/brooks-lint/README.md`. | pass |
+| 2026-06-11 | T006 | Accepted D003 and routed accepted/deferred findings to B016/R005, B026, B042, B043, or explicit no-action decisions. | pass |
+| 2026-06-11 | T007 | Full validation commands passed before final spec commit. | pass |
+| 2026-06-11 | T008 | Durable register, backlog, roadmap linkage, and closure targets prepared for final spec commit and cleanup. | pass |
 
 ## Residual Risks
 
 | Risk | Status | Mitigation |
 |------|--------|------------|
-| Register may become stale after future Brooks runs. | open | T004 defines append/reconcile rules. |
-| History file may be local telemetry rather than durable source. | open | D002 resolves treatment. |
-| Findings may duplicate backlog items. | open | T006 requires routing or linking. |
+| Register may become stale after future Brooks runs. | mitigated | T004 defines append/reconcile rules and keeps validation Markdown-only until drift appears. |
+| History file may be local telemetry rather than durable source. | mitigated | D002 treats score history as optional supporting evidence. |
+| Findings may duplicate backlog items. | mitigated | T006 links duplicated findings to existing backlog/roadmap items or explicit no-action decisions. |
 
 ## Closure Readiness
 
