@@ -49,9 +49,46 @@ def write_sync_guard_repo(repo: Path, codex_home: Path, include_cache: bool = Tr
     (source / "scripts").mkdir()
     (source / "scripts/spec_runtime.py").write_text("print('runtime')\n", encoding="utf-8")
     shutil.copytree(source, bundled_skill, dirs_exist_ok=True)
-    (bundled / ".codex-plugin/plugin.json").write_text('{"name": "spec-lifecycle-manager"}\n', encoding="utf-8")
+    (bundled / ".codex-plugin/plugin.json").write_text(
+        '{"name": "spec-lifecycle-manager", "version": "0.1.0+test"}\n',
+        encoding="utf-8",
+    )
     (repo / "scripts/install-spec-lifecycle-manager-package.sh").write_text("#!/usr/bin/env bash\n", encoding="utf-8")
-    (repo / "packaging/spec-lifecycle-manager/package-manifest.json").write_text('{"name": "spec-lifecycle-manager"}\n', encoding="utf-8")
+    (repo / "packaging/spec-lifecycle-manager/package-manifest.json").write_text(
+        '{"name": "spec-lifecycle-manager", "version": "0.1.0+test"}\n',
+        encoding="utf-8",
+    )
+    (repo / "packaging/spec-lifecycle-manager/Containerfile").write_text("FROM scratch\n", encoding="utf-8")
+    (repo / "packaging/spec-lifecycle-manager/ghcr-package.json").write_text(
+        json.dumps(
+            {
+                "name": "spec-lifecycle-manager",
+                "registry": "ghcr.io",
+                "image": "ghcr.io/example/spec-lifecycle-manager",
+                "publish_status": "contract-ready-not-published",
+                "version_source": "plugins/spec-lifecycle-manager/.codex-plugin/plugin.json#/version",
+                "payload_root": "plugins/spec-lifecycle-manager",
+                "required_paths": [
+                    "plugins/spec-lifecycle-manager/.codex-plugin/plugin.json",
+                    "plugins/spec-lifecycle-manager/.mcp.json",
+                    "plugins/spec-lifecycle-manager/hooks/hooks.json",
+                    "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/SKILL.md",
+                    "packaging/spec-lifecycle-manager/package-manifest.json",
+                    "packaging/spec-lifecycle-manager/Containerfile",
+                ],
+                "provenance": {
+                    "source_repository": "https://example.invalid/repo",
+                    "source_path": "plugins/spec-lifecycle-manager",
+                },
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (bundled / ".mcp.json").write_text('{"mcpServers": {}}\n', encoding="utf-8")
+    (bundled / "hooks").mkdir()
+    (bundled / "hooks/hooks.json").write_text('{"hooks": {}}\n', encoding="utf-8")
     if include_cache:
         cache = codex_home / "plugins/cache/auriora-local/spec-lifecycle-manager/0.1.0+test"
         shutil.copytree(bundled, cache, dirs_exist_ok=True)
@@ -236,6 +273,37 @@ def write_complete_spec(repo: Path, status: str = "draft") -> Path:
 
 
 class SpecRuntimeTests(unittest.TestCase):
+    def test_package_contract_validates_required_shape(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            codex_home = Path(tmp) / "codex"
+            repo.mkdir()
+            write_sync_guard_repo(repo, codex_home)
+            run_git(repo, "init")
+            commit_all(repo, "initial package")
+
+            payload = spec_runtime.package_contract(repo)
+
+        self.assertEqual("pass", payload["status"])
+        self.assertEqual("spec-lifecycle-manager", payload["package"]["name"])
+        self.assertEqual("in_sync", payload["source_bundle_parity"]["status"])
+        self.assertTrue(all(item["exists"] for item in payload["required_paths"]))
+        self.assertEqual(0, payload["summary"]["error"])
+
+    def test_package_contract_reports_missing_required_path(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            codex_home = Path(tmp) / "codex"
+            repo.mkdir()
+            write_sync_guard_repo(repo, codex_home)
+            (repo / "plugins/spec-lifecycle-manager/.mcp.json").unlink()
+
+            payload = spec_runtime.package_contract(repo)
+
+        self.assertEqual("findings", payload["status"])
+        self.assertGreater(payload["summary"]["error"], 0)
+        self.assertTrue(any(item["code"] == "PACKAGE_REQUIRED_PATH_MISSING" for item in payload["diagnostics"]))
+
     def test_sync_guard_reports_clean_source_bundle_and_cache_parity(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp) / "repo"

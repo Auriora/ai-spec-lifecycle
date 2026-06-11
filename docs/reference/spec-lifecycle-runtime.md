@@ -52,6 +52,7 @@ not available.
 | `hook` | Run lifecycle hook checks over changed files, selected specs, selected task IDs, or review-result files. |
 | `archive-index` | Validate `docs/history/spec-archive-index.md` entries, retained/removed package state, closure-log consistency, commit evidence fields, and durable destination references. |
 | `sync-guard` | Report read-only source skill, bundled plugin, installed cache, MCP reload, and recent commit sync state. |
+| `package-contract` | Validate the Spec Lifecycle Manager package distribution contract, GHCR metadata, required package files, source/bundle parity, and provenance. |
 
 ## MCP Server
 
@@ -207,6 +208,33 @@ The command returns JSON with:
 
 Use `--codex-home <path>` for fixture validation or non-default Codex homes,
 and `--commits <N>` to adjust recent commit evidence depth.
+
+## Package Contract
+
+`package-contract` validates this repository's Spec Lifecycle Manager
+distribution contract without building, pushing, pulling, or installing a
+registry artifact:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .
+```
+
+The command checks:
+
+- `packaging/spec-lifecycle-manager/ghcr-package.json` is valid JSON and
+  includes the package name, image reference, registry, publish status, payload
+  root, and required path list.
+- `packaging/spec-lifecycle-manager/package-manifest.json` and
+  `plugins/spec-lifecycle-manager/.codex-plugin/plugin.json` are readable.
+- every required package input exists, including the plugin manifest, MCP
+  config, hook config, skill scripts, prompts, references, package manifest,
+  and Containerfile.
+- source skill and bundled plugin skill contents are in sync.
+- Git HEAD provenance is reported when available.
+
+The current GHCR status is `contract-ready-not-published`: local marketplace
+install remains the supported install path until a future publish/install slice
+adds registry authentication, push, pull, and install behavior.
 
 ## Traceability Lookup
 

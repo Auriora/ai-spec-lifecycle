@@ -80,6 +80,25 @@ The installer:
 The plugin has no third-party runtime dependencies. It requires Python 3.9 or
 newer and otherwise uses the Python standard library.
 
+## Distribution Contract
+
+The repository also defines a GHCR-ready package contract:
+
+```text
+packaging/spec-lifecycle-manager/ghcr-package.json
+packaging/spec-lifecycle-manager/Containerfile
+```
+
+This contract describes the planned
+`ghcr.io/bcherrington/spec-lifecycle-manager` artifact, version source,
+payload root, OCI labels, compatibility requirements, provenance fields, and
+required package inputs. Its current status is
+`contract-ready-not-published`.
+
+Local marketplace install remains the supported install path in this slice.
+Publishing to GHCR, registry authentication, pulling from GHCR, and installing
+directly from a registry artifact are future work.
+
 ## Hook Policy
 
 Spec lifecycle hooks are advisory-only. The bundled hook file is:
@@ -116,6 +135,7 @@ Use this checklist in this repository after install, sync, or reload:
 | Prompt definitions validate | `prompts_validate` returns no diagnostics. |
 | Package tools resolve live specs | `closure_check`, `task_context`, or `traceability_lookup` work when an active spec exists. |
 | Sync guard is reviewed | In this repository, `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py sync-guard .` reports source/bundle parity, installed cache state, reload advisory, and recent commit evidence. |
+| Package contract validates | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .` returns no diagnostics for GHCR contract metadata, required package files, source/bundle parity, and provenance. |
 | No old standalone skill remains | `~/.codex/skills/spec-lifecycle-manager/` is absent after installer cleanup. |
 | No old managed host MCP remains | `~/.codex/config.toml` does not contain the old installer-managed `mcp_servers.spec-lifecycle-manager` block. |
 

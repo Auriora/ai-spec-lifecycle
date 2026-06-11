@@ -2,6 +2,11 @@
   "name": "spec-lifecycle-manager",
   "version": "0.1.0+codex.20260606221001",
   "registry": "local",
+  "distribution": {
+    "ghcr_contract": "packaging/spec-lifecycle-manager/ghcr-package.json",
+    "ghcr_image": "ghcr.io/bcherrington/spec-lifecycle-manager",
+    "publish_status": "contract-ready-not-published"
+  },
   "installer": "scripts/install-spec-lifecycle-manager-package.sh",
   "entrypoint": "plugin-bundled mcpServers entry: plugins/spec-lifecycle-manager/.mcp.json",
   "dependency_install": {

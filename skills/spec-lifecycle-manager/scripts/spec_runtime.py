@@ -1057,6 +1057,113 @@ def sync_guard(repo_root: Path, codex_home: Path | None = None, commit_count: in
     }
 
 
+def load_json_file(path: Path, artifact_name: str) -> tuple[dict[str, Any] | None, list[dict[str, Any]]]:
+    if not path.exists():
+        return None, [diagnostic("error", "PACKAGE_JSON_MISSING", path, f"Missing {artifact_name}: {path}", lifecycle_gate="package", waivable=False)]
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        return None, [diagnostic("error", "PACKAGE_JSON_INVALID", path, f"Invalid {artifact_name}: {exc}", lifecycle_gate="package", waivable=False)]
+    if not isinstance(data, dict):
+        return None, [diagnostic("error", "PACKAGE_JSON_NOT_OBJECT", path, f"{artifact_name} must be a JSON object.", lifecycle_gate="package", waivable=False)]
+    return data, []
+
+
+def git_head_commit(repo_root: Path) -> dict[str, Any]:
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=repo_root,
+            check=False,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+    except OSError as exc:
+        return {"status": "unknown", "reason": str(exc), "commit": None}
+    if result.returncode != 0:
+        return {"status": "unknown", "reason": result.stderr.strip() or f"git rev-parse exited with {result.returncode}", "commit": None}
+    return {"status": "ok", "commit": result.stdout.strip()}
+
+
+def package_contract(repo_root: Path) -> dict[str, Any]:
+    root = repo_root.resolve()
+    contract_path = root / "packaging" / "spec-lifecycle-manager" / "ghcr-package.json"
+    manifest_path = root / "packaging" / "spec-lifecycle-manager" / "package-manifest.json"
+    plugin_manifest_path = root / "plugins" / "spec-lifecycle-manager" / ".codex-plugin" / "plugin.json"
+    diagnostics: list[dict[str, Any]] = []
+
+    contract, contract_diagnostics = load_json_file(contract_path, "GHCR package contract")
+    manifest, manifest_diagnostics = load_json_file(manifest_path, "package manifest")
+    plugin_manifest, plugin_manifest_diagnostics = load_json_file(plugin_manifest_path, "plugin manifest")
+    diagnostics.extend(contract_diagnostics)
+    diagnostics.extend(manifest_diagnostics)
+    diagnostics.extend(plugin_manifest_diagnostics)
+
+    required_paths: list[dict[str, Any]] = []
+    required_values = []
+    if contract:
+        value = contract.get("required_paths")
+        if isinstance(value, list) and all(isinstance(item, str) for item in value):
+            required_values = value
+        else:
+            diagnostics.append(diagnostic("error", "PACKAGE_REQUIRED_PATHS_INVALID", contract_path, "required_paths must be a list of strings.", lifecycle_gate="package", waivable=False))
+    for relative in required_values:
+        exists = (root / relative).exists()
+        required_paths.append({"path": relative, "exists": exists})
+        if not exists:
+            diagnostics.append(diagnostic("error", "PACKAGE_REQUIRED_PATH_MISSING", root / relative, f"Missing package input: {relative}", lifecycle_gate="package", waivable=False))
+
+    source_bundle = compare_sync_trees(
+        root / "skills" / "spec-lifecycle-manager",
+        root / "plugins" / "spec-lifecycle-manager" / "skills" / "spec-lifecycle-manager",
+        "source_skill",
+        "bundled_plugin_skill",
+    )
+    if source_bundle["status"] != "in_sync":
+        diagnostics.append(diagnostic("error", "PACKAGE_SOURCE_BUNDLE_DRIFT", root / "plugins" / "spec-lifecycle-manager" / "skills" / "spec-lifecycle-manager", "Source skill and bundled plugin skill are not in sync.", lifecycle_gate="package", waivable=False))
+
+    package_info = {
+        "name": contract.get("name") if contract else None,
+        "image": contract.get("image") if contract else None,
+        "registry": contract.get("registry") if contract else None,
+        "publish_status": contract.get("publish_status") if contract else None,
+        "version_source": contract.get("version_source") if contract else None,
+        "manifest_version": manifest.get("version") if manifest else None,
+        "plugin_version": plugin_manifest.get("version") if plugin_manifest else None,
+        "payload_root": contract.get("payload_root") if contract else None,
+    }
+    for field in ["name", "image", "registry", "publish_status", "payload_root", "version_source"]:
+        if contract is not None and not contract.get(field):
+            diagnostics.append(diagnostic("error", "PACKAGE_CONTRACT_FIELD_MISSING", contract_path, f"Missing package contract field: {field}", lifecycle_gate="package", waivable=False))
+    if manifest is not None and not manifest.get("version"):
+        diagnostics.append(diagnostic("error", "PACKAGE_MANIFEST_VERSION_MISSING", manifest_path, "Missing package manifest version.", lifecycle_gate="package", waivable=False))
+    if plugin_manifest is not None and not plugin_manifest.get("version"):
+        diagnostics.append(diagnostic("error", "PACKAGE_PLUGIN_VERSION_MISSING", plugin_manifest_path, "Missing plugin manifest version.", lifecycle_gate="package", waivable=False))
+
+    provenance = {
+        "git": git_head_commit(root),
+        "source_repository": contract.get("provenance", {}).get("source_repository") if isinstance(contract and contract.get("provenance"), dict) else None,
+        "source_path": contract.get("provenance", {}).get("source_path") if isinstance(contract and contract.get("provenance"), dict) else None,
+    }
+
+    summary = diagnostic_summary(diagnostics)
+    if not diagnostics:
+        summary["pass"] = 1
+    return {
+        "repo_root": str(root),
+        "contract_path": str(contract_path),
+        "manifest_path": str(manifest_path),
+        "status": "pass" if not diagnostics else "findings",
+        "package": package_info,
+        "required_paths": required_paths,
+        "source_bundle_parity": source_bundle,
+        "provenance": provenance,
+        "diagnostics": diagnostics,
+        "summary": summary,
+    }
+
+
 def parse_tasks(path: Path) -> list[Task]:
     if not path.exists():
         return []
@@ -2147,6 +2254,9 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     sync.add_argument("--codex-home", type=Path)
     sync.add_argument("--commits", type=int, default=5)
 
+    package = sub.add_parser("package-contract", help="Validate the Spec Lifecycle Manager package distribution contract.")
+    package.add_argument("repo_root", type=Path, nargs="?", default=Path.cwd())
+
     hook = sub.add_parser("hook", help="Run a spec lifecycle hook.")
     hook.add_argument(
         "hook_name",
@@ -2214,6 +2324,8 @@ def main(argv: list[str] | None = None) -> int:
         payload = archive_index(args.repo_root)
     elif args.command == "sync-guard":
         payload = sync_guard(args.repo_root, args.codex_home, args.commits)
+    elif args.command == "package-contract":
+        payload = package_contract(args.repo_root)
     elif args.command == "hook":
         payload = run_hook(
             args.repo_root,
