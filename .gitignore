@@ -1,3 +1,4 @@
 .cache/
 .codex/
 __pycache__
+*.tgz
