@@ -149,6 +149,8 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertIn("no_active_spec_context", tools)
         self.assertIn("closure_check", tools)
         self.assertIn("archive_index", tools)
+        self.assertIn("resolve_spec_reference", tools)
+        self.assertIn("mcp_audit", tools)
         structured = responses[1]["result"]["structuredContent"]
         self.assertIn("specs", structured)
         self.assertEqual(".", structured["repo_root"])
@@ -185,10 +187,12 @@ class SpecMcpServerTests(unittest.TestCase):
 
         tools = {tool["name"]: tool for tool in response["result"]["tools"]}
         review_type = tools["review_packet"]["inputSchema"]["properties"]["review_type"]
+        tool_name = tools["agent_backed_tool"]["inputSchema"]["properties"]["tool_name"]
         canonical = {item["value"] for item in review_type["x-canonical-review-types"]}
         aliases = {item["value"]: item["maps_to"] for item in review_type["x-review-type-aliases"]}
 
         self.assertEqual("design_requirements_trace", review_type["default"])
+        self.assertEqual("design_requirements_trace", tool_name["default"])
         self.assertIn("implementation_review", canonical)
         self.assertIn("generic_review", canonical)
         self.assertEqual("implementation_review", aliases["implementation"])
@@ -236,6 +240,73 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertEqual("implementation-readiness", implementation["requested_review_type"])
         self.assertEqual("generic_review", generic["review_type"])
         self.assertEqual("release-polish", generic["requested_review_type"])
+
+    def test_resolve_spec_reference_tool_reports_active_and_missing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / ".git").mkdir()
+            write_current_spec(repo)
+            responses = self.send(
+                rpc(
+                    1,
+                    "tools/call",
+                    {
+                        "name": "resolve_spec_reference",
+                        "arguments": {"repo_root": str(repo), "reference": "001-current"},
+                    },
+                ),
+                rpc(
+                    2,
+                    "tools/call",
+                    {
+                        "name": "resolve_spec_reference",
+                        "arguments": {"repo_root": str(repo), "reference": "999-missing"},
+                    },
+                ),
+                root=repo,
+            )
+
+        active = responses[0]["result"]["structuredContent"]
+        missing = responses[1]["result"]["structuredContent"]
+        self.assertEqual("active", active["status"])
+        self.assertEqual("docs/specs/001-current", active["path"])
+        self.assertEqual("missing", missing["status"])
+        self.assertIn("active_candidates", missing)
+
+    def test_mcp_audit_tool_summarizes_session_mentions(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            sessions = Path(tmp) / "sessions"
+            repo.mkdir()
+            sessions.mkdir()
+            (repo / ".git").mkdir()
+            (sessions / "rollout.jsonl").write_text(
+                "\n".join(
+                    [
+                        json.dumps({"payload": {"role": "user", "content": "spec-lifecycle-manager.review_packet({})"}}),
+                        json.dumps({"payload": {"role": "assistant", "content": "Unknown review packet type: implementation"}}),
+                        json.dumps({"payload": {"role": "assistant", "content": "specs://active"}}),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            [response] = self.send(
+                rpc(
+                    1,
+                    "tools/call",
+                    {
+                        "name": "mcp_audit",
+                        "arguments": {"repo_root": str(repo), "sessions_root": str(sessions)},
+                    },
+                ),
+                root=repo,
+            )
+
+        payload = response["result"]["structuredContent"]
+        self.assertEqual("ok", payload["status"])
+        self.assertEqual(1, payload["matched_files"])
+        self.assertEqual(1, payload["error_counts"]["unknown_review_packet_type"])
 
     def test_agent_backed_tool_returns_unavailable_through_mcp(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -321,6 +392,8 @@ class SpecMcpServerTests(unittest.TestCase):
         payload = json.loads(content["text"])
         self.assertIn("specs", payload)
         self.assertEqual(".", payload["repo_root"])
+        self.assertEqual(".", payload["resource_binding"]["repo_root"])
+        self.assertEqual("repo-relative", payload["resource_binding"]["path_policy"])
         self.assertNotIn(str(ROOT), content["text"])
 
     def test_resources_use_workspace_env_when_server_has_no_root_argument(self):
@@ -339,6 +412,7 @@ class SpecMcpServerTests(unittest.TestCase):
         payload = json.loads(content["text"])
         self.assertEqual(".", payload["repo_root"])
         self.assertEqual("docs/specs/001-current", payload["specs"][0]["path"])
+        self.assertEqual(".", payload["resource_binding"]["repo_root"])
         self.assertNotIn(str(repo), content["text"])
 
     def test_archive_index_tool_and_resource(self):

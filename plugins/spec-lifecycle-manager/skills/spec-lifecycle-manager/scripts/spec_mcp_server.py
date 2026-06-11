@@ -221,7 +221,13 @@ def tool_definitions() -> list[dict[str, Any]]:
             "Run an advisory agent-backed tool; returns unavailable when no runner is configured.",
             {
                 **SPEC_PATH_PROPERTIES,
-                "tool_name": REVIEW_TYPE_PROPERTY,
+                "tool_name": {
+                    **REVIEW_TYPE_PROPERTY,
+                    "description": (
+                        "Agent-backed review tool selector. Uses the same canonical values, "
+                        "aliases, default, and generic fallback as review_packet review_type."
+                    ),
+                },
                 "model_class": "Optional model class.",
             },
             ["spec_path", "tool_name"],
@@ -242,6 +248,27 @@ def tool_definitions() -> list[dict[str, Any]]:
         tool_schema("next_task", "Select the next runnable task with traceability context.", SPEC_PATH_PROPERTIES, ["spec_path"]),
         tool_schema("closure_check", "Check closure readiness and blockers.", SPEC_PATH_PROPERTIES, ["spec_path"]),
         tool_schema("archive_index", "Validate spec archive index and closure-log consistency.", {"repo_root": REPO_ROOT_PROPERTY}),
+        tool_schema(
+            "resolve_spec_reference",
+            "Resolve an active, archived, missing, or ambiguous spec reference without throwing path-lookup errors.",
+            {
+                "repo_root": REPO_ROOT_PROPERTY,
+                "reference": "Spec package path, spec ID, numeric prefix, or archive package reference.",
+                "docs_root": "Optional docs root.",
+            },
+            ["reference"],
+        ),
+        tool_schema(
+            "mcp_audit",
+            "Summarize spec lifecycle MCP mentions and explicit errors in Codex session logs.",
+            {
+                "repo_root": REPO_ROOT_PROPERTY,
+                "sessions_root": "Directory containing Codex session JSONL files.",
+                "since": "Optional lexicographic relative-path cutoff, such as 2026/06/07.",
+                "limit": {"type": ["integer", "string"], "description": "Maximum matched session files and per-file items to return."},
+            },
+            ["sessions_root"],
+        ),
         tool_schema("reconcile_spec", "Generate a classified reconciliation report.", SPEC_PATH_PROPERTIES, ["spec_path"]),
         tool_schema("promotion_plan", "Generate durable documentation promotion targets.", SPEC_PATH_PROPERTIES, ["spec_path"]),
         tool_schema(
@@ -322,6 +349,21 @@ def call_tool(name: str, arguments: dict[str, Any], default_root: Path) -> tuple
         return spec_runtime.closure_check(spec_path_arg(arguments, default_root)), root
     if name == "archive_index":
         return spec_runtime.archive_index(root), root
+    if name == "resolve_spec_reference":
+        reference = arguments.get("reference")
+        if not reference:
+            raise ValueError("reference is required")
+        return spec_runtime.resolve_spec_reference(root, str(reference), arguments.get("docs_root")), root
+    if name == "mcp_audit":
+        sessions_root = arguments.get("sessions_root")
+        if not sessions_root:
+            raise ValueError("sessions_root is required")
+        limit_value = arguments.get("limit", 200)
+        try:
+            limit = int(limit_value)
+        except (TypeError, ValueError):
+            raise ValueError("limit must be an integer")
+        return spec_runtime.mcp_audit(root, Path(str(sessions_root)), arguments.get("since"), limit), root
     if name == "reconcile_spec":
         return spec_runtime.reconcile_spec(spec_path_arg(arguments, default_root)), root
     if name == "promotion_plan":
@@ -402,6 +444,7 @@ def list_resources(repo_root: Path) -> list[dict[str, str]]:
 def read_resource(uri: str, repo_root: Path) -> dict[str, Any]:
     if uri == "specs://active":
         payload = spec_runtime.scan_specs(repo_root)
+        payload["resource_binding"] = resource_binding(uri, repo_root)
         return resource_payload(uri, "application/json", json_text(normalize_mcp_payload(payload, repo_root)))
     if uri == "governance://constitution":
         path = repo_root / "docs" / "governance" / "constitution.md"
@@ -409,10 +452,12 @@ def read_resource(uri: str, repo_root: Path) -> dict[str, Any]:
         return resource_payload(uri, "text/markdown", text)
     if uri == "history://spec-archive-index":
         payload = spec_runtime.archive_index(repo_root)
+        payload["resource_binding"] = resource_binding(uri, repo_root)
         return resource_payload(uri, "application/json", json_text(normalize_mcp_payload(payload, repo_root)))
     if uri == "templates://spec-package":
         template_dir = repo_root / "skills" / "spec-lifecycle-manager" / "references" / "spec-package"
         payload = {"path": str(template_dir), "templates": sorted(path.name for path in template_dir.glob("*.md")) if template_dir.exists() else []}
+        payload["resource_binding"] = resource_binding(uri, repo_root)
         return resource_payload(uri, "application/json", json_text(normalize_mcp_payload(payload, repo_root)))
 
     spec_match = uri.removeprefix("specs://")
@@ -421,12 +466,22 @@ def read_resource(uri: str, repo_root: Path) -> dict[str, Any]:
         spec_path = resolve_spec_path(repo_root, spec_id)
         if suffix == "summary":
             payload = spec_runtime.spec_summary(spec_path)
+            payload["resource_binding"] = resource_binding(uri, repo_root)
             return resource_payload(uri, "application/json", json_text(normalize_mcp_payload(payload, repo_root)))
         if suffix == "health":
             payload = spec_runtime.lint_spec_package(spec_path)
             assert isinstance(payload, dict)
+            payload["resource_binding"] = resource_binding(uri, repo_root)
             return resource_payload(uri, "application/json", json_text(normalize_mcp_payload(payload, repo_root)))
     raise ValueError(f"Unknown resource URI: {uri}")
+
+
+def resource_binding(uri: str, repo_root: Path) -> dict[str, str]:
+    return {
+        "uri": uri,
+        "repo_root": str(repo_root.resolve()),
+        "path_policy": "repo-relative",
+    }
 
 
 def resource_payload(uri: str, mime_type: str, text: str) -> dict[str, Any]:

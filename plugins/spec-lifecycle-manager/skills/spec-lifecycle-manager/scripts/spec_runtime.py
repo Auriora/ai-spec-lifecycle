@@ -829,6 +829,187 @@ def archive_entry_payload(entry: ArchiveIndexEntry) -> dict[str, Any]:
     }
 
 
+def _reference_key(value: str) -> str:
+    return value.strip().strip("/").lower()
+
+
+def _archive_entry_matches(entry: dict[str, Any], value: str) -> bool:
+    key = _reference_key(value)
+    package_path = _reference_key(str(entry.get("package_path") or ""))
+    spec_id = _reference_key(str(entry.get("spec_id") or ""))
+    package_name = Path(package_path).name.lower() if package_path else ""
+    numeric_prefix = spec_id.split("-", 1)[0] if spec_id else ""
+    return key in {spec_id, package_path, package_name, numeric_prefix}
+
+
+def resolve_spec_reference(repo_root: Path, value: str | None, docs_root: str | None = None) -> dict[str, Any]:
+    """Classify a spec reference without forcing callers to parse exceptions."""
+    root = repo_root.resolve()
+    requested = (value or "").strip()
+    if not requested:
+        return {
+            "repo_root": str(root),
+            "requested": requested,
+            "status": "missing",
+            "reason": "spec_path or spec_id is required.",
+            "guidance": "Call scan_specs for live packages or archive_index for closed package history.",
+            "active_candidates": [],
+            "archive_matches": [],
+        }
+
+    path = Path(requested)
+    active_matches: list[Path] = []
+    if path.is_absolute() and path.exists():
+        active_matches.append(path.resolve())
+    else:
+        direct = (root / requested).resolve()
+        if direct.exists():
+            active_matches.append(direct)
+
+    discovered = discover_spec_paths(root, docs_root)
+    for spec_path in discovered:
+        try:
+            relative = spec_path.relative_to(root).as_posix()
+        except ValueError:
+            relative = str(spec_path)
+        if requested in {spec_path.name, relative, spec_path.as_posix(), str(spec_path)}:
+            active_matches.append(spec_path.resolve())
+
+    unique_active = sorted({match for match in active_matches})
+    if len(unique_active) == 1:
+        spec_path = unique_active[0]
+        return {
+            "repo_root": str(root),
+            "requested": requested,
+            "status": "active",
+            "spec_id": spec_path.name,
+            "path": str(spec_path),
+            "lifecycle": spec_lifecycle(spec_status(spec_path)),
+            "guidance": "Use this path with spec_path tools.",
+        }
+    if len(unique_active) > 1:
+        return {
+            "repo_root": str(root),
+            "requested": requested,
+            "status": "ambiguous",
+            "reason": "Reference matched multiple active specs.",
+            "matches": [{"spec_id": spec.name, "path": str(spec)} for spec in unique_active],
+            "guidance": "Use a full repo-relative spec package path.",
+        }
+
+    archive_payload = archive_index(root)
+    archive_matches = [
+        entry
+        for entry in archive_payload.get("entries", [])
+        if isinstance(entry, dict) and _archive_entry_matches(entry, requested)
+    ]
+    if archive_matches:
+        return {
+            "repo_root": str(root),
+            "requested": requested,
+            "status": "archived",
+            "archive_matches": archive_matches,
+            "guidance": "Use archive history for read-only context; do not call active spec tools with this reference.",
+        }
+
+    return {
+        "repo_root": str(root),
+        "requested": requested,
+        "status": "missing",
+        "reason": "No active or archived spec matched the reference.",
+        "active_candidates": [{"spec_id": spec.name, "path": str(spec)} for spec in discovered],
+        "archive_matches": [],
+        "guidance": "Call scan_specs for live packages or history://spec-archive-index for closed package history.",
+    }
+
+
+MCP_AUDIT_PATTERNS = {
+    "unknown_review_packet_type": re.compile(r"Unknown review packet type: ([^\\\"\\n]+)"),
+    "active_spec_not_found": re.compile(r"Active spec not found: ([^\\\"\\n]+)"),
+    "tool_call": re.compile(r"spec-lifecycle-manager[./]([A-Za-z_][A-Za-z0-9_]*)"),
+    "resource": re.compile(r"(specs://active|specs://[A-Za-z0-9_.-]+/(?:summary|health)|history://spec-archive-index|templates://spec-package)"),
+}
+
+
+def mcp_audit(repo_root: Path, sessions_root: Path, since: str | None = None, limit: int = 200) -> dict[str, Any]:
+    """Summarize lifecycle MCP mentions and explicit errors in Codex JSONL sessions."""
+    root = repo_root.resolve()
+    sessions = sessions_root.expanduser().resolve()
+    session_summaries: list[dict[str, Any]] = []
+    error_counts: dict[str, int] = {}
+    mention_counts: dict[str, int] = {}
+    inspected = 0
+    if not sessions.exists():
+        return {
+            "repo_root": str(root),
+            "sessions_root": str(sessions),
+            "status": "missing_sessions_root",
+            "inspected_files": 0,
+            "matched_files": 0,
+            "sessions": [],
+            "error_counts": {},
+            "mention_counts": {},
+            "summary": {"error": 1, "warn": 0, "info": 0},
+        }
+
+    for path in sorted(sessions.rglob("*.jsonl")):
+        relative_name = path.relative_to(sessions).as_posix()
+        if since and relative_name < since:
+            continue
+        inspected += 1
+        errors: list[dict[str, Any]] = []
+        mentions: list[dict[str, Any]] = []
+        try:
+            lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()
+        except OSError as exc:
+            errors.append({"line": 0, "type": "read_error", "value": str(exc)})
+            lines = []
+        for line_number, line in enumerate(lines, 1):
+            if "spec-lifecycle-manager" not in line and "specs://" not in line and "Unknown review packet" not in line and "Active spec not found" not in line:
+                continue
+            for name, pattern in MCP_AUDIT_PATTERNS.items():
+                for match in pattern.finditer(line):
+                    value = match.group(1) if match.groups() else match.group(0)
+                    item = {"line": line_number, "type": name, "value": value[:240]}
+                    if name in {"unknown_review_packet_type", "active_spec_not_found"}:
+                        errors.append(item)
+                        error_counts[name] = error_counts.get(name, 0) + 1
+                    else:
+                        mentions.append(item)
+                        mention_counts[name] = mention_counts.get(name, 0) + 1
+        if errors or mentions:
+            session_summaries.append(
+                {
+                    "path": str(path),
+                    "matched": True,
+                    "errors": errors[:limit],
+                    "mentions": mentions[:limit],
+                    "error_count": len(errors),
+                    "mention_count": len(mentions),
+                }
+            )
+        if len(session_summaries) >= limit:
+            break
+
+    summary = {
+        "error": sum(item["error_count"] for item in session_summaries),
+        "warn": 0,
+        "info": sum(item["mention_count"] for item in session_summaries),
+    }
+    return {
+        "repo_root": str(root),
+        "sessions_root": str(sessions),
+        "status": "ok",
+        "since": since,
+        "inspected_files": inspected,
+        "matched_files": len(session_summaries),
+        "sessions": session_summaries,
+        "error_counts": error_counts,
+        "mention_counts": mention_counts,
+        "summary": summary,
+    }
+
+
 def sync_guard_file_manifest(root: Path) -> tuple[dict[str, str], list[dict[str, Any]]]:
     diagnostics: list[dict[str, Any]] = []
     manifest: dict[str, str] = {}
@@ -904,6 +1085,7 @@ def sync_guard_applicability(repo_root: Path) -> dict[str, Any]:
         "skills/spec-lifecycle-manager/SKILL.md",
         "plugins/spec-lifecycle-manager/.codex-plugin/plugin.json",
         "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/SKILL.md",
+        "plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/SKILL.md",
         "scripts/install-spec-lifecycle-manager-package.sh",
         "packaging/spec-lifecycle-manager/package-manifest.json",
     ]
@@ -1018,10 +1200,12 @@ def sync_guard(repo_root: Path, codex_home: Path | None = None, commit_count: in
     source_skill = root / "skills" / "spec-lifecycle-manager"
     bundled_plugin = root / "plugins" / "spec-lifecycle-manager"
     bundled_skill = bundled_plugin / "skills" / "spec-lifecycle-manager"
+    claude_skill = bundled_plugin / "claude-plugin" / "skills" / "spec-lifecycle-manager"
     cache_candidates = discover_plugin_cache_candidates(home)
     selected_cache = cache_candidates[0] if cache_candidates else None
 
     source_bundle = compare_sync_trees(source_skill, bundled_skill, "source_skill", "bundled_plugin_skill")
+    source_claude = compare_sync_trees(source_skill, claude_skill, "source_skill", "claude_plugin_skill")
     if selected_cache:
         bundle_cache = compare_sync_trees(bundled_plugin, selected_cache, "bundled_plugin", "installed_cache")
     else:
@@ -1047,6 +1231,8 @@ def sync_guard(repo_root: Path, codex_home: Path | None = None, commit_count: in
     findings: list[dict[str, Any]] = []
     if source_bundle["status"] != "in_sync":
         findings.append({"severity": source_bundle["severity"], "code": "SOURCE_BUNDLE_DRIFT", "message": "Source skill and bundled plugin skill are not in sync."})
+    if source_claude["status"] != "in_sync":
+        findings.append({"severity": source_claude["severity"], "code": "SOURCE_CLAUDE_DRIFT", "message": "Source skill and Claude plugin skill are not in sync."})
     if bundle_cache["status"] != "in_sync":
         findings.append({"severity": bundle_cache["severity"], "code": "BUNDLE_CACHE_DRIFT", "message": "Bundled plugin and installed plugin cache are not in sync or cache is missing."})
     if reload["status"] != "not_required_by_guard":
@@ -1064,6 +1250,8 @@ def sync_guard(repo_root: Path, codex_home: Path | None = None, commit_count: in
     recommendations = []
     if source_bundle["status"] != "in_sync":
         recommendations.append("Sync plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager from skills/spec-lifecycle-manager before packaging.")
+    if source_claude["status"] != "in_sync":
+        recommendations.append("Sync plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager from skills/spec-lifecycle-manager before packaging.")
     if bundle_cache["status"] != "in_sync":
         recommendations.append("Run scripts/install-spec-lifecycle-manager-package.sh, then reload Codex if MCP tools or hooks should use the new package.")
     if commits["status"] == "missing_evidence":
@@ -1075,6 +1263,7 @@ def sync_guard(repo_root: Path, codex_home: Path | None = None, commit_count: in
         "status": "pass" if not findings else "findings",
         "applicability": applicability,
         "source_bundle_parity": source_bundle,
+        "source_claude_parity": source_claude,
         "bundle_cache_parity": {
             **bundle_cache,
             "cache_candidates": [str(path) for path in cache_candidates],
@@ -1155,8 +1344,16 @@ def package_contract(repo_root: Path) -> dict[str, Any]:
         "source_skill",
         "bundled_plugin_skill",
     )
+    source_claude = compare_sync_trees(
+        root / "skills" / "spec-lifecycle-manager",
+        root / "plugins" / "spec-lifecycle-manager" / "claude-plugin" / "skills" / "spec-lifecycle-manager",
+        "source_skill",
+        "claude_plugin_skill",
+    )
     if source_bundle["status"] != "in_sync":
         diagnostics.append(diagnostic("error", "PACKAGE_SOURCE_BUNDLE_DRIFT", root / "plugins" / "spec-lifecycle-manager" / "skills" / "spec-lifecycle-manager", "Source skill and bundled plugin skill are not in sync.", lifecycle_gate="package", waivable=False))
+    if source_claude["status"] != "in_sync":
+        diagnostics.append(diagnostic("error", "PACKAGE_SOURCE_CLAUDE_DRIFT", root / "plugins" / "spec-lifecycle-manager" / "claude-plugin" / "skills" / "spec-lifecycle-manager", "Source skill and Claude plugin skill are not in sync.", lifecycle_gate="package", waivable=False))
 
     npm_info = {
         "package_name": npm_contract.get("package_name") if npm_contract else None,
@@ -1214,6 +1411,7 @@ def package_contract(repo_root: Path) -> dict[str, Any]:
         "package": package_info,
         "required_paths": required_paths,
         "source_bundle_parity": source_bundle,
+        "source_claude_parity": source_claude,
         "provenance": provenance,
         "diagnostics": diagnostics,
         "summary": summary,
@@ -2354,6 +2552,17 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     archive = sub.add_parser("archive-index", help="Validate spec archive index and closure-log consistency.")
     archive.add_argument("repo_root", type=Path, nargs="?", default=Path.cwd())
 
+    resolve = sub.add_parser("resolve-spec", help="Resolve an active, archived, missing, or ambiguous spec reference.")
+    resolve.add_argument("reference")
+    resolve.add_argument("--repo-root", type=Path, default=Path.cwd())
+    resolve.add_argument("--docs-root")
+
+    audit = sub.add_parser("mcp-audit", help="Summarize spec lifecycle MCP mentions and explicit errors in Codex session logs.")
+    audit.add_argument("sessions_root", type=Path)
+    audit.add_argument("--repo-root", type=Path, default=Path.cwd())
+    audit.add_argument("--since")
+    audit.add_argument("--limit", type=int, default=200)
+
     sync = sub.add_parser("sync-guard", help="Report source, package, install, MCP reload, and commit sync state.")
     sync.add_argument("repo_root", type=Path, nargs="?", default=Path.cwd())
     sync.add_argument("--codex-home", type=Path)
@@ -2427,6 +2636,10 @@ def main(argv: list[str] | None = None) -> int:
         payload = load_prompt_definitions(args.repo_root)
     elif args.command == "archive-index":
         payload = archive_index(args.repo_root)
+    elif args.command == "resolve-spec":
+        payload = resolve_spec_reference(args.repo_root, args.reference, args.docs_root)
+    elif args.command == "mcp-audit":
+        payload = mcp_audit(args.repo_root, args.sessions_root, args.since, args.limit)
     elif args.command == "sync-guard":
         payload = sync_guard(args.repo_root, args.codex_home, args.commits)
     elif args.command == "package-contract":

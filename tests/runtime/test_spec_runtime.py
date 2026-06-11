@@ -40,8 +40,10 @@ def write_sync_guard_repo(repo: Path, codex_home: Path, include_cache: bool = Tr
     source = repo / "skills/spec-lifecycle-manager"
     bundled = repo / "plugins/spec-lifecycle-manager"
     bundled_skill = bundled / "skills/spec-lifecycle-manager"
+    claude_skill = bundled / "claude-plugin/skills/spec-lifecycle-manager"
     source.mkdir(parents=True)
     bundled_skill.mkdir(parents=True)
+    claude_skill.mkdir(parents=True)
     (bundled / ".codex-plugin").mkdir(parents=True)
     (repo / "scripts").mkdir()
     (repo / "packaging/spec-lifecycle-manager").mkdir(parents=True)
@@ -49,6 +51,7 @@ def write_sync_guard_repo(repo: Path, codex_home: Path, include_cache: bool = Tr
     (source / "scripts").mkdir()
     (source / "scripts/spec_runtime.py").write_text("print('runtime')\n", encoding="utf-8")
     shutil.copytree(source, bundled_skill, dirs_exist_ok=True)
+    shutil.copytree(source, claude_skill, dirs_exist_ok=True)
     (bundled / ".codex-plugin/plugin.json").write_text(
         '{"name": "spec-lifecycle-manager", "version": "0.1.0+test"}\n',
         encoding="utf-8",
@@ -97,6 +100,7 @@ def write_sync_guard_repo(repo: Path, codex_home: Path, include_cache: bool = Tr
                     "plugins/spec-lifecycle-manager/.codex-plugin/plugin.json",
                     "plugins/spec-lifecycle-manager/.mcp.json",
                     "plugins/spec-lifecycle-manager/hooks/hooks.json",
+                    "plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/SKILL.md",
                     "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/SKILL.md",
                     "scripts/install-spec-lifecycle-manager-package.sh",
                 ],
@@ -313,6 +317,7 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertEqual("npm", payload["package"]["primary"])
         self.assertEqual("pack-ready-not-published", payload["package"]["npm"]["publish_status"])
         self.assertEqual("in_sync", payload["source_bundle_parity"]["status"])
+        self.assertEqual("in_sync", payload["source_claude_parity"]["status"])
         self.assertTrue(all(item["exists"] for item in payload["required_paths"]))
         self.assertEqual(0, payload["summary"]["error"])
 
@@ -342,6 +347,7 @@ class SpecRuntimeTests(unittest.TestCase):
             payload = spec_runtime.sync_guard(repo, codex_home, commit_count=1)
 
         self.assertEqual("in_sync", payload["source_bundle_parity"]["status"])
+        self.assertEqual("in_sync", payload["source_claude_parity"]["status"])
         self.assertEqual("in_sync", payload["bundle_cache_parity"]["status"])
         self.assertEqual("ok", payload["commit_evidence"]["status"])
         self.assertEqual(0, payload["summary"]["error"])
@@ -374,8 +380,10 @@ class SpecRuntimeTests(unittest.TestCase):
             payload = spec_runtime.sync_guard(repo, codex_home, commit_count=1)
 
         self.assertEqual("drift", payload["source_bundle_parity"]["status"])
+        self.assertEqual("drift", payload["source_claude_parity"]["status"])
         self.assertIn("SKILL.md", payload["source_bundle_parity"]["content_differences"])
         self.assertTrue(any(item["code"] == "SOURCE_BUNDLE_DRIFT" for item in payload["findings"]))
+        self.assertTrue(any(item["code"] == "SOURCE_CLAUDE_DRIFT" for item in payload["findings"]))
 
     def test_sync_guard_reports_missing_installed_cache(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -408,6 +416,70 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertEqual("missing_evidence", payload["commit_evidence"]["status"])
         self.assertEqual(1, payload["commit_evidence"]["source_skill_commit_count"])
         self.assertFalse(payload["commit_evidence"]["commits"][0]["touched_sync_evidence"])
+
+    def test_resolve_spec_reference_classifies_active_archived_missing_and_ambiguous(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            write_complete_spec(repo)
+            nested = repo / "docs/platform/specs/001-current"
+            shutil.copytree(repo / "docs/specs/001-current", nested)
+            history = repo / "docs/history"
+            history.mkdir(parents=True)
+            (history / "spec-closure-log.md").write_text("# Spec Closure Log\n", encoding="utf-8")
+            (history / "spec-archive-index.md").write_text(
+                "\n".join(
+                    [
+                        "# Spec Archive Index",
+                        "",
+                        "## Entries",
+                        "",
+                        "| Spec ID | Title | Package path | Status | Final spec commit | Cleanup commit | Closure action | Durable destinations | Verification |",
+                        "|---------|-------|--------------|--------|-------------------|----------------|----------------|----------------------|--------------|",
+                        "| 002-closed | Closed | `docs/specs/002-closed/` | removed | abc1234 | def5678 | removed-after-index | `docs/reference/current.md` | `docs/history/spec-closure-log.md` |",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            active = spec_runtime.resolve_spec_reference(repo, "docs/specs/001-current")
+            ambiguous = spec_runtime.resolve_spec_reference(repo, "001-current")
+            archived = spec_runtime.resolve_spec_reference(repo, "002")
+            missing = spec_runtime.resolve_spec_reference(repo, "999-missing")
+
+        self.assertEqual("active", active["status"])
+        self.assertEqual("001-current", active["spec_id"])
+        self.assertEqual("ambiguous", ambiguous["status"])
+        self.assertEqual(2, len(ambiguous["matches"]))
+        self.assertEqual("archived", archived["status"])
+        self.assertEqual("002-closed", archived["archive_matches"][0]["spec_id"])
+        self.assertEqual("missing", missing["status"])
+        self.assertIn("active_candidates", missing)
+
+    def test_mcp_audit_summarizes_session_errors_and_mentions(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            sessions = Path(tmp) / "sessions/2026/06/11"
+            repo.mkdir()
+            sessions.mkdir(parents=True)
+            (sessions / "rollout.jsonl").write_text(
+                "\n".join(
+                    [
+                        json.dumps({"payload": {"role": "user", "content": "spec-lifecycle-manager.review_packet({})"}}),
+                        json.dumps({"payload": {"role": "assistant", "content": "Unknown review packet type: implementation-readiness"}}),
+                        json.dumps({"payload": {"role": "assistant", "content": "read specs://active"}}),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            payload = spec_runtime.mcp_audit(repo, sessions.parent.parent.parent)
+
+        self.assertEqual("ok", payload["status"])
+        self.assertEqual(1, payload["matched_files"])
+        self.assertEqual(1, payload["error_counts"]["unknown_review_packet_type"])
+        self.assertGreaterEqual(payload["mention_counts"]["tool_call"], 1)
+        self.assertGreaterEqual(payload["mention_counts"]["resource"], 1)
 
     def test_scan_discovers_current_and_old_format_specs(self):
         with tempfile.TemporaryDirectory() as tmp:

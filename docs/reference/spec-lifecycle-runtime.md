@@ -51,6 +51,8 @@ not available.
 | `validate-review-result` | Validate accepted, rejected, deferred, and human-decision review-result disposition records. |
 | `hook` | Run lifecycle hook checks over changed files, selected specs, selected task IDs, or review-result files. |
 | `archive-index` | Validate `docs/history/spec-archive-index.md` entries, retained/removed package state, closure-log consistency, commit evidence fields, and durable destination references. |
+| `resolve-spec` | Resolve an active, archived, missing, or ambiguous spec reference without requiring callers to parse path lookup exceptions. |
+| `mcp-audit` | Summarize spec lifecycle MCP mentions and explicit errors in Codex session JSONL logs. |
 | `sync-guard` | Report read-only source skill, bundled plugin, installed cache, MCP reload, and recent commit sync state. |
 | `package-contract` | Validate the Spec Lifecycle Manager npm package distribution contract, required package files, source/bundle parity, and provenance. |
 
@@ -93,6 +95,8 @@ The server exposes read-only tools that delegate to the existing runtime:
 - `next_task`
 - `closure_check`
 - `archive_index`
+- `resolve_spec_reference`
+- `mcp_audit`
 - `reconcile_spec`
 - `promotion_plan`
 - `review_packet`
@@ -115,6 +119,24 @@ evidence, update durable docs, archive packages, remove files, or commit.
 next-task, traceability, durable-doc, closure-log, and archive-index context so
 agents can decide what to read before implementation. They do not invoke
 secondary agents and do not mutate files.
+
+`resolve_spec_reference` is the preferred recovery surface when an agent has a
+spec ID, numeric prefix, or package path but does not know whether it is active
+or closed. It returns structured `active`, `archived`, `ambiguous`, or
+`missing` statuses instead of requiring callers to infer lifecycle state from
+exception text.
+
+`review_packet.review_type` and `agent_backed_tool.tool_name` expose the same
+selector contract in `tools/list`: canonical review types, aliases, default,
+and generic fallback behavior. Unknown non-empty selector values map to
+`generic_review` and preserve the requested value in returned resolution
+metadata.
+
+`mcp_audit` scans local Codex session JSONL files for spec lifecycle MCP
+mentions and explicit errors such as unknown review packet types or active spec
+lookup failures. The command is read-only and intended for maintainer triage;
+session logs can include copied prompts or user-pasted errors, so audit output
+is evidence to inspect rather than proof that a tool executed.
 
 ### MCP Resources
 
@@ -139,6 +161,9 @@ the server without an explicit repository argument, it can set
 `SPEC_LIFECYCLE_REPO_ROOT`, `CODEX_REPO_ROOT`, `CODEX_WORKSPACE_ROOT`,
 `CODEX_WORKSPACE`, or `WORKSPACE_ROOT` so resource reads such as
 `specs://active` bind to the workspace instead of the plugin directory.
+JSON resources include a `resource_binding` object with the resource URI,
+repo-root binding, and path policy so clients can explain which workspace was
+used without exposing plugin cache paths as package inventory.
 
 Spec resources are exposed only for packages discovered by `scan_specs`,
 including nested docs partitions such as `docs/<name>/specs/[###-slug]/`.
@@ -194,6 +219,8 @@ The command returns JSON with:
   Manager package repository.
 - `source_bundle_parity`: compares `skills/spec-lifecycle-manager/` with
   `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/`.
+- `source_claude_parity`: compares `skills/spec-lifecycle-manager/` with
+  `plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/`.
 - `bundle_cache_parity`: compares `plugins/spec-lifecycle-manager/` with the
   newest installed cache candidate under
   `$CODEX_HOME/plugins/cache/*/spec-lifecycle-manager/*/`.
@@ -230,7 +257,8 @@ The command checks:
 - every required package input exists, including the plugin manifest, MCP
   config, hook config, skill scripts, prompts, references, package manifest,
   npm package contract, npm bin, and installer script.
-- source skill and bundled plugin skill contents are in sync.
+- source skill, bundled plugin skill, and Claude plugin skill contents are in
+  sync.
 - Git HEAD provenance is reported when available.
 
 The current npm status is `pack-ready-not-published`. Validate the tarball

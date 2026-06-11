@@ -2,6 +2,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import unittest
 from pathlib import Path
 
@@ -13,6 +14,10 @@ NPM_PACKAGE = ROOT / "package.json"
 SOURCE_SKILL = ROOT / "skills" / "spec-lifecycle-manager"
 BUNDLED_SKILL = PLUGIN / "skills" / "spec-lifecycle-manager"
 CLAUDE_SKILL = CLAUDE_PLUGIN / "skills" / "spec-lifecycle-manager"
+SCRIPT_DIR = SOURCE_SKILL / "scripts"
+sys.path.insert(0, str(SCRIPT_DIR))
+
+import spec_runtime
 
 
 class SpecPluginPackageTests(unittest.TestCase):
@@ -147,6 +152,12 @@ class SpecPluginPackageTests(unittest.TestCase):
         self.assertIn("plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/SKILL.md", files)
         self.assertFalse(any("__pycache__" in path for path in files))
         self.assertFalse(any(path.endswith((".pyc", ".pyo")) for path in files))
+
+    def test_package_contract_reports_claude_parity(self):
+        payload = spec_runtime.package_contract(ROOT)
+
+        self.assertIn("source_claude_parity", payload)
+        self.assertEqual("in_sync", payload["source_claude_parity"]["status"])
 
 
 if __name__ == "__main__":
