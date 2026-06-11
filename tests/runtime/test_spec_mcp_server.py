@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -103,13 +104,20 @@ def rpc(request_id, method, params=None):
 
 
 class SpecMcpServerTests(unittest.TestCase):
-    def send(self, *messages, root: Path = ROOT):
+    def send(self, *messages, root: Path | None = ROOT, env: dict[str, str] | None = None):
+        process_env = None
+        if env is not None:
+            process_env = {**os.environ, **env}
+        command = [sys.executable, str(SERVER)]
+        if root is not None:
+            command.append(str(root))
         completed = subprocess.run(
-            [sys.executable, str(SERVER), str(root)],
+            command,
             input="\n".join(json.dumps(message) for message in messages) + "\n",
             check=True,
             capture_output=True,
             text=True,
+            env=process_env,
         )
         return [json.loads(line) for line in completed.stdout.splitlines() if line.strip()]
 
@@ -143,6 +151,7 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertIn("archive_index", tools)
         structured = responses[1]["result"]["structuredContent"]
         self.assertIn("specs", structured)
+        self.assertEqual(".", structured["repo_root"])
         self.assertEqual(0, structured["summary"]["total"])
         scan_schema = next(tool for tool in responses[0]["result"]["tools"] if tool["name"] == "scan_specs")
         self.assertIn("include_archived_lint", scan_schema["inputSchema"]["properties"])
@@ -213,6 +222,7 @@ class SpecMcpServerTests(unittest.TestCase):
         readiness = responses[1]["result"]["structuredContent"]
         self.assertEqual("ready", preflight["status"])
         self.assertEqual("001-current", preflight["selected_spec"]["spec_id"])
+        self.assertEqual("docs/specs/001-current", preflight["selected_spec"]["path"])
         self.assertEqual("T001", readiness["task_id"])
         self.assertIn("Requirement 1", {item["id"] for item in readiness["required_review"]["requirements"]})
 
@@ -253,6 +263,26 @@ class SpecMcpServerTests(unittest.TestCase):
         content = responses[1]["result"]["contents"][0]
         payload = json.loads(content["text"])
         self.assertIn("specs", payload)
+        self.assertEqual(".", payload["repo_root"])
+        self.assertNotIn(str(ROOT), content["text"])
+
+    def test_resources_use_workspace_env_when_server_has_no_root_argument(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "target"
+            repo.mkdir()
+            (repo / ".git").mkdir()
+            write_current_spec(repo)
+            [response] = self.send(
+                rpc(1, "resources/read", {"uri": "specs://active"}),
+                root=None,
+                env={"SPEC_LIFECYCLE_REPO_ROOT": str(repo)},
+            )
+
+        content = response["result"]["contents"][0]
+        payload = json.loads(content["text"])
+        self.assertEqual(".", payload["repo_root"])
+        self.assertEqual("docs/specs/001-current", payload["specs"][0]["path"])
+        self.assertNotIn(str(repo), content["text"])
 
     def test_archive_index_tool_and_resource(self):
         responses = self.send(
@@ -264,10 +294,12 @@ class SpecMcpServerTests(unittest.TestCase):
         tool_payload = responses[0]["result"]["structuredContent"]
         self.assertEqual(0, tool_payload["summary"]["error"])
         self.assertIn("entries", tool_payload)
+        self.assertEqual(".", tool_payload["repo_root"])
         uris = {resource["uri"] for resource in responses[1]["result"]["resources"]}
         self.assertIn("history://spec-archive-index", uris)
         resource_payload = json.loads(responses[2]["result"]["contents"][0]["text"])
         self.assertEqual(0, resource_payload["summary"]["error"])
+        self.assertEqual(".", resource_payload["repo_root"])
 
     def test_resource_read_returns_error_for_removed_or_missing_spec(self):
         [response] = self.send(rpc(1, "resources/read", {"uri": "specs://004-spec-management-mcp/summary"}))
@@ -289,7 +321,7 @@ class SpecMcpServerTests(unittest.TestCase):
             )
 
         scan_payload = responses[0]["result"]["structuredContent"]
-        self.assertEqual(str(spec), scan_payload["specs"][0]["path"])
+        self.assertEqual("docs/platform/specs/001-nested", scan_payload["specs"][0]["path"])
         self.assertEqual("001-nested", responses[1]["result"]["structuredContent"]["spec_id"])
         uris = {resource["uri"] for resource in responses[2]["result"]["resources"]}
         self.assertIn("specs://001-nested/summary", uris)

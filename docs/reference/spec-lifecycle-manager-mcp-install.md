@@ -110,7 +110,8 @@ Use this checklist after install, sync, or reload:
 | Plugin is self-contained | `skills/`, `.mcp.json`, `hooks/hooks.json`, scripts, prompts, and references exist under the plugin root. |
 | MCP tools visible after reload | Codex exposes plugin-scoped `spec-lifecycle-manager` MCP tools. |
 | Server starts | `initialize` returns server name `spec-lifecycle-manager`. |
-| Spec scan works | `scan_specs` returns the target repository root and expected active-spec count when `repo_root` is supplied or inferred. |
+| Spec scan works | `scan_specs` returns repo-relative paths and the expected active-spec count when `repo_root` is supplied or inferred. |
+| Resource scan works | `specs://active` returns repo-relative paths for the target workspace and does not expose the plugin cache or load path. |
 | Archive index works | `archive_index` returns no diagnostics for removed package history. |
 | Prompt definitions validate | `prompts_validate` returns no diagnostics. |
 | Package tools resolve live specs | `closure_check`, `task_context`, or `traceability_lookup` work when an active spec exists. |

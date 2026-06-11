@@ -9,6 +9,7 @@ duplicating lifecycle policy or parsing logic.
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -25,6 +26,13 @@ PROTOCOL_VERSION = "2025-06-18"
 SERVER_NAME = "spec-lifecycle-manager"
 SERVER_VERSION = "0.1.0"
 REPO_ROOT_PROPERTY = "Repository root. Defaults to current working directory."
+WORKSPACE_ROOT_ENV_VARS = (
+    "SPEC_LIFECYCLE_REPO_ROOT",
+    "CODEX_REPO_ROOT",
+    "CODEX_WORKSPACE_ROOT",
+    "CODEX_WORKSPACE",
+    "WORKSPACE_ROOT",
+)
 SPEC_PATH_PROPERTIES = {
     "repo_root": REPO_ROOT_PROPERTY,
     "spec_path": "Spec package path or ID.",
@@ -39,6 +47,18 @@ def find_repo_root(path: Path | None = None) -> Path:
     return start
 
 
+def workspace_repo_root() -> Path | None:
+    for name in WORKSPACE_ROOT_ENV_VARS:
+        value = os.environ.get(name)
+        if value:
+            return find_repo_root(Path(value))
+    return None
+
+
+def default_repo_root(path: Path | None = None) -> Path:
+    return find_repo_root(path) if path is not None else workspace_repo_root() or find_repo_root()
+
+
 def json_text(payload: Any) -> str:
     return json.dumps(payload, indent=2, sort_keys=True)
 
@@ -47,10 +67,45 @@ def text_content(payload: Any) -> list[dict[str, str]]:
     return [{"type": "text", "text": json_text(payload)}]
 
 
-def tool_result(payload: Any) -> dict[str, Any]:
+def relative_path_for_mcp(path: Path, repo_root: Path) -> str | None:
+    resolved = path.resolve()
+    try:
+        relative = resolved.relative_to(repo_root.resolve())
+    except ValueError:
+        return None
+    return relative.as_posix() or "."
+
+
+def normalize_mcp_string(value: str, repo_root: Path) -> str | None:
+    path = Path(value)
+    if path.is_absolute():
+        return relative_path_for_mcp(path, repo_root)
+    root_text = repo_root.resolve().as_posix()
+    if root_text in value:
+        return value.replace(root_text, ".")
+    return value
+
+
+def normalize_mcp_payload(payload: Any, repo_root: Path) -> Any:
+    if isinstance(payload, dict):
+        normalized = {}
+        for key, value in payload.items():
+            normalized_value = normalize_mcp_payload(value, repo_root)
+            if normalized_value is not None:
+                normalized[key] = normalized_value
+        return normalized
+    if isinstance(payload, list):
+        return [item for item in (normalize_mcp_payload(value, repo_root) for value in payload) if item is not None]
+    if isinstance(payload, str):
+        return normalize_mcp_string(payload, repo_root)
+    return payload
+
+
+def tool_result(payload: Any, repo_root: Path) -> dict[str, Any]:
+    normalized = normalize_mcp_payload(payload, repo_root)
     return {
-        "content": text_content(payload),
-        "structuredContent": payload if isinstance(payload, dict) else {"result": payload},
+        "content": text_content(normalized),
+        "structuredContent": normalized if isinstance(normalized, dict) else {"result": normalized},
         "isError": False,
     }
 
@@ -66,8 +121,8 @@ def response(request_id: Any, result: Any) -> dict[str, Any]:
     return {"jsonrpc": "2.0", "id": request_id, "result": result}
 
 
-def repo_root_arg(arguments: dict[str, Any]) -> Path:
-    return Path(arguments.get("repo_root") or Path.cwd()).resolve()
+def repo_root_arg(arguments: dict[str, Any], default_root: Path) -> Path:
+    return Path(arguments.get("repo_root") or default_root).resolve()
 
 
 def bool_arg(arguments: dict[str, Any], name: str) -> bool:
@@ -100,21 +155,21 @@ def resolve_spec_path(repo_root: Path, value: str) -> Path:
     raise ValueError(f"Active spec not found: {value}. Use scan_specs for live packages or history://spec-archive-index for removed specs.")
 
 
-def spec_path_arg(arguments: dict[str, Any]) -> Path:
+def spec_path_arg(arguments: dict[str, Any], default_root: Path) -> Path:
     value = arguments.get("spec_path") or arguments.get("spec_id")
     if not value:
         raise ValueError("spec_path or spec_id is required")
-    return resolve_spec_path(repo_root_arg(arguments), str(value))
+    return resolve_spec_path(repo_root_arg(arguments, default_root), str(value))
 
 
-def path_arg(arguments: dict[str, Any], name: str) -> Path:
+def path_arg(arguments: dict[str, Any], name: str, default_root: Path) -> Path:
     value = arguments.get(name)
     if not value:
         raise ValueError(f"{name} is required")
     path = Path(value)
-    if path.exists():
+    if path.is_absolute() and path.exists():
         return path.resolve()
-    return (repo_root_arg(arguments) / str(value)).resolve()
+    return (repo_root_arg(arguments, default_root) / str(value)).resolve()
 
 
 def tool_definitions() -> list[dict[str, Any]]:
@@ -214,70 +269,71 @@ def tool_schema(name: str, description: str, properties: dict[str, Any], require
     }
 
 
-def call_tool(name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+def call_tool(name: str, arguments: dict[str, Any], default_root: Path) -> tuple[dict[str, Any], Path]:
+    root = repo_root_arg(arguments, default_root)
     if name == "scan_specs":
         return spec_runtime.scan_specs(
-            repo_root_arg(arguments),
+            root,
             arguments.get("docs_root"),
             include_archived_lint=bool_arg(arguments, "include_archived_lint"),
-        )
+        ), root
     if name == "active_spec_preflight":
-        spec_path = spec_path_arg(arguments) if arguments.get("spec_path") or arguments.get("spec_id") else None
-        return spec_runtime.active_spec_preflight(repo_root_arg(arguments), spec_path, arguments.get("task_id"), arguments.get("docs_root"))
+        spec_path = spec_path_arg(arguments, default_root) if arguments.get("spec_path") or arguments.get("spec_id") else None
+        return spec_runtime.active_spec_preflight(root, spec_path, arguments.get("task_id"), arguments.get("docs_root")), root
     if name == "agent_readiness_packet":
         task_id = arguments.get("task_id")
         if not task_id:
             raise ValueError("task_id is required")
-        return spec_runtime.agent_readiness_packet(spec_path_arg(arguments), str(task_id))
+        return spec_runtime.agent_readiness_packet(spec_path_arg(arguments, default_root), str(task_id)), root
     if name == "agent_backed_tool":
         tool_name = arguments.get("tool_name")
         if not tool_name:
             raise ValueError("tool_name is required")
-        return spec_runtime.agent_backed_tool(spec_path_arg(arguments), str(tool_name), arguments.get("model_class"))
+        return spec_runtime.agent_backed_tool(spec_path_arg(arguments, default_root), str(tool_name), arguments.get("model_class")), root
     if name == "no_active_spec_context":
-        return spec_runtime.no_active_spec_context(repo_root_arg(arguments))
+        return spec_runtime.no_active_spec_context(root), root
     if name == "spec_summary":
-        return spec_runtime.spec_summary(spec_path_arg(arguments))
+        return spec_runtime.spec_summary(spec_path_arg(arguments, default_root)), root
     if name == "lint_spec_package":
-        payload = spec_runtime.lint_spec_package(spec_path_arg(arguments))
+        payload = spec_runtime.lint_spec_package(spec_path_arg(arguments, default_root))
         assert isinstance(payload, dict)
-        return payload
+        return payload, root
     if name == "lint_doc":
-        path = path_arg(arguments, "path")
+        path = path_arg(arguments, "path", default_root)
         diagnostics = spec_runtime.lint_doc(path, arguments.get("artifact_type"))
-        return {"path": str(path), "diagnostics": diagnostics, "summary": spec_runtime.diagnostic_summary(diagnostics)}
+        return {"path": str(path), "diagnostics": diagnostics, "summary": spec_runtime.diagnostic_summary(diagnostics)}, root
     if name == "next_task":
-        return spec_runtime.next_task(spec_path_arg(arguments))
+        return spec_runtime.next_task(spec_path_arg(arguments, default_root)), root
     if name == "closure_check":
-        return spec_runtime.closure_check(spec_path_arg(arguments))
+        return spec_runtime.closure_check(spec_path_arg(arguments, default_root)), root
     if name == "archive_index":
-        return spec_runtime.archive_index(repo_root_arg(arguments))
+        return spec_runtime.archive_index(root), root
     if name == "reconcile_spec":
-        return spec_runtime.reconcile_spec(spec_path_arg(arguments))
+        return spec_runtime.reconcile_spec(spec_path_arg(arguments, default_root)), root
     if name == "promotion_plan":
-        return spec_runtime.promotion_plan(spec_path_arg(arguments))
+        return spec_runtime.promotion_plan(spec_path_arg(arguments, default_root)), root
     if name == "review_packet":
         return spec_runtime.generate_review_packet(
-            spec_path_arg(arguments),
+            spec_path_arg(arguments, default_root),
             arguments.get("review_type") or "design_requirements_trace",
             arguments.get("model_class"),
-        )
+        ), root
     if name == "task_context":
         task_id = arguments.get("task_id")
         if not task_id:
             raise ValueError("task_id is required")
-        return traceability_lookup.task_lookup(spec_path_arg(arguments), str(task_id))
+        return traceability_lookup.task_lookup(spec_path_arg(arguments, default_root), str(task_id)), root
     if name == "traceability_lookup":
-        spec_path = spec_path_arg(arguments)
+        spec_path = spec_path_arg(arguments, default_root)
         if arguments.get("task_id"):
-            return traceability_lookup.task_lookup(spec_path, str(arguments["task_id"]))
+            return traceability_lookup.task_lookup(spec_path, str(arguments["task_id"])), root
         if arguments.get("requirement"):
-            return traceability_lookup.reverse_lookup(spec_path, "requirement", str(arguments["requirement"]))
+            return traceability_lookup.reverse_lookup(spec_path, "requirement", str(arguments["requirement"])), root
         if arguments.get("design"):
-            return traceability_lookup.reverse_lookup(spec_path, "design", str(arguments["design"]))
+            return traceability_lookup.reverse_lookup(spec_path, "design", str(arguments["design"])), root
         raise ValueError("task_id, requirement, or design is required")
     if name == "prompts_validate":
-        return spec_runtime.load_prompt_definitions(repo_root_arg(arguments))
+        return spec_runtime.load_prompt_definitions(root), root
     raise ValueError(f"Unknown tool: {name}")
 
 
@@ -332,29 +388,30 @@ def list_resources(repo_root: Path) -> list[dict[str, str]]:
 def read_resource(uri: str, repo_root: Path) -> dict[str, Any]:
     if uri == "specs://active":
         payload = spec_runtime.scan_specs(repo_root)
-        return resource_payload(uri, "application/json", json_text(payload))
+        return resource_payload(uri, "application/json", json_text(normalize_mcp_payload(payload, repo_root)))
     if uri == "governance://constitution":
         path = repo_root / "docs" / "governance" / "constitution.md"
         text = path.read_text(encoding="utf-8") if path.exists() else ""
         return resource_payload(uri, "text/markdown", text)
     if uri == "history://spec-archive-index":
         payload = spec_runtime.archive_index(repo_root)
-        return resource_payload(uri, "application/json", json_text(payload))
+        return resource_payload(uri, "application/json", json_text(normalize_mcp_payload(payload, repo_root)))
     if uri == "templates://spec-package":
         template_dir = repo_root / "skills" / "spec-lifecycle-manager" / "references" / "spec-package"
         payload = {"path": str(template_dir), "templates": sorted(path.name for path in template_dir.glob("*.md")) if template_dir.exists() else []}
-        return resource_payload(uri, "application/json", json_text(payload))
+        return resource_payload(uri, "application/json", json_text(normalize_mcp_payload(payload, repo_root)))
 
     spec_match = uri.removeprefix("specs://")
     if "/" in spec_match:
         spec_id, suffix = spec_match.split("/", 1)
         spec_path = resolve_spec_path(repo_root, spec_id)
         if suffix == "summary":
-            return resource_payload(uri, "application/json", json_text(spec_runtime.spec_summary(spec_path)))
+            payload = spec_runtime.spec_summary(spec_path)
+            return resource_payload(uri, "application/json", json_text(normalize_mcp_payload(payload, repo_root)))
         if suffix == "health":
             payload = spec_runtime.lint_spec_package(spec_path)
             assert isinstance(payload, dict)
-            return resource_payload(uri, "application/json", json_text(payload))
+            return resource_payload(uri, "application/json", json_text(normalize_mcp_payload(payload, repo_root)))
     raise ValueError(f"Unknown resource URI: {uri}")
 
 
@@ -442,8 +499,8 @@ def handle_request(message: dict[str, Any], repo_root: Path) -> dict[str, Any] |
         if method == "tools/list":
             return response(request_id, {"tools": tool_definitions()})
         if method == "tools/call":
-            payload = call_tool(params.get("name", ""), params.get("arguments") or {})
-            return response(request_id, tool_result(payload))
+            payload, target_root = call_tool(params.get("name", ""), params.get("arguments") or {}, repo_root)
+            return response(request_id, tool_result(payload, target_root))
         if method == "resources/list":
             return response(request_id, {"resources": list_resources(repo_root)})
         if method == "resources/read":
@@ -458,7 +515,7 @@ def handle_request(message: dict[str, Any], repo_root: Path) -> dict[str, Any] |
 
 
 def serve(repo_root: Path | None = None) -> int:
-    root = find_repo_root(repo_root)
+    root = default_repo_root(repo_root)
     for line in sys.stdin:
         if not line.strip():
             continue
