@@ -3,7 +3,7 @@ title: Spec archive index
 doc_type: history
 status: active
 owner: platform
-last_reviewed: 2026-06-06
+last_reviewed: 2026-06-11
 ---
 
 # Spec Archive Index
@@ -17,6 +17,7 @@ to verify removed or explicitly retained package evidence.
 
 | Spec ID | Title | Package path | Status | Final spec commit | Cleanup commit | Closure action | Durable destinations | Verification |
 |---------|-------|--------------|--------|-------------------|----------------|----------------|----------------------|--------------|
+| 016-commit-sync-guard | Commit sync guard | `docs/specs/016-commit-sync-guard/` | removed | `0522ea9` | `43dd031` | removed | `docs/reference/spec-lifecycle-runtime.md`; `docs/reference/spec-lifecycle-manager-mcp-install.md`; `docs/backlog/README.md`; `docs/roadmap/README.md`; `skills/spec-lifecycle-manager/scripts/spec_runtime.py`; `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/spec_runtime.py`; `tests/runtime/test_spec_runtime.py` | `docs/history/spec-closure-log.md` |
 | 015-brooks-lint-findings-tracking | Brooks-Lint findings tracking | `docs/specs/015-brooks-lint-findings-tracking/` | removed | `4b73823` | `160b582` | removed | `docs/reviews/brooks-lint/README.md`; `docs/backlog/README.md` | `docs/history/spec-closure-log.md` |
 | 014-plugin-comparison-improvements | Plugin comparison improvements | `docs/specs/014-plugin-comparison-improvements/` | removed | `356c335` | `d7edc98` | removed | `docs/reference/plugin-comparison-improvements.md`; `docs/reference/spec-lifecycle-runtime.md`; `docs/README.md`; `skills/spec-lifecycle-manager/SKILL.md`; `skills/spec-lifecycle-manager/prompts/`; `skills/spec-lifecycle-manager/references/spec-package/`; `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/SKILL.md`; `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/prompts/`; `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/references/spec-package/`; `docs/backlog/README.md`; `tests/runtime/test_spec_runtime.py` | `docs/history/spec-closure-log.md` |
 | 013-agent-backed-lifecycle-tools | Agent-backed lifecycle tools | `docs/specs/013-agent-backed-lifecycle-tools/` | removed | `bb6c436` | `6d23a40` | removed | `docs/reference/spec-lifecycle-runtime.md`; `docs/design/spec-lifecycle-management.md`; `docs/reviews/spec-lifecycle-manager/README.md`; `skills/spec-lifecycle-manager/SKILL.md`; `skills/spec-lifecycle-manager/scripts/spec_agent_schemas.py`; `skills/spec-lifecycle-manager/scripts/spec_runtime.py`; `skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`; `tests/runtime/test_spec_runtime.py`; `tests/runtime/test_spec_mcp_server.py` | `docs/history/spec-closure-log.md` |

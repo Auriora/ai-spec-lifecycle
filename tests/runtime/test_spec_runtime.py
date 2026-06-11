@@ -26,7 +26,14 @@ GIT_ENV = {
 def run_git(repo: Path, *args: str) -> None:
     if shutil.which("git") is None:
         raise unittest.SkipTest("git is required for sync guard tests")
-    subprocess.run(["git", *args], cwd=repo, check=True, env={**os.environ, **GIT_ENV}, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    subprocess.run(
+        ["git", "-c", "commit.gpgsign=false", *args],
+        cwd=repo,
+        check=True,
+        env={**os.environ, **GIT_ENV},
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
 
 
 def write_sync_guard_repo(repo: Path, codex_home: Path, include_cache: bool = True) -> None:
@@ -342,8 +349,8 @@ class SpecRuntimeTests(unittest.TestCase):
 
         self.assertEqual(0, payload["summary"]["error"])
         self.assertEqual(0, payload["summary"]["warn"])
-        self.assertEqual(15, payload["summary"]["total"])
-        self.assertEqual(15, payload["summary"]["removed"])
+        self.assertEqual(16, payload["summary"]["total"])
+        self.assertEqual(16, payload["summary"]["removed"])
         self.assertEqual(0, payload["summary"]["retained"])
         self.assertEqual(0, payload["summary"]["superseded"])
         self.assertEqual(0, payload["summary"]["legacy_gaps"])
@@ -363,6 +370,7 @@ class SpecRuntimeTests(unittest.TestCase):
             "012-operating-model-governance-adoption",
             "014-plugin-comparison-improvements",
             "015-brooks-lint-findings-tracking",
+            "016-commit-sync-guard",
         }
         entries = {entry["spec_id"]: entry for entry in payload["entries"]}
         self.assertEqual(expected, set(entries))

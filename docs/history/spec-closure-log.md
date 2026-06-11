@@ -3,7 +3,7 @@ title: Spec closure log
 doc_type: history
 status: active
 owner: platform
-last_reviewed: 2026-06-06
+last_reviewed: 2026-06-11
 ---
 
 # Spec Closure Log
@@ -13,6 +13,32 @@ package history is preserved by Git unless a repository-specific archive policy
 requires visible archived docs.
 
 ## Entries
+
+### 2026-06-11 - 016-commit-sync-guard
+
+- **Spec:** `docs/specs/016-commit-sync-guard/`
+- **Title:** Commit sync guard
+- **Final spec commit:** `0522ea9`
+- **Closure cleanup commit:** `43dd031`
+- **Closure action:** removed
+- **Closed by:** platform
+- **Durable docs updated:**
+  - `docs/reference/spec-lifecycle-runtime.md`
+  - `docs/reference/spec-lifecycle-manager-mcp-install.md`
+  - `docs/backlog/README.md`
+  - `docs/roadmap/README.md`
+  - `skills/spec-lifecycle-manager/scripts/spec_runtime.py`
+  - `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/spec_runtime.py`
+  - `tests/runtime/test_spec_runtime.py`
+- **Verification summary:** Full unit suite passed; focused runtime and plugin
+  package tests passed; spec lint and closure check passed; `git diff --check`
+  passed. After install and reload, `sync-guard` reported applicable, source
+  and bundled plugin in sync, installed cache in sync, commit evidence ok, and
+  no findings.
+- **Residual risks:** `sync-guard` is a maintainer validation command for this
+  repository only. It reports `not_applicable` outside the Spec Lifecycle
+  Manager package repository and does not automate install or reload.
+- **Follow-up:** None.
 
 ### 2026-06-11 - 015-brooks-lint-findings-tracking
 
