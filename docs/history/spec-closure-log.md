@@ -14,6 +14,27 @@ requires visible archived docs.
 
 ## Entries
 
+### 2026-06-11 - 015-brooks-lint-findings-tracking
+
+- **Spec:** `docs/specs/015-brooks-lint-findings-tracking/`
+- **Title:** Brooks-Lint findings tracking
+- **Final spec commit:** `4b73823`
+- **Closure cleanup commit:** `160b582`
+- **Closure action:** removed
+- **Closed by:** platform
+- **Durable docs updated:**
+  - `docs/reviews/brooks-lint/README.md`
+  - `docs/backlog/README.md`
+- **Verification summary:** Full unit suite passed; lifecycle scan, archive
+  index validation, prompt validation, focused spec lint, closure check, and
+  `git diff --check` passed before the final spec commit.
+- **Residual risks:** Brooks findings remain Markdown-maintained by decision
+  D001; runtime validation is deferred until repeated Brooks runs show real
+  register drift. Deferred remediation is routed to B016/R005, B026, B042, and
+  B043.
+- **Follow-up:** Promote B016/R005 next if commit/install drift remains the
+  highest-priority lifecycle hardening item.
+
 ### 2026-06-09 - 014-plugin-comparison-improvements
 
 - **Spec:** `docs/specs/014-plugin-comparison-improvements/`

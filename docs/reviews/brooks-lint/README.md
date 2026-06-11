@@ -585,6 +585,7 @@ instead of creating duplicate remediation work.
 
 ## Related Artifacts
 
-- Active spec: `docs/specs/015-brooks-lint-findings-tracking/`
+- Closure history: `docs/history/spec-closure-log.md`
+- Archive index: `docs/history/spec-archive-index.md`
 - Backlog: `docs/backlog/README.md`
 - Roadmap: `docs/roadmap/README.md`

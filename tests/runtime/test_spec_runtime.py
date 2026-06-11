@@ -221,8 +221,8 @@ class SpecRuntimeTests(unittest.TestCase):
 
         self.assertEqual(0, payload["summary"]["error"])
         self.assertEqual(0, payload["summary"]["warn"])
-        self.assertEqual(14, payload["summary"]["total"])
-        self.assertEqual(14, payload["summary"]["removed"])
+        self.assertEqual(15, payload["summary"]["total"])
+        self.assertEqual(15, payload["summary"]["removed"])
         self.assertEqual(0, payload["summary"]["retained"])
         self.assertEqual(0, payload["summary"]["superseded"])
         self.assertEqual(0, payload["summary"]["legacy_gaps"])
@@ -241,6 +241,7 @@ class SpecRuntimeTests(unittest.TestCase):
             "011-spec-archive-index-runtime",
             "012-operating-model-governance-adoption",
             "014-plugin-comparison-improvements",
+            "015-brooks-lint-findings-tracking",
         }
         entries = {entry["spec_id"]: entry for entry in payload["entries"]}
         self.assertEqual(expected, set(entries))
