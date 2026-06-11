@@ -14,6 +14,34 @@ requires visible archived docs.
 
 ## Entries
 
+### 2026-06-11 - 023-hierarchical-spec-authoring-hooks
+
+- **Spec:** `docs/specs/023-hierarchical-spec-authoring-hooks/`
+- **Title:** Hierarchical spec authoring hooks
+- **Final spec commit:** `c9caebe`
+- **Closure cleanup commit:** `0000000`
+- **Closure action:** removed
+- **Closed by:** platform
+- **Durable docs updated:**
+  - `docs/reference/spec-lifecycle-runtime.md`
+  - `docs/backlog/README.md`
+  - `skills/spec-lifecycle-manager/scripts/spec_runtime.py`
+  - `skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py`
+  - `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/spec_runtime.py`
+  - `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py`
+  - `plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/scripts/spec_runtime.py`
+  - `plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py`
+  - `tests/runtime/test_spec_runtime.py`
+  - `tests/runtime/test_codex_spec_lifecycle_hook.py`
+- **Verification summary:** Focused runtime and Codex hook wrapper tests passed;
+  full unit suite passed with 94 tests. Lifecycle scan, archive-index
+  validation, prompt validation, package-contract validation, npm pack dry-run,
+  sync-guard after install, closure-check, and `git diff --check` passed.
+- **Residual risks:** Hook payloads may not include enough diff detail to
+  isolate changed task IDs. The implementation must keep fallback task scope
+  explicit and avoid noisy package-wide output during ordinary authoring.
+- **Follow-up:** None.
+
 ### 2026-06-11 - 018-mcp-ergonomics-observability
 
 - **Spec:** `docs/specs/018-mcp-ergonomics-observability/`
