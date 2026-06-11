@@ -515,8 +515,8 @@ class SpecRuntimeTests(unittest.TestCase):
 
         self.assertEqual(0, payload["summary"]["error"])
         self.assertEqual(0, payload["summary"]["warn"])
-        self.assertEqual(18, payload["summary"]["total"])
-        self.assertEqual(18, payload["summary"]["removed"])
+        self.assertEqual(19, payload["summary"]["total"])
+        self.assertEqual(19, payload["summary"]["removed"])
         self.assertEqual(0, payload["summary"]["retained"])
         self.assertEqual(0, payload["summary"]["superseded"])
         self.assertEqual(0, payload["summary"]["legacy_gaps"])
@@ -539,6 +539,7 @@ class SpecRuntimeTests(unittest.TestCase):
             "016-commit-sync-guard",
             "017-npm-distribution-packaging",
             "018-mcp-ergonomics-observability",
+            "023-hierarchical-spec-authoring-hooks",
         }
         entries = {entry["spec_id"]: entry for entry in payload["entries"]}
         self.assertEqual(expected, set(entries))
