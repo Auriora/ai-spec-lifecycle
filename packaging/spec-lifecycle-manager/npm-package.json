@@ -1,0 +1,34 @@
+{
+  "package_name": "@auriora/spec-lifecycle-manager",
+  "registry": "npm",
+  "publish_status": "pack-ready-not-published",
+  "version_source": "package.json#/version",
+  "plugin_version_source": "plugins/spec-lifecycle-manager/.codex-plugin/plugin.json#/version",
+  "install_command": "npx @auriora/spec-lifecycle-manager install",
+  "pack_command": "npm pack",
+  "payload_root": "plugins/spec-lifecycle-manager",
+  "bin": "packaging/spec-lifecycle-manager/npm-install.js",
+  "required_paths": [
+    "package.json",
+    "packaging/spec-lifecycle-manager/npm-package.json",
+    "packaging/spec-lifecycle-manager/npm-install.js",
+    "packaging/spec-lifecycle-manager/package-manifest.json",
+    "plugins/spec-lifecycle-manager/.codex-plugin/plugin.json",
+    "plugins/spec-lifecycle-manager/.mcp.json",
+    "plugins/spec-lifecycle-manager/hooks/hooks.json",
+    "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/SKILL.md",
+    "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/spec_runtime.py",
+    "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py",
+    "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py",
+    "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/traceability_lookup.py",
+    "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/prompts",
+    "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/references",
+    "scripts/install-spec-lifecycle-manager-package.sh"
+  ],
+  "provenance": {
+    "source_repository": "https://github.com/bcherrington/agent-dev-lifecycle",
+    "source_path": "plugins/spec-lifecycle-manager",
+    "commit_source": "git HEAD when packed",
+    "validation_command": "PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract ."
+  }
+}

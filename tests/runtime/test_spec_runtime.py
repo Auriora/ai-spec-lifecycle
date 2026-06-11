@@ -54,27 +54,50 @@ def write_sync_guard_repo(repo: Path, codex_home: Path, include_cache: bool = Tr
         encoding="utf-8",
     )
     (repo / "scripts/install-spec-lifecycle-manager-package.sh").write_text("#!/usr/bin/env bash\n", encoding="utf-8")
+    (repo / "package.json").write_text(
+        json.dumps(
+            {
+                "name": "@auriora/spec-lifecycle-manager",
+                "version": "0.1.0-test",
+                "bin": {
+                    "spec-lifecycle-manager": "packaging/spec-lifecycle-manager/npm-install.js",
+                },
+                "files": [
+                    "packaging/spec-lifecycle-manager/npm-package.json",
+                    "packaging/spec-lifecycle-manager/npm-install.js",
+                    "plugins/spec-lifecycle-manager",
+                    "scripts/install-spec-lifecycle-manager-package.sh",
+                ],
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
     (repo / "packaging/spec-lifecycle-manager/package-manifest.json").write_text(
         '{"name": "spec-lifecycle-manager", "version": "0.1.0+test"}\n',
         encoding="utf-8",
     )
-    (repo / "packaging/spec-lifecycle-manager/Containerfile").write_text("FROM scratch\n", encoding="utf-8")
-    (repo / "packaging/spec-lifecycle-manager/ghcr-package.json").write_text(
+    (repo / "packaging/spec-lifecycle-manager/npm-install.js").write_text("#!/usr/bin/env node\n", encoding="utf-8")
+    (repo / "packaging/spec-lifecycle-manager/npm-package.json").write_text(
         json.dumps(
             {
-                "name": "spec-lifecycle-manager",
-                "registry": "ghcr.io",
-                "image": "ghcr.io/example/spec-lifecycle-manager",
-                "publish_status": "contract-ready-not-published",
-                "version_source": "plugins/spec-lifecycle-manager/.codex-plugin/plugin.json#/version",
+                "package_name": "@auriora/spec-lifecycle-manager",
+                "registry": "npm",
+                "publish_status": "pack-ready-not-published",
+                "version_source": "package.json#/version",
+                "install_command": "npx @auriora/spec-lifecycle-manager install",
                 "payload_root": "plugins/spec-lifecycle-manager",
+                "bin": "packaging/spec-lifecycle-manager/npm-install.js",
                 "required_paths": [
+                    "package.json",
+                    "packaging/spec-lifecycle-manager/npm-package.json",
+                    "packaging/spec-lifecycle-manager/npm-install.js",
                     "plugins/spec-lifecycle-manager/.codex-plugin/plugin.json",
                     "plugins/spec-lifecycle-manager/.mcp.json",
                     "plugins/spec-lifecycle-manager/hooks/hooks.json",
                     "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/SKILL.md",
-                    "packaging/spec-lifecycle-manager/package-manifest.json",
-                    "packaging/spec-lifecycle-manager/Containerfile",
+                    "scripts/install-spec-lifecycle-manager-package.sh",
                 ],
                 "provenance": {
                     "source_repository": "https://example.invalid/repo",
@@ -285,7 +308,9 @@ class SpecRuntimeTests(unittest.TestCase):
             payload = spec_runtime.package_contract(repo)
 
         self.assertEqual("pass", payload["status"])
-        self.assertEqual("spec-lifecycle-manager", payload["package"]["name"])
+        self.assertEqual("@auriora/spec-lifecycle-manager", payload["package"]["name"])
+        self.assertEqual("npm", payload["package"]["primary"])
+        self.assertEqual("pack-ready-not-published", payload["package"]["npm"]["publish_status"])
         self.assertEqual("in_sync", payload["source_bundle_parity"]["status"])
         self.assertTrue(all(item["exists"] for item in payload["required_paths"]))
         self.assertEqual(0, payload["summary"]["error"])

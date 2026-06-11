@@ -1088,27 +1088,30 @@ def git_head_commit(repo_root: Path) -> dict[str, Any]:
 
 def package_contract(repo_root: Path) -> dict[str, Any]:
     root = repo_root.resolve()
-    contract_path = root / "packaging" / "spec-lifecycle-manager" / "ghcr-package.json"
+    npm_contract_path = root / "packaging" / "spec-lifecycle-manager" / "npm-package.json"
     manifest_path = root / "packaging" / "spec-lifecycle-manager" / "package-manifest.json"
+    npm_package_path = root / "package.json"
     plugin_manifest_path = root / "plugins" / "spec-lifecycle-manager" / ".codex-plugin" / "plugin.json"
     diagnostics: list[dict[str, Any]] = []
 
-    contract, contract_diagnostics = load_json_file(contract_path, "GHCR package contract")
+    npm_contract, npm_contract_diagnostics = load_json_file(npm_contract_path, "npm package contract")
     manifest, manifest_diagnostics = load_json_file(manifest_path, "package manifest")
+    npm_package, npm_package_diagnostics = load_json_file(npm_package_path, "npm package manifest")
     plugin_manifest, plugin_manifest_diagnostics = load_json_file(plugin_manifest_path, "plugin manifest")
-    diagnostics.extend(contract_diagnostics)
+    diagnostics.extend(npm_contract_diagnostics)
     diagnostics.extend(manifest_diagnostics)
+    diagnostics.extend(npm_package_diagnostics)
     diagnostics.extend(plugin_manifest_diagnostics)
 
     required_paths: list[dict[str, Any]] = []
-    required_values = []
-    if contract:
-        value = contract.get("required_paths")
+    required_values: list[str] = []
+    if npm_contract:
+        value = npm_contract.get("required_paths")
         if isinstance(value, list) and all(isinstance(item, str) for item in value):
-            required_values = value
+            required_values.extend(value)
         else:
-            diagnostics.append(diagnostic("error", "PACKAGE_REQUIRED_PATHS_INVALID", contract_path, "required_paths must be a list of strings.", lifecycle_gate="package", waivable=False))
-    for relative in required_values:
+            diagnostics.append(diagnostic("error", "PACKAGE_REQUIRED_PATHS_INVALID", npm_contract_path, "required_paths must be a list of strings.", lifecycle_gate="package", waivable=False))
+    for relative in sorted(set(required_values)):
         exists = (root / relative).exists()
         required_paths.append({"path": relative, "exists": exists})
         if not exists:
@@ -1123,19 +1126,38 @@ def package_contract(repo_root: Path) -> dict[str, Any]:
     if source_bundle["status"] != "in_sync":
         diagnostics.append(diagnostic("error", "PACKAGE_SOURCE_BUNDLE_DRIFT", root / "plugins" / "spec-lifecycle-manager" / "skills" / "spec-lifecycle-manager", "Source skill and bundled plugin skill are not in sync.", lifecycle_gate="package", waivable=False))
 
+    npm_info = {
+        "package_name": npm_contract.get("package_name") if npm_contract else None,
+        "package_json_name": npm_package.get("name") if npm_package else None,
+        "package_json_version": npm_package.get("version") if npm_package else None,
+        "registry": npm_contract.get("registry") if npm_contract else None,
+        "publish_status": npm_contract.get("publish_status") if npm_contract else None,
+        "version_source": npm_contract.get("version_source") if npm_contract else None,
+        "install_command": npm_contract.get("install_command") if npm_contract else None,
+        "bin": npm_contract.get("bin") if npm_contract else None,
+        "payload_root": npm_contract.get("payload_root") if npm_contract else None,
+    }
     package_info = {
-        "name": contract.get("name") if contract else None,
-        "image": contract.get("image") if contract else None,
-        "registry": contract.get("registry") if contract else None,
-        "publish_status": contract.get("publish_status") if contract else None,
-        "version_source": contract.get("version_source") if contract else None,
+        "primary": "npm",
+        "name": npm_info["package_name"],
         "manifest_version": manifest.get("version") if manifest else None,
         "plugin_version": plugin_manifest.get("version") if plugin_manifest else None,
-        "payload_root": contract.get("payload_root") if contract else None,
+        "npm": npm_info,
     }
-    for field in ["name", "image", "registry", "publish_status", "payload_root", "version_source"]:
-        if contract is not None and not contract.get(field):
-            diagnostics.append(diagnostic("error", "PACKAGE_CONTRACT_FIELD_MISSING", contract_path, f"Missing package contract field: {field}", lifecycle_gate="package", waivable=False))
+    for field in ["package_name", "registry", "publish_status", "payload_root", "version_source", "install_command", "bin"]:
+        if npm_contract is not None and not npm_contract.get(field):
+            diagnostics.append(diagnostic("error", "PACKAGE_CONTRACT_FIELD_MISSING", npm_contract_path, f"Missing npm package contract field: {field}", lifecycle_gate="package", waivable=False))
+    for field in ["name", "version", "bin", "files"]:
+        if npm_package is not None and not npm_package.get(field):
+            diagnostics.append(diagnostic("error", "PACKAGE_NPM_FIELD_MISSING", npm_package_path, f"Missing npm package.json field: {field}", lifecycle_gate="package", waivable=False))
+    if npm_contract and npm_package:
+        if npm_contract.get("package_name") != npm_package.get("name"):
+            diagnostics.append(diagnostic("error", "PACKAGE_NPM_NAME_MISMATCH", npm_package_path, "npm package contract name does not match package.json name.", lifecycle_gate="package", waivable=False))
+        if npm_contract.get("bin"):
+            bin_value = npm_package.get("bin")
+            bin_paths = list(bin_value.values()) if isinstance(bin_value, dict) else []
+            if npm_contract["bin"] not in bin_paths:
+                diagnostics.append(diagnostic("error", "PACKAGE_NPM_BIN_MISMATCH", npm_package_path, "npm package contract bin is not exposed by package.json.", lifecycle_gate="package", waivable=False))
     if manifest is not None and not manifest.get("version"):
         diagnostics.append(diagnostic("error", "PACKAGE_MANIFEST_VERSION_MISSING", manifest_path, "Missing package manifest version.", lifecycle_gate="package", waivable=False))
     if plugin_manifest is not None and not plugin_manifest.get("version"):
@@ -1143,8 +1165,8 @@ def package_contract(repo_root: Path) -> dict[str, Any]:
 
     provenance = {
         "git": git_head_commit(root),
-        "source_repository": contract.get("provenance", {}).get("source_repository") if isinstance(contract and contract.get("provenance"), dict) else None,
-        "source_path": contract.get("provenance", {}).get("source_path") if isinstance(contract and contract.get("provenance"), dict) else None,
+        "source_repository": npm_contract.get("provenance", {}).get("source_repository") if isinstance(npm_contract and npm_contract.get("provenance"), dict) else None,
+        "source_path": npm_contract.get("provenance", {}).get("source_path") if isinstance(npm_contract and npm_contract.get("provenance"), dict) else None,
     }
 
     summary = diagnostic_summary(diagnostics)
@@ -1152,8 +1174,10 @@ def package_contract(repo_root: Path) -> dict[str, Any]:
         summary["pass"] = 1
     return {
         "repo_root": str(root),
-        "contract_path": str(contract_path),
+        "contract_path": str(npm_contract_path),
+        "npm_contract_path": str(npm_contract_path),
         "manifest_path": str(manifest_path),
+        "npm_package_path": str(npm_package_path),
         "status": "pass" if not diagnostics else "findings",
         "package": package_info,
         "required_paths": required_paths,

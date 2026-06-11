@@ -19,5 +19,12 @@ skills/spec-lifecycle-manager/scripts/spec_mcp_server.py
 The MCP runtime is read-only. Hooks are advisory and require the normal Codex
 plugin hook trust flow before they run.
 
-Use `scripts/install-spec-lifecycle-manager-package.sh` from this repository to
+For checkout-based development, use
+`scripts/install-spec-lifecycle-manager-package.sh` from this repository to
 install or refresh the package for the current user.
+
+For npm distribution after publish, use:
+
+```bash
+npx @auriora/spec-lifecycle-manager install
+```

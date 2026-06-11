@@ -1,0 +1,39 @@
+{
+  "name": "@auriora/spec-lifecycle-manager",
+  "version": "0.1.0-codex.20260606221001",
+  "description": "Codex plugin for spec lifecycle skills, read-only MCP tools, prompts, templates, and advisory hooks.",
+  "license": "MIT",
+  "author": "Auriora",
+  "homepage": "https://github.com/bcherrington/agent-dev-lifecycle/tree/main/plugins/spec-lifecycle-manager",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bcherrington/agent-dev-lifecycle.git"
+  },
+  "keywords": [
+    "codex",
+    "plugin",
+    "mcp",
+    "spec",
+    "lifecycle"
+  ],
+  "bin": {
+    "spec-lifecycle-manager": "packaging/spec-lifecycle-manager/npm-install.js"
+  },
+  "files": [
+    "AGENTS.md",
+    "docs/reference/spec-lifecycle-manager-mcp-install.md",
+    "docs/reference/spec-lifecycle-runtime.md",
+    "packaging/spec-lifecycle-manager/package-manifest.json",
+    "packaging/spec-lifecycle-manager/npm-package.json",
+    "packaging/spec-lifecycle-manager/npm-install.js",
+    "plugins/spec-lifecycle-manager",
+    "scripts/install-spec-lifecycle-manager-package.sh"
+  ],
+  "scripts": {
+    "pack:dry-run": "npm_config_cache=/tmp/spec-lifecycle-npm-cache npm pack --dry-run --json",
+    "validate": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py' && PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract . && npm_config_cache=/tmp/spec-lifecycle-npm-cache npm pack --dry-run --json"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

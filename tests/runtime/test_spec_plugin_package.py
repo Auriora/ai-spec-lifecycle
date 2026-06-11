@@ -1,10 +1,14 @@
 import json
+import os
+import shutil
+import subprocess
 import unittest
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
 PLUGIN = ROOT / "plugins" / "spec-lifecycle-manager"
+NPM_PACKAGE = ROOT / "package.json"
 SOURCE_SKILL = ROOT / "skills" / "spec-lifecycle-manager"
 BUNDLED_SKILL = PLUGIN / "skills" / "spec-lifecycle-manager"
 
@@ -64,6 +68,43 @@ class SpecPluginPackageTests(unittest.TestCase):
         self.assertIn("license: MIT", frontmatter)
         self.assertIn("compatibility:", frontmatter)
         self.assertIn("metadata:", frontmatter)
+
+    def test_npm_package_exposes_installer_bin_and_payload(self):
+        package = json.loads(NPM_PACKAGE.read_text(encoding="utf-8"))
+
+        self.assertEqual("@auriora/spec-lifecycle-manager", package["name"])
+        self.assertEqual(
+            "packaging/spec-lifecycle-manager/npm-install.js",
+            package["bin"]["spec-lifecycle-manager"],
+        )
+        self.assertIn("plugins/spec-lifecycle-manager", package["files"])
+        self.assertIn("scripts/install-spec-lifecycle-manager-package.sh", package["files"])
+        self.assertIn("packaging/spec-lifecycle-manager/npm-package.json", package["files"])
+
+    def test_npm_pack_dry_run_contains_distribution_payload(self):
+        if shutil.which("npm") is None:
+            raise unittest.SkipTest("npm is required for package dry-run validation")
+
+        result = subprocess.run(
+            ["npm", "pack", "--dry-run", "--json"],
+            cwd=ROOT,
+            check=True,
+            env={**os.environ, "npm_config_cache": "/tmp/spec-lifecycle-npm-cache"},
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        payload = json.loads(result.stdout)[0]
+        files = {item["path"] for item in payload["files"]}
+
+        self.assertIn("package.json", files)
+        self.assertIn("packaging/spec-lifecycle-manager/npm-install.js", files)
+        self.assertIn("packaging/spec-lifecycle-manager/npm-package.json", files)
+        self.assertIn("scripts/install-spec-lifecycle-manager-package.sh", files)
+        self.assertIn("plugins/spec-lifecycle-manager/.codex-plugin/plugin.json", files)
+        self.assertIn("plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/SKILL.md", files)
+        self.assertFalse(any("__pycache__" in path for path in files))
+        self.assertFalse(any(path.endswith((".pyc", ".pyo")) for path in files))
 
 
 if __name__ == "__main__":

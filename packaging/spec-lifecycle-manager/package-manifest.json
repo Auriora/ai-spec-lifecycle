@@ -3,9 +3,9 @@
   "version": "0.1.0+codex.20260606221001",
   "registry": "local",
   "distribution": {
-    "ghcr_contract": "packaging/spec-lifecycle-manager/ghcr-package.json",
-    "ghcr_image": "ghcr.io/bcherrington/spec-lifecycle-manager",
-    "publish_status": "contract-ready-not-published"
+    "npm_contract": "packaging/spec-lifecycle-manager/npm-package.json",
+    "npm_package": "@auriora/spec-lifecycle-manager",
+    "npm_publish_status": "pack-ready-not-published"
   },
   "installer": "scripts/install-spec-lifecycle-manager-package.sh",
   "entrypoint": "plugin-bundled mcpServers entry: plugins/spec-lifecycle-manager/.mcp.json",

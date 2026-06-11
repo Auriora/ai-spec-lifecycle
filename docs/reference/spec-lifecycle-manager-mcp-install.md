@@ -80,24 +80,30 @@ The installer:
 The plugin has no third-party runtime dependencies. It requires Python 3.9 or
 newer and otherwise uses the Python standard library.
 
-## Distribution Contract
+## npm Distribution Package
 
-The repository also defines a GHCR-ready package contract:
+The repository defines an npm package contract:
 
 ```text
-packaging/spec-lifecycle-manager/ghcr-package.json
-packaging/spec-lifecycle-manager/Containerfile
+package.json
+packaging/spec-lifecycle-manager/npm-package.json
+packaging/spec-lifecycle-manager/npm-install.js
 ```
 
-This contract describes the planned
-`ghcr.io/bcherrington/spec-lifecycle-manager` artifact, version source,
-payload root, OCI labels, compatibility requirements, provenance fields, and
-required package inputs. Its current status is
-`contract-ready-not-published`.
+The package name is `@auriora/spec-lifecycle-manager`. It packages the plugin
+bundle, package metadata, and the existing installer script. Its current status
+is `pack-ready-not-published`.
 
-Local marketplace install remains the supported install path in this slice.
-Publishing to GHCR, registry authentication, pulling from GHCR, and installing
-directly from a registry artifact are future work.
+After publish, the intended install command is:
+
+```bash
+npx @auriora/spec-lifecycle-manager install
+```
+
+The npm bin resolves the unpacked package root and invokes
+`scripts/install-spec-lifecycle-manager-package.sh --source <package-root>`.
+Local marketplace install remains supported for checkout-based development.
+Docker/GHCR image distribution is not the supported package path.
 
 ## Hook Policy
 
@@ -135,7 +141,8 @@ Use this checklist in this repository after install, sync, or reload:
 | Prompt definitions validate | `prompts_validate` returns no diagnostics. |
 | Package tools resolve live specs | `closure_check`, `task_context`, or `traceability_lookup` work when an active spec exists. |
 | Sync guard is reviewed | In this repository, `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py sync-guard .` reports source/bundle parity, installed cache state, reload advisory, and recent commit evidence. |
-| Package contract validates | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .` returns no diagnostics for GHCR contract metadata, required package files, source/bundle parity, and provenance. |
+| Package contract validates | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .` returns no diagnostics for npm contract metadata, required package files, source/bundle parity, and provenance. |
+| npm tarball contains payload | `npm pack --dry-run --json` includes `package.json`, the npm installer bin, npm package contract, existing installer script, and plugin bundle. |
 | No old standalone skill remains | `~/.codex/skills/spec-lifecycle-manager/` is absent after installer cleanup. |
 | No old managed host MCP remains | `~/.codex/config.toml` does not contain the old installer-managed `mcp_servers.spec-lifecycle-manager` block. |
 
