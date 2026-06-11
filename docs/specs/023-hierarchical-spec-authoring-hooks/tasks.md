@@ -50,8 +50,8 @@ T001 -> T002 -> T003 -> T004 -> T005 -> T006 -> T007
   - Acceptance: Runtime docs describe authoring, task-update, package-validation, resume, and closure hook behavior with helper resources.
   - Evidence: `docs/reference/spec-lifecycle-runtime.md` documents hierarchy-aware `spec-file-changed` behavior; full unit suite passed with 94 tests.
 
-- [ ] T007 Mirror bundles and validate.
+- [x] T007 Mirror bundles and validate.
   - Depends on: T006
   - Files: `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/`, `plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/`
   - Acceptance: Source, Codex bundle, Claude bundle, sync guard, package contract, tests, scan, archive index, prompts, and whitespace checks pass.
-  - Evidence: Pending.
+  - Evidence: `scripts/install-spec-lifecycle-manager-package.sh` installed the bundled plugin; `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py sync-guard .` passed with source, bundle, Claude bundle, and installed cache in sync.

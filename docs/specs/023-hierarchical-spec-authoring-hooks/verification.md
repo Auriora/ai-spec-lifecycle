@@ -49,11 +49,13 @@ last_reviewed: 2026-06-11
   hierarchy-aware `spec-file-changed` behavior and Codex wrapper next-action
   guidance; `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p
   'test_*.py'` passed with 94 tests.
+- T007: `scripts/install-spec-lifecycle-manager-package.sh` installed the
+  bundled plugin, then `PYTHONDONTWRITEBYTECODE=1
+  skills/spec-lifecycle-manager/scripts/spec_runtime.py sync-guard .` passed
+  with source, bundled plugin, Claude plugin, and installed cache in sync.
 
 ## Residual Risks
 
 - Hook payloads may not include enough diff detail to isolate changed task IDs.
   If so, implementation must make fallback scope explicit and avoid noisy
   package-wide output during ordinary authoring.
-- Installed Codex plugin cache still needs package install/reload before
-  `sync-guard` can pass bundle-cache parity for T007.
