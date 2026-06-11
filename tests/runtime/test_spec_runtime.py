@@ -515,8 +515,8 @@ class SpecRuntimeTests(unittest.TestCase):
 
         self.assertEqual(0, payload["summary"]["error"])
         self.assertEqual(0, payload["summary"]["warn"])
-        self.assertEqual(16, payload["summary"]["total"])
-        self.assertEqual(16, payload["summary"]["removed"])
+        self.assertEqual(18, payload["summary"]["total"])
+        self.assertEqual(18, payload["summary"]["removed"])
         self.assertEqual(0, payload["summary"]["retained"])
         self.assertEqual(0, payload["summary"]["superseded"])
         self.assertEqual(0, payload["summary"]["legacy_gaps"])
@@ -537,6 +537,8 @@ class SpecRuntimeTests(unittest.TestCase):
             "014-plugin-comparison-improvements",
             "015-brooks-lint-findings-tracking",
             "016-commit-sync-guard",
+            "017-npm-distribution-packaging",
+            "018-mcp-ergonomics-observability",
         }
         entries = {entry["spec_id"]: entry for entry in payload["entries"]}
         self.assertEqual(expected, set(entries))

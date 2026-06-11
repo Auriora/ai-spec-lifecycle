@@ -14,6 +14,70 @@ requires visible archived docs.
 
 ## Entries
 
+### 2026-06-11 - 018-mcp-ergonomics-observability
+
+- **Spec:** `docs/specs/018-mcp-ergonomics-observability/`
+- **Title:** MCP ergonomics and observability hardening
+- **Final spec commit:** `e4703ff`
+- **Closure cleanup commit:** `613f9bf`
+- **Closure action:** removed
+- **Closed by:** platform
+- **Durable docs updated:**
+  - `docs/reference/spec-lifecycle-runtime.md`
+  - `skills/spec-lifecycle-manager/scripts/spec_runtime.py`
+  - `skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`
+  - `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/spec_runtime.py`
+  - `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`
+  - `plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/scripts/spec_runtime.py`
+  - `plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`
+  - `tests/runtime/test_spec_runtime.py`
+  - `tests/runtime/test_spec_mcp_server.py`
+  - `tests/runtime/test_spec_plugin_package.py`
+- **Verification summary:** Full unit suite passed; lifecycle scan, archive
+  index validation, prompt validation, package-contract validation, npm pack
+  dry-run, sync-guard, and `git diff --check` passed. After install,
+  `sync-guard` reported source skill, Codex bundle, Claude bundle, and
+  installed cache all in sync with no findings.
+- **Residual risks:** Existing already-running MCP sessions may need reload to
+  pick up the installed runtime. `mcp_audit` is a deterministic log triage
+  signal and not proof that a tool executed because session logs can contain
+  copied prompts or user-pasted errors.
+- **Follow-up:** Consider hook-log input for `mcp_audit` only if future review
+  workflows need first-class hook evidence.
+
+### 2026-06-11 - 017-npm-distribution-packaging
+
+- **Spec:** `docs/specs/017-npm-distribution-packaging/`
+- **Title:** npm distribution packaging
+- **Final spec commit:** `e4703ff`
+- **Closure cleanup commit:** `613f9bf`
+- **Closure action:** removed
+- **Closed by:** platform
+- **Durable docs updated:**
+  - `package.json`
+  - `packaging/spec-lifecycle-manager/npm-package.json`
+  - `packaging/spec-lifecycle-manager/npm-install.js`
+  - `packaging/spec-lifecycle-manager/package-manifest.json`
+  - `plugins/spec-lifecycle-manager/claude-plugin/`
+  - `docs/reference/spec-lifecycle-manager-mcp-install.md`
+  - `docs/reference/spec-lifecycle-runtime.md`
+  - `docs/backlog/README.md`
+  - `skills/spec-lifecycle-manager/scripts/spec_runtime.py`
+  - `skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`
+  - `tests/runtime/test_spec_runtime.py`
+  - `tests/runtime/test_spec_mcp_server.py`
+  - `tests/runtime/test_spec_plugin_package.py`
+- **Verification summary:** Full unit suite passed; package-contract
+  validation passed; npm pack dry-run included the npm installer, Codex plugin
+  bundle, and Claude plugin payload; lifecycle scan, archive index validation,
+  prompt validation, sync-guard after install, and `git diff --check` passed.
+- **Residual risks:** npm publishing, registry authentication, remote `npx`
+  install validation, release tagging policy, and publish automation remain
+  future work. Docker/GHCR distribution is explicitly superseded as the useful
+  install path.
+- **Follow-up:** Plan a release/publish slice when npm registry publishing is
+  required.
+
 ### 2026-06-11 - 016-commit-sync-guard
 
 - **Spec:** `docs/specs/016-commit-sync-guard/`
