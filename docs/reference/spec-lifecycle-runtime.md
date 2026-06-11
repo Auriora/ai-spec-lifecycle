@@ -323,7 +323,7 @@ The hook runner supports advisory and blocking profiles.
 
 | Hook | Purpose |
 | --- | --- |
-| `spec-file-changed` | Lint affected spec packages from changed files. |
+| `spec-file-changed` | Return hierarchy-aware authoring guidance for affected spec packages from changed files. |
 | `task-checkbox-changed` | Check completed tasks for evidence. |
 | `template-changed` | Lint changed markdown templates. |
 | `implementation-task-complete` | Check selected or completed tasks for evidence, file metadata, and changed-file alignment. |
@@ -339,6 +339,26 @@ These runtime checks are reusable by Git hooks, Codex hooks, Agent Workbench
 hooks, or direct CLI invocations. Blocking profile adoption should remain a
 separate dogfood and promotion decision.
 
+`spec-file-changed` is intentionally narrower than full package lint. During
+ordinary authoring it inspects the changed artifact in the context of the spec
+tree and reports:
+
+- the authoring mode, such as `initial_authoring`, `revision`, `task_update`,
+  `verification_update`, or `closure_check`;
+- changed artifacts and existing artifacts in the package;
+- missing prerequisite artifacts for the changed file;
+- existing downstream artifacts that may need review after an upstream
+  revision;
+- the next useful authoring step when there is one;
+- relevant helper surfaces such as `templates://spec-package`, `scan_specs`,
+  `active_spec_preflight`, `task_context`, or `traceability_lookup`.
+
+When an upstream artifact such as `requirements.md` or `design.md` is revised
+after downstream artifacts already exist, the hook reports those downstream
+files as review candidates. It does not present them as the next missing step.
+Use explicit `lint`, `spec-resumed`, `verification-updated`, or
+`spec-close-check` when full package health is the desired signal.
+
 ## Codex Hook Wrapper
 
 `codex_spec_lifecycle_hook.py` is an advisory Codex `PostToolUse` wrapper. It
@@ -353,7 +373,9 @@ runtime hook checks for relevant spec lifecycle files:
 
 The wrapper is quiet when checks pass. When advisory diagnostics are found, it
 emits Codex `additionalContext` for the current turn and exits with status 0.
-It does not block edits, modify files, update task evidence, or install itself.
+For ordinary spec authoring writes, the wrapper can also emit concise
+next-action guidance even when there are no lint errors. It does not block
+edits, modify files, update task evidence, or install itself.
 
 Recommended global Codex hook entry:
 

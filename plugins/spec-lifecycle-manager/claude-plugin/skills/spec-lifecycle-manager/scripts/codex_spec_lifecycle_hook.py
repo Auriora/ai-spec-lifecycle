@@ -213,16 +213,70 @@ def diagnostic_line(item: dict[str, Any]) -> str:
     return f"{severity} {code}{location}: {message}".strip()
 
 
+def authoring_context_lines(result: dict[str, Any]) -> list[str]:
+    payload = result.get("authoring_context")
+    if not isinstance(payload, dict):
+        return []
+    contexts = payload.get("contexts")
+    if not isinstance(contexts, list):
+        return []
+    lines: list[str] = []
+    for context in contexts:
+        if not isinstance(context, dict):
+            continue
+        spec_path = str(context.get("spec_path", "")).strip()
+        mode = str(context.get("mode", "authoring")).strip()
+        prefix = f"{spec_path}: " if spec_path else ""
+        next_step = context.get("next_authoring_step")
+        if isinstance(next_step, dict) and next_step.get("artifact"):
+            tools = next_step.get("recommended_tools")
+            tool_text = ""
+            if isinstance(tools, list) and tools:
+                tool_text = f" Use: {', '.join(str(tool) for tool in tools[:3])}."
+            lines.append(f"{prefix}{mode}. Next spec artifact: {next_step['artifact']}.{tool_text}")
+        downstream = context.get("downstream_review")
+        if isinstance(downstream, list) and downstream:
+            artifacts = [
+                str(item.get("artifact"))
+                for item in downstream
+                if isinstance(item, dict) and item.get("artifact")
+            ]
+            if artifacts:
+                lines.append(f"{prefix}{mode}. Review existing downstream artifact(s): {', '.join(artifacts)}.")
+        missing = context.get("missing_prerequisites")
+        if isinstance(missing, list) and missing:
+            artifacts = [
+                f"{item.get('artifact')} before {item.get('for_artifact')}"
+                for item in missing
+                if isinstance(item, dict) and item.get("artifact") and item.get("for_artifact")
+            ]
+            if artifacts:
+                lines.append(f"{prefix}{mode}. Missing prerequisite: {', '.join(artifacts)}.")
+    return lines
+
+
 def build_context(results: list[dict[str, Any]]) -> str:
+    guidance: list[str] = []
     diagnostics: list[dict[str, Any]] = []
     for result in results:
+        guidance.extend(authoring_context_lines(result))
         diagnostics.extend(item for item in result.get("diagnostics", []) if isinstance(item, dict))
-    if not diagnostics:
+    if guidance:
+        diagnostics = [
+            item
+            for item in diagnostics
+            if not str(item.get("code", "")).startswith("SPEC_AUTHORING_")
+        ]
+    if not diagnostics and not guidance:
         return ""
-    lines = [diagnostic_line(item) for item in diagnostics[:MAX_DIAGNOSTICS]]
-    remaining = len(diagnostics) - len(lines)
+    lines = guidance[:MAX_DIAGNOSTICS]
+    remaining_guidance = len(guidance) - len(lines)
+    remaining_slots = max(0, MAX_DIAGNOSTICS - len(lines))
+    diagnostic_lines = [diagnostic_line(item) for item in diagnostics[:remaining_slots]]
+    lines.extend(diagnostic_lines)
+    remaining = remaining_guidance + max(0, len(diagnostics) - len(diagnostic_lines))
     suffix = f" {remaining} more finding(s) omitted." if remaining > 0 else ""
-    return "Spec lifecycle advisory checks found issues. " + " ".join(lines) + suffix
+    return "Spec lifecycle advisory guidance. " + " ".join(lines) + suffix
 
 
 def emit_context(context: str) -> None:

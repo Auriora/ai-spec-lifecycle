@@ -13,23 +13,23 @@ last_reviewed: 2026-06-11
 
 | Task ID | Requirements | Acceptance Criteria | Design Sections | Change Impact | Verification | Durable Targets | Open Decisions |
 |---------|--------------|---------------------|-----------------|---------------|--------------|-----------------|----------------|
-| T001 | All | All | Overview | Backlog/spec framing | Scan/lint | `docs/backlog/README.md`, spec package | none |
+| T001 | Requirement 1, Requirement 2, Requirement 3, Requirement 4, Requirement 5 | All | Overview | Backlog/spec framing | Scan/lint | `docs/backlog/README.md`, spec package | none |
 | T002 | Requirement 1, Requirement 3, Requirement 5 | All | High-Level Design, Low-Level Design | Runtime helper | Runtime tests | `spec_runtime.py` | none |
 | T003 | Requirement 2, Requirement 3, Requirement 4 | All | Low-Level Design | Runtime hook behavior | Runtime tests | `spec_runtime.py` | Task diff feasibility |
 | T004 | Requirement 4, Requirement 5 | All | Low-Level Design | Codex hook wrapper | Wrapper tests | `codex_spec_lifecycle_hook.py` | none |
-| T005 | All | All | Operational Considerations | Test coverage | Unit tests | `tests/runtime/` | Task diff feasibility |
+| T005 | Requirement 1, Requirement 2, Requirement 3, Requirement 4, Requirement 5 | All | Operational Considerations | Test coverage | Unit tests | `tests/runtime/` | Task diff feasibility |
 | T006 | Requirement 2, Requirement 4, Requirement 5 | All | Operational Considerations | Runtime docs | Docs review, scan | `docs/reference/spec-lifecycle-runtime.md` | none |
-| T007 | All | All | Operational Considerations | Bundled plugin parity | Full validation | bundled plugin skill copies | none |
+| T007 | Requirement 1, Requirement 2, Requirement 3, Requirement 4, Requirement 5 | All | Operational Considerations | Bundled plugin parity | Full validation | bundled plugin skill copies | none |
 
 ## Requirement To Delivery Matrix
 
 | Requirement | Runtime | Hook Wrapper | Tests | Docs |
 |-------------|---------|--------------|-------|------|
-| Requirement 1 | T002 | T004 consumes payload | T005 | T006 |
-| Requirement 2 | T002, T003 | T004 | T005 | T006 |
-| Requirement 3 | T002, T003 | T004 | T005 | T006 |
-| Requirement 4 | T003 | T004 | T005 | T006 |
-| Requirement 5 | T002, T003 | T004 | T005 | T006 |
+| Requirement 1 | T002 | T004 consumes payload | T001, T005, T007 | T006 |
+| Requirement 2 | T002, T003 | T004 | T001, T005, T007 | T006 |
+| Requirement 3 | T002, T003 | T004 | T001, T005, T007 | T006 |
+| Requirement 4 | T003 | T004 | T001, T005, T007 | T006 |
+| Requirement 5 | T002, T003 | T004 | T001, T005, T007 | T006 |
 
 ## Design To Implementation Matrix
 

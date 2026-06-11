@@ -41,6 +41,20 @@ OPTIONAL_ARTIFACTS = [
     "traceability.md",
 ]
 SPEC_ARTIFACTS = CORE_ARTIFACTS + OPTIONAL_ARTIFACTS
+AUTHORING_ARTIFACT_ORDER = [
+    "research.md",
+    "requirements.md",
+    "design.md",
+    "tasks.md",
+    "traceability.md",
+    "verification.md",
+]
+AUTHORING_PREREQUISITES = {
+    "design.md": ["requirements.md"],
+    "tasks.md": ["requirements.md", "design.md"],
+    "traceability.md": ["requirements.md", "design.md", "tasks.md"],
+    "verification.md": ["requirements.md", "design.md", "tasks.md"],
+}
 ARCHIVED_STATUSES = {"archived", "closed", "superseded"}
 REQUIRED_PROMPTS = ["reconcile-spec", "choose-next-task", "task-context", "lint-spec"]
 REVIEW_PACKET_TYPES = {
@@ -1870,6 +1884,181 @@ def spec_path_for_changed_file(repo_root: Path, changed_file: str) -> Path | Non
     return None
 
 
+def artifact_name_for_changed_file(repo_root: Path, changed_file: str) -> str | None:
+    spec_path = spec_path_for_changed_file(repo_root, changed_file)
+    if spec_path is None:
+        return None
+    path = (repo_root / changed_file).resolve()
+    try:
+        relative = path.relative_to(spec_path)
+    except ValueError:
+        return None
+    if len(relative.parts) != 1:
+        return None
+    name = relative.parts[0]
+    if name in AUTHORING_ARTIFACT_ORDER or name in {"change-impact.md", "open-decisions.md", "quickstart.md"}:
+        return name
+    return name if name.endswith(".md") else None
+
+
+def recommended_tools_for_artifact(artifact: str | None, mode: str) -> list[str]:
+    tools = ["templates://spec-package"]
+    if artifact == "tasks.md":
+        tools.extend(["task-context prompt", "traceability_lookup"])
+    elif artifact == "traceability.md":
+        tools.extend(["task_context", "traceability_lookup"])
+    elif artifact == "verification.md":
+        tools.extend(["lifecycle-validate prompt", "lint_spec_package"])
+    elif mode == "closure_check":
+        tools.extend(["closure_check", "promotion_plan", "archive_index"])
+    else:
+        tools.extend(["scan_specs", "active_spec_preflight"])
+    return list(dict.fromkeys(tools))
+
+
+def authoring_mode_for(hook_name: str, changed_artifacts: list[str], downstream_review: list[dict[str, Any]]) -> str:
+    if hook_name == "spec-close-check":
+        return "closure_check"
+    if hook_name in {"task-checkbox-changed", "implementation-task-complete", "agent-response-check"} or "tasks.md" in changed_artifacts:
+        return "task_update"
+    if hook_name == "verification-updated" or "verification.md" in changed_artifacts:
+        return "verification_update"
+    if downstream_review:
+        return "revision"
+    return "initial_authoring"
+
+
+def next_authoring_step(inventory: dict[str, str], changed_artifacts: list[str], mode: str) -> dict[str, Any] | None:
+    if mode in {"revision", "closure_check"}:
+        return None
+    if "requirements.md" in changed_artifacts and inventory.get("design.md") != "present":
+        artifact = "design.md"
+    elif "design.md" in changed_artifacts and inventory.get("tasks.md") != "present":
+        artifact = "tasks.md"
+    elif "tasks.md" in changed_artifacts and inventory.get("traceability.md") != "present":
+        artifact = "traceability.md"
+    elif "tasks.md" in changed_artifacts and inventory.get("verification.md") != "present":
+        artifact = "verification.md"
+    elif "verification.md" in changed_artifacts:
+        artifact = None
+    else:
+        artifact = next((item for item in ["requirements.md", "design.md", "tasks.md"] if inventory.get(item) != "present"), None)
+    if not artifact:
+        return None
+    return {
+        "artifact": artifact,
+        "path": artifact,
+        "reason": "Next useful spec authoring artifact for the current edit.",
+        "recommended_tools": recommended_tools_for_artifact(artifact, mode),
+    }
+
+
+def spec_authoring_context(repo_root: Path, changed_files: list[str], hook_name: str) -> dict[str, Any]:
+    root = repo_root.resolve()
+    by_spec: dict[Path, list[str]] = {}
+    for changed in changed_files:
+        spec = spec_path_for_changed_file(root, changed)
+        if spec is not None:
+            by_spec.setdefault(spec, []).append(changed)
+
+    contexts: list[dict[str, Any]] = []
+    diagnostics: list[dict[str, Any]] = []
+    for spec_path, files in sorted(by_spec.items(), key=lambda item: str(item[0])):
+        inventory = artifact_inventory(spec_path)
+        changed_artifacts = [
+            artifact
+            for changed in files
+            if (artifact := artifact_name_for_changed_file(root, changed)) is not None
+        ]
+        changed_artifacts = list(dict.fromkeys(changed_artifacts))
+        existing_artifacts = [name for name, state in inventory.items() if state == "present"]
+
+        missing_prerequisites: list[dict[str, Any]] = []
+        for artifact in changed_artifacts:
+            for prerequisite in AUTHORING_PREREQUISITES.get(artifact, []):
+                if inventory.get(prerequisite) != "present":
+                    missing_prerequisites.append(
+                        {
+                            "artifact": prerequisite,
+                            "for_artifact": artifact,
+                            "path": str(spec_path / prerequisite),
+                            "recommended_tools": recommended_tools_for_artifact(prerequisite, "initial_authoring"),
+                        }
+                    )
+
+        downstream_review: list[dict[str, Any]] = []
+        changed_order = [
+            AUTHORING_ARTIFACT_ORDER.index(artifact)
+            for artifact in changed_artifacts
+            if artifact in AUTHORING_ARTIFACT_ORDER
+        ]
+        if changed_order:
+            earliest_changed = min(changed_order)
+            for artifact in AUTHORING_ARTIFACT_ORDER[earliest_changed + 1 :]:
+                if inventory.get(artifact) == "present":
+                    downstream_review.append(
+                        {
+                            "artifact": artifact,
+                            "path": str(spec_path / artifact),
+                            "reason": "review_existing_downstream",
+                        }
+                    )
+
+        mode = authoring_mode_for(hook_name, changed_artifacts, downstream_review)
+        next_step = next_authoring_step(inventory, changed_artifacts, mode)
+        context_diagnostics: list[dict[str, Any]] = []
+        for item in missing_prerequisites:
+            context_diagnostics.append(
+                diagnostic(
+                    "warn",
+                    "SPEC_AUTHORING_PREREQUISITE_MISSING",
+                    Path(item["path"]),
+                    f"{item['artifact']} should exist before or alongside {item['for_artifact']}.",
+                    lifecycle_gate="authoring",
+                    artifact_type=item["artifact"].removesuffix(".md"),
+                )
+            )
+        if downstream_review:
+            names = ", ".join(item["artifact"] for item in downstream_review)
+            context_diagnostics.append(
+                diagnostic(
+                    "info",
+                    "SPEC_AUTHORING_DOWNSTREAM_REVIEW",
+                    spec_path,
+                    f"Upstream revision may require reviewing existing downstream artifact(s): {names}.",
+                    lifecycle_gate="authoring",
+                )
+            )
+        diagnostics.extend(context_diagnostics)
+
+        contexts.append(
+            {
+                "spec_path": str(spec_path),
+                "changed_files": files,
+                "changed_artifacts": changed_artifacts,
+                "existing_artifacts": existing_artifacts,
+                "missing_prerequisites": missing_prerequisites,
+                "downstream_review": downstream_review,
+                "mode": mode,
+                "next_authoring_step": next_step,
+                "recommended_tools": recommended_tools_for_artifact(
+                    next_step["artifact"] if next_step else (changed_artifacts[0] if changed_artifacts else None),
+                    mode,
+                ),
+                "diagnostics": context_diagnostics,
+            }
+        )
+
+    return {
+        "repo_root": str(root),
+        "hook": hook_name,
+        "changed_files": changed_files,
+        "contexts": contexts,
+        "diagnostics": diagnostics,
+        "summary": diagnostic_summary(diagnostics),
+    }
+
+
 def run_hook(
     repo_root: Path,
     hook_name: str,
@@ -1897,11 +2086,9 @@ def run_hook(
         affected = sorted(affected_set)
 
     if hook_name == "spec-file-changed":
-        for spec in affected:
-            affected_specs.append(str(spec))
-            result = lint_spec_package(spec)
-            assert isinstance(result, dict)
-            diagnostics.extend(result["diagnostics"])
+        authoring_context = spec_authoring_context(root, changed_files, hook_name)
+        diagnostics.extend(authoring_context["diagnostics"])
+        affected_specs.extend(context["spec_path"] for context in authoring_context["contexts"])
     elif hook_name == "task-checkbox-changed":
         for spec in affected:
             tasks_path = spec / "tasks.md"
@@ -1949,7 +2136,7 @@ def run_hook(
         )
 
     blocking = hook_blockers(diagnostics, effective_advisory)
-    return {
+    payload = {
         "hook": hook_name,
         "repo_root": str(root),
         "severity_profile": severity_profile,
@@ -1961,6 +2148,9 @@ def run_hook(
         "blocking": blocking,
         "blocked": bool(blocking),
     }
+    if hook_name == "spec-file-changed":
+        payload["authoring_context"] = authoring_context
+    return payload
 
 
 def check_implementation_task_complete(

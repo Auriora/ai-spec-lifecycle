@@ -72,7 +72,7 @@ def run_hook(payload: dict[str, object]) -> subprocess.CompletedProcess[str]:
 
 
 class CodexSpecLifecycleHookTests(unittest.TestCase):
-    def test_hook_stays_quiet_when_spec_checks_pass(self):
+    def test_hook_reports_concise_guidance_when_spec_checks_pass(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp) / "repo"
             repo.mkdir()
@@ -88,8 +88,12 @@ class CodexSpecLifecycleHookTests(unittest.TestCase):
             }
 
             result = run_hook(payload)
+        data = json.loads(result.stdout)
+        context = data["hookSpecificOutput"]["additionalContext"]
 
-        self.assertEqual("", result.stdout)
+        self.assertIn("Spec lifecycle advisory guidance.", context)
+        self.assertIn("Next spec artifact: traceability.md", context)
+        self.assertNotRegex(context, r"\b(ERROR|WARN)\b")
         self.assertEqual("", result.stderr)
 
     def test_hook_matches_nested_partition_specs(self):
@@ -108,8 +112,11 @@ class CodexSpecLifecycleHookTests(unittest.TestCase):
             }
 
             result = run_hook(payload)
+        data = json.loads(result.stdout)
+        context = data["hookSpecificOutput"]["additionalContext"]
 
-        self.assertEqual("", result.stdout)
+        self.assertIn("docs/platform/specs/001-valid", context)
+        self.assertIn("Next spec artifact: traceability.md", context)
         self.assertEqual("", result.stderr)
 
     def test_hook_extracts_apply_patch_input_paths(self):
@@ -129,8 +136,10 @@ class CodexSpecLifecycleHookTests(unittest.TestCase):
             }
 
             result = run_hook(payload)
+        data = json.loads(result.stdout)
+        context = data["hookSpecificOutput"]["additionalContext"]
 
-        self.assertEqual("", result.stdout)
+        self.assertIn("Next spec artifact: traceability.md", context)
         self.assertEqual("", result.stderr)
 
     def test_hook_reports_advisory_findings_for_invalid_spec(self):
@@ -151,8 +160,33 @@ class CodexSpecLifecycleHookTests(unittest.TestCase):
         data = json.loads(result.stdout)
         context = data["hookSpecificOutput"]["additionalContext"]
 
-        self.assertIn("Spec lifecycle advisory checks found issues.", context)
+        self.assertIn("Spec lifecycle advisory guidance.", context)
         self.assertRegex(context, r"\b(ERROR|WARN)\b")
+
+    def test_hook_reports_next_authoring_step_for_clean_design_write(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            spec = repo / "docs/specs/001-new"
+            spec.mkdir(parents=True)
+            (repo / ".git").mkdir()
+            (spec / "requirements.md").write_text("# Requirements\n", encoding="utf-8")
+            (spec / "design.md").write_text("# Design\n", encoding="utf-8")
+            payload = {
+                "hook_event_name": "PostToolUse",
+                "cwd": str(repo),
+                "tool_name": "write_file",
+                "tool_input": {
+                    "path": "docs/specs/001-new/design.md"
+                },
+            }
+
+            result = run_hook(payload)
+        data = json.loads(result.stdout)
+        context = data["hookSpecificOutput"]["additionalContext"]
+
+        self.assertIn("Next spec artifact: tasks.md", context)
+        self.assertIn("templates://spec-package", context)
+        self.assertNotIn("CORE_ARTIFACT_MISSING", context)
 
     def test_hook_wrapper_logs_unexpected_errors_without_failing_codex(self):
         def fail() -> int:

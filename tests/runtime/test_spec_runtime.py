@@ -839,7 +839,66 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertTrue({"reconcile-spec", "choose-next-task", "task-context", "lint-spec"} <= names)
         self.assertEqual({"error": 0, "warn": 0, "info": 0}, payload["summary"])
 
-    def test_hook_spec_file_changed_lints_affected_package(self):
+    def test_spec_authoring_context_recommends_next_artifact(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / ".git").mkdir()
+            spec = repo / "docs/specs/001-new"
+            spec.mkdir(parents=True)
+            (spec / "requirements.md").write_text("# Requirements\n", encoding="utf-8")
+
+            payload = spec_runtime.spec_authoring_context(
+                repo,
+                ["docs/specs/001-new/requirements.md"],
+                "spec-file-changed",
+            )
+
+        context = payload["contexts"][0]
+        self.assertEqual("initial_authoring", context["mode"])
+        self.assertEqual(["requirements.md"], context["changed_artifacts"])
+        self.assertEqual("design.md", context["next_authoring_step"]["artifact"])
+        self.assertEqual([], context["downstream_review"])
+
+    def test_spec_authoring_context_reports_downstream_review_for_revision(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            write_complete_spec(repo)
+
+            payload = spec_runtime.spec_authoring_context(
+                repo,
+                ["docs/specs/001-current/requirements.md"],
+                "spec-file-changed",
+            )
+
+        context = payload["contexts"][0]
+        downstream = {item["artifact"]: item["reason"] for item in context["downstream_review"]}
+        self.assertEqual("revision", context["mode"])
+        self.assertIsNone(context["next_authoring_step"])
+        self.assertEqual("review_existing_downstream", downstream["design.md"])
+        self.assertEqual("review_existing_downstream", downstream["tasks.md"])
+
+    def test_spec_authoring_context_reports_missing_prerequisite(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / ".git").mkdir()
+            spec = repo / "docs/specs/001-new"
+            spec.mkdir(parents=True)
+            (spec / "design.md").write_text("# Design\n", encoding="utf-8")
+
+            payload = spec_runtime.spec_authoring_context(
+                repo,
+                ["docs/specs/001-new/design.md"],
+                "spec-file-changed",
+            )
+
+        context = payload["contexts"][0]
+        missing = {(item["artifact"], item["for_artifact"]) for item in context["missing_prerequisites"]}
+        codes = {item["code"] for item in payload["diagnostics"]}
+        self.assertEqual("initial_authoring", context["mode"])
+        self.assertIn(("requirements.md", "design.md"), missing)
+        self.assertIn("SPEC_AUTHORING_PREREQUISITE_MISSING", codes)
+
+    def test_hook_spec_file_changed_reports_authoring_context_for_affected_package(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
             write_complete_spec(repo)
@@ -852,8 +911,51 @@ class SpecRuntimeTests(unittest.TestCase):
 
         self.assertTrue(payload["advisory"])
         self.assertFalse(payload["blocked"])
-        self.assertEqual({"error": 0, "warn": 0, "info": 0}, payload["summary"])
+        self.assertEqual({"error": 0, "warn": 0, "info": 1}, payload["summary"])
         self.assertEqual(1, len(payload["affected_specs"]))
+        self.assertEqual("task_update", payload["authoring_context"]["contexts"][0]["mode"])
+
+    def test_hook_spec_file_changed_uses_authoring_context_without_package_lint_flood(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / ".git").mkdir()
+            spec = repo / "docs/specs/001-new"
+            spec.mkdir(parents=True)
+            (spec / "requirements.md").write_text("# Requirements\n", encoding="utf-8")
+            (spec / "design.md").write_text("# Design\n", encoding="utf-8")
+
+            payload = spec_runtime.run_hook(
+                repo,
+                "spec-file-changed",
+                changed_files=["docs/specs/001-new/design.md"],
+                severity_profile="advisory",
+            )
+
+        context = payload["authoring_context"]["contexts"][0]
+        codes = {item["code"] for item in payload["diagnostics"]}
+        self.assertEqual("initial_authoring", context["mode"])
+        self.assertEqual("tasks.md", context["next_authoring_step"]["artifact"])
+        self.assertNotIn("CORE_ARTIFACT_MISSING", codes)
+        self.assertNotIn("TASKS_MISSING", codes)
+
+    def test_hook_spec_file_changed_reports_revision_downstream_context(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            write_complete_spec(repo)
+
+            payload = spec_runtime.run_hook(
+                repo,
+                "spec-file-changed",
+                changed_files=["docs/specs/001-current/design.md"],
+                severity_profile="advisory",
+            )
+
+        context = payload["authoring_context"]["contexts"][0]
+        downstream = {item["artifact"] for item in context["downstream_review"]}
+        self.assertEqual("revision", context["mode"])
+        self.assertIsNone(context["next_authoring_step"])
+        self.assertIn("tasks.md", downstream)
+        self.assertIn("SPEC_AUTHORING_DOWNSTREAM_REVIEW", {item["code"] for item in payload["diagnostics"]})
 
     def test_hook_task_checkbox_changed_blocks_missing_evidence(self):
         with tempfile.TemporaryDirectory() as tmp:
