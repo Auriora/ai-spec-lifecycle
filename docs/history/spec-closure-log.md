@@ -19,7 +19,7 @@ requires visible archived docs.
 - **Spec:** `docs/specs/023-hierarchical-spec-authoring-hooks/`
 - **Title:** Hierarchical spec authoring hooks
 - **Final spec commit:** `c9caebe`
-- **Closure cleanup commit:** `0000000`
+- **Closure cleanup commit:** `5e75d44`
 - **Closure action:** removed
 - **Closed by:** platform
 - **Durable docs updated:**
