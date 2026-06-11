@@ -1,10 +1,10 @@
 {
-  "package_name": "@auriora/spec-lifecycle-manager",
+  "package_name": "@auriora/ai-spec-lifecycle",
   "registry": "npm",
   "publish_status": "pack-ready-not-published",
   "version_source": "package.json#/version",
   "plugin_version_source": "plugins/spec-lifecycle-manager/.codex-plugin/plugin.json#/version",
-  "install_command": "npx @auriora/spec-lifecycle-manager install",
+  "install_command": "npx @auriora/ai-spec-lifecycle install",
   "pack_command": "npm pack",
   "payload_root": "plugins/spec-lifecycle-manager",
   "bin": "packaging/spec-lifecycle-manager/npm-install.js",
@@ -16,6 +16,11 @@
     "plugins/spec-lifecycle-manager/.codex-plugin/plugin.json",
     "plugins/spec-lifecycle-manager/.mcp.json",
     "plugins/spec-lifecycle-manager/hooks/hooks.json",
+    "plugins/spec-lifecycle-manager/claude-plugin/.claude-plugin/plugin.json",
+    "plugins/spec-lifecycle-manager/claude-plugin/.mcp.json",
+    "plugins/spec-lifecycle-manager/claude-plugin/hooks/hooks.json",
+    "plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/SKILL.md",
+    "plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py",
     "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/SKILL.md",
     "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/spec_runtime.py",
     "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py",
@@ -26,7 +31,7 @@
     "scripts/install-spec-lifecycle-manager-package.sh"
   ],
   "provenance": {
-    "source_repository": "https://github.com/bcherrington/agent-dev-lifecycle",
+    "source_repository": "https://github.com/Auriora/ai-spec-lifecycle",
     "source_path": "plugins/spec-lifecycle-manager",
     "commit_source": "git HEAD when packed",
     "validation_command": "PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract ."

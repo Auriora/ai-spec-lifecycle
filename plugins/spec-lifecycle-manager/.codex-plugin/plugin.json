@@ -7,8 +7,8 @@
     "email": "noreply@example.com",
     "url": "https://github.com/bcherrington"
   },
-  "homepage": "https://github.com/bcherrington/agent-dev-lifecycle/tree/main/plugins/spec-lifecycle-manager",
-  "repository": "https://github.com/bcherrington/agent-dev-lifecycle",
+  "homepage": "https://github.com/Auriora/ai-spec-lifecycle/tree/main/plugins/spec-lifecycle-manager",
+  "repository": "https://github.com/Auriora/ai-spec-lifecycle",
   "license": "MIT",
   "keywords": [
     "agents",
@@ -28,7 +28,7 @@
     "capabilities": [
       "Interactive"
     ],
-    "websiteURL": "https://github.com/bcherrington/agent-dev-lifecycle/tree/main/plugins/spec-lifecycle-manager",
+    "websiteURL": "https://github.com/Auriora/ai-spec-lifecycle/tree/main/plugins/spec-lifecycle-manager",
     "privacyPolicyURL": "https://opensource.org/licenses/MIT",
     "termsOfServiceURL": "https://opensource.org/licenses/MIT",
     "defaultPrompt": [

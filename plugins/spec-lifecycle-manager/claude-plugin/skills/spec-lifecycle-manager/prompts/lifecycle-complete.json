@@ -1,0 +1,37 @@
+{
+  "name": "lifecycle-complete",
+  "description": "Guide durable promotion, closure readiness, and active spec cleanup.",
+  "arguments": [
+    {
+      "name": "spec_id",
+      "required": true,
+      "description": "Active spec package ID or path."
+    }
+  ],
+  "resources": [
+    "specs://{spec_id}/summary",
+    "history://spec-archive-index"
+  ],
+  "tools": [
+    "closure_check",
+    "promotion_plan",
+    "archive_index",
+    "lint_spec_package"
+  ],
+  "instructions": [
+    "Use the spec-lifecycle-manager skill.",
+    "Check closure readiness before recommending cleanup.",
+    "Verify task evidence, open decisions, durable promotion targets, validation evidence, residual risks, and follow-up routing.",
+    "Do not remove an active spec package until durable docs, closure log, archive index, and final spec evidence are ready."
+  ],
+  "return_format": [
+    "closure_status",
+    "promotion_targets",
+    "blockers",
+    "validation_required",
+    "closure_log_updates",
+    "archive_index_updates",
+    "cleanup_action"
+  ],
+  "client_support_recovery": "If MCP tools are unavailable, run spec_runtime.py closure-check, promotion-plan, lint, and archive-index directly."
+}

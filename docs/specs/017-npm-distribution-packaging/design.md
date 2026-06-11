@@ -34,6 +34,7 @@ The npm distribution slice adds:
 - root `package.json`
 - `packaging/spec-lifecycle-manager/npm-package.json`
 - `packaging/spec-lifecycle-manager/npm-install.js`
+- `plugins/spec-lifecycle-manager/claude-plugin/`
 - npm-aware `package-contract` validation in `spec_runtime.py`
 - focused package tests
 - install/distribution documentation
@@ -43,12 +44,14 @@ image experiment is superseded by this design and should not be pushed.
 
 ### Components and Changes
 
-- **Root package manifest:** Defines `@auriora/spec-lifecycle-manager`, files
+- **Root package manifest:** Defines `@auriora/ai-spec-lifecycle`, files
   included in the tarball, Node engine, validation scripts, and bin entry.
 - **npm package contract:** JSON metadata for package name, version source,
   payload root, install command, required paths, and provenance.
 - **npm installer bin:** Node wrapper that resolves the unpacked package root
   and invokes `scripts/install-spec-lifecycle-manager-package.sh --source`.
+- **Claude Code plugin wrapper:** Claude plugin manifest, MCP config, skill,
+  and advisory hook config under `plugins/spec-lifecycle-manager/claude-plugin/`.
 - **Runtime validation:** Read-only command validates npm contract, `package.json`,
   required paths, source/bundle parity, package metadata, and optional Git
   provenance.
@@ -106,7 +109,7 @@ repo or unpacked package root
 ### npm Installer Bin
 
 ```bash
-npx @auriora/spec-lifecycle-manager install
+npx @auriora/ai-spec-lifecycle install
 ```
 
 The bin:
@@ -116,6 +119,23 @@ The bin:
 3. Invokes `scripts/install-spec-lifecycle-manager-package.sh --source <root>`.
 4. Forwards additional installer options.
 5. Exits with the underlying installer status.
+
+### Claude Code Plugin
+
+```bash
+claude --plugin-dir plugins/spec-lifecycle-manager/claude-plugin
+```
+
+The Claude plugin root contains:
+
+- `.claude-plugin/plugin.json`
+- `.mcp.json`
+- `hooks/hooks.json`
+- `skills/spec-lifecycle-manager/`
+
+The MCP config launches `./skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`
+with `python3`. The hook config invokes the bundled advisory lifecycle hook via
+`${CLAUDE_PLUGIN_ROOT}`.
 
 ### Runtime Command
 
@@ -156,6 +176,7 @@ that installer instead of duplicating Codex plugin installation logic.
 | --- | --- | --- | --- |
 | Focused package-contract tests | Requirements 1-3 | `verification.md` | Does not prove npm publish. |
 | `npm pack --dry-run --json` | Tarball contents | `verification.md` | Does not prove registry install. |
+| Claude plugin package tests | Claude manifest, MCP, hook, and skill payload | `verification.md` | Does not prove runtime loading inside Claude. |
 | Full unit suite | Runtime regression | `verification.md` | None expected. |
 | Manual package-contract command | Local package state | `verification.md` | Git provenance depends on local Git availability. |
 | Sync guard | Source/bundle/cache parity | `verification.md` | Installed cache may need reinstall after runtime changes. |

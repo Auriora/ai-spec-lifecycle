@@ -10,8 +10,8 @@ last_reviewed: 2026-06-11
 
 ## Purpose
 
-Record how the `spec-lifecycle-manager` Codex plugin is packaged, installed,
-and validated for this repository.
+Record how the `spec-lifecycle-manager` Codex and Claude Code plugins are
+packaged, installed, and validated for this repository.
 
 ## Supported Model
 
@@ -31,6 +31,7 @@ Supported boundaries:
 | Spec lifecycle plugin | Spec lifecycle skill, read-only MCP tools, prompt definitions, templates, and advisory hooks. | Plugin cache under `~/.codex/plugins/cache/<marketplace>/spec-lifecycle-manager/<version>/`. |
 | Spec lifecycle MCP | Spec inventory, linting, traceability context, prompt definitions, promotion planning, and closure checks. | Plugin-scoped `.mcp.json`, not a host-level `mcp_servers` entry. |
 | Spec lifecycle hooks | Advisory lifecycle checks after write tools. | Plugin-scoped `hooks/hooks.json`, subject to normal Codex plugin hook trust. |
+| Claude Code plugin | Claude plugin wrapper with the same skill, MCP server, runtime scripts, and advisory lifecycle hook. | `plugins/spec-lifecycle-manager/claude-plugin/` from a checkout or unpacked package. |
 
 Do not install a separate `~/.codex/skills/spec-lifecycle-manager/` copy for
 normal operation. Do not add a host-level
@@ -51,9 +52,26 @@ plugins/spec-lifecycle-manager/
     prompts/
     references/
     scripts/
+  claude-plugin/
+    .claude-plugin/plugin.json
+    .mcp.json
+    hooks/hooks.json
+    skills/spec-lifecycle-manager/
+      SKILL.md
+      agents/
+      prompts/
+      references/
+      scripts/
 ```
 
 The manifest points to bundled components with plugin-root-relative paths:
+
+- `skills`: `./skills/`
+- `mcpServers`: `./.mcp.json`
+- `hooks`: `./hooks/hooks.json`
+
+The Claude Code plugin wrapper points to its nested bundled components with
+Claude-plugin-root-relative paths:
 
 - `skills`: `./skills/`
 - `mcpServers`: `./.mcp.json`
@@ -90,20 +108,38 @@ packaging/spec-lifecycle-manager/npm-package.json
 packaging/spec-lifecycle-manager/npm-install.js
 ```
 
-The package name is `@auriora/spec-lifecycle-manager`. It packages the plugin
+The package name is `@auriora/ai-spec-lifecycle`. It packages the plugin
 bundle, package metadata, and the existing installer script. Its current status
 is `pack-ready-not-published`.
 
 After publish, the intended install command is:
 
 ```bash
-npx @auriora/spec-lifecycle-manager install
+npx @auriora/ai-spec-lifecycle install
 ```
 
 The npm bin resolves the unpacked package root and invokes
 `scripts/install-spec-lifecycle-manager-package.sh --source <package-root>`.
 Local marketplace install remains supported for checkout-based development.
 Docker/GHCR image distribution is not the supported package path.
+
+## Claude Code Plugin
+
+For Claude Code, load the bundled plugin wrapper from a checkout or unpacked
+npm package:
+
+```bash
+claude --plugin-dir plugins/spec-lifecycle-manager/claude-plugin
+```
+
+The Claude plugin wrapper starts the MCP server from its own plugin root:
+
+```text
+python3 ./skills/spec-lifecycle-manager/scripts/spec_mcp_server.py
+```
+
+After changing the plugin wrapper, skill, MCP config, or hooks, run
+`/reload-plugins` in Claude Code or restart Claude Code.
 
 ## Hook Policy
 
@@ -125,6 +161,13 @@ diagnostics. Future blocking behavior requires a focused spec or backlog item
 that defines event source, payload, command, timeout, severity profile,
 false-positive handling, rollback path, and validation evidence.
 
+The Claude Code wrapper uses the same advisory hook script from its nested
+plugin root:
+
+```text
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py"
+```
+
 ## Validation Checklist
 
 Use this checklist in this repository after install, sync, or reload:
@@ -143,6 +186,8 @@ Use this checklist in this repository after install, sync, or reload:
 | Sync guard is reviewed | In this repository, `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py sync-guard .` reports source/bundle parity, installed cache state, reload advisory, and recent commit evidence. |
 | Package contract validates | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .` returns no diagnostics for npm contract metadata, required package files, source/bundle parity, and provenance. |
 | npm tarball contains payload | `npm pack --dry-run --json` includes `package.json`, the npm installer bin, npm package contract, existing installer script, and plugin bundle. |
+| Claude plugin validates | Package tests confirm the Claude manifest, MCP config, hook config, skill, and runtime script are bundled under `plugins/spec-lifecycle-manager/claude-plugin/`. |
+| Claude plugin is in npm payload | `npm pack --dry-run --json` includes the Claude plugin manifest, `.mcp.json`, hooks, skill, and MCP runtime script. |
 | No old standalone skill remains | `~/.codex/skills/spec-lifecycle-manager/` is absent after installer cleanup. |
 | No old managed host MCP remains | `~/.codex/config.toml` does not contain the old installer-managed `mcp_servers.spec-lifecycle-manager` block. |
 
@@ -166,3 +211,5 @@ If the tools are not visible after reload:
 - `docs/history/spec-archive-index.md`
 - `plugins/spec-lifecycle-manager/.codex-plugin/plugin.json`
 - `plugins/spec-lifecycle-manager/.mcp.json`
+- `plugins/spec-lifecycle-manager/claude-plugin/.claude-plugin/plugin.json`
+- `plugins/spec-lifecycle-manager/claude-plugin/.mcp.json`

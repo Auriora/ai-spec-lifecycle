@@ -4,7 +4,7 @@
   "registry": "local",
   "distribution": {
     "npm_contract": "packaging/spec-lifecycle-manager/npm-package.json",
-    "npm_package": "@auriora/spec-lifecycle-manager",
+    "npm_package": "@auriora/ai-spec-lifecycle",
     "npm_publish_status": "pack-ready-not-published"
   },
   "installer": "scripts/install-spec-lifecycle-manager-package.sh",
@@ -19,6 +19,7 @@
   },
   "components": [
     "plugins/spec-lifecycle-manager",
+    "plugins/spec-lifecycle-manager/claude-plugin",
     "docs/reference/spec-lifecycle-runtime.md",
     "docs/reference/spec-lifecycle-manager-mcp-install.md",
     "AGENTS.md"
@@ -28,5 +29,13 @@
     "plugin_manifest": "plugins/spec-lifecycle-manager/.codex-plugin/plugin.json",
     "skill_path": "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager",
     "hook_config_fallback": "scripts/install-spec-lifecycle-manager-package.sh"
+  },
+  "claude_code": {
+    "plugin_root": "plugins/spec-lifecycle-manager/claude-plugin",
+    "plugin_manifest": "plugins/spec-lifecycle-manager/claude-plugin/.claude-plugin/plugin.json",
+    "plugin_mcp_config": "plugins/spec-lifecycle-manager/claude-plugin/.mcp.json",
+    "plugin_skill": "plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/SKILL.md",
+    "plugin_hooks": "plugins/spec-lifecycle-manager/claude-plugin/hooks/hooks.json",
+    "install_model": "Load with claude --plugin-dir plugins/spec-lifecycle-manager/claude-plugin from the unpacked package."
   }
 }

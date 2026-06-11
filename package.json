@@ -1,13 +1,13 @@
 {
-  "name": "@auriora/spec-lifecycle-manager",
+  "name": "@auriora/ai-spec-lifecycle",
   "version": "0.1.0-codex.20260606221001",
   "description": "Codex plugin for spec lifecycle skills, read-only MCP tools, prompts, templates, and advisory hooks.",
   "license": "MIT",
   "author": "Auriora",
-  "homepage": "https://github.com/bcherrington/agent-dev-lifecycle/tree/main/plugins/spec-lifecycle-manager",
+  "homepage": "https://github.com/Auriora/ai-spec-lifecycle/tree/main/plugins/spec-lifecycle-manager",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bcherrington/agent-dev-lifecycle.git"
+    "url": "git+https://github.com/Auriora/ai-spec-lifecycle.git"
   },
   "keywords": [
     "codex",
@@ -17,6 +17,7 @@
     "lifecycle"
   ],
   "bin": {
+    "ai-spec-lifecycle": "packaging/spec-lifecycle-manager/npm-install.js",
     "spec-lifecycle-manager": "packaging/spec-lifecycle-manager/npm-install.js"
   },
   "files": [

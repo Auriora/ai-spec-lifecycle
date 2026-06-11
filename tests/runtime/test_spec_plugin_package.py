@@ -8,9 +8,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 PLUGIN = ROOT / "plugins" / "spec-lifecycle-manager"
+CLAUDE_PLUGIN = PLUGIN / "claude-plugin"
 NPM_PACKAGE = ROOT / "package.json"
 SOURCE_SKILL = ROOT / "skills" / "spec-lifecycle-manager"
 BUNDLED_SKILL = PLUGIN / "skills" / "spec-lifecycle-manager"
+CLAUDE_SKILL = CLAUDE_PLUGIN / "skills" / "spec-lifecycle-manager"
 
 
 class SpecPluginPackageTests(unittest.TestCase):
@@ -18,9 +20,14 @@ class SpecPluginPackageTests(unittest.TestCase):
         self.assertTrue((PLUGIN / ".codex-plugin" / "plugin.json").is_file())
         self.assertTrue((PLUGIN / ".mcp.json").is_file())
         self.assertTrue((PLUGIN / "hooks" / "hooks.json").is_file())
+        self.assertTrue((CLAUDE_PLUGIN / ".claude-plugin" / "plugin.json").is_file())
+        self.assertTrue((CLAUDE_PLUGIN / ".mcp.json").is_file())
+        self.assertTrue((CLAUDE_PLUGIN / "hooks" / "hooks.json").is_file())
         self.assertTrue((PLUGIN / "skills" / "spec-lifecycle-manager" / "SKILL.md").is_file())
         self.assertTrue((PLUGIN / "skills" / "spec-lifecycle-manager" / "scripts" / "spec_mcp_server.py").is_file())
         self.assertTrue((PLUGIN / "skills" / "spec-lifecycle-manager" / "scripts" / "spec_runtime.py").is_file())
+        self.assertTrue((CLAUDE_PLUGIN / "skills" / "spec-lifecycle-manager" / "SKILL.md").is_file())
+        self.assertTrue((CLAUDE_PLUGIN / "skills" / "spec-lifecycle-manager" / "scripts" / "spec_mcp_server.py").is_file())
         self.assertTrue((PLUGIN / "skills" / "spec-lifecycle-manager" / "prompts").is_dir())
         self.assertTrue((PLUGIN / "skills" / "spec-lifecycle-manager" / "references").is_dir())
 
@@ -41,6 +48,22 @@ class SpecPluginPackageTests(unittest.TestCase):
         post_tool = hooks["hooks"]["PostToolUse"][0]["hooks"][0]
         self.assertIn("${PLUGIN_ROOT}/skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py", post_tool["command"])
 
+    def test_claude_plugin_manifest_mcp_and_hooks_use_bundled_runtime(self):
+        manifest = json.loads((CLAUDE_PLUGIN / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8"))
+        self.assertEqual("spec-lifecycle-manager", manifest["name"])
+        self.assertEqual("./skills/", manifest["skills"])
+        self.assertEqual("./.mcp.json", manifest["mcpServers"])
+        self.assertEqual("./hooks/hooks.json", manifest["hooks"])
+
+        mcp = json.loads((CLAUDE_PLUGIN / ".mcp.json").read_text(encoding="utf-8"))
+        server = mcp["mcpServers"]["spec-lifecycle-manager"]
+        self.assertEqual("python3", server["command"])
+        self.assertIn("./skills/spec-lifecycle-manager/scripts/spec_mcp_server.py", server["args"])
+
+        hooks = json.loads((CLAUDE_PLUGIN / "hooks" / "hooks.json").read_text(encoding="utf-8"))
+        post_tool = hooks["hooks"]["PostToolUse"][0]["hooks"][0]
+        self.assertIn("${CLAUDE_PLUGIN_ROOT}/skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py", post_tool["command"])
+
     def test_bundled_skill_matches_source_skill(self):
         source_files = {
             path.relative_to(SOURCE_SKILL)
@@ -52,12 +75,23 @@ class SpecPluginPackageTests(unittest.TestCase):
             for path in BUNDLED_SKILL.rglob("*")
             if path.is_file() and "__pycache__" not in path.parts
         }
+        claude_files = {
+            path.relative_to(CLAUDE_SKILL)
+            for path in CLAUDE_SKILL.rglob("*")
+            if path.is_file() and "__pycache__" not in path.parts
+        }
         self.assertEqual(source_files, bundled_files)
+        self.assertEqual(source_files, claude_files)
         for relative in sorted(source_files):
             self.assertEqual(
                 (SOURCE_SKILL / relative).read_bytes(),
                 (BUNDLED_SKILL / relative).read_bytes(),
                 f"Bundled skill file drifted: {relative}",
+            )
+            self.assertEqual(
+                (SOURCE_SKILL / relative).read_bytes(),
+                (CLAUDE_SKILL / relative).read_bytes(),
+                f"Claude plugin skill file drifted: {relative}",
             )
 
     def test_skill_frontmatter_includes_agent_skills_metadata(self):
@@ -72,7 +106,11 @@ class SpecPluginPackageTests(unittest.TestCase):
     def test_npm_package_exposes_installer_bin_and_payload(self):
         package = json.loads(NPM_PACKAGE.read_text(encoding="utf-8"))
 
-        self.assertEqual("@auriora/spec-lifecycle-manager", package["name"])
+        self.assertEqual("@auriora/ai-spec-lifecycle", package["name"])
+        self.assertEqual(
+            "packaging/spec-lifecycle-manager/npm-install.js",
+            package["bin"]["ai-spec-lifecycle"],
+        )
         self.assertEqual(
             "packaging/spec-lifecycle-manager/npm-install.js",
             package["bin"]["spec-lifecycle-manager"],
@@ -102,6 +140,10 @@ class SpecPluginPackageTests(unittest.TestCase):
         self.assertIn("packaging/spec-lifecycle-manager/npm-package.json", files)
         self.assertIn("scripts/install-spec-lifecycle-manager-package.sh", files)
         self.assertIn("plugins/spec-lifecycle-manager/.codex-plugin/plugin.json", files)
+        self.assertIn("plugins/spec-lifecycle-manager/claude-plugin/.claude-plugin/plugin.json", files)
+        self.assertIn("plugins/spec-lifecycle-manager/claude-plugin/.mcp.json", files)
+        self.assertIn("plugins/spec-lifecycle-manager/claude-plugin/hooks/hooks.json", files)
+        self.assertIn("plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/SKILL.md", files)
         self.assertIn("plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/SKILL.md", files)
         self.assertFalse(any("__pycache__" in path for path in files))
         self.assertFalse(any(path.endswith((".pyc", ".pyo")) for path in files))

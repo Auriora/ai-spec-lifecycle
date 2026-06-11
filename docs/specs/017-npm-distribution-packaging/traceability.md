@@ -19,6 +19,8 @@ last_reviewed: 2026-06-11
 | T004 | Requirement 1; Requirement 2; Requirement 3 | All | `design.md#runtime-command`; `design.md#validation-strategy` | `change-impact.md#proposed-changes` | `verification.md#evidence-log` | `skills/spec-lifecycle-manager/scripts/spec_runtime.py`; `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/spec_runtime.py`; `tests/runtime/test_spec_runtime.py`; `tests/runtime/test_spec_plugin_package.py` | none |
 | T005 | Requirement 4 | All | `design.md#operational-considerations` | `change-impact.md#promotion-targets` | `verification.md#evidence-log` | `docs/reference/spec-lifecycle-runtime.md`; `docs/reference/spec-lifecycle-manager-mcp-install.md`; `docs/backlog/README.md` | none |
 | T006 | Requirement 1; Requirement 2; Requirement 3; Requirement 4 | All | `design.md#validation-strategy` | `change-impact.md#promotion-targets` | `verification.md#evidence-log` | `docs/specs/017-npm-distribution-packaging/verification.md` | none |
+| T007 | Requirement 5 | All | `design.md#claude-code-plugin` | `change-impact.md#proposed-changes` | `verification.md#evidence-log` | `plugins/spec-lifecycle-manager/claude-plugin/`; `packaging/spec-lifecycle-manager/npm-package.json`; `tests/runtime/test_spec_plugin_package.py` | none |
+| T008 | Requirement 1; Requirement 2; Requirement 5 | All | `design.md#validation-strategy` | `change-impact.md#promotion-targets` | `verification.md#evidence-log` | `docs/specs/017-npm-distribution-packaging/verification.md` | none |
 
 ## Requirement To Delivery Matrix
 
@@ -28,6 +30,7 @@ last_reviewed: 2026-06-11
 | Requirement 2 | AC1-AC3 | `design.md#runtime-command` | T004, T006 | `verification.md#evidence-log` | `skills/spec-lifecycle-manager/scripts/spec_runtime.py`; `tests/runtime/test_spec_runtime.py`; `tests/runtime/test_spec_plugin_package.py` |
 | Requirement 3 | AC1-AC3 | `design.md#npm-installer-bin` | T002, T004, T006 | `verification.md#evidence-log` | `packaging/spec-lifecycle-manager/npm-install.js`; `package.json` |
 | Requirement 4 | AC1-AC3 | `design.md#operational-considerations` | T003, T005, T006 | `verification.md#evidence-log` | `docs/reference/spec-lifecycle-runtime.md`; `docs/reference/spec-lifecycle-manager-mcp-install.md`; `docs/backlog/README.md` |
+| Requirement 5 | AC1-AC3 | `design.md#claude-code-plugin` | T007, T008 | `verification.md#evidence-log` | `plugins/spec-lifecycle-manager/claude-plugin/`; `docs/reference/spec-lifecycle-manager-mcp-install.md` |
 
 ## Design To Implementation Matrix
 
@@ -38,6 +41,7 @@ last_reviewed: 2026-06-11
 | `design.md#runtime-command` | Requirement 1; Requirement 2; Requirement 3 | T004 | `skills/spec-lifecycle-manager/scripts/spec_runtime.py`; `tests/runtime/test_spec_runtime.py` | Focused runtime tests. |
 | `design.md#operational-considerations` | Requirement 4 | T003, T005 | `docs/reference/spec-lifecycle-manager-mcp-install.md`; `docs/backlog/README.md` | Docs review and package contract command. |
 | `design.md#validation-strategy` | Requirement 1; Requirement 2; Requirement 3; Requirement 4 | T006 | `verification.md` | Full validation set. |
+| `design.md#claude-code-plugin` | Requirement 5 | T007 | `plugins/spec-lifecycle-manager/claude-plugin/` | Package tests and npm pack dry-run. |
 
 ## Open Decision Impact
 

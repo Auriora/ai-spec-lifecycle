@@ -12,7 +12,7 @@ last_reviewed: 2026-06-11
 ## Task Dependency Graph
 
 ```text
-T001 -> T002 -> T003 -> T004 -> T005 -> T006
+T001 -> T002 -> T003 -> T004 -> T005 -> T006 -> T007 -> T008
 ```
 
 ## Tasks
@@ -81,3 +81,28 @@ T001 -> T002 -> T003 -> T004 -> T005 -> T006
     the expected tarball payload without bytecode artifacts; `sync-guard`
     reported source/bundle in sync and installed cache drift pending reinstall;
     spec lint and whitespace checks passed.
+
+- [x] T007 Add Claude Code plugin wrapper.
+  - Depends on: T006
+  - Requirement: Requirement 5
+  - Files: `plugins/spec-lifecycle-manager/claude-plugin/`,
+    `packaging/spec-lifecycle-manager/package-manifest.json`,
+    `packaging/spec-lifecycle-manager/npm-package.json`,
+    `docs/reference/spec-lifecycle-manager-mcp-install.md`,
+    `tests/runtime/test_spec_plugin_package.py`
+  - Acceptance: Claude plugin manifest, MCP config, hook config, skill payload,
+    package metadata, and package tests are present.
+  - Evidence: Added Claude plugin wrapper, package metadata, install docs, and
+    package tests.
+
+- [x] T008 Validate Claude plugin packaging.
+  - Depends on: T007
+  - Requirement: Requirement 1; Requirement 2; Requirement 5
+  - Files: `docs/specs/017-npm-distribution-packaging/verification.md`
+  - Acceptance: Focused package tests, full tests, package-contract, npm pack
+    dry-run, spec lint, closure check, and whitespace validation are recorded
+    after Claude plugin packaging.
+  - Evidence: Focused Claude/package tests passed; package-contract passed;
+    npm pack dry-run included the Claude plugin payload; full unittest suite
+    passed; sync-guard reported source/bundle parity with installed cache drift
+    pending reinstall; whitespace validation passed.

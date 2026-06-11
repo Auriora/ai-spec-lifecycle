@@ -1,0 +1,38 @@
+{
+  "name": "reconcile-spec",
+  "description": "Reconcile an active spec package before resumed implementation.",
+  "arguments": [
+    {
+      "name": "spec_id",
+      "required": true,
+      "description": "Spec package ID or path, for example 004-spec-management-mcp."
+    },
+    {
+      "name": "docs_root",
+      "required": false,
+      "description": "Documentation root to scan when spec_id is not a path."
+    }
+  ],
+  "resources": [
+    "specs://{spec_id}/summary",
+    "governance://constitution"
+  ],
+  "tools": [
+    "lint_spec_package",
+    "next_task"
+  ],
+  "instructions": [
+    "Use the spec-lifecycle-manager skill as the authoritative workflow guide.",
+    "Read the listed resources or equivalent CLI outputs before making a recommendation.",
+    "Separate observed facts, inferred diagnosis, and recommended action.",
+    "Report unresolved decisions, stale evidence, missing durable docs, and old-format migration needs."
+  ],
+  "return_format": [
+    "selected_workflow",
+    "findings_by_severity",
+    "required_decisions",
+    "next_action",
+    "evidence_or_residual_risk"
+  ],
+  "client_support_recovery": "If MCP tools are unavailable, ask naturally to reconcile the spec using the spec-lifecycle-manager skill plus spec_runtime.py lint and next-task."
+}

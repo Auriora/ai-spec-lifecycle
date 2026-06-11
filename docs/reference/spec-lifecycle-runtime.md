@@ -220,8 +220,8 @@ PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py 
 
 The command checks:
 
-- `package.json` is valid JSON and exposes the
-  `spec-lifecycle-manager` bin.
+- `package.json` is valid JSON and exposes the `ai-spec-lifecycle` bin, plus
+  the `spec-lifecycle-manager` compatibility bin.
 - `packaging/spec-lifecycle-manager/npm-package.json` is valid JSON and
   includes package name, install command, bin path, registry, publish status,
   payload root, and required path list.
@@ -243,7 +243,7 @@ npm pack --dry-run --json
 After publish, the intended user install command is:
 
 ```bash
-npx @auriora/spec-lifecycle-manager install
+npx @auriora/ai-spec-lifecycle install
 ```
 
 ## Traceability Lookup

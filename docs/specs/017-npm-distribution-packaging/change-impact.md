@@ -23,6 +23,7 @@ last_reviewed: 2026-06-11
 | Target | Change |
 | --- | --- |
 | `package.json` | Add npm package manifest, files list, bin, and validation scripts. |
+| `plugins/spec-lifecycle-manager/claude-plugin/` | Add Claude Code plugin wrapper, MCP config, skill payload, hook config, and README. |
 | `packaging/spec-lifecycle-manager/npm-package.json` | Add npm distribution contract. |
 | `packaging/spec-lifecycle-manager/npm-install.js` | Add `npx` installer wrapper. |
 | `packaging/spec-lifecycle-manager/Containerfile` | Remove superseded Docker image packaging artifact. |
@@ -36,7 +37,7 @@ last_reviewed: 2026-06-11
 
 | Destination | Promoted content |
 | --- | --- |
-| `docs/reference/spec-lifecycle-manager-mcp-install.md` | Local install, npm package install, and validation checklist. |
+| `docs/reference/spec-lifecycle-manager-mcp-install.md` | Local install, npm package install, Claude plugin loading, and validation checklist. |
 | `docs/reference/spec-lifecycle-runtime.md` | Runtime command and npm payload behavior. |
 | `docs/backlog/README.md` | Mark B026 delivered/done for npm package contract and validation slice. |
 

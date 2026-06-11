@@ -8,6 +8,7 @@ It packages:
 - Full skill and runtime under `skills/spec-lifecycle-manager/`.
 - Plugin-scoped MCP server configuration in `.mcp.json`.
 - Advisory lifecycle hook configuration in `hooks/hooks.json`.
+- Claude Code plugin wrapper under `claude-plugin/`.
 
 The plugin is self-contained. The bundled MCP server runs from the installed
 plugin cache and delegates to:
@@ -26,5 +27,11 @@ install or refresh the package for the current user.
 For npm distribution after publish, use:
 
 ```bash
-npx @auriora/spec-lifecycle-manager install
+npx @auriora/ai-spec-lifecycle install
+```
+
+For Claude Code, load the bundled plugin wrapper from the unpacked package:
+
+```bash
+claude --plugin-dir plugins/spec-lifecycle-manager/claude-plugin
 ```

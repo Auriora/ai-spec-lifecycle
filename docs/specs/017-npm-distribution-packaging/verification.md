@@ -25,6 +25,7 @@ last_reviewed: 2026-06-11
 | --- | --- | --- |
 | npm contract present | `package.json`, `npm-package.json`, and npm installer bin exist and validate. | Package-contract command and tests. |
 | Package shape | Required plugin, manifest, MCP, hook, prompt, script, reference, npm, and installer paths exist. | Package-contract command and npm pack dry-run. |
+| Claude plugin shape | Claude plugin manifest, MCP config, hooks, skill, and runtime scripts exist and validate. | Package tests and npm pack dry-run. |
 | Source parity | Source skill and bundled plugin skill are in sync. | Package-contract and sync-guard commands. |
 | Documentation promotion | Runtime and install docs explain local/npm boundary and Docker/GHCR deferral. | Task T005 evidence. |
 
@@ -32,17 +33,22 @@ last_reviewed: 2026-06-11
 
 | Check | Result | Evidence |
 | --- | --- | --- |
-| Focused runtime/package tests | Pass | `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime tests.runtime.test_spec_plugin_package` passed 52 tests. |
-| Package contract command | Pass | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .` returned status `pass`, npm package `@auriora/spec-lifecycle-manager`, 0 errors, and 0 warnings. |
-| npm pack dry-run | Pass | `npm_config_cache=/tmp/spec-lifecycle-npm-cache npm pack --dry-run --json` returned `auriora-spec-lifecycle-manager-0.1.0-codex.20260606221001.tgz`, 59 entries, package size about 88 KB, and included package metadata, installer bin, existing installer script, and plugin bundle without bytecode artifacts. |
+| Focused runtime/package tests | Pass | `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime tests.runtime.test_spec_plugin_package` passed 53 tests. |
+| Package contract command | Pass | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .` returned status `pass`, npm package `@auriora/ai-spec-lifecycle`, 0 errors, and 0 warnings. |
+| npm pack dry-run | Pass | `npm_config_cache=/tmp/spec-lifecycle-npm-cache npm pack --dry-run --json` returned `auriora-ai-spec-lifecycle-0.1.0-codex.20260606221001.tgz`, 110 entries, package size about 116 KB, and included package metadata, installer bin, existing installer script, Codex plugin bundle, and Claude plugin wrapper without bytecode artifacts. |
 | Sync guard command | Pass with install advisory | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py sync-guard . --commits 5` returned source/bundle `in_sync` and installed cache drift pending reinstall. |
 | Full unittest suite | Pass | `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'` passed 78 tests. |
-| Spec lint | Pass | MCP `lint_spec_package` returned 0 errors and 0 warnings. |
+| Spec lint | Pass | MCP `lint_spec_package` returned 0 errors and 0 warnings after the Claude plugin packaging update. |
 | Traceability preflight | Pass | MCP `active_spec_preflight` for T006 returned status `ready` with no traceability gaps. |
-| Closure check | Pass | MCP `closure_check` returned ready with no blockers and 0 lint diagnostics after T006 evidence was recorded. |
+| Closure check | Pass | MCP `closure_check` returned ready with no blockers and 0 lint diagnostics after T008 evidence was recorded. |
 | Archive index | Pass | MCP `archive_index` returned 0 diagnostics. |
 | Prompt validation | Pass | MCP `prompts_validate` returned 0 diagnostics. |
 | Whitespace check | Pass | `git diff --check` returned no whitespace findings. |
+| Claude plugin focused tests | Pass | `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_plugin_package` passed 8 tests, including Claude manifest, MCP config, hook config, skill parity, and npm payload assertions. |
+| Claude plugin package contract | Pass | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .` returned status `pass`, 0 errors, 0 warnings, and confirmed required Claude plugin paths. |
+| Claude plugin package payload | Pass | `npm_config_cache=/tmp/spec-lifecycle-npm-cache npm pack --dry-run --json` returned `auriora-ai-spec-lifecycle-0.1.0-codex.20260606221001.tgz`, 110 entries, package size about 116 KB, and included the Claude plugin manifest, `.mcp.json`, hooks, README, skill, and runtime scripts. |
+| Full unittest suite after Claude plugin | Pass | `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'` passed 79 tests. |
+| Sync guard after Claude plugin | Pass with install advisory | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py sync-guard . --commits 5` reported source/bundle `in_sync` and installed cache drift pending reinstall. |
 
 ## Residual Risks
 

@@ -1,0 +1,22 @@
+{
+  "name": "spec-lifecycle-manager",
+  "displayName": "Spec Lifecycle Manager",
+  "version": "0.1.0",
+  "description": "Lifecycle guidance and read-only MCP tools for AI-assisted implementation specs.",
+  "author": {
+    "name": "Auriora"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/Auriora/ai-spec-lifecycle/tree/main/plugins/spec-lifecycle-manager/claude-plugin",
+  "repository": "https://github.com/Auriora/ai-spec-lifecycle",
+  "keywords": [
+    "mcp",
+    "specs",
+    "lifecycle",
+    "documentation",
+    "validation"
+  ],
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json",
+  "mcpServers": "./.mcp.json"
+}

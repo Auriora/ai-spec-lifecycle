@@ -19,7 +19,9 @@ npm package with an `npx` installer command.
 ## Goals
 
 - Define an npm package for the self-contained Codex plugin.
-- Support `npx @auriora/spec-lifecycle-manager install`.
+- Support `npx @auriora/ai-spec-lifecycle install`.
+- Include a Claude Code plugin wrapper for users who want to load the package
+  through Claude Code plugin support.
 - Keep package contents aligned with `plugins/spec-lifecycle-manager/`.
 - Validate npm package metadata and tarball contents without publishing.
 - Update durable docs and backlog language away from Docker/GHCR as the primary
@@ -36,7 +38,7 @@ npm package with an `npx` installer command.
 
 | Term | Definition |
 | --- | --- |
-| npm package | Distributable package named `@auriora/spec-lifecycle-manager`. |
+| npm package | Distributable package named `@auriora/ai-spec-lifecycle`. |
 | Plugin bundle | The self-contained plugin tree under `plugins/spec-lifecycle-manager/`. |
 | Package contract | Metadata, layout, install command, and validation rules for distribution. |
 | Provenance | Repository, commit, version, source path, and validation metadata that identify the package source. |
@@ -64,7 +66,7 @@ plugin can be distributed without requiring a repository checkout.
    THEN it SHALL identify the npm package name, version source, payload root,
    installer bin, install command, publish status, and required files.
 2. WHERE the package references install commands, THE SYSTEM SHALL use
-   `npx @auriora/spec-lifecycle-manager install` as the package install path.
+   `npx @auriora/ai-spec-lifecycle install` as the package install path.
 3. IF publishing is not implemented yet, THEN the contract SHALL label npm
    publish status as pack-ready but not published.
 
@@ -116,6 +118,23 @@ package path.
 3. The docs SHALL record Docker/GHCR as superseded or deferred, not the primary
    distribution artifact.
 
+### Requirement 5: Claude Code Plugin Wrapper
+
+**User Story:** As a Claude Code user, I want a bundled Claude plugin wrapper,
+so that I can load the Spec Lifecycle Manager MCP server and skill without
+manually wiring the MCP command.
+
+#### Acceptance Criteria
+
+1. GIVEN the npm package payload, WHEN the Claude plugin is inspected, THEN it
+   SHALL include `.claude-plugin/plugin.json`, `.mcp.json`, a skill, and hook
+   configuration under `plugins/spec-lifecycle-manager/claude-plugin/`.
+2. GIVEN the Claude plugin is loaded with `claude --plugin-dir`, WHEN Claude
+   starts the MCP server, THEN the MCP config SHALL launch the bundled
+   `spec_mcp_server.py` from the Claude plugin root.
+3. WHERE hooks are packaged, THE SYSTEM SHALL keep them advisory-only and
+   rooted at `${CLAUDE_PLUGIN_ROOT}`.
+
 ## Correctness Properties
 
 - **CP-001**: Package validation is deterministic for the same repository tree.
@@ -136,9 +155,11 @@ package path.
 
 ## Success Criteria
 
-- `package.json` defines `@auriora/spec-lifecycle-manager` with a bin entry.
+- `package.json` defines `@auriora/ai-spec-lifecycle` with a bin entry.
 - `packaging/spec-lifecycle-manager/npm-package.json` defines the package
   contract.
+- `plugins/spec-lifecycle-manager/claude-plugin/` defines a Claude Code plugin
+  wrapper.
 - `npm pack --dry-run --json` includes the required distribution payload.
 - `spec_runtime.py package-contract .` validates npm package shape.
 - Install docs distinguish local install from npm package install.

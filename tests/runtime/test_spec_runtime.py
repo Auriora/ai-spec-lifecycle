@@ -57,9 +57,10 @@ def write_sync_guard_repo(repo: Path, codex_home: Path, include_cache: bool = Tr
     (repo / "package.json").write_text(
         json.dumps(
             {
-                "name": "@auriora/spec-lifecycle-manager",
+                "name": "@auriora/ai-spec-lifecycle",
                 "version": "0.1.0-test",
                 "bin": {
+                    "ai-spec-lifecycle": "packaging/spec-lifecycle-manager/npm-install.js",
                     "spec-lifecycle-manager": "packaging/spec-lifecycle-manager/npm-install.js",
                 },
                 "files": [
@@ -82,11 +83,11 @@ def write_sync_guard_repo(repo: Path, codex_home: Path, include_cache: bool = Tr
     (repo / "packaging/spec-lifecycle-manager/npm-package.json").write_text(
         json.dumps(
             {
-                "package_name": "@auriora/spec-lifecycle-manager",
+                "package_name": "@auriora/ai-spec-lifecycle",
                 "registry": "npm",
                 "publish_status": "pack-ready-not-published",
                 "version_source": "package.json#/version",
-                "install_command": "npx @auriora/spec-lifecycle-manager install",
+                "install_command": "npx @auriora/ai-spec-lifecycle install",
                 "payload_root": "plugins/spec-lifecycle-manager",
                 "bin": "packaging/spec-lifecycle-manager/npm-install.js",
                 "required_paths": [
@@ -308,7 +309,7 @@ class SpecRuntimeTests(unittest.TestCase):
             payload = spec_runtime.package_contract(repo)
 
         self.assertEqual("pass", payload["status"])
-        self.assertEqual("@auriora/spec-lifecycle-manager", payload["package"]["name"])
+        self.assertEqual("@auriora/ai-spec-lifecycle", payload["package"]["name"])
         self.assertEqual("npm", payload["package"]["primary"])
         self.assertEqual("pack-ready-not-published", payload["package"]["npm"]["publish_status"])
         self.assertEqual("in_sync", payload["source_bundle_parity"]["status"])

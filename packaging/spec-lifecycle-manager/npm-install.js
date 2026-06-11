@@ -15,8 +15,8 @@ Commands:
   help         Show this help.
 
 Examples:
-  npx @auriora/spec-lifecycle-manager install
-  npx @auriora/spec-lifecycle-manager install -- --codex-home ~/.codex
+  npx @auriora/ai-spec-lifecycle install
+  npx @auriora/ai-spec-lifecycle install -- --codex-home ~/.codex
 `);
 }
 
