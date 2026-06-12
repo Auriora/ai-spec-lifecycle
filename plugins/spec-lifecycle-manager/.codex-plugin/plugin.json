@@ -1,6 +1,6 @@
 {
   "name": "spec-lifecycle-manager",
-  "version": "0.1.0+codex.20260606221001",
+  "version": "0.1.0",
   "description": "Codex plugin for the Spec Lifecycle Manager skill, MCP runtime, and advisory hooks.",
   "author": {
     "name": "Auriora",
