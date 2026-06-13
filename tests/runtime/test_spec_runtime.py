@@ -791,8 +791,8 @@ class SpecRuntimeTests(unittest.TestCase):
 
         self.assertEqual(0, payload["summary"]["error"])
         self.assertEqual(0, payload["summary"]["warn"])
-        self.assertEqual(22, payload["summary"]["total"])
-        self.assertEqual(22, payload["summary"]["removed"])
+        self.assertEqual(23, payload["summary"]["total"])
+        self.assertEqual(23, payload["summary"]["removed"])
         self.assertEqual(0, payload["summary"]["retained"])
         self.assertEqual(0, payload["summary"]["superseded"])
         self.assertEqual(0, payload["summary"]["legacy_gaps"])
@@ -817,6 +817,7 @@ class SpecRuntimeTests(unittest.TestCase):
             "018-mcp-ergonomics-observability",
             "019-validation-plan-builder",
             "020-evidence-quality-check",
+            "021-closure-risk-review",
             "023-task-state-management-tools",
             "023-hierarchical-spec-authoring-hooks",
         }

@@ -19,7 +19,7 @@ requires visible archived docs.
 - **Spec:** `docs/specs/021-closure-risk-review/`
 - **Title:** Closure risk review
 - **Final spec commit:** `36d0135`
-- **Closure cleanup commit:** `pending`
+- **Closure cleanup commit:** `0a9e547`
 - **Closure action:** removed
 - **Closed by:** platform
 - **Durable docs updated:**
