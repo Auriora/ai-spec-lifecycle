@@ -211,6 +211,22 @@ def tool_definitions() -> list[dict[str, Any]]:
             },
         ),
         tool_schema(
+            "validation_plan",
+            "Plan validation checks from changed files and optional task context.",
+            {
+                "repo_root": REPO_ROOT_PROPERTY,
+                "changed_files": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Repo-relative or absolute changed file paths.",
+                    "default": [],
+                },
+                "spec_path": "Optional spec package path or ID.",
+                "task_id": "Optional task ID such as T004.",
+                "risk_level": "Optional caller-supplied risk level.",
+            },
+        ),
+        tool_schema(
             "agent_readiness_packet",
             "Return bounded implementation context for a task before coding.",
             {**SPEC_PATH_PROPERTIES, "task_id": "Task ID such as T004."},
@@ -321,6 +337,18 @@ def call_tool(name: str, arguments: dict[str, Any], default_root: Path) -> tuple
     if name == "active_spec_preflight":
         spec_path = spec_path_arg(arguments, default_root) if arguments.get("spec_path") or arguments.get("spec_id") else None
         return spec_runtime.active_spec_preflight(root, spec_path, arguments.get("task_id"), arguments.get("docs_root")), root
+    if name == "validation_plan":
+        spec_path = spec_path_arg(arguments, default_root) if arguments.get("spec_path") or arguments.get("spec_id") else None
+        changed_files = arguments.get("changed_files") or []
+        if not isinstance(changed_files, list):
+            raise ValueError("changed_files must be an array")
+        return spec_runtime.validation_plan(
+            root,
+            [str(item) for item in changed_files],
+            spec_path,
+            arguments.get("task_id"),
+            arguments.get("risk_level"),
+        ), root
     if name == "agent_readiness_packet":
         task_id = arguments.get("task_id")
         if not task_id:

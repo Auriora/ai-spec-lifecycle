@@ -8,6 +8,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SERVER = ROOT / "skills/spec-lifecycle-manager/scripts/spec_mcp_server.py"
+SCRIPT_DIR = ROOT / "skills/spec-lifecycle-manager/scripts"
+sys.path.insert(0, str(SCRIPT_DIR))
+
+import spec_mcp_server
+import spec_runtime
 
 
 def write_archived_old_format_spec(repo: Path) -> None:
@@ -144,6 +149,7 @@ class SpecMcpServerTests(unittest.TestCase):
         tools = {tool["name"] for tool in responses[0]["result"]["tools"]}
         self.assertIn("scan_specs", tools)
         self.assertIn("active_spec_preflight", tools)
+        self.assertIn("validation_plan", tools)
         self.assertIn("agent_readiness_packet", tools)
         self.assertIn("agent_backed_tool", tools)
         self.assertIn("no_active_spec_context", tools)
@@ -158,6 +164,8 @@ class SpecMcpServerTests(unittest.TestCase):
         scan_schema = next(tool for tool in responses[0]["result"]["tools"] if tool["name"] == "scan_specs")
         self.assertIn("include_archived_lint", scan_schema["inputSchema"]["properties"])
         self.assertIn("boolean", scan_schema["inputSchema"]["properties"]["include_archived_lint"]["type"])
+        validation_schema = next(tool for tool in responses[0]["result"]["tools"] if tool["name"] == "validation_plan")
+        self.assertEqual("array", validation_schema["inputSchema"]["properties"]["changed_files"]["type"])
 
     def test_spec_path_tools_advertise_repo_root(self):
         [response] = self.send(rpc(1, "tools/list"))
@@ -353,6 +361,36 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertEqual("docs/specs/001-current", preflight["selected_spec"]["path"])
         self.assertEqual("T001", readiness["task_id"])
         self.assertIn("Requirement 1", {item["id"] for item in readiness["required_review"]["requirements"]})
+
+    def test_validation_plan_tool_matches_runtime_payload(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / ".git").mkdir()
+            spec = write_current_spec(repo)
+            [response] = self.send(
+                rpc(
+                    1,
+                    "tools/call",
+                    {
+                        "name": "validation_plan",
+                        "arguments": {
+                            "repo_root": str(repo),
+                            "changed_files": ["docs/reference/current.md"],
+                            "spec_path": "001-current",
+                            "task_id": "T001",
+                        },
+                    },
+                ),
+                root=repo,
+            )
+            expected = spec_mcp_server.normalize_mcp_payload(
+                spec_runtime.validation_plan(repo, ["docs/reference/current.md"], spec, "T001"),
+                repo,
+            )
+        payload = response["result"]["structuredContent"]
+        self.assertEqual(expected, payload)
+        self.assertEqual("not_applicable", {item["id"]: item for item in payload["checks"]}["unit-tests"]["applicability"])
+        self.assertEqual("planned", payload["validation_contract"]["status"])
 
     def test_no_active_spec_context_tool(self):
         with tempfile.TemporaryDirectory() as tmp:

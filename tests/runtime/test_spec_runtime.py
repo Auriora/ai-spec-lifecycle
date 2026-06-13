@@ -663,6 +663,164 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertEqual("mcp", payload["agent_interface"]["preferred"])
         self.assertIn("active_spec_preflight", payload["agent_interface"]["mcp_tools"])
 
+    def test_validation_plan_classifies_runtime_change_and_task_contract(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            spec = write_complete_spec(repo)
+            tasks_path = spec / "tasks.md"
+            tasks_path.write_text(
+                tasks_path.read_text(encoding="utf-8")
+                .replace("- [x] T001 Do work.", "- [ ] T001 Do work.")
+                .replace("  - Evidence: Done.", "  - Evidence: Pending."),
+                encoding="utf-8",
+            )
+
+            payload = spec_runtime.validation_plan(
+                repo,
+                ["skills/spec-lifecycle-manager/scripts/spec_runtime.py"],
+                spec,
+                "T001",
+            )
+
+        checks = {item["id"]: item for item in payload["checks"]}
+        self.assertIn("runtime", payload["file_classification"]["active_groups"])
+        self.assertTrue(checks["unit-tests"]["required"])
+        self.assertEqual("planned", checks["unit-tests"]["validation_state"])
+        self.assertEqual("planned", payload["validation_contract"]["status"])
+        self.assertFalse(payload["validation_contract"]["executed_evidence"])
+        self.assertTrue(
+            any(item["check_id"] == "unit-tests" for item in payload["validation_contract"]["automated_proof"])
+        )
+
+    def test_validation_plan_marks_unit_tests_not_applicable_for_docs_only_change(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            write_complete_spec(repo)
+            payload = spec_runtime.validation_plan(repo, ["docs/reference/current.md"])
+
+        checks = {item["id"]: item for item in payload["checks"]}
+        self.assertTrue(payload["file_classification"]["docs_only"])
+        self.assertFalse(checks["unit-tests"]["required"])
+        self.assertEqual("not_applicable", checks["unit-tests"]["applicability"])
+        self.assertEqual("not_applicable", checks["unit-tests"]["validation_state"])
+        self.assertTrue(checks["scan"]["required"])
+        self.assertTrue(checks["git-diff-check"]["required"])
+
+    def test_validation_plan_classifies_spec_history_and_prompt_changes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            write_complete_spec(repo)
+            payload = spec_runtime.validation_plan(
+                repo,
+                [
+                    "docs/specs/001-current/tasks.md",
+                    "docs/history/spec-archive-index.md",
+                    "skills/spec-lifecycle-manager/prompts/task-context.json",
+                ],
+            )
+
+        groups = payload["file_classification"]["active_groups"]
+        checks = {item["id"]: item for item in payload["checks"]}
+        self.assertIn("spec_package", groups)
+        self.assertIn("history", groups)
+        self.assertIn("prompts", groups)
+        self.assertTrue(payload["file_classification"]["docs_only"])
+        self.assertTrue(checks["archive-index"]["required"])
+        self.assertTrue(checks["prompts"]["required"])
+        self.assertEqual("not_applicable", checks["unit-tests"]["applicability"])
+
+    def test_validation_plan_returns_baseline_without_changed_files(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            write_complete_spec(repo)
+            payload = spec_runtime.validation_plan(repo)
+
+        checks = {item["id"]: item for item in payload["checks"]}
+        self.assertFalse(payload["file_classification"]["has_changes"])
+        self.assertTrue(checks["scan"]["required"])
+        self.assertEqual("recommended", checks["unit-tests"]["applicability"])
+        self.assertEqual("recommended", checks["prompts"]["applicability"])
+
+    def test_validation_plan_includes_package_and_sync_checks_for_package_change(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            write_sync_guard_repo(repo, Path(tmp) / "codex-home")
+            payload = spec_runtime.validation_plan(repo, ["plugins/spec-lifecycle-manager/.codex-plugin/plugin.json"])
+
+        checks = {item["id"]: item for item in payload["checks"]}
+        self.assertIn("plugin_bundle", payload["file_classification"]["active_groups"])
+        self.assertTrue(checks["package-contract"]["required"])
+        self.assertTrue(checks["sync-guard"]["required"])
+        self.assertTrue(checks["npm-pack-dry-run"]["required"])
+        self.assertEqual("planned", checks["sync-guard"]["validation_state"])
+
+    def test_validation_plan_reports_not_run_when_package_dry_run_input_missing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / "plugins/spec-lifecycle-manager").mkdir(parents=True)
+            payload = spec_runtime.validation_plan(repo, ["plugins/spec-lifecycle-manager/.codex-plugin/plugin.json"])
+
+        checks = {item["id"]: item for item in payload["checks"]}
+        self.assertEqual("not_run", checks["sync-guard"]["applicability"])
+        self.assertEqual("blocked", checks["sync-guard"]["validation_state"])
+        self.assertIn("blocker", checks["sync-guard"])
+        self.assertEqual("not_run", checks["npm-pack-dry-run"]["applicability"])
+        self.assertIn("package.json is missing", checks["npm-pack-dry-run"]["blocker"])
+
+    def test_validation_plan_reports_contract_gaps_for_missing_task_context(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            spec = write_complete_spec(repo)
+            tasks_path = spec / "tasks.md"
+            tasks_path.write_text(
+                tasks_path.read_text(encoding="utf-8").replace("  - Acceptance: Done.\n", ""),
+                encoding="utf-8",
+            )
+            payload = spec_runtime.validation_plan(repo, ["docs/reference/current.md"], spec, "T001")
+
+        fields = {item["field"] for item in payload["validation_contract"]["gaps"]}
+        self.assertIn("false_positive_risk", fields)
+        self.assertIn("false_negative_risk", fields)
+
+    def test_validation_plan_reports_traceability_gap_for_missing_task(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            spec = write_complete_spec(repo)
+            payload = spec_runtime.validation_plan(repo, ["docs/reference/current.md"], spec, "T999")
+
+        gaps = payload["task_context"]["gaps"]
+        self.assertTrue(any(item["code"] == "TASK_NOT_FOUND" for item in gaps))
+        self.assertIsNone(payload["validation_contract"])
+
+    def test_validation_plan_preserves_executed_evidence_from_task(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            spec = write_complete_spec(repo)
+            payload = spec_runtime.validation_plan(repo, ["docs/reference/current.md"], spec, "T001")
+
+        contract = payload["validation_contract"]
+        self.assertEqual("executed", contract["status"])
+        self.assertEqual(["Done."], contract["executed_evidence"])
+
+    def test_cli_validation_plan_outputs_json(self):
+        completed = subprocess.run(
+            [
+                sys.executable,
+                str(SCRIPT),
+                "validation-plan",
+                str(ROOT),
+                "--changed-files",
+                "docs/reference/spec-lifecycle-runtime.md",
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+        payload = json.loads(completed.stdout)
+        self.assertIn("checks", payload)
+        self.assertIn("docs", payload["file_classification"]["active_groups"])
+
     def test_no_active_spec_context_uses_durable_history(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)

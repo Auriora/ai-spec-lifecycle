@@ -39,6 +39,7 @@ not available.
 | `lint` | Run deterministic document or package lint checks for frontmatter, required sections, task IDs, dependencies, evidence, optional artifacts, and waivers. |
 | `next-task` | Select the next runnable task whose dependencies are complete with evidence and include traceability context when available. |
 | `active-spec-preflight` | Return the active spec, next task, readiness context, no-active context, guidance, and validation commands. |
+| `validation-plan` | Plan read-only validation checks from changed files and optional spec/task context, including check applicability, validation state, and a validation contract. |
 | `agent-readiness-packet` | Return bounded implementation context for a specific task before coding. |
 | `no-active-spec-context` | Return durable docs, backlog, roadmap, closure-log, and archive-index context when no active spec exists. |
 | `closure-check` | Report whether a spec is ready to close and list blockers. |
@@ -87,6 +88,7 @@ The server exposes read-only tools that delegate to the existing runtime:
 
 - `scan_specs`
 - `active_spec_preflight`
+- `validation_plan`
 - `agent_readiness_packet`
 - `no_active_spec_context`
 - `spec_summary`
@@ -119,6 +121,80 @@ evidence, update durable docs, archive packages, remove files, or commit.
 next-task, traceability, durable-doc, closure-log, and archive-index context so
 agents can decide what to read before implementation. They do not invoke
 secondary agents and do not mutate files.
+
+`validation_plan` is a read-only planning surface. It accepts:
+
+- `repo_root`: repository root. Defaults to the server-bound workspace.
+- `changed_files`: repo-relative or absolute file paths. Empty input returns a
+  baseline lifecycle plan for the repository/spec context.
+- `spec_path`: optional active spec package path or ID.
+- `task_id`: optional task ID used to include traceability and task evidence.
+- `risk_level`: optional caller-supplied risk label, preserved in output for
+  clients that already classify risk.
+
+The direct CLI form is:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py validation-plan . \
+  --changed-files skills/spec-lifecycle-manager/scripts/spec_runtime.py docs/specs/019-validation-plan-builder/tasks.md \
+  --spec-path docs/specs/019-validation-plan-builder \
+  --task-id T001
+```
+
+The MCP tool returns the same structured payload after normalizing repository
+paths for client display.
+
+The planner classifies changed files into path groups such as `runtime`, `mcp`,
+`hook`, `tests`, `docs`, `package`, `plugin_bundle`, `spec_package`,
+`history`, and `prompts`. Each check includes:
+
+- `id`: stable check ID such as `scan`, `lint-spec`, `unit-tests`,
+  `archive-index`, `prompts`, `package-contract`, `sync-guard`,
+  `npm-pack-dry-run`, or `git-diff-check`.
+- `required`: whether the check is required by the changed-file/task context.
+- `applicability`: `required`, `recommended`, `optional`, `not_applicable`, or
+  `not_run`.
+- `validation_state`: `planned`, `executed`, `blocked`, `inspection_only`, or
+  `not_applicable`.
+- `reason`: why the check is included.
+- `covers`: risks or contracts the check covers.
+- `command` or `mcp_tool`: how to run the proof when applicable.
+- `blocker` and `residual_risk`: present when an applicable check cannot be
+  planned or run because required inputs, tools, credentials, or environment
+  are unavailable.
+
+`not_applicable` means the current change/task context does not require that
+check. It is not missing validation. `not_run` means the check applies but an
+input or environment blocker prevents it from being planned or executed.
+
+Validation state is separate from applicability. `planned` means the proof
+method is recommended but has not run. `executed` is used only when task,
+verification, or review context supplies concrete evidence. `blocked` means an
+applicable proof cannot run. `inspection_only` is reserved for manual review or
+inspection proof. `not_applicable` means the proof does not apply.
+
+When task context is available, `validation_plan` may include a
+`validation_contract` with:
+
+- `status`: `planned` or `executed`.
+- `automated_proof`: check IDs and commands/tools that should prove the task.
+- `manual_proof`: inspection-only proof targets.
+- `evidence_location`: task or verification locations where evidence should be
+  recorded.
+- `executed_evidence`: preserved task, verification, or review evidence
+  references.
+- `residual_risk_if_not_run`: risks left if required planned or blocked checks
+  are not completed.
+- `false_positive_risk` and `false_negative_risk`: proof risks derived from
+  task and changed-file context.
+- `gaps`: missing fields or traceability gaps. The planner reports gaps instead
+  of inventing generic proof criteria.
+
+Documentation-only changes normally require lifecycle/document checks such as
+scan, package lint when a spec is selected, archive or prompt validation when
+those files changed, and `git diff --check`. They classify unrelated code
+runtime checks as `not_applicable` unless the selected task or evidence context
+requires code validation.
 
 `resolve_spec_reference` is the preferred recovery surface when an agent has a
 spec ID, numeric prefix, or package path but does not know whether it is active

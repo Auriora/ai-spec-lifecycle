@@ -125,6 +125,31 @@ SYNC_EVIDENCE_PATHS = {
     "docs/reference/spec-lifecycle-manager-mcp-install.md",
     "docs/reference/spec-lifecycle-runtime.md",
 }
+VALIDATION_STATES = {"planned", "executed", "blocked", "inspection_only", "not_applicable"}
+VALIDATION_APPLICABILITY = {"required", "recommended", "optional", "not_applicable", "not_run"}
+VALIDATION_FILE_GROUPS = {
+    "runtime": (
+        "skills/spec-lifecycle-manager/scripts/",
+        "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/",
+        "plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/scripts/",
+    ),
+    "mcp": (
+        "skills/spec-lifecycle-manager/scripts/spec_mcp_server.py",
+        "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py",
+        "plugins/spec-lifecycle-manager/.mcp.json",
+    ),
+    "hook": (
+        "skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py",
+        "plugins/spec-lifecycle-manager/hooks/",
+    ),
+    "tests": ("tests/",),
+    "docs": ("docs/", "AGENTS.md"),
+    "package": ("package.json", "packaging/spec-lifecycle-manager/", "scripts/install-spec-lifecycle-manager-package.sh"),
+    "plugin_bundle": ("plugins/spec-lifecycle-manager/",),
+    "spec_package": ("docs/specs/",),
+    "history": ("docs/history/spec-closure-log.md", "docs/history/spec-archive-index.md"),
+    "prompts": ("skills/spec-lifecycle-manager/prompts/", "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/prompts/"),
+}
 
 
 @dataclass
@@ -1773,6 +1798,363 @@ def validation_commands_for_spec(spec_path: Path, task_id: str | None = None) ->
     return commands
 
 
+def normalize_changed_files(repo_root: Path, changed_files: list[str] | None) -> list[str]:
+    root = repo_root.resolve()
+    normalized: list[str] = []
+    for raw in changed_files or []:
+        if not raw:
+            continue
+        path = Path(raw)
+        if path.is_absolute():
+            try:
+                value = path.resolve().relative_to(root).as_posix()
+            except ValueError:
+                value = path.as_posix()
+        else:
+            value = path.as_posix()
+        normalized.append(value.strip("./"))
+    return list(dict.fromkeys(item for item in normalized if item))
+
+
+def classify_validation_files(changed_files: list[str]) -> dict[str, Any]:
+    groups = {name: [] for name in VALIDATION_FILE_GROUPS}
+    unmatched: list[str] = []
+    for changed in changed_files:
+        matched = False
+        for group, prefixes in VALIDATION_FILE_GROUPS.items():
+            if any(changed == prefix.rstrip("/") or changed.startswith(prefix) for prefix in prefixes):
+                groups[group].append(changed)
+                matched = True
+        if not matched:
+            unmatched.append(changed)
+    docs_only_groups = {"docs", "spec_package", "history", "prompts"}
+    active_groups = {group for group, files in groups.items() if files}
+    return {
+        "changed_files": changed_files,
+        "groups": groups,
+        "active_groups": sorted(active_groups),
+        "unmatched": unmatched,
+        "docs_only": bool(active_groups) and active_groups <= docs_only_groups and not unmatched,
+        "has_changes": bool(changed_files),
+    }
+
+
+def validation_item(
+    item_id: str,
+    reason: str,
+    covers: list[str],
+    command: str | None = None,
+    mcp_tool: str | None = None,
+    required: bool = False,
+    applicability: str = "optional",
+    validation_state: str | None = None,
+    blocker: str | None = None,
+    residual_risk: str | None = None,
+) -> dict[str, Any]:
+    state = validation_state or ("blocked" if blocker else "planned")
+    if applicability == "not_applicable":
+        state = "not_applicable"
+    if applicability == "not_run" and blocker:
+        state = "blocked"
+    if applicability not in VALIDATION_APPLICABILITY:
+        raise ValueError(f"Unknown validation applicability: {applicability}")
+    if state not in VALIDATION_STATES:
+        raise ValueError(f"Unknown validation state: {state}")
+    item: dict[str, Any] = {
+        "id": item_id,
+        "required": required,
+        "applicability": applicability,
+        "validation_state": state,
+        "reason": reason,
+        "covers": covers,
+    }
+    if command:
+        item["command"] = command
+    if mcp_tool:
+        item["mcp_tool"] = mcp_tool
+    if blocker:
+        item["blocker"] = blocker
+    if residual_risk:
+        item["residual_risk"] = residual_risk
+    return item
+
+
+def validation_item_state(applies: bool, required: bool = False, recommended: bool = False) -> tuple[bool, str]:
+    if not applies:
+        return False, "not_applicable"
+    if required:
+        return True, "required"
+    if recommended:
+        return False, "recommended"
+    return False, "optional"
+
+
+def task_evidence_reference(task: Task | None) -> list[str]:
+    if task is None:
+        return []
+    evidence = task.evidence.strip()
+    if not evidence or evidence.lower() in {"pending", "pending."}:
+        return []
+    return [evidence]
+
+
+def validation_contract_for_task(
+    spec_path: Path,
+    task: Task | None,
+    context: dict[str, Any],
+    plan_items: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    if task is None:
+        return None
+    executed = task_evidence_reference(task)
+    automated = [
+        {
+            "check_id": item["id"],
+            "command": item.get("command"),
+            "mcp_tool": item.get("mcp_tool"),
+            "covers": item["covers"],
+        }
+        for item in plan_items
+        if item["required"] and item["validation_state"] == "planned" and (item.get("command") or item.get("mcp_tool"))
+    ]
+    manual = [
+        {
+            "check_id": item["id"],
+            "reason": item["reason"],
+            "covers": item["covers"],
+        }
+        for item in plan_items
+        if item["required"] and item["validation_state"] == "inspection_only"
+    ]
+    evidence_location = [f"{(spec_path / 'tasks.md').as_posix()} Evidence for {task.task_id}"]
+    if (spec_path / "verification.md").exists():
+        evidence_location.append(f"{(spec_path / 'verification.md').as_posix()} Evidence Log")
+    residual = [
+        f"{item['id']}: {item.get('residual_risk', 'Required validation would remain unproven.')}"
+        for item in plan_items
+        if item["required"] and item["validation_state"] in {"planned", "blocked"}
+    ]
+    false_positive: list[str] = []
+    false_negative: list[str] = []
+    if task.acceptance:
+        false_positive.append("Task acceptance can be marked complete from command success alone while output shape or classification semantics remain wrong.")
+        false_negative.append("Changed-file heuristics may miss a repo-specific validation need that is not represented by path groups.")
+    gaps: list[dict[str, str]] = []
+    if not automated:
+        gaps.append({"field": "automated_proof", "message": "No automated proof could be derived from required plan items."})
+    if not task.acceptance:
+        gaps.append({"field": "false_positive_risk", "message": "Task acceptance text is missing, so proof risk cannot be derived."})
+        gaps.append({"field": "false_negative_risk", "message": "Task acceptance text is missing, so missed-proof risk cannot be derived."})
+    gaps.extend(
+        {
+            "field": "traceability",
+            "message": item.get("message", item.get("code", "Traceability gap reported.")),
+        }
+        for item in context.get("gaps", [])
+    )
+    return {
+        "status": "executed" if executed else "planned",
+        "automated_proof": automated,
+        "manual_proof": manual,
+        "evidence_location": evidence_location,
+        "executed_evidence": executed,
+        "residual_risk_if_not_run": residual,
+        "false_positive_risk": false_positive,
+        "false_negative_risk": false_negative,
+        "gaps": gaps,
+    }
+
+
+def validation_plan(
+    repo_root: Path,
+    changed_files: list[str] | None = None,
+    spec_path: Path | None = None,
+    task_id: str | None = None,
+    risk_level: str | None = None,
+) -> dict[str, Any]:
+    root = repo_root.resolve()
+    changed = normalize_changed_files(root, changed_files)
+    classification = classify_validation_files(changed)
+    groups = set(classification["active_groups"])
+    baseline = not changed
+    spec = None
+    task = None
+    context: dict[str, Any] = {"gaps": []}
+    if spec_path:
+        spec = spec_path.resolve() if spec_path.is_absolute() else (root / spec_path).resolve()
+        if task_id:
+            tasks = {item.task_id: item for item in parse_tasks(spec / "tasks.md")}
+            task = tasks.get(task_id)
+            context = traceability_context(spec, task_id)
+            if task is None:
+                context.setdefault("gaps", []).append(
+                    {"severity": "error", "code": "TASK_NOT_FOUND", "message": f"Task not found in tasks.md: {task_id}"}
+                )
+
+    runtime_changed = bool(groups & {"runtime", "mcp", "hook", "tests"})
+    package_changed = bool(groups & {"package", "plugin_bundle"})
+    spec_changed = bool(groups & {"spec_package"})
+    history_changed = bool(groups & {"history"})
+    prompts_changed = bool(groups & {"prompts"})
+    docs_changed = bool(groups & {"docs", "spec_package", "history", "prompts"})
+    docs_only = classification["docs_only"]
+
+    items: list[dict[str, Any]] = []
+    req, app = validation_item_state(baseline or spec_changed or docs_changed or bool(spec), required=True)
+    items.append(
+        validation_item(
+            "scan",
+            "Inspect active spec inventory and lifecycle health for spec or documentation changes.",
+            ["spec inventory", "lifecycle health"],
+            command="PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py scan .",
+            mcp_tool="scan_specs",
+            required=req,
+            applicability=app,
+        )
+    )
+    if spec:
+        lint_command = f"PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py lint {spec.relative_to(root).as_posix() if spec.is_relative_to(root) else spec.as_posix()}"
+    else:
+        lint_command = None
+    req, app = validation_item_state(bool(spec) or spec_changed, required=bool(spec) or spec_changed)
+    items.append(
+        validation_item(
+            "lint-spec",
+            "Check the active package structure, task evidence, and traceability fields.",
+            ["spec authoring quality", "task evidence"],
+            command=lint_command,
+            mcp_tool="lint_spec_package",
+            required=req,
+            applicability=app,
+            blocker=None if lint_command else ("spec_path is required for package lint." if spec_changed else None),
+        )
+    )
+    req, app = validation_item_state(runtime_changed or baseline or not docs_only, required=runtime_changed, recommended=baseline or not docs_only)
+    items.append(
+        validation_item(
+            "unit-tests",
+            "Run the repository test suite when runtime, MCP, hook, or test files changed.",
+            ["runtime behavior", "regression coverage"],
+            command="PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'",
+            required=req,
+            applicability=app,
+        )
+    )
+    req, app = validation_item_state(history_changed, required=history_changed)
+    items.append(
+        validation_item(
+            "archive-index",
+            "Validate closure-log and archive-index consistency when history records change.",
+            ["closed spec lookup", "closure metadata"],
+            command="PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py archive-index .",
+            mcp_tool="archive_index",
+            required=req,
+            applicability=app,
+        )
+    )
+    req, app = validation_item_state(prompts_changed or baseline, required=prompts_changed, recommended=baseline)
+    items.append(
+        validation_item(
+            "prompts",
+            "Validate prompt definitions when prompt files change or during baseline lifecycle checks.",
+            ["MCP prompt contract"],
+            command="PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py prompts .",
+            mcp_tool="prompts_validate",
+            required=req,
+            applicability=app,
+        )
+    )
+    req, app = validation_item_state(package_changed, required=package_changed)
+    items.append(
+        validation_item(
+            "package-contract",
+            "Validate distributable package metadata when package or plugin bundle files change.",
+            ["package manifest", "release contract"],
+            command="PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .",
+            required=req,
+            applicability=app,
+        )
+    )
+    sync_applicability = sync_guard_applicability(root)
+    req, app = validation_item_state(package_changed, required=package_changed)
+    blocker = None
+    if package_changed and sync_applicability["status"] != "applicable":
+        app = "not_run"
+        blocker = sync_applicability["reason"]
+    items.append(
+        validation_item(
+            "sync-guard",
+            "Check source, bundled plugin, installed cache, and recent commit sync evidence for package changes.",
+            ["source/plugin parity", "install cache freshness"],
+            command="PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py sync-guard . --commits 5",
+            required=req,
+            applicability=app,
+            blocker=blocker,
+            residual_risk="Bundle or installed plugin cache may drift from source if sync guard cannot run.",
+        )
+    )
+    req, app = validation_item_state(package_changed, required=package_changed)
+    package_json = root / "package.json"
+    npm_blocker = None
+    if package_changed and not package_json.exists():
+        app = "not_run"
+        npm_blocker = "package.json is missing, so npm pack dry-run cannot be planned for this repository."
+    items.append(
+        validation_item(
+            "npm-pack-dry-run",
+            "Dry-run package assembly when package metadata or plugin bundle files change.",
+            ["release artifact contents"],
+            command="npm_config_cache=/tmp/spec-lifecycle-npm-cache npm pack --dry-run --json",
+            required=req,
+            applicability=app,
+            blocker=npm_blocker,
+            residual_risk="Release artifact contents remain unverified without a package dry-run.",
+        )
+    )
+    req, app = validation_item_state(True, required=True)
+    items.append(
+        validation_item(
+            "git-diff-check",
+            "Catch whitespace and patch formatting issues before handoff.",
+            ["workspace hygiene"],
+            command="git diff --check",
+            required=req,
+            applicability=app,
+        )
+    )
+
+    if docs_only:
+        for item in items:
+            if item["id"] == "unit-tests":
+                item["required"] = False
+                item["applicability"] = "not_applicable"
+                item["validation_state"] = "not_applicable"
+                item["reason"] = "Documentation-only changes do not require code unit tests unless task acceptance separately requires them."
+
+    contract = validation_contract_for_task(spec, task, context, items) if spec and task_id else None
+    return {
+        "repo_root": str(root),
+        "changed_files": changed,
+        "file_classification": classification,
+        "spec_path": str(spec) if spec else None,
+        "task_id": task_id,
+        "risk_level": risk_level,
+        "task_context": context if task_id else None,
+        "checks": items,
+        "validation_contract": contract,
+        "summary": {
+            "required": sum(1 for item in items if item["required"]),
+            "recommended": sum(1 for item in items if item["applicability"] == "recommended"),
+            "optional": sum(1 for item in items if item["applicability"] == "optional"),
+            "not_applicable": sum(1 for item in items if item["applicability"] == "not_applicable"),
+            "not_run": sum(1 for item in items if item["applicability"] == "not_run"),
+            "blocked": sum(1 for item in items if item["validation_state"] == "blocked"),
+            "executed": sum(1 for item in items if item["validation_state"] == "executed"),
+            "planned": sum(1 for item in items if item["validation_state"] == "planned"),
+        },
+    }
+
+
 def traceability_context(spec_path: Path, task_id: str) -> dict[str, Any]:
     if not (spec_path / "traceability.md").exists():
         return {
@@ -2756,6 +3138,13 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     preflight.add_argument("--task-id")
     preflight.add_argument("--docs-root")
 
+    validation = sub.add_parser("validation-plan", help="Plan validation checks from changed files and optional task context.")
+    validation.add_argument("repo_root", type=Path, nargs="?", default=Path.cwd())
+    validation.add_argument("--changed-files", nargs="*", default=[])
+    validation.add_argument("--spec-path", type=Path)
+    validation.add_argument("--task-id")
+    validation.add_argument("--risk-level")
+
     readiness = sub.add_parser("agent-readiness-packet", help="Return bounded implementation context for a task.")
     readiness.add_argument("spec_path", type=Path)
     readiness.add_argument("--task-id", required=True)
@@ -2856,6 +3245,8 @@ def main(argv: list[str] | None = None) -> int:
         payload = next_task(args.spec_path.resolve())
     elif args.command == "active-spec-preflight":
         payload = active_spec_preflight(args.repo_root, args.spec_path, args.task_id, args.docs_root)
+    elif args.command == "validation-plan":
+        payload = validation_plan(args.repo_root, args.changed_files, args.spec_path, args.task_id, args.risk_level)
     elif args.command == "agent-readiness-packet":
         payload = agent_readiness_packet(args.spec_path.resolve(), args.task_id)
     elif args.command == "no-active-spec-context":
