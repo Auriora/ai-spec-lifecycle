@@ -14,6 +14,37 @@ requires visible archived docs.
 
 ## Entries
 
+### 2026-06-13 - 024-staged-developer-onboarding
+
+- **Spec:** `docs/specs/024-staged-developer-onboarding/`
+- **Title:** Staged developer onboarding
+- **Final spec commit:** `4a2d5c8`
+- **Closure cleanup commit:** `pending`
+- **Closure action:** removed
+- **Closed by:** platform
+- **Durable docs updated:**
+  - `docs/reference/spec-lifecycle-runtime.md`
+  - `docs/design/spec-lifecycle-management.md`
+  - `docs/reference/document-routing-and-expert-review-matrix.md`
+  - `skills/spec-lifecycle-manager/scripts/spec_runtime.py`
+  - `skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`
+  - `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/spec_runtime.py`
+  - `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`
+  - `plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/scripts/spec_runtime.py`
+  - `plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`
+  - `tests/runtime/test_spec_runtime.py`
+  - `tests/runtime/test_spec_mcp_server.py`
+- **Verification summary:** Full unit suite passed with 141 tests. MCP spec
+  lint, MCP prompt validation, MCP archive-index validation, CLI scan, CLI
+  prompt validation, CLI archive-index validation, package-contract
+  validation, stage-readiness validation, and `git diff --check` passed before
+  removal.
+- **Residual risks:** Already-running MCP sessions and hooks may need install
+  and reload to use the refreshed `stage_readiness` tool. `sync-guard`
+  reported source-to-bundle parity in sync and installed-cache drift before
+  install.
+- **Follow-up:** None.
+
 ### 2026-06-13 - 021-closure-risk-review
 
 - **Spec:** `docs/specs/021-closure-risk-review/`
