@@ -44,6 +44,7 @@ not available.
 | `set-task-state` | Preview or write a guarded task-state update scoped to one task block in an active spec package `tasks.md`; defaults to dry-run and requires explicit write intent for mutation. |
 | `active-spec-preflight` | Return the active spec, next task, readiness context, no-active context, guidance, and validation commands. |
 | `validation-plan` | Plan read-only validation checks from changed files and optional spec/task context, including check applicability, validation state, and a validation contract. |
+| `evidence-quality` | Review task and verification evidence quality, classify evidence strength, and return advisory diagnostics without mutating files. |
 | `agent-readiness-packet` | Return bounded implementation context for a specific task before coding. |
 | `no-active-spec-context` | Return durable docs, backlog, roadmap, closure-log, and archive-index context when no active spec exists. |
 | `closure-check` | Report whether a spec is ready to close and list blockers. |
@@ -97,6 +98,7 @@ preview-first: it defaults to dry-run, requires explicit `write_intent` when
 - `scan_specs`
 - `active_spec_preflight`
 - `validation_plan`
+- `evidence_quality_check`
 - `agent_readiness_packet`
 - `no_active_spec_context`
 - `spec_summary`
@@ -207,6 +209,41 @@ scan, package lint when a spec is selected, archive or prompt validation when
 those files changed, and `git diff --check`. They classify unrelated code
 runtime checks as `not_applicable` unless the selected task or evidence context
 requires code validation.
+
+`evidence_quality_check` is a read-only advisory check for completed task
+evidence and `verification.md` evidence-log entries. The direct CLI form is:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py evidence-quality docs/specs/020-evidence-quality-check
+```
+
+The payload includes:
+
+- `records`: task and verification evidence records with source path, line,
+  source type, evidence text, classification, signals, and reason.
+- `diagnostics`: warnings or errors for completed tasks and verification rows
+  whose evidence is `missing`, `vague`, `weak`, or `not_run`.
+- `summary`: counts by classification and source type plus diagnostic totals.
+- `advisory: true` and `mutates_files: false`.
+
+Classifications are deterministic heuristics:
+
+- `concrete`: cites commands, file paths, commits, test counts, or explicit
+  passing validation signals.
+- `vague`: says work is done, complete, implemented, fixed, or passed without
+  a concrete proof signal.
+- `missing`: evidence is absent or still pending.
+- `waived`: records an explicit waiver or accepted risk.
+- `deferred`: routes proof to a follow-up, backlog item, or future work.
+- `not_applicable`: evidence states validation does not apply and the task is
+  docs-only or explicitly tied to a not-applicable validation-plan context.
+- `not_run`: evidence says the applicable validation was skipped or could not
+  run.
+- `weak`: evidence is present but does not meet a stronger classification.
+
+`not_applicable` is intentionally narrow. A bare "N/A" on a code or runtime
+task is reported as weak evidence unless surrounding task files or validation
+context prove that automated validation does not apply.
 
 `resolve_spec_reference` is the preferred recovery surface when an agent has a
 spec ID, numeric prefix, or package path but does not know whether it is active

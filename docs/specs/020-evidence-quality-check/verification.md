@@ -31,7 +31,14 @@ last_reviewed: 2026-06-13
 
 ## Evidence Log
 
-- Pending.
+- 2026-06-13: `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime tests.runtime.test_spec_mcp_server` ran 106 tests OK after adding runtime and MCP coverage.
+- 2026-06-13: `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'` ran 128 tests OK.
+- 2026-06-13: `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py scan .` passed with 4 active specs and 0 active errors.
+- 2026-06-13: `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py archive-index .` passed with 21 removed entries and 0 diagnostics.
+- 2026-06-13: `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py prompts .` passed with 0 diagnostics.
+- 2026-06-13: `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .` passed with source bundle and Claude bundle parity in sync.
+- 2026-06-13: `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py sync-guard . --commits 5` passed after `scripts/install-spec-lifecycle-manager-package.sh` refreshed the installed cache.
+- 2026-06-13: `git diff --check` passed.
 
 ## Residual Risks
 

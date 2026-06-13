@@ -161,6 +161,7 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertIn("task_details", tools)
         self.assertIn("task_state_audit", tools)
         self.assertIn("set_task_state", tools)
+        self.assertIn("evidence_quality_check", tools)
         structured = responses[1]["result"]["structuredContent"]
         self.assertIn("specs", structured)
         self.assertEqual(".", structured["repo_root"])
@@ -185,6 +186,7 @@ class SpecMcpServerTests(unittest.TestCase):
             "task_details",
             "task_state_audit",
             "set_task_state",
+            "evidence_quality_check",
             "closure_check",
             "reconcile_spec",
             "promotion_plan",
@@ -471,6 +473,35 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertEqual(expected, payload)
         self.assertEqual("not_applicable", {item["id"]: item for item in payload["checks"]}["unit-tests"]["applicability"])
         self.assertEqual("planned", payload["validation_contract"]["status"])
+
+    def test_evidence_quality_check_tool_returns_structured_output(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / ".git").mkdir()
+            spec = write_current_spec(repo)
+            (spec / "tasks.md").write_text(
+                (spec / "tasks.md").read_text(encoding="utf-8").replace("- [ ] T001", "- [x] T001").replace("Evidence: Pending.", "Evidence: Done."),
+                encoding="utf-8",
+            )
+            [response] = self.send(
+                rpc(
+                    1,
+                    "tools/call",
+                    {
+                        "name": "evidence_quality_check",
+                        "arguments": {"repo_root": str(repo), "spec_path": "001-current"},
+                    },
+                ),
+                root=repo,
+            )
+            expected = spec_mcp_server.normalize_mcp_payload(spec_runtime.evidence_quality_check(spec), repo)
+
+        payload = response["result"]["structuredContent"]
+        self.assertEqual(expected, payload)
+        self.assertTrue(payload["advisory"])
+        self.assertFalse(payload["mutates_files"])
+        self.assertEqual("vague", payload["records"][0]["classification"])
+        self.assertEqual("EVIDENCE_VAGUE", payload["diagnostics"][0]["code"])
 
     def test_no_active_spec_context_tool(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -300,7 +300,131 @@ def write_complete_spec(repo: Path, status: str = "draft") -> Path:
     return spec
 
 
+def write_evidence_quality_spec(repo: Path) -> Path:
+    spec = repo / "docs/specs/020-evidence-quality"
+    spec.mkdir(parents=True)
+    frontmatter = "\n".join(
+        [
+            "---",
+            "title: Evidence Quality",
+            "doc_type: spec",
+            "artifact_type: {artifact}",
+            "status: draft",
+            "owner: platform",
+            "last_reviewed: 2026-06-13",
+            "---",
+            "",
+        ]
+    )
+    (spec / "tasks.md").write_text(
+        frontmatter.format(artifact="tasks")
+        + "\n".join(
+            [
+                "# Tasks",
+                "",
+                "- [x] T001 Concrete evidence.",
+                "  - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`",
+                "  - Acceptance: Done.",
+                "  - Evidence: `python3 -m unittest tests/runtime/test_spec_runtime.py` passed 7 tests.",
+                "- [x] T002 Vague evidence.",
+                "  - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`",
+                "  - Acceptance: Done.",
+                "  - Evidence: Done.",
+                "- [x] T003 Missing evidence.",
+                "  - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`",
+                "  - Acceptance: Done.",
+                "  - Evidence: Pending.",
+                "- [x] T004 Waived evidence.",
+                "  - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`",
+                "  - Acceptance: Done.",
+                "  - Evidence: Waived by maintainer; accepted risk for manual-only review.",
+                "- [x] T005 Deferred evidence.",
+                "  - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`",
+                "  - Acceptance: Done.",
+                "  - Evidence: Deferred to follow-up backlog item BL-123.",
+                "- [x] T006 Docs-only not applicable evidence.",
+                "  - Files: `docs/reference/spec-lifecycle-runtime.md`",
+                "  - Acceptance: Done.",
+                "  - Evidence: Documentation-only change; no automated validation applies.",
+                "- [x] T007 Unsupported not applicable evidence.",
+                "  - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`",
+                "  - Acceptance: Done.",
+                "  - Evidence: Not applicable.",
+                "- [x] T008 Not-run evidence.",
+                "  - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`",
+                "  - Acceptance: Done.",
+                "  - Evidence: Not run; local interpreter unavailable.",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (spec / "verification.md").write_text(
+        frontmatter.format(artifact="verification")
+        + "\n".join(
+            [
+                "# Verification",
+                "",
+                "## Quality Gates",
+                "",
+                "## Evidence Log",
+                "",
+                "| Date | Check | Result | Notes |",
+                "|------|-------|--------|-------|",
+                "| 2026-06-13 | Runtime tests | pass | `python3 -m unittest` passed 7 tests |",
+                "- Pending.",
+                "",
+                "## Residual Risks",
+                "",
+                "None.",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    return spec
+
+
 class SpecRuntimeTests(unittest.TestCase):
+    def test_evidence_quality_check_classifies_task_and_verification_evidence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_evidence_quality_spec(Path(tmp))
+
+            payload = spec_runtime.evidence_quality_check(spec)
+
+        records = {item["id"]: item for item in payload["records"]}
+        self.assertEqual("concrete", records["T001"]["classification"])
+        self.assertEqual("vague", records["T002"]["classification"])
+        self.assertEqual("missing", records["T003"]["classification"])
+        self.assertEqual("waived", records["T004"]["classification"])
+        self.assertEqual("deferred", records["T005"]["classification"])
+        self.assertEqual("not_applicable", records["T006"]["classification"])
+        self.assertEqual("weak", records["T007"]["classification"])
+        self.assertEqual("not_run", records["T008"]["classification"])
+        self.assertEqual("concrete", records["verification:17"]["classification"])
+        self.assertEqual("missing", records["verification:18"]["classification"])
+        self.assertTrue(payload["advisory"])
+        self.assertFalse(payload["mutates_files"])
+        self.assertEqual(2, payload["summary"]["by_classification"]["concrete"])
+        self.assertEqual(2, payload["summary"]["error"])
+        self.assertTrue(any(item["code"] == "EVIDENCE_MISSING" for item in payload["diagnostics"]))
+        self.assertTrue(any(item["code"] == "EVIDENCE_NOT_RUN" for item in payload["diagnostics"]))
+
+    def test_evidence_quality_cli_outputs_json(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_evidence_quality_spec(Path(tmp))
+
+            completed = subprocess.run(
+                [sys.executable, str(SCRIPT), "evidence-quality", str(spec)],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+        payload = json.loads(completed.stdout)
+        self.assertEqual(1, completed.returncode)
+        self.assertEqual("findings", payload["status"])
+        self.assertIn("by_classification", payload["summary"])
+
     def test_package_contract_validates_required_shape(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp) / "repo"
@@ -538,8 +662,8 @@ class SpecRuntimeTests(unittest.TestCase):
 
         self.assertEqual(0, payload["summary"]["error"])
         self.assertEqual(0, payload["summary"]["warn"])
-        self.assertEqual(20, payload["summary"]["total"])
-        self.assertEqual(20, payload["summary"]["removed"])
+        self.assertEqual(21, payload["summary"]["total"])
+        self.assertEqual(21, payload["summary"]["removed"])
         self.assertEqual(0, payload["summary"]["retained"])
         self.assertEqual(0, payload["summary"]["superseded"])
         self.assertEqual(0, payload["summary"]["legacy_gaps"])
@@ -563,6 +687,7 @@ class SpecRuntimeTests(unittest.TestCase):
             "017-npm-distribution-packaging",
             "018-mcp-ergonomics-observability",
             "019-validation-plan-builder",
+            "023-task-state-management-tools",
             "023-hierarchical-spec-authoring-hooks",
         }
         entries = {entry["spec_id"]: entry for entry in payload["entries"]}

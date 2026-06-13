@@ -131,6 +131,19 @@ UNRESOLVED_EVIDENCE_RE = re.compile(
     re.IGNORECASE,
 )
 COMPLETION_LIMITED_EVIDENCE_MODES = {"planner", "dry_run", "routing", "no_op", "blocked_output", "contract", "contract_only"}
+EVIDENCE_MISSING_VALUES = {"", "pending", "pending."}
+EVIDENCE_ISSUE_CLASSIFICATIONS = {"missing", "vague", "weak", "not_run"}
+EVIDENCE_WAIVER_RE = re.compile(r"\b(waiv(?:e|ed|er)|explicitly waived|accepted risk)\b", re.IGNORECASE)
+EVIDENCE_DEFERRED_RE = re.compile(r"\b(defer(?:red)?|follow[- ]?up|routed?|backlog|future work)\b", re.IGNORECASE)
+EVIDENCE_NOT_RUN_RE = re.compile(r"\b(not run|not executed|skipped|did not run|unable to run)\b", re.IGNORECASE)
+EVIDENCE_NOT_APPLICABLE_RE = re.compile(r"\b(not applicable|n/a|documentation[- ]only|docs[- ]only|no automated validation applies)\b", re.IGNORECASE)
+EVIDENCE_CONCRETE_RE = re.compile(
+    r"(`[^`]+`|\b[0-9a-f]{7,40}\b|\b\d+\s+tests?\b|\b(?:passed|pass)\b.*\b(?:test|suite|validation|check)s?\b|"
+    r"\b(?:python3|python|pytest|unittest|git|npm|pnpm|uv|node|bash|sh)\b|"
+    r"\b[\w./-]+\.(?:py|md|json|ya?ml|toml|sh|txt|ini|cfg)\b)",
+    re.IGNORECASE,
+)
+EVIDENCE_VAGUE_RE = re.compile(r"^\s*(done|complete|completed|implemented|passed|fixed)\.?\s*$", re.IGNORECASE)
 COMMIT_RE = re.compile(r"^[0-9a-f]{7,40}$", re.IGNORECASE)
 ARCHIVE_STATUSES = {"retained", "removed", "superseded"}
 ARCHIVE_ACTIONS = {"retained-as-history", "removed-after-index", "archived", "removed", "superseded"}
@@ -2542,6 +2555,155 @@ def validation_plan(
     }
 
 
+def evidence_quality_context_supports_not_applicable(record: dict[str, Any]) -> bool:
+    text = f"{record.get('source_text', '')} {record.get('evidence', '')}".lower()
+    if "validation_plan:not_applicable" in text or "inspection_only" in text:
+        return True
+    files = record.get("task_files")
+    if isinstance(files, list) and files:
+        return all(str(path).endswith(".md") or str(path).startswith("docs/") for path in files)
+    return False
+
+
+def classify_evidence_text(evidence: str, record: dict[str, Any] | None = None) -> tuple[str, list[str], str]:
+    text = evidence.strip()
+    lowered = text.lower()
+    signals: list[str] = []
+    if lowered in EVIDENCE_MISSING_VALUES:
+        return "missing", signals, "Evidence is absent or still pending."
+    if EVIDENCE_WAIVER_RE.search(text):
+        signals.append("waiver")
+        return "waived", signals, "Evidence records an explicit waiver or accepted risk."
+    if EVIDENCE_DEFERRED_RE.search(text):
+        signals.append("deferred")
+        return "deferred", signals, "Evidence records deferred or follow-up validation."
+    if EVIDENCE_NOT_APPLICABLE_RE.search(text):
+        signals.append("not_applicable")
+        if record and evidence_quality_context_supports_not_applicable(record):
+            return "not_applicable", signals, "Evidence is scoped to a context where validation is not applicable."
+        return "weak", signals, "Not-applicable evidence lacks a supporting docs-only or validation-plan context."
+    if EVIDENCE_NOT_RUN_RE.search(text):
+        signals.append("not_run")
+        return "not_run", signals, "Evidence says validation was not run."
+    concrete = EVIDENCE_CONCRETE_RE.findall(text)
+    if concrete:
+        signals.extend(sorted({item.strip("`")[:80] for item in concrete if item}))
+        return "concrete", signals, "Evidence cites concrete commands, paths, commits, or result counts."
+    if EVIDENCE_VAGUE_RE.search(text) or re.search(r"\b(done|complete|completed|implemented|passed|fixed)\b", text, re.IGNORECASE):
+        signals.append("vague_completion")
+        return "vague", signals, "Evidence uses completion wording without concrete proof."
+    return "weak", signals, "Evidence is present but lacks a concrete proof signal."
+
+
+def task_evidence_records(spec_path: Path) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    for task in parse_tasks(spec_path / "tasks.md"):
+        record = {
+            "id": task.task_id,
+            "source_type": "task",
+            "source_path": str(spec_path / "tasks.md"),
+            "line": task.line,
+            "title": task.title,
+            "task_status": task.status,
+            "task_files": task.files,
+            "source_text": task.block,
+            "evidence": task.evidence,
+        }
+        classification, signals, reason = classify_evidence_text(task.evidence, record)
+        record.update({"classification": classification, "signals": signals, "reason": reason})
+        records.append(record)
+    return records
+
+
+def verification_evidence_records(spec_path: Path) -> list[dict[str, Any]]:
+    path = spec_path / "verification.md"
+    if not path.exists():
+        return []
+    lines = read_text(path).splitlines()
+    in_log = False
+    records: list[dict[str, Any]] = []
+    for idx, line in enumerate(lines, start=1):
+        if re.match(r"^##\s+Evidence Log\s*$", line, re.IGNORECASE):
+            in_log = True
+            continue
+        if in_log and line.startswith("## "):
+            break
+        if not in_log:
+            continue
+        stripped = line.strip()
+        if not stripped or stripped.startswith("|---") or re.match(r"^\|\s*(Date|Evidence|Command|Check)\b", stripped, re.IGNORECASE):
+            continue
+        evidence = ""
+        if stripped.startswith("|"):
+            cells = [cell.strip() for cell in stripped.strip("|").split("|")]
+            evidence = " | ".join(cell for cell in cells if cell)
+        elif stripped.startswith("- "):
+            evidence = stripped[2:].strip()
+        if not evidence:
+            continue
+        record = {
+            "id": f"verification:{idx}",
+            "source_type": "verification",
+            "source_path": str(path),
+            "line": idx,
+            "source_text": line,
+            "evidence": evidence,
+        }
+        classification, signals, reason = classify_evidence_text(evidence, record)
+        record.update({"classification": classification, "signals": signals, "reason": reason})
+        records.append(record)
+    return records
+
+
+def evidence_quality_diagnostic(record: dict[str, Any]) -> dict[str, Any] | None:
+    classification = str(record.get("classification") or "weak")
+    if classification not in EVIDENCE_ISSUE_CLASSIFICATIONS:
+        return None
+    if record.get("source_type") == "task" and record.get("task_status") != "complete":
+        return None
+    severity = "error" if classification == "missing" else "warn"
+    source_id = str(record.get("id") or "evidence")
+    message = f"{source_id} has {classification} evidence: {record.get('reason', 'Evidence needs stronger proof.')}"
+    return diagnostic(
+        severity,
+        f"EVIDENCE_{classification.upper()}",
+        Path(str(record.get("source_path") or "")),
+        message,
+        record.get("line") if isinstance(record.get("line"), int) else None,
+        "validation",
+        "evidence",
+    )
+
+
+def evidence_quality_check(spec_path: Path) -> dict[str, Any]:
+    spec = spec_path.resolve()
+    records = task_evidence_records(spec) + verification_evidence_records(spec)
+    diagnostics = [item for item in (evidence_quality_diagnostic(record) for record in records) if item]
+    by_classification: dict[str, int] = {}
+    by_source_type: dict[str, int] = {}
+    for record in records:
+        classification = str(record.get("classification") or "unknown")
+        source_type = str(record.get("source_type") or "unknown")
+        by_classification[classification] = by_classification.get(classification, 0) + 1
+        by_source_type[source_type] = by_source_type.get(source_type, 0) + 1
+    return {
+        "spec_path": str(spec),
+        "status": "findings" if diagnostics else "pass",
+        "advisory": True,
+        "mutates_files": False,
+        "records": records,
+        "diagnostics": diagnostics,
+        "summary": {
+            "total_records": len(records),
+            "by_classification": by_classification,
+            "by_source_type": by_source_type,
+            "error": sum(1 for item in diagnostics if item.get("severity") == "error"),
+            "warn": sum(1 for item in diagnostics if item.get("severity") == "warn"),
+            "info": sum(1 for item in diagnostics if item.get("severity") == "info"),
+        },
+    }
+
+
 def traceability_context(spec_path: Path, task_id: str) -> dict[str, Any]:
     if not (spec_path / "traceability.md").exists():
         return {
@@ -3848,6 +4010,9 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     validation.add_argument("--task-id")
     validation.add_argument("--risk-level")
 
+    evidence = sub.add_parser("evidence-quality", help="Review task and verification evidence quality.")
+    evidence.add_argument("spec_path", type=Path)
+
     readiness = sub.add_parser("agent-readiness-packet", help="Return bounded implementation context for a task.")
     readiness.add_argument("spec_path", type=Path)
     readiness.add_argument("--task-id", required=True)
@@ -3970,6 +4135,8 @@ def main(argv: list[str] | None = None) -> int:
         payload = active_spec_preflight(args.repo_root, args.spec_path, args.task_id, args.docs_root)
     elif args.command == "validation-plan":
         payload = validation_plan(args.repo_root, args.changed_files, args.spec_path, args.task_id, args.risk_level)
+    elif args.command == "evidence-quality":
+        payload = evidence_quality_check(args.spec_path.resolve())
     elif args.command == "agent-readiness-packet":
         payload = agent_readiness_packet(args.spec_path.resolve(), args.task_id)
     elif args.command == "no-active-spec-context":
