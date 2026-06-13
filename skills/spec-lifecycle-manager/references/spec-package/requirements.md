@@ -31,7 +31,8 @@ Brief description of the change. What problem is being solved and why it matters
 
 Reference durable source-of-truth docs, contracts, schemas, runbooks,
 governance files, or code-derived references that describe current behavior
-before this change.
+before this change. Durable docs should describe current accepted state unless
+they are explicitly labeled proposed, planned, deferred, or historical.
 
 | Source | Current behavior relied on | Confidence | Notes |
 |--------|----------------------------|------------|-------|
@@ -40,6 +41,19 @@ before this change.
 
 If no durable source exists, record the gap and the durable document that should
 become the source of truth after promotion.
+
+## Durable Impact
+
+Describe how this spec affects durable docs. Use `change-impact.md` instead
+when the impact spans several documents or behavior classes.
+
+| Durable area | Action | Target | Notes |
+|--------------|--------|--------|-------|
+| requirements | add\|modify\|clarify\|supersede\|unchanged | `docs/requirements/path.md` | |
+| design | add\|modify\|clarify\|supersede\|unchanged | `docs/design/path.md` | |
+| architecture | add\|modify\|clarify\|supersede\|unchanged | `docs/architecture/path.md` | |
+| API/contract | add\|modify\|clarify\|supersede\|unchanged | `docs/api/path.md` | |
+| data-flow/runbook/reference/ADR | add\|modify\|clarify\|supersede\|unchanged | `docs/path.md` | |
 
 ## Requirements
 

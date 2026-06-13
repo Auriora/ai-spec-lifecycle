@@ -61,6 +61,7 @@ spec or that should not block the active spec currently being delivered.
 | B044 | active | npm publish and release workflow | B026 residual risk; user request; active spec `022-npm-publish-release-workflow` | Add GitHub Actions CI/CD for validation, packaged release artifacts, guarded npm publish, GitHub release evidence, and install verification. |
 | B045 | candidate | Closure artifact exception policy | User discussion about completed specs blocked by missing `verification.md` or `traceability.md`; B008, B012, B023 | Consider lifecycle rules that distinguish missing evidence from missing preferred artifact containers. Support minimal final closure artifacts, explicit waivers, or evidence consolidation when tasks and durable promotion are complete but closure checks block on absent optional package files. |
 | B046 | done | Hierarchical spec authoring hook guidance | User report of noisy `PostToolUse` findings when creating spec files; advisory hook dogfood; spec `023-hierarchical-spec-authoring-hooks` | Added hierarchy-aware `spec-file-changed` guidance, concise Codex hook next-action output, runtime docs, tests, bundle mirrors, install verification, and sync-guard evidence. |
+| B047 | candidate | Spec package rationalisation and durable-doc integration | User discussion on spec document proliferation, `spec.md`, durable-doc precedence, and numbering | Clarify which spec intents are always required but embedded in core files, when optional artifacts should exist, how deprecated `spec.md` packages are handled without duplication, and how active specs reference, add to, or modify durable current-state docs. |
 
 ## Kiro-Inspired Candidate Details
 
@@ -272,6 +273,57 @@ validation patterns.
 - Full package lint remains available for explicit validation, resume, and
   closure workflows.
 
+### B047 Spec Package Rationalisation And Durable-Doc Integration
+
+The current package model has a good direction but needs a clearer
+low-duplication contract before changing templates or runtime behavior.
+
+Discussion baseline:
+
+- `spec.md` was deprecated during the Kiro-style alignment work on 2026-06-02,
+  especially commit `58cfb9e` (`Align skill flow with Kiro-style specs`).
+  The migration decision was to consolidate `spec.md` and `plan.md` content
+  into `requirements.md`, while keeping old-format packages supported through a
+  visible migration decision.
+- Existing `spec.md` files in downstream projects are not automatically
+  useless. They often act as a feature brief, summary, or old-format
+  requirements container. The risk is duplication when they restate
+  requirements, durable-source baselines, or design decisions already present in
+  `requirements.md`, `design.md`, or durable docs.
+- Optional artifacts should stay optional as files, but their intent should not
+  disappear. The required core package should embed the necessary intent:
+  durable-source baseline, durable-doc impact, verification expectations,
+  traceability links, open decisions, and promotion targets.
+- Durable docs should describe current accepted state by default. Intended or
+  proposed state belongs in an active spec, backlog, roadmap, ADR proposal, or a
+  clearly marked proposed/deferred section.
+- Active specs should explicitly say whether they add to, modify, clarify,
+  supersede, or leave unchanged each relevant durable doc class: requirements,
+  design, architecture, API/contract, data-flow, runbook, verification, and
+  reference docs.
+- Numbering may help agent read order and precedence, but spec numbers should
+  remain distinct from durable-doc numbering. Prefer runtime/template read-order
+  metadata before renaming canonical files such as `requirements.md`,
+  `design.md`, and `tasks.md`.
+
+Candidate scope for a future spec:
+
+- Define a minimal core package contract where `requirements.md`, `design.md`,
+  and `tasks.md` embed required lifecycle intents without forcing every
+  supporting artifact to exist as a separate file.
+- Define conditions that justify separate `change-impact.md`,
+  `verification.md`, `traceability.md`, `open-decisions.md`, `research.md`, or
+  `quickstart.md` files.
+- Define a compatibility rule for old-format `spec.md`: feature brief only,
+  migration input, or deprecated duplicate. Runtime should classify the role
+  and warn when it duplicates current artifacts.
+- Strengthen durable-doc mapping so every active spec records current durable
+  sources, intended deltas, promotion targets, and unchanged durable areas.
+- Decide whether package indexes or runtime preflight should expose artifact
+  precedence/read order without changing filenames.
+- Decide whether durable docs need a numbering convention that distinguishes
+  durable document order from active spec IDs.
+
 ## Candidate Priorities
 
 Priority is based on recurring friction signals from local history and project
@@ -297,6 +349,7 @@ dogfooding, not on factual claims from conversation content.
 | P2 | B039 | Generalizes fallback-discipline and secrets concerns into a repository-policy review without hard-coding AWS-datalake behavior. |
 | P2 | B040 | Helps route broad prompts into direct patch, spec, or governance paths before agents start broad work. |
 | P2 | B045 | Clarifies how closure should handle functionally complete specs that lack preferred artifact files, reducing unnecessary retroactive documentation while preserving evidence quality. |
+| P2 | B047 | Reduces spec document proliferation and duplication while strengthening the tie between active specs and durable current-state docs. |
 | P2 | B015 | Converts repeated corrections and workflow friction into candidate improvements without treating history as authoritative. |
 | P2 | B014 | Supports bounded feature discovery from selected history as advisory input only. |
 | P3 | B009 | Useful for richer specs, but lower priority than preflight because traceability can already be hand-authored. |

@@ -3,7 +3,7 @@ title: Spec lifecycle management
 doc_type: design
 status: active
 owner: platform
-last_reviewed: 2026-06-02
+last_reviewed: 2026-06-13
 ---
 
 # Spec Lifecycle Management
@@ -59,6 +59,34 @@ Current fallback package files:
 - `open-decisions.md`: optional unresolved decisions that block stable
   implementation.
 
+The core package files are required because their intent is required, not
+because every concern deserves its own file. A small package should embed
+durable-source baseline, durable-document impact, verification expectations,
+traceability links, open decisions, and promotion targets inside
+`requirements.md`, `design.md`, or `tasks.md` when separate supporting files
+would add ceremony without reducing risk.
+
+Separate supporting artifacts are justified when they reduce ambiguity:
+
+- create `change-impact.md` when existing durable behavior changes across
+  several documents, contracts, or migration paths;
+- create `verification.md` when validation has multiple gates, environments,
+  residual risks, waivers, or release/closure evidence;
+- create `traceability.md` when task text alone is not enough to map work back
+  to requirements, acceptance criteria, design, durable docs, and decisions;
+- create `open-decisions.md` when unresolved decisions need ownership and
+  blocking status outside a single design section;
+- create `research.md` or `quickstart.md` only when investigation or temporary
+  operator/developer instructions need a clear home before promotion or
+  discard.
+
+`spec.md` is an old-format compatibility artifact, not a current core file. An
+existing `spec.md` may be useful as a feature brief or migration input, but it
+should not duplicate current `requirements.md`, `design.md`, or durable docs.
+When an active package contains `spec.md`, reconciliation should classify it as
+feature brief, migration input, or deprecated duplicate before implementation
+continues.
+
 ## Durable Documentation Roles
 
 | Durable doc area | Role |
@@ -78,12 +106,25 @@ Current fallback package files:
 
 Repositories may use different folder names. The lifecycle still applies: identify each repository's durable doc classes before implementing from a spec.
 
+Durable docs describe current accepted state by default. Intended future state
+belongs in active specs, backlog, roadmap, ADR proposals, or explicitly marked
+proposed/deferred sections. If a durable document intentionally contains future
+intent, it must be labeled so agents and tools do not treat it as current
+implementation guidance.
+
 ## Durable Source And Delta Rules
 
 The durable source of truth should always be referenced from an active spec. If
 the change modifies existing behavior, the spec should identify the current
 durable docs, contracts, schemas, runbooks, or code-derived references that
 describe that behavior.
+
+An active spec should also state its durable-document impact: which durable
+requirements, design, architecture, API/contract, data-flow, runbook,
+verification, reference, ADR, backlog, or roadmap documents it adds to,
+modifies, clarifies, supersedes, or leaves unchanged. This mapping may live in
+`requirements.md` for small work or in `change-impact.md` when the impact spans
+several durable docs or behavior classes.
 
 Use `change-impact.md` when the work changes existing behavior, including bug
 fixes. The change-impact record should classify each delta as add, modify,
@@ -113,6 +154,12 @@ migration is a decision gate. The agent should decide whether to continue the
 old format for the current slice, migrate before implementation, or create a
 follow-up migration task. Archived specs should remain historical unless
 resumed.
+
+Migration guidance must stay current with released lifecycle improvements. When
+the skill adds new task-state markers, validation semantics, closure checks,
+artifact rules, or durable-document integration rules, update the migration
+guide in the same release slice so old packages can be upgraded without
+guesswork.
 
 Archived, closed, or superseded packages are historical delivery records. They
 should remain visible to inventory and closure-log workflows, but default

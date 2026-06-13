@@ -1,3 +1,11 @@
+---
+title: Spec package templates
+doc_type: reference
+status: active
+owner: platform
+last_reviewed: 2026-06-13
+---
+
 # Spec Package Templates
 
 Use these templates only when the target repository does not provide its own
@@ -51,6 +59,28 @@ Use the artifacts as a progressive chain:
 Small, low-risk work can use a smaller package. Create only the files that help
 coordinate implementation, validation, or future promotion.
 
+Required intent is broader than required files. Even when a supporting artifact
+is not created, the package should still answer the relevant lifecycle
+questions somewhere in the core files:
+
+- What durable current-state sources does this change rely on?
+- Which durable docs or contracts does this spec add to, modify, clarify,
+  supersede, or leave unchanged?
+- What validation is expected, waived, not applicable, or deferred?
+- Which task IDs map to requirements, acceptance criteria, design sections, and
+  durable promotion targets?
+- Which decisions are open, who owns them, and whether they block
+  implementation, verification, or closure?
+- What content must be promoted to durable docs before the spec is closed?
+
+Create separate artifacts only when they reduce ambiguity or make large work
+easier to resume. Do not create them only to satisfy ceremony.
+
+`spec.md` is not part of the current fallback package. Existing projects may
+still have old-format `spec.md` files; treat them as compatibility inputs that
+must be classified as feature brief, migration input, or deprecated duplicate
+before relying on them for implementation.
+
 ## Spec Package Metadata
 
 Spec package files are temporary delivery artifacts. Use `doc_type: spec` for
@@ -83,6 +113,11 @@ Durable docs use durable document classes such as `requirements`, `design`,
 `architecture`, `runbook`, `adr`, `reference`, or `checklist`. Do not treat a
 spec-package `requirements.md` or `design.md` as a durable source of truth after
 closure; promote accepted content into the durable documentation set.
+
+Durable docs describe current accepted state unless explicitly labeled as
+proposed, planned, deferred, or historical. Active specs describe intended
+changes. Keep that boundary visible so tools and agents do not surface future
+intent as current implementation guidance.
 
 ## Template Files
 

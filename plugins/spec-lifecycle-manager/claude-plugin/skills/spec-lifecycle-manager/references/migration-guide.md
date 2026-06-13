@@ -6,6 +6,11 @@ hybrid Kiro-style format (`requirements.md`, enriched `design.md`, and
 checklist tasks with subtasks, dependency notes, acceptance criteria, and
 evidence).
 
+Keep this guide current with released lifecycle improvements. When the skill
+adds task-state markers, validation semantics, closure checks, artifact rules,
+or durable-document integration requirements, update this guide in the same
+release slice so old packages can be migrated consistently.
+
 ## Migration Decision Gate
 
 When an active package uses the old format, choose one path before
@@ -32,6 +37,16 @@ Migration Decision:
 - Reason: ...
 - Impact: existing docs touched? yes/no; templates touched? yes/no; durable docs affected? yes/no
 - Follow-up: ...
+```
+
+Also classify any old `spec.md` file before relying on it:
+
+```markdown
+spec.md Classification:
+- Role: feature brief | migration input | deprecated duplicate
+- Duplicates current artifacts? yes/no
+- Carries unpromoted decisions or acceptance criteria? yes/no
+- Action: retain as brief | migrate content | remove after migration | leave historical
 ```
 
 When a repository has its own `docs/templates/` or documented template system,
@@ -100,6 +115,16 @@ Old format indicators:
   work
 - `design.md` lacks High-Level Design / Low-Level Design sections
 
+Duplication indicators:
+
+- `spec.md` restates requirements already present in `requirements.md`
+- `spec.md` contains durable-source baselines now present in
+  `requirements.md` or `change-impact.md`
+- `plan.md` repeats task phases that now live in `tasks.md`
+- Future/intended behavior appears in durable docs without proposed/deferred
+  labeling
+- Durable-doc impact is split across artifacts without a single clear source
+
 ## Field Mapping: spec.md → requirements.md
 
 | Old location (spec.md) | New location (requirements.md) |
@@ -116,6 +141,11 @@ Old format indicators:
 | Success Criteria | Success Criteria |
 | Validation Targets | Move to verification.md or design.md operational considerations |
 | Related Artifacts | Related Artifacts |
+
+If `spec.md` is only a concise feature brief, do not expand it into duplicate
+requirements. Either retain it as an explicit brief with links to current
+artifacts, or replace it with a package README/index if the repository wants a
+read-order surface.
 
 ### Conversion Rules
 
@@ -297,26 +327,35 @@ When migrating, infer dependencies from:
 ## Migration Procedure
 
 1. Read the existing spec package fully.
-2. Create `requirements.md` from `spec.md` + `plan.md` using the field mappings
-   above.
-3. Update `design.md` to add High-Level/Low-Level structure.
-4. Rebuild or enhance `tasks.md` with Kiro-style checklist tasks, useful
+2. Classify `spec.md` and `plan.md` as feature brief, migration input, or
+   deprecated duplicate.
+3. Create or update `requirements.md` from unpromoted `spec.md` + `plan.md`
+   content using the field mappings above.
+4. Add or update the durable source and durable impact mapping. State which
+   durable requirements, design, architecture, API/contract, data-flow, runbook,
+   verification, reference, ADR, backlog, or roadmap docs are added, modified,
+   clarified, superseded, or unchanged.
+5. Update `design.md` to add High-Level/Low-Level structure.
+6. Rebuild or enhance `tasks.md` with Kiro-style checklist tasks, useful
    subtasks, dependency notes or a DAG, affected files, per-task acceptance
    criteria, and evidence.
-5. Create `verification.md` when the package has validation gates, evidence, or
-   residual risks worth tracking separately.
-6. Verify cross-references between artifacts are correct.
-7. Decide whether to remove, archive, or leave `spec.md` and `plan.md` as
+7. Create `change-impact.md`, `verification.md`, `traceability.md`,
+   `open-decisions.md`, `research.md`, or `quickstart.md` only when separate
+   files reduce ambiguity. Otherwise embed the intent in the core artifacts.
+8. Verify cross-references between artifacts are correct.
+9. Decide whether to remove, archive, or leave `spec.md` and `plan.md` as
    historical migration inputs. Do not delete them if they carry unpromoted
    decision history.
-8. Update any `Related Artifacts` links in remaining files.
-9. Update repository indexes if they reference the old filenames.
+10. Update any `Related Artifacts` links in remaining files.
+11. Update repository indexes if they reference the old filenames.
 
 ## Post-Migration Verification
 
 After migration, confirm:
 
 - [ ] `requirements.md` exists with user stories and EARS acceptance criteria
+- [ ] `requirements.md` records durable sources and durable impact, or links to
+      `change-impact.md`
 - [ ] `design.md` has High-Level and Low-Level sections
 - [ ] `tasks.md` uses checklist tasks and subtasks as the primary structure
 - [ ] Non-trivial dependencies are captured through `Depends on:` notes or a
@@ -324,6 +363,12 @@ After migration, confirm:
 - [ ] Parent tasks have acceptance criteria and evidence fields where needed
 - [ ] `verification.md` exists when quality gates or validation evidence need
       separate tracking
+- [ ] `spec.md` and `plan.md` are classified as retained brief, migrated input,
+      deprecated duplicate, or historical record
 - [ ] No orphan references to `spec.md` or `plan.md`
+- [ ] Duplicated requirements, design decisions, and durable-source baselines
+      have one current source
+- [ ] Durable docs touched by the spec are current-state docs or clearly marked
+      proposed/deferred/historical where applicable
 - [ ] Frontmatter status and dates are accurate
 - [ ] Related Artifacts links resolve correctly

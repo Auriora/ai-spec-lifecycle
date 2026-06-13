@@ -95,7 +95,24 @@ Use spec artifacts as a progressive chain, not interchangeable notes:
   verification, durable targets, and open decisions. Use it when the package is
   large enough that task text may not carry enough context by itself.
 
-Not every task needs every artifact. For small, low-risk work, create only the files that add clear value.
+Not every task needs every artifact. For small, low-risk work, create only the
+files that add clear value, but do not drop the underlying intent. Embed the
+needed durable-source baseline, durable-document impact, verification
+expectations, traceability links, open decisions, and promotion targets in
+`requirements.md`, `design.md`, or `tasks.md` when separate files would only
+duplicate content.
+
+`spec.md` is an old-format compatibility artifact, not a current core artifact.
+If an active package contains `spec.md`, classify it during reconciliation as:
+
+- `feature brief`: concise package overview that does not duplicate current
+  requirements or design;
+- `migration input`: old-format requirements or acceptance content that still
+  needs to be migrated;
+- `deprecated duplicate`: content already represented in current artifacts or
+  durable docs and likely to go stale.
+
+Do not create new `spec.md` files from the fallback templates.
 
 ### Requirements Format
 
@@ -125,6 +142,13 @@ for TypeScript, proptest or quickcheck for Rust, Go fuzzing, or FsCheck for
 Always reference durable source-of-truth documents that describe current
 behavior before the change. If no durable source exists, record that gap and
 create a promotion target.
+
+Durable docs should describe current accepted state by default. Intended future
+state belongs in active specs, backlog, roadmap, ADR proposals, or explicitly
+marked proposed/deferred sections. An active spec must state whether it adds to,
+modifies, clarifies, supersedes, or leaves unchanged relevant durable
+requirements, design, architecture, API/contract, data-flow, runbook,
+verification, reference, ADR, backlog, or roadmap documents.
 
 ### Change Impact Format
 
@@ -255,6 +279,11 @@ If the spec package uses the old format (has `spec.md` or `plan.md` instead of `
 
 Always make the package migration decision visible in the reconciliation
 summary, even when the decision is to continue without migration.
+
+Keep `references/migration-guide.md` current with lifecycle improvements. When
+this skill changes task states, validation semantics, closure checks, artifact
+rules, or durable-document integration, update the migration guide and bundled
+copies in the same release slice.
 
 When repository templates exist, also make a visible template authority
 decision before changing package structure, creating new lifecycle docs, or
