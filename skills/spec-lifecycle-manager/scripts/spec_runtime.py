@@ -268,25 +268,43 @@ def discover_spec_paths(repo_root: Path, docs_root: str | None = None) -> list[P
     return sorted(paths)
 
 
+def skill_spec_package_templates_dir() -> Path:
+    return Path(__file__).resolve().parents[1] / "references" / "spec-package"
+
+
+def spec_package_template_dir(repo_root: Path) -> Path | None:
+    repo_templates = repo_root / "docs" / "templates" / "spec-package"
+    if repo_templates.exists():
+        return repo_templates
+    skill_templates = skill_spec_package_templates_dir()
+    if skill_templates.exists():
+        return skill_templates
+    return None
+
+
 def template_authority(repo_root: Path) -> dict[str, Any]:
     repo_templates = repo_root / "docs" / "templates"
-    skill_templates = repo_root / "skills" / "spec-lifecycle-manager" / "references" / "spec-package"
-    if repo_templates.exists():
+    repo_spec_templates = repo_templates / "spec-package"
+    skill_templates = skill_spec_package_templates_dir()
+    if repo_spec_templates.exists():
         return {
-            "authority": "repository",
-            "path": str(repo_templates),
-            "decision": "Use repository templates as authoritative.",
+            "authority": "repository-spec-package",
+            "path": str(repo_spec_templates),
+            "durable_templates_path": str(repo_templates) if repo_templates.exists() else None,
+            "decision": "Use repository spec-package templates as authoritative.",
         }
     if skill_templates.exists():
         return {
             "authority": "skill-fallback",
             "path": str(skill_templates),
-            "decision": "Use skill fallback templates because no repository templates were found.",
+            "durable_templates_path": str(repo_templates) if repo_templates.exists() else None,
+            "decision": "Use skill fallback spec-package templates because no repository spec-package templates were found.",
         }
     return {
         "authority": "missing",
         "path": None,
-        "decision": "No repository or skill fallback templates were found.",
+        "durable_templates_path": str(repo_templates) if repo_templates.exists() else None,
+        "decision": "No repository or skill fallback spec-package templates were found.",
     }
 
 

@@ -29,10 +29,12 @@ documentation system that should stay clean, use a named partition such as
 records, use the target repository's documented structure.
 
 If the target repository has `docs/templates/` or another documented template
-system, treat those templates as authoritative for that repository. Do not apply
-this skill's fallback templates silently. When the repository templates differ
-from this skill's preferred package shape, record a visible template authority
-decision before creating, migrating, or reshaping docs.
+system, treat those templates as authoritative for durable repository
+documentation. Do not apply this skill's durable-doc fallback templates
+silently. For temporary implementation spec packages, treat
+`docs/templates/spec-package/` as the repository override only when that
+directory exists. A durable-doc template directory by itself does not override
+this skill's spec-package fallback templates.
 
 This skill includes two kinds of fallback references:
 
@@ -54,7 +56,7 @@ This skill includes two kinds of fallback references:
 4. Read available spec artifacts: `requirements.md`, `design.md`, `tasks.md`, plus optional `change-impact.md`, `verification.md`, `research.md`, `quickstart.md`, `open-decisions.md`, `traceability.md`, contracts, checklists, and sequencing docs when present. If `spec.md` or `plan.md` are found instead, the package uses the old format; handle that through the migration decision gate in Reconcile.
 5. Identify the repository's durable documentation targets from its own docs structure and templates before assuming document classes or folder names.
 
-If no active package exists and the user asks to start one, create the smallest useful `[docs-root]/specs/[###-slug]/` package for the risk level. Use repository-documented package templates when present. If no repository-specific package template exists, use `references/spec-package/` as the fallback package template. If both exist and differ, prefer the repository template and record the template authority decision.
+If no active package exists and the user asks to start one, create the smallest useful `[docs-root]/specs/[###-slug]/` package for the risk level. Use repository-documented spec-package templates when `docs/templates/spec-package/` or an equivalent explicit spec-package template location exists. If no repository-specific spec-package template exists, use `references/spec-package/` as the fallback package template. If both exist and differ, prefer the repository template and record the template authority decision.
 
 If no active package exists and the user is not asking to start one, do not
 recreate or browse removed spec packages as if they are current work. Use
@@ -285,15 +287,15 @@ this skill changes task states, validation semantics, closure checks, artifact
 rules, or durable-document integration, update the migration guide and bundled
 copies in the same release slice.
 
-When repository templates exist, also make a visible template authority
-decision before changing package structure, creating new lifecycle docs, or
-updating templates:
+When repository spec-package templates exist, also make a visible template
+authority decision before changing package structure, creating new lifecycle
+docs, or updating templates:
 
 - use repository templates as-is;
 - use repository templates and add only missing fields needed for this package;
 - propose a selective template update for review before changing future docs;
 - use this skill's fallback templates because the repository has no documented
-  templates.
+  spec-package templates.
 
 Do not force migration for archived specs, mid-task collaboration, or small changes where migration would create more risk than value. Do not migrate repository templates wholesale just because this skill prefers a richer package shape. Template migration must be selective: identify the specific document classes affected, the existing docs that would be impacted, required field additions, compatibility risks, and whether old packages should remain untouched.
 

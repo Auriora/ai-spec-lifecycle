@@ -455,8 +455,12 @@ def read_resource(uri: str, repo_root: Path) -> dict[str, Any]:
         payload["resource_binding"] = resource_binding(uri, repo_root)
         return resource_payload(uri, "application/json", json_text(normalize_mcp_payload(payload, repo_root)))
     if uri == "templates://spec-package":
-        template_dir = repo_root / "skills" / "spec-lifecycle-manager" / "references" / "spec-package"
-        payload = {"path": str(template_dir), "templates": sorted(path.name for path in template_dir.glob("*.md")) if template_dir.exists() else []}
+        template_dir = spec_runtime.spec_package_template_dir(repo_root)
+        payload = {
+            "path": str(template_dir) if template_dir else None,
+            "template_authority": spec_runtime.template_authority(repo_root),
+            "templates": sorted(path.name for path in template_dir.glob("*.md")) if template_dir and template_dir.exists() else [],
+        }
         payload["resource_binding"] = resource_binding(uri, repo_root)
         return resource_payload(uri, "application/json", json_text(normalize_mcp_payload(payload, repo_root)))
 

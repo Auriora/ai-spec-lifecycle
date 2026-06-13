@@ -459,6 +459,19 @@ class SpecMcpServerTests(unittest.TestCase):
         resource_payload = json.loads(responses[3]["result"]["contents"][0]["text"])
         self.assertEqual("001-nested", resource_payload["spec_id"])
 
+    def test_spec_template_resource_uses_skill_fallback_without_repo_spec_templates(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / ".git").mkdir()
+            (repo / "docs/templates").mkdir(parents=True)
+            (repo / "docs/templates/README.md").write_text("# Durable templates\n", encoding="utf-8")
+            [response] = self.send(rpc(1, "resources/read", {"uri": "templates://spec-package"}), root=repo)
+
+        payload = json.loads(response["result"]["contents"][0]["text"])
+        self.assertEqual("skill-fallback", payload["template_authority"]["authority"])
+        self.assertIn("requirements.md", payload["templates"])
+        self.assertNotIn("path", payload)
+
     def test_prompts_list_and_get(self):
         responses = self.send(
             rpc(1, "prompts/list"),

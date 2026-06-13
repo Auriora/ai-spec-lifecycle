@@ -231,6 +231,10 @@ tasks, verification, change impact, and optional research or quickstart notes
 tracked together. Spec packages can describe features, bug fixes, refactors,
 migrations, operational changes, or documentation-only changes.
 
+A repository's durable documentation templates do not override these
+spec-package templates. Only an explicit repository spec-package template
+location such as `docs/templates/spec-package/` should override them.
+
 This directory is reserved for durable document classes that should live with
 the code and reflect current implementation state. Copy or adapt only the
 document classes needed for a selected project.

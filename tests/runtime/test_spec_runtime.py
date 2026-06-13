@@ -510,6 +510,29 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertFalse(archived["health"]["skipped"])
         self.assertGreater(archived["health"]["diagnostic_count"], 0)
 
+    def test_durable_templates_do_not_override_spec_package_fallback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / "docs/templates").mkdir(parents=True)
+            (repo / "docs/templates/README.md").write_text("# Durable templates\n", encoding="utf-8")
+
+            authority = spec_runtime.template_authority(repo)
+
+        self.assertEqual("skill-fallback", authority["authority"])
+        self.assertEqual(str(repo / "docs/templates"), authority["durable_templates_path"])
+        self.assertTrue(authority["path"].endswith("references/spec-package"))
+
+    def test_repository_spec_package_templates_override_fallback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / "docs/templates/spec-package").mkdir(parents=True)
+            (repo / "docs/templates/spec-package/tasks.md").write_text("# Tasks\n", encoding="utf-8")
+
+            authority = spec_runtime.template_authority(repo)
+
+        self.assertEqual("repository-spec-package", authority["authority"])
+        self.assertEqual(str(repo / "docs/templates/spec-package"), authority["path"])
+
     def test_archive_index_validates_current_index(self):
         payload = spec_runtime.archive_index(ROOT)
 

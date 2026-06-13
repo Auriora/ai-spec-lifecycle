@@ -55,6 +55,11 @@ The skill includes fallback templates under:
   adapt when they do not already have their own `docs/templates/` system,
   including backlog and roadmap templates for deferred work.
 
+A repository-level `docs/templates/` directory is durable-document authority
+only. Temporary spec-package authoring uses a repository override only when
+`docs/templates/spec-package/` exists; otherwise it uses the skill fallback
+templates above.
+
 This repository's `docs/` tree documents the skill and its validation history;
 reusable project templates live with the skill source.
 

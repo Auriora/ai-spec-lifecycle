@@ -1,3 +1,11 @@
+---
+title: Spec package migration guide
+doc_type: reference
+status: active
+owner: platform
+last_reviewed: 2026-06-13
+---
+
 # Spec Package Migration Guide
 
 Use this guide to decide whether and how to migrate spec packages from older
@@ -49,10 +57,12 @@ spec.md Classification:
 - Action: retain as brief | migrate content | remove after migration | leave historical
 ```
 
-When a repository has its own `docs/templates/` or documented template system,
-the template authority decision is required even if package migration is not
-performed. Repository templates remain authoritative unless the user explicitly
-asks to revise them.
+When a repository has its own `docs/templates/spec-package/` or equivalent
+documented spec-package template system, the template authority decision is
+required even if package migration is not performed. Repository spec-package
+templates remain authoritative unless the user explicitly asks to revise them.
+Durable documentation templates under `docs/templates/` do not by themselves
+override this skill's spec-package fallback templates.
 
 ## Template Authority And Selective Template Migration
 
@@ -62,8 +72,8 @@ Template migration is different from package migration:
 - **Template migration** changes the future document shape for a repository and
   may affect many existing or future documents.
 
-When repository templates exist, do not replace them wholesale with this
-skill's fallback templates. Grade them first:
+When repository spec-package templates exist, do not replace them wholesale with
+this skill's fallback templates. Grade them first:
 
 | Grade | Meaning | Action |
 |-------|---------|--------|
@@ -71,7 +81,7 @@ skill's fallback templates. Grade them first:
 | Add package-local fields | Current package needs extra evidence, impact, verification, or risk fields, but repo-wide templates do not need to change yet | Add fields only to the active package |
 | Selective template update | Multiple packages would benefit from a missing field or section | Propose the smallest template change and identify affected document classes |
 | Defer template update | Existing docs would be disrupted or the value is unclear | Continue with current templates and record follow-up |
-| Use skill fallback | No repo templates or governance are available | Use `references/spec-package/` |
+| Use skill fallback | No repo spec-package templates or governance are available | Use `references/spec-package/` |
 
 Before changing repository templates, record:
 
