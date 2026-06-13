@@ -114,6 +114,24 @@ spec active or record the blocker until the final state is recoverable.
 A closed spec should not be the only place a future reader can learn how the
 implemented system works.
 
+## Staged Lifecycle Guidance
+
+New lifecycle work should progress through discover, optional bootstrap,
+requirements, design, tasks, agent readiness, implementation, verification,
+promotion, and closure. Requirements normally precede design, and design
+normally precedes tasks. If a design-first flow is explicitly chosen, record
+the exception and complete requirements before implementation readiness.
+
+Blank or near-blank repositories should receive preview-first bootstrap
+guidance instead of architecture-first requirements. Create architecture or
+pattern docs only when repository evidence or user-confirmed project purpose
+supports them.
+
+Instruction failures, stale docs, validation gaps, and repeated agent
+corrections should be routed as instruction-as-code candidates to `AGENTS.md`,
+durable docs, backlog, roadmap, issues, or follow-up specs. Do not mutate those
+surfaces automatically from a review finding.
+
 ## Related Docs
 
 - [Documentation Templates](README.md)

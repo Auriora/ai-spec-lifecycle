@@ -76,6 +76,43 @@ signals.
 
 If several active packages exist, read repository indexes such as `docs/README.md` and any sequencing docs. Ask the user to choose, or select the first blocking slice from documented sequencing guidance when the next step is clear.
 
+## First Run
+
+When entering an unfamiliar repository, start with a runtime-backed orientation
+before creating docs or specs. Use `lifecycle_guide` when available; otherwise
+use `active_spec_preflight`, `scan_specs`, repository instructions, durable
+indexes, backlog, roadmap, closure logs, and archive indexes to answer three
+questions:
+
+- What lifecycle state is this repository in?
+- What tools, docs, templates, governance constraints, and active specs are
+  available?
+- What is the smallest useful next action?
+
+First-run guidance should report MCP tools when they are available and include
+equivalent CLI commands for validation, CI, and recovery. If MCP tools are not
+available, provide the direct `spec_runtime.py` commands needed to recover the
+same read-only context.
+
+If the repository is blank or near blank, enter bootstrap mode instead of
+failing because `docs/`, `docs/specs/`, architecture docs, or durable lifecycle
+indexes are absent. Bootstrap mode is preview-first:
+
+- classify the repository evidence as `blank` or `near_blank`;
+- ask for or record a project-purpose statement before durable structure is
+  generated;
+- propose only the minimum useful docs foundation, such as a docs root,
+  lifecycle index, project summary, runbook target, or optional first spec;
+- do not require an architecture document before requirements work can start;
+- recommend architecture or pattern docs only when code, project structure, or
+  user-confirmed purpose provides evidence for them;
+- keep proposed writes limited to lifecycle/docs paths unless the user
+  explicitly asks for source changes.
+
+Do not recreate deleted spec packages when first-run guidance finds no active
+specs. Use durable docs, backlog, roadmap, closure logs, and archive indexes as
+the current source of truth.
+
 ## Spec Package Flow
 
 Use spec artifacts as a progressive chain, not interchangeable notes:
@@ -103,6 +140,41 @@ needed durable-source baseline, durable-document impact, verification
 expectations, traceability links, open decisions, and promotion targets in
 `requirements.md`, `design.md`, or `tasks.md` when separate files would only
 duplicate content.
+
+Use staged artifact progression for new or resumed specs:
+
+1. `discover`: inspect repo state, instructions, durable docs, tooling, and
+   template authority.
+2. `bootstrap`: preview the minimum lifecycle foundation for blank or near
+   blank repositories.
+3. `requirements`: capture goals, non-goals, user stories, acceptance
+   criteria, correctness properties, durable-source baseline, and durable-doc
+   impact.
+4. `design`: map accepted requirements and correctness properties to concrete
+   components, interfaces, operational behavior, and validation strategy.
+5. `tasks`: define ordered, traceable work with dependencies, evidence, and
+   checkpoints.
+6. `agent_ready`: provide a bounded Agent Readiness Contract before a worker
+   agent edits files.
+7. `implement`: execute one coherent task slice and record evidence.
+8. `verify`: record validation evidence, waivers, residual risk, and review
+   outcomes.
+9. `promote`: move accepted behavior to durable docs, backlog, roadmap, ADRs,
+   runbooks, or follow-up specs.
+10. `close`: preserve closure breadcrumbs and remove or archive temporary spec
+    scaffolding according to repository policy.
+
+Default to requirements before design and design before tasks. If the user
+explicitly chooses a design-first flow, record partial requirements, label the
+exception, and require a later requirements-completion step before
+implementation readiness. When requirements change after design or tasks exist,
+flag downstream review instead of silently rewriting later artifacts. When
+design changes after tasks exist, flag task and traceability review before
+implementation continues.
+
+Optional artifacts remain optional. Recommend or create them only when risk,
+durable-doc impact, validation needs, open decisions, or traceability size make
+them useful for the current work.
 
 `spec.md` is an old-format compatibility artifact, not a current core artifact.
 If an active package contains `spec.md`, classify it during reconciliation as:
@@ -429,6 +501,46 @@ The MCP tools and CLI helpers are advisory runtime surfaces, not replacements
 for lifecycle judgment. Use their structured results as evidence for
 reconciliation, task selection, lint findings, and closure blockers.
 
+Use an Agent Readiness Contract before handing work to a worker agent or
+starting a non-trivial implementation slice. The contract is distinct from
+`ready_to_implement`: a task can be logically implementable but still not
+`ready_for_agent` if context, permissions, validation, review, or durable-doc
+impact are unclear. The contract should name:
+
+- scope: selected task or requirement, risk level, likely affected files, and
+  explicit out-of-scope files;
+- context: must-read artifacts, optional artifacts, durable sources of truth,
+  historical or stale documents not to treat as current, and refresh points;
+- validation: required commands, expected pass/fail signal, manual proof,
+  evidence location, and residual risk;
+- permissions: allowed edits, forbidden edits, external services, secrets, and
+  human approval points;
+- review: required packet type, fresh-context review need, and
+  security/privacy review need;
+- closure impact: durable docs affected, backlog/roadmap/issue routing, and
+  release-note expectation;
+- optional repo evidence: provider name, freshness, confidence, capability,
+  evidence kinds, diagnostics status, validation-plan status, skipped evidence,
+  and residual risk when Agent Workbench or an equivalent provider is used.
+
+Missing contract fields are readiness gaps. Do not pad them with generic
+advice.
+
+Apply context-budget rules when building readiness packets or implementing
+tasks:
+
+- prefer `task_context`, `traceability_lookup`, and linked sections over
+  loading every artifact;
+- read the smallest complete set of source artifacts needed for the selected
+  slice;
+- avoid archived specs unless the user asks for historical audit or
+  restoration;
+- refresh context at phase boundaries, after upstream artifact changes, and
+  before validation or closure claims;
+- keep optional repo-evidence providers advisory. They can guide routing and
+  validation planning, but cannot prove completion, promotion, closure, or
+  governance override.
+
 Agent Workbench, when present, is also an optional repository-evidence provider,
 not a lifecycle authority or required dependency. Use Workbench-style evidence
 for repo freshness, context routing, impact analysis, diagnostics, and
@@ -511,6 +623,35 @@ Task status rules:
 - Mark a task or subtask as partial, on hold, error, or skipped only with a
   documented reason (remaining work, blocker, error needing intervention,
   intentional deferral, superseded, or out of scope).
+
+If an implementation slice fails, make one meaningfully different recovery
+attempt when that is safe and in scope. If recovery also fails, stop and record
+the task state, blocker, exact error evidence, attempted recovery, and the
+specific decision or input needed. If the recovery produces a reusable lesson,
+offer a durable gotcha, runbook, troubleshooting note, backlog item, roadmap
+item, or follow-up spec destination.
+
+When stale, missing, ambiguous, or conflicting instructions cause repeated
+agent failure or user correction, treat that as instruction-as-code evidence.
+Classify the failure before routing it, using stable categories such as
+misunderstood requirement, missed durable source, stale spec followed,
+insufficient validation, over-broad implementation, invented behavior,
+dependency or environment failure, context overflow or noise, unsafe tool use,
+review missed defect, documentation promotion missed, routing evidence treated
+as proof, or planned validation treated as completed validation. Do not mutate
+`AGENTS.md`, durable docs, backlog, roadmap, or specs automatically; route the
+candidate change for lead-agent or human acceptance.
+
+Durable agent directives, when created or promoted, must be derived from actual
+repository docs, code patterns, governance, or user-confirmed principles. Keep
+directives concise and route details to the durable source document. Do not
+invent architecture, conventions, or coding directives for a blank repository.
+
+Persisted review or audit findings should use stable finding IDs and preserve
+history. A finding record should keep status, severity or impact, effort where
+useful, source evidence, recommended routing, resolution or deferral evidence,
+and whether it is findings-only or implementation work. When extending a
+review, append new IDs without renumbering existing findings.
 
 ## Verify
 

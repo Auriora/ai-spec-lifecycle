@@ -32,6 +32,17 @@ Describe the trigger conditions or scenarios for using it.
 | --- | --- |
 | Related guide or reference | Explain the decision, config, schema, mapping, or validation context this runbook depends on. |
 
+## Agent Directives
+
+Use this section only when directives are evidence-derived from repository docs,
+code patterns, governance, or user-confirmed principles. Omit it for blank
+repositories or when no stable directive exists.
+
+- Before changing this workflow:
+- Required source docs:
+- Required validation:
+- Do not:
+
 ## Config And Code Touchpoints
 
 | Area | Path Or Setting | How It Is Used | Required Validation |

@@ -11,18 +11,18 @@ last_reviewed: 2026-06-13
 
 ## Task To Context Matrix
 
-| Task | Requirements | Design sections | Verification |
+| Task ID | Requirements | Design Sections | Verification |
 | --- | --- | --- | --- |
-| T001 | R1, R2, R3, R4, R5, R6, R7, R8, R9 | Stage Model, Agent Readiness Contract, Open Questions | V001, V002 |
-| T002 | R1, R2, R3, R5, R6, R7, R8, R9 | Guidance And Template Design, Agent Readiness Contract, Learning Loop And Failure Taxonomy | V002, V008 |
-| T003 | R3, R5, R7, R8 | Guidance And Template Design, Review Findings Model | V002, V003, V007 |
-| T004 | R1, R3, R4, R9 | Runtime And MCP Design, Stage Model, Agent Readiness Contract | V001, V004, V005 |
-| T005 | R1, R2, R4 | Bootstrap Plan, Blank-Repo Behavior | V001, V004, V006 |
-| T006 | R1, R2, R4 | Runtime And MCP Design | V001, V004, V006 |
-| T007 | R1, R2, R3 | Runtime And MCP Design, Blank-Repo Behavior | V002, V006 |
-| T008 | R3, R6, R7, R9 | Stage Readiness, Agent Readiness Contract, Traceability And Validation | V001, V005, V007 |
-| T009 | R1, R2, R3, R4, R5, R6, R7, R8, R9 | Guidance And Template Design, Review Findings Model, Learning Loop And Failure Taxonomy | V002, V008 |
-| T010 | R1, R4, R7 | Files Affected, Runtime And MCP Design | V001, V003, V004, V009 |
+| T001 | Requirement 1, Requirement 2, Requirement 3, Requirement 4, Requirement 5, Requirement 6, Requirement 7, Requirement 8, Requirement 9 | Stage Model, Agent Readiness Contract, Open Questions | V001, V002 |
+| T002 | Requirement 1, Requirement 2, Requirement 3, Requirement 5, Requirement 6, Requirement 7, Requirement 8, Requirement 9 | Guidance And Template Design, Agent Readiness Contract, Learning Loop And Failure Taxonomy | V002, V008 |
+| T003 | Requirement 3, Requirement 5, Requirement 7, Requirement 8 | Guidance And Template Design, Review Findings Model | V002, V003, V007 |
+| T004 | Requirement 1, Requirement 3, Requirement 4, Requirement 9 | Runtime And MCP Design, Stage Model, Agent Readiness Contract | V001, V004, V005 |
+| T005 | Requirement 1, Requirement 2, Requirement 4 | Bootstrap Plan, Blank-Repo Behavior | V001, V004, V006 |
+| T006 | Requirement 1, Requirement 2, Requirement 4 | Runtime And MCP Design | V001, V004, V006 |
+| T007 | Requirement 1, Requirement 2, Requirement 3 | Runtime And MCP Design, Blank-Repo Behavior | V002, V006 |
+| T008 | Requirement 3, Requirement 6, Requirement 7, Requirement 9 | Stage Readiness, Agent Readiness Contract, Traceability And Validation | V001, V005, V007 |
+| T009 | Requirement 1, Requirement 2, Requirement 3, Requirement 4, Requirement 5, Requirement 6, Requirement 7, Requirement 8, Requirement 9 | Guidance And Template Design, Review Findings Model, Learning Loop And Failure Taxonomy | V002, V008 |
+| T010 | Requirement 1, Requirement 4, Requirement 7 | Files Affected, Runtime And MCP Design | V001, V003, V004, V009 |
 
 ## Requirement To Delivery Matrix
 

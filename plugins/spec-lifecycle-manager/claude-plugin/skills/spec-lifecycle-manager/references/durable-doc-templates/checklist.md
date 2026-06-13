@@ -36,6 +36,27 @@ status. Record skipped or not-applicable items with a reason.
 - **Overall result:** pass | fail | blocked | partial
 - **Residual risk:**
 
+## Numbered Findings
+
+Use this section for review or audit findings that may be extended over time.
+Append new IDs without renumbering existing findings.
+
+#### F-001 Short title
+
+| Field | Value |
+| --- | --- |
+| Status | open |
+| Impact | low, medium, or high |
+| Effort | small, medium, or large |
+| Source | `path/to/file`, command, review note, or packet |
+| Routing | backlog, roadmap, spec, issue, durable doc, or none |
+
+**Finding:** Describe the issue and evidence.
+
+**Direction:** Describe the recommended action or deferral.
+
+**Resolution evidence:** Pending.
+
 ## Related Docs
 
 - Requirements:

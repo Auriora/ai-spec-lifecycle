@@ -113,8 +113,9 @@ T010 -> T011
   - Depends on: T003
   - Files: `docs/specs/[###-feature-name]/verification.md`
   - Acceptance: Shared prerequisites are reviewed, required focused validation
-    is run or explicitly waived, and any user questions are recorded before
-    user-story work begins.
+    is run or explicitly waived, agent-readiness needs for the next slice are
+    identified, and any user questions are recorded before user-story work
+    begins.
   - Validation: Run the focused validation command for shared contracts or
     record why no automated command applies.
   - Evidence: Pending.
@@ -237,6 +238,11 @@ T010 -> T011
   tasks or subtasks that name the property IDs, linked requirements, framework
   choice, and validation command. Keep the framework language-appropriate and
   repository-approved.
+- If no property-test dependency path exists, use conventional tests or a
+  documented manual verification method and record the residual risk in
+  `verification.md`.
+- Before implementation, confirm the selected task has Agent Readiness Contract
+  coverage: scope, context, permissions, validation, review, and closure impact.
 - Check off subtasks as work progresses, but check off the parent task only when
   its acceptance criteria are met.
 - A task is complete only when evidence is recorded. Evidence can be a command,

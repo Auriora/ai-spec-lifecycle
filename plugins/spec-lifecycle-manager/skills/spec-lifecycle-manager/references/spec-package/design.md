@@ -21,6 +21,14 @@ Map requirements and success criteria to the design elements that satisfy them.
 |-------------|---------------------|-----------------|---------------------|
 | Requirement 1 | AC1, AC2 | Component, flow, interface, or decision | Test, review, command, or manual check |
 
+## Correctness Property Coverage
+
+Map requirement properties to concrete design behavior before tasks are drafted.
+
+| Property | Design Behavior | Validation Direction | Notes |
+|----------|-----------------|----------------------|-------|
+| CP-001 | Component, flow, invariant, interface, or guardrail | Property test, conventional test, command, review, or manual check | |
+
 ## High-Level Design
 
 ### System Architecture
@@ -90,6 +98,13 @@ requirements, tasks, and risk.
 | Validation | Covers | Evidence Location | Residual Risk |
 |------------|--------|-------------------|---------------|
 | Test, command, review, or manual check | Requirement, task, or risk | `verification.md`, task evidence, CI, log, screenshot, or review note | Risk or none |
+
+## Downstream Task Guidance
+
+- Required checkpoints before implementation:
+- Properties or acceptance criteria that need explicit task coverage:
+- Optional artifacts needed before implementation:
+- Downstream review needed if this design changes after tasks are drafted:
 
 ## Operational Considerations
 

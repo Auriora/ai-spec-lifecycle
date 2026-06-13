@@ -20,6 +20,16 @@ State who this is for.
 
 - Accounts, tools, access, or local setup required before starting.
 
+## Agent Directives
+
+Use this section only for concise, evidence-derived or user-confirmed guidance
+that helps an agent fit the repository before editing.
+
+- Must read:
+- Prefer:
+- Avoid:
+- Validation before completion:
+
 ## Setup
 
 Provide the minimum ordered steps to get started successfully.

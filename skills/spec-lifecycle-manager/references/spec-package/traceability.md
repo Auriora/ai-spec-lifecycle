@@ -42,6 +42,12 @@ reconciled.
 |-------------|---------------------|-----------------|-------|--------------|-----------------|
 | Requirement 1 | AC1, AC2 | `design.md#section` | T001, T002 | `verification.md#gate` | `docs/path.md` |
 
+## Correctness Property Coverage
+
+| Property | Requirements | Design Sections | Tasks | Tests Or Verification | Residual Risk |
+|----------|--------------|-----------------|-------|-----------------------|---------------|
+| CP-001 | Requirement 1 | `design.md#section` | T001 | Test, command, review, or manual check | none or risk |
+
 ## Design To Implementation Matrix
 
 | Design Section | Requirements | Tasks | Interfaces Or Files | Verification |
@@ -62,3 +68,6 @@ reconciled.
   the relevant specification context before implementation.
 - If a row cannot be completed, record `TBD` and the blocker rather than
   leaving the relationship implicit.
+- Treat uncovered correctness properties or acceptance criteria as readiness
+  gaps until they are mapped to tasks, tests, verification, or a recorded manual
+  method.

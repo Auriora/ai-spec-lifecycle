@@ -38,11 +38,35 @@ record covers.
 |-------------|-----------------------------|----------|---------------|
 | Requirement 1 | AC1 | | |
 
+## Correctness Property Coverage
+
+| Property | Covered by | Evidence | Residual risk |
+|----------|------------|----------|---------------|
+| CP-001 | Task, test, command, review, or manual method | | |
+
+## Agent Readiness Evidence
+
+| Field | Evidence | Residual risk |
+|-------|----------|---------------|
+| Scope and out-of-scope files | | |
+| Must-read and optional context | | |
+| Permissions and approval points | | |
+| Validation commands and expected signals | | |
+| Review needs | | |
+| Durable-doc or closure impact | | |
+| Optional repo-evidence provider caveats | | |
+
 ## Task Evidence
 
 | Task ID | Status | Evidence | Notes |
 |---------|--------|----------|-------|
 | T001 | pending | | |
+
+## Evidence Log
+
+| Date | Evidence | Result | Notes |
+|------|----------|--------|-------|
+| YYYY-MM-DD | Command, review, manual verification, or artifact | pending | |
 
 ## Manual Or External Verification
 

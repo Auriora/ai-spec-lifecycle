@@ -54,6 +54,13 @@ last_reviewed: 2026-06-13
 | --- | --- | --- | --- |
 | 2026-06-13 | MCP `scan_specs` before spec creation. | Pass | Existing active specs were healthy; fallback template authority was reported. |
 | 2026-06-13 | MCP `lint_spec_package` after initial draft. | Warn | Authoring warnings identified missing expected sections; this package was updated to add them. |
+| 2026-06-13 | MCP `lint_spec_package` for `docs/specs/024-staged-developer-onboarding`. | Pass | Phase 1 task states and traceability updates produced 0 diagnostics. |
+| 2026-06-13 | MCP `traceability_lookup` for T001, T002, and T003. | Pass | Phase 1 task-context rows resolved with no gaps after normalizing traceability column names and requirement references. |
+| 2026-06-13 | MCP `lint_doc` for changed fallback spec-package templates. | Pass | `requirements.md`, `design.md`, `tasks.md`, `traceability.md`, and `verification.md` returned 0 diagnostics. |
+| 2026-06-13 | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py scan .`. | Pass | Active spec inventory reported 2 active specs, both passing, and skill-fallback template authority. |
+| 2026-06-13 | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py prompts`. | Pass | Prompt definitions returned 0 diagnostics. |
+| 2026-06-13 | `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'`. | Pass | 133 tests passed after syncing source skill changes to bundled Codex and Claude plugin copies. |
+| 2026-06-13 | `git diff --check`. | Pass | No whitespace errors. |
 
 ## Closure Requirements
 

@@ -55,6 +55,20 @@ when the impact spans several documents or behavior classes.
 | API/contract | add\|modify\|clarify\|supersede\|unchanged | `docs/api/path.md` | |
 | data-flow/runbook/reference/ADR | add\|modify\|clarify\|supersede\|unchanged | `docs/path.md` | |
 
+## Staged Readiness
+
+- **Current stage:** requirements
+- **Next stage:** design
+- **Ready to design when:** goals, non-goals, user stories, acceptance
+  criteria, correctness properties, durable-source baseline, durable impact,
+  and open questions are coherent enough to make design decisions.
+- **Design-first exception:** no | yes - record the partial requirements that
+  must be completed before implementation readiness.
+- **Optional artifacts recommended:** none | `research.md` | `change-impact.md`
+  | `open-decisions.md`
+- **Downstream review needed:** none | design | tasks | traceability |
+  verification
+
 ## Requirements
 
 ### Requirement 1: Title
@@ -85,6 +99,9 @@ already accepted; otherwise record the dependency decision in `design.md` or
 
 - **CP-001**: [Invariant or property description]
 - **CP-002**: [Invariant or property description]
+
+Each correctness property should later map to design behavior and at least one
+task, test, validation command, or explicit manual verification method.
 
 ## Technical Context
 

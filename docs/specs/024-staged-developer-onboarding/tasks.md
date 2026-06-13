@@ -21,22 +21,22 @@ T009 -> T010
 
 ## Phase 1: Requirements And Stage Contract
 
-- [ ] T001 Review and finalize the staged lifecycle contract.
+- [x] T001 Review and finalize the staged lifecycle contract.
   - Files: `docs/specs/024-staged-developer-onboarding/requirements.md`, `docs/specs/024-staged-developer-onboarding/design.md`
   - Acceptance: Accepted ideas, non-goals, blank-repo behavior, staged flow, Agent Readiness Contract, optional repo-evidence boundary, context-budget rules, learning-loop taxonomy, tooling preservation, and packaging exclusion are confirmed.
-  - Evidence: Pending.
+  - Evidence: Confirmed on 2026-06-13: the requirements and design cover accepted CLU-inspired ideas, non-goals, blank-repo bootstrap, staged flow, Agent Readiness Contract, optional repo-evidence boundary, context-budget rules, learning-loop taxonomy, tooling preservation, and unchanged packaging scope. Traceability matrix column names were normalized for runtime lookup compatibility.
 
-- [ ] T002 Update lifecycle skill guidance for first-run and staged flow.
+- [x] T002 Update lifecycle skill guidance for first-run and staged flow.
   - Depends on: T001
   - Files: `skills/spec-lifecycle-manager/SKILL.md`
   - Acceptance: Skill guidance covers first-run use, blank-repo bootstrap, staged artifacts, design-first exception handling, Agent Readiness Contract, optional repo-evidence boundary, context-budget rules, execution recovery, agent directives, properties-to-tests, instruction-as-code routing, numbered findings, and MCP-first tooling.
-  - Evidence: Pending.
+  - Evidence: Updated `skills/spec-lifecycle-manager/SKILL.md` with First Run guidance, preview-first blank-repo bootstrap, staged artifact progression, design-first exception handling, Agent Readiness Contract, optional repo-evidence boundary, context-budget rules, recovery discipline, evidence-derived agent directives, properties-to-tests guidance, instruction-as-code routing, numbered findings, and MCP-first runtime access.
 
-- [ ] T003 Update fallback spec and durable-doc templates selectively.
+- [x] T003 Update fallback spec and durable-doc templates selectively.
   - Depends on: T002
   - Files: `skills/spec-lifecycle-manager/references/spec-package/`, `skills/spec-lifecycle-manager/references/durable-doc-templates/`
   - Acceptance: Templates support staged readiness, evidence-derived agent directives, properties-to-tests traceability, checkpoint validation, and numbered findings without forcing optional artifacts up front.
-  - Evidence: Pending.
+  - Evidence: Updated fallback spec templates for staged readiness, property-to-design mapping, downstream task guidance, checkpoint validation, Agent Readiness Contract evidence, correctness-property coverage, and traceability gaps. Updated durable-doc templates for optional evidence-derived agent directives, numbered findings, and staged lifecycle/instruction-as-code routing without adding mandatory optional artifacts. Synced source skill changes to Codex and Claude plugin bundled copies to satisfy existing package parity tests without changing packaging behavior.
 
 ## Phase 2: Runtime Readiness And Bootstrap Tools
 
