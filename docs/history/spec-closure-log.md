@@ -19,7 +19,7 @@ requires visible archived docs.
 - **Spec:** `docs/specs/023-task-state-management-tools/`
 - **Title:** Task state management tools
 - **Final spec commit:** `83c09ae`
-- **Closure cleanup commit:** `pending`
+- **Closure cleanup commit:** `126d08b`
 - **Closure action:** removed
 - **Closed by:** platform
 - **Durable docs updated:**
