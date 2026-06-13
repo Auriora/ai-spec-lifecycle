@@ -19,7 +19,7 @@ requires visible archived docs.
 - **Spec:** `docs/specs/019-validation-plan-builder/`
 - **Title:** Validation plan builder
 - **Final spec commit:** `d43166f`
-- **Closure cleanup commit:** `pending`
+- **Closure cleanup commit:** `b70019b`
 - **Closure action:** removed
 - **Closed by:** platform
 - **Durable docs updated:**
