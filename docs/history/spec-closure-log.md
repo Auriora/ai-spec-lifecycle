@@ -3,7 +3,7 @@ title: Spec closure log
 doc_type: history
 status: active
 owner: platform
-last_reviewed: 2026-06-11
+last_reviewed: 2026-06-13
 ---
 
 # Spec Closure Log
@@ -13,6 +13,36 @@ package history is preserved by Git unless a repository-specific archive policy
 requires visible archived docs.
 
 ## Entries
+
+### 2026-06-13 - 020-evidence-quality-check
+
+- **Spec:** `docs/specs/020-evidence-quality-check/`
+- **Title:** Evidence quality check
+- **Final spec commit:** `ac93f24`
+- **Closure cleanup commit:** `pending`
+- **Closure action:** removed
+- **Closed by:** platform
+- **Durable docs updated:**
+  - `docs/reference/spec-lifecycle-runtime.md`
+  - `docs/backlog/README.md`
+  - `docs/roadmap/README.md`
+  - `skills/spec-lifecycle-manager/scripts/spec_runtime.py`
+  - `skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`
+  - `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/spec_runtime.py`
+  - `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`
+  - `plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/scripts/spec_runtime.py`
+  - `plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`
+  - `tests/runtime/test_spec_runtime.py`
+  - `tests/runtime/test_spec_mcp_server.py`
+- **Verification summary:** Full unit suite passed with 128 tests. Lifecycle
+  scan, spec lint, evidence-quality check, closure-check, archive-index
+  validation, prompt validation, package-contract validation, sync-guard after
+  install, and `git diff --check` passed before removal.
+- **Residual risks:** Already-running MCP sessions may need reload to pick up
+  the refreshed evidence-quality tool. Implementation-file inspection remains
+  deferred to B037.
+- **Follow-up:** B037 should add implementation-file inspection when that
+  backlog item is ready.
 
 ### 2026-06-13 - 023-task-state-management-tools
 
