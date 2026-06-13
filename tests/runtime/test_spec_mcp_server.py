@@ -157,6 +157,8 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertIn("archive_index", tools)
         self.assertIn("resolve_spec_reference", tools)
         self.assertIn("mcp_audit", tools)
+        self.assertIn("list_tasks", tools)
+        self.assertIn("task_details", tools)
         structured = responses[1]["result"]["structuredContent"]
         self.assertIn("specs", structured)
         self.assertEqual(".", structured["repo_root"])
@@ -177,6 +179,8 @@ class SpecMcpServerTests(unittest.TestCase):
             "spec_summary",
             "lint_spec_package",
             "next_task",
+            "list_tasks",
+            "task_details",
             "closure_check",
             "reconcile_spec",
             "promotion_plan",
@@ -361,6 +365,40 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertEqual("docs/specs/001-current", preflight["selected_spec"]["path"])
         self.assertEqual("T001", readiness["task_id"])
         self.assertIn("Requirement 1", {item["id"] for item in readiness["required_review"]["requirements"]})
+
+    def test_task_query_tools_return_structured_output(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / ".git").mkdir()
+            write_current_spec(repo)
+            responses = self.send(
+                rpc(
+                    1,
+                    "tools/call",
+                    {
+                        "name": "list_tasks",
+                        "arguments": {"repo_root": str(repo), "spec_path": "001-current"},
+                    },
+                ),
+                rpc(
+                    2,
+                    "tools/call",
+                    {
+                        "name": "task_details",
+                        "arguments": {"repo_root": str(repo), "spec_path": "001-current", "task_id": "T001"},
+                    },
+                ),
+                root=repo,
+            )
+
+        listed = responses[0]["result"]["structuredContent"]
+        details = responses[1]["result"]["structuredContent"]
+        self.assertEqual(1, listed["summary"]["total"])
+        self.assertEqual("T001", listed["phases"][0]["tasks"][0]["task_id"])
+        self.assertIn("dependency_state", listed["phases"][0]["tasks"][0])
+        self.assertEqual("T001", details["task_id"])
+        self.assertEqual("Requirement 1", details["traceability_context"]["traceability_row"]["Requirements"])
+        self.assertTrue(details["dependency_state"]["ready"])
 
     def test_validation_plan_tool_matches_runtime_payload(self):
         with tempfile.TemporaryDirectory() as tmp:

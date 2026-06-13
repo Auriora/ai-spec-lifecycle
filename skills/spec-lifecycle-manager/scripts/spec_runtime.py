@@ -445,6 +445,137 @@ def task_status_counts(tasks: list[Task]) -> dict[str, int]:
     return counts
 
 
+def task_phase_map(tasks_path: Path) -> dict[str, str]:
+    if not tasks_path.exists():
+        return {}
+    current_phase = "Unphased"
+    phases: dict[str, str] = {}
+    for line in read_text(tasks_path).splitlines():
+        heading = re.match(r"^##\s+(.+?)\s*$", line)
+        if heading:
+            current_phase = heading.group(1).strip()
+            continue
+        task = TASK_LINE_RE.match(line)
+        if task:
+            phases[task.group(2)] = current_phase
+    return phases
+
+
+def task_evidence_summary(task: Task) -> dict[str, Any]:
+    evidence = task.evidence.strip()
+    pending = evidence.lower() in {"", "pending", "pending."}
+    return {
+        "state": "pending" if pending else "recorded",
+        "text": evidence,
+        "summary": evidence[:160],
+        "evidence_mode": task.evidence_mode,
+    }
+
+
+def task_dependency_state(task: Task, by_id: dict[str, Task]) -> dict[str, Any]:
+    dependencies = []
+    ready = True
+    for dep_id in task.depends_on:
+        dep = by_id.get(dep_id)
+        if dep is None:
+            ready = False
+            dependencies.append({"task_id": dep_id, "status": "missing", "ready": False, "reason": "unknown dependency"})
+            continue
+        verified = task_verified(dep, by_id)
+        if not verified:
+            ready = False
+        dependencies.append(
+            {
+                "task_id": dep_id,
+                "status": dep.status,
+                "complete": dep.complete,
+                "verified": verified,
+                "ready": verified,
+            }
+        )
+    return {"ready": ready, "dependencies": dependencies}
+
+
+def task_cross_spec_health(task: Task, spec_path: Path) -> list[dict[str, Any]]:
+    repo_root = repo_root_for(spec_path)
+    refs = [*task.upstream_specs, *task.downstream_specs]
+    health: list[dict[str, Any]] = []
+    for ref in refs:
+        spec_ref = ref.split("#", 1)[0]
+        if not spec_ref.startswith("docs/specs/"):
+            continue
+        candidate = (repo_root / spec_ref).resolve()
+        if not candidate.exists() or not candidate.is_dir():
+            health.append({"reference": ref, "status": "missing"})
+            continue
+        summary = spec_summary(candidate)
+        health.append(
+            {
+                "reference": ref,
+                "status": "available",
+                "spec_id": summary["spec_id"],
+                "lifecycle": summary["lifecycle"],
+                "tasks": summary["tasks"],
+                "health": summary["health"],
+            }
+        )
+    return health
+
+
+def split_task_suggestions(task: Task) -> list[dict[str, str]]:
+    text = f"{task.title} {task.acceptance}".lower()
+    suggestions: list[dict[str, str]] = []
+    if len(task.files) > 2:
+        suggestions.append(
+            {
+                "title": f"Split {task.task_id} by file or artifact family.",
+                "evidence_mode": "implementation",
+                "artifact_class": "files",
+                "reason": "Task references multiple files and may hide separate implementation outcomes.",
+            }
+        )
+    if re.search(r"\b(and|,)\b", text) and len(task.acceptance) > 120:
+        suggestions.append(
+            {
+                "title": f"Split {task.task_id} by acceptance outcome.",
+                "evidence_mode": "validation",
+                "artifact_class": "acceptance",
+                "reason": "Task acceptance combines multiple outcomes that may need separate evidence.",
+            }
+        )
+    return suggestions
+
+
+def broad_task_warnings(task: Task) -> list[dict[str, Any]]:
+    suggestions = split_task_suggestions(task)
+    if not suggestions:
+        return []
+    return [
+        {
+            "classification": "broad_task",
+            "task_id": task.task_id,
+            "severity": "info",
+            "message": f"{task.task_id} may be broad enough to hide multiple outcomes.",
+            "split_task_suggestions": suggestions,
+        }
+    ]
+
+
+def candidate_complete_findings(task: Task) -> list[dict[str, Any]]:
+    evidence = task.evidence.strip().lower()
+    if task.status == "pending" and evidence and evidence not in {"pending", "pending."}:
+        return [
+            {
+                "classification": "candidate_complete",
+                "task_id": task.task_id,
+                "severity": "info",
+                "message": f"{task.task_id} is pending but has recorded evidence.",
+                "evidence": task.evidence,
+            }
+        ]
+    return []
+
+
 def durable_source_refs(requirements_path: Path) -> list[str]:
     if not requirements_path.exists():
         return []
@@ -2243,6 +2374,87 @@ def task_payload(task: Task) -> dict[str, Any]:
     }
 
 
+def task_record(task: Task, by_id: dict[str, Task], spec_path: Path) -> dict[str, Any]:
+    payload = task_payload(task)
+    payload["dependency_state"] = task_dependency_state(task, by_id)
+    payload["evidence_summary"] = task_evidence_summary(task)
+    payload["broad_task_warnings"] = broad_task_warnings(task)
+    payload["candidate_findings"] = candidate_complete_findings(task)
+    payload["cross_spec_health"] = task_cross_spec_health(task, spec_path)
+    return payload
+
+
+def task_list(spec_path: Path, include_subtasks: bool = True, status: str | None = None) -> dict[str, Any]:
+    tasks_path = spec_path / "tasks.md"
+    tasks = parse_tasks(tasks_path)
+    by_id = {task.task_id: task for task in tasks}
+    phase_by_task = task_phase_map(tasks_path)
+    status_filter = status.strip() if status else None
+    phases: list[dict[str, Any]] = []
+    phase_index: dict[str, dict[str, Any]] = {}
+    for task in tasks:
+        if not include_subtasks and task.parent_id:
+            continue
+        if status_filter and task.status != status_filter:
+            continue
+        phase = phase_by_task.get(task.task_id, "Unphased")
+        phase_payload = phase_index.get(phase)
+        if phase_payload is None:
+            phase_payload = {"name": phase, "tasks": []}
+            phase_index[phase] = phase_payload
+            phases.append(phase_payload)
+        phase_payload["tasks"].append(task_record(task, by_id, spec_path))
+    findings = []
+    for task in tasks:
+        findings.extend(broad_task_warnings(task))
+        findings.extend(candidate_complete_findings(task))
+    return {
+        "spec_path": str(spec_path.resolve()),
+        "summary": {
+            "total": len(tasks),
+            "by_status": task_status_counts(tasks),
+            "phases": len(phases),
+            "findings": len(findings),
+        },
+        "filters": {"include_subtasks": include_subtasks, "status": status_filter},
+        "phases": phases,
+        "findings": findings,
+    }
+
+
+def task_details(spec_path: Path, task_id: str) -> dict[str, Any]:
+    tasks = parse_tasks(spec_path / "tasks.md")
+    by_id = {task.task_id: task for task in tasks}
+    task = by_id.get(task_id)
+    if task is None:
+        return {
+            "spec_path": str(spec_path.resolve()),
+            "task_id": task_id,
+            "status": "missing",
+            "gaps": [{"severity": "error", "code": "TASK_NOT_FOUND", "message": f"Task not found in tasks.md: {task_id}"}],
+        }
+    context = traceability_context(spec_path, task_id)
+    parent = task_payload(by_id[task.parent_id]) if task.parent_id and task.parent_id in by_id else None
+    children = [task_payload(by_id[child_id]) for child_id in task.children if child_id in by_id]
+    return {
+        "spec_path": str(spec_path.resolve()),
+        "task_id": task_id,
+        "status": "ready" if not any(item.get("severity") == "error" for item in context.get("gaps", [])) else "gaps",
+        "task": task_record(task, by_id, spec_path),
+        "parent": parent,
+        "children": children,
+        "dependency_state": task_dependency_state(task, by_id),
+        "traceability_context": context,
+        "requirements": context.get("requirements", []),
+        "verification": context.get("verification"),
+        "durable_targets": context.get("durable_targets", []),
+        "gaps": context.get("gaps", []),
+        "broad_task_warnings": broad_task_warnings(task),
+        "split_task_suggestions": split_task_suggestions(task),
+        "cross_spec_health": task_cross_spec_health(task, spec_path),
+    }
+
+
 def task_verified(task: Task, by_id: dict[str, Task] | None = None) -> bool:
     if task.verified:
         return True
@@ -3193,6 +3405,15 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     next_cmd = sub.add_parser("next-task", help="Return the next runnable task with context.")
     next_cmd.add_argument("spec_path", type=Path)
 
+    list_tasks = sub.add_parser("list-tasks", help="Return grouped task records for a spec package.")
+    list_tasks.add_argument("spec_path", type=Path)
+    list_tasks.add_argument("--status")
+    list_tasks.add_argument("--no-subtasks", action="store_true")
+
+    details = sub.add_parser("task-details", help="Return task detail with traceability context.")
+    details.add_argument("spec_path", type=Path)
+    details.add_argument("--task-id", required=True)
+
     preflight = sub.add_parser("active-spec-preflight", help="Return active spec, next task, required context, and validation commands.")
     preflight.add_argument("repo_root", type=Path, nargs="?", default=Path.cwd())
     preflight.add_argument("--spec-path", type=Path)
@@ -3304,6 +3525,10 @@ def main(argv: list[str] | None = None) -> int:
             payload = {"path": str(args.path.resolve()), "diagnostics": diagnostics, "summary": diagnostic_summary(diagnostics)}
     elif args.command == "next-task":
         payload = next_task(args.spec_path.resolve())
+    elif args.command == "list-tasks":
+        payload = task_list(args.spec_path.resolve(), include_subtasks=not args.no_subtasks, status=args.status)
+    elif args.command == "task-details":
+        payload = task_details(args.spec_path.resolve(), args.task_id)
     elif args.command == "active-spec-preflight":
         payload = active_spec_preflight(args.repo_root, args.spec_path, args.task_id, args.docs_root)
     elif args.command == "validation-plan":

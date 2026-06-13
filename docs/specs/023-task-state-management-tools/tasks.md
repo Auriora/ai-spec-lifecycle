@@ -40,17 +40,17 @@ T008 -> T009
 
 ## Phase 2: Task Query Tools
 
-- [ ] T004 Implement task listing and task detail helpers.
+- [x] T004 Implement task listing and task detail helpers.
   - Depends on: T002
   - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`
   - Acceptance: Helpers return grouped tasks, dependency readiness, evidence summaries, parent/subtask detail, cross-spec references, and traceability-backed task context.
-  - Evidence: Pending.
+  - Evidence: `list-tasks` and `task-details` runtime helpers/CLI commands implemented with grouped phases, dependency readiness, evidence summaries, parent/subtask detail, cross-spec health, traceability context, and advisory split/candidate findings; unit tests passed.
 
-- [ ] T005 Expose task query tools through MCP.
+- [x] T005 Expose task query tools through MCP.
   - Depends on: T004
   - Files: `skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`
   - Acceptance: `list_tasks` and `task_details` appear in MCP `tools/list` and return structured output.
-  - Evidence: Pending.
+  - Evidence: `list_tasks` and `task_details` MCP schemas and dispatch implemented in source and bundled plugin copies; MCP subprocess tests confirm `tools/list` advertisement and structured output.
 
 ## Phase 3: Audit And State Updates
 

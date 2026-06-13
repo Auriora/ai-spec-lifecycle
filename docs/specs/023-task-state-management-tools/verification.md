@@ -14,7 +14,7 @@ last_reviewed: 2026-06-13
 | Gate | Scope | Required Evidence | Status |
 | --- | --- | --- | --- |
 | VG-001 | Marker contract | Parser tests cover preferred symbols and compatibility markers. | Passed for phase 1. |
-| VG-002 | Task query tools | Runtime and MCP tests cover list/detail output, traceability context, dependencies, and subtasks. | Pending |
+| VG-002 | Task query tools | Runtime and MCP tests cover list/detail output, traceability context, dependencies, and subtasks. | Passed. |
 | VG-003 | Task audit | Runtime/hook tests catch contradictory completion, broad tasks, and follow-up prose without state. | Pending |
 | VG-004 | State update | Dry-run and write tests prove scoped edits, explicit write intent, before/after patch summaries, guarded completion, and rejection of paths outside active spec package `tasks.md`. | Pending |
 | VG-005 | Guidance and bundle parity | Source docs/templates and bundled plugin copies match; full repo validation passes. | Passed for phase 1 source/docs/runtime bundle parity; template work remains in phase 4. |
@@ -30,6 +30,7 @@ last_reviewed: 2026-06-13
 | 2026-06-13 | Reviewed local Codex session `019ebd51-67ed-72f0-a994-cc1cef4acf6d` for aws-datalake Specs 023 and 048. | Added stale-open, plan-only completion, blocked-output, cross-spec dependency, and evidence-depth requirements. | Pending implementation. |
 | 2026-06-13 | Reviewed task-state spec against current read-only MCP boundary and accepted guarded spec/documentation write direction. | Added preview-first MCP write boundary, metadata fields, and split-task suggestion requirements. | Pending implementation. |
 | 2026-06-13 | Implemented phase 1 parser and contract slice; `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'`, `spec_runtime.py scan .`, `spec_runtime.py prompts .`, `spec_runtime.py archive-index .`, `spec_runtime.py lint docs/specs/023-task-state-management-tools`, `spec_runtime.py package-contract .`, and `git diff --check` passed. | T001, T002, T003; VG-001, phase 1 portions of VG-005 and VG-007. | Passed. |
+| 2026-06-13 | Implemented phase 2 task query tools; `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'`, `spec_runtime.py package-contract .`, `spec_runtime.py list-tasks docs/specs/023-task-state-management-tools --status in_progress`, and `spec_runtime.py task-details docs/specs/023-task-state-management-tools --task-id T004` passed. | T004, T005, VG-002. | Passed. |
 
 ## Validation Commands
 

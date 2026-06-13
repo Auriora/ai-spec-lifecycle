@@ -1129,6 +1129,71 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertEqual("task status is follow_up", blocked["T001"])
         self.assertEqual("task status is attention", blocked["T002"])
 
+    def test_task_list_groups_tasks_and_reports_dependency_state(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+            (spec / "tasks.md").write_text(
+                "\n".join(
+                    [
+                        "# Tasks",
+                        "",
+                        "## Phase 1: Runtime",
+                        "",
+                        "- [x] T001 Build parser.",
+                        "  - Evidence: Parser tests passed.",
+                        "",
+                        "- [ ] T002 Add grouped task listing and detail helpers.",
+                        "  - Depends on: T001",
+                        "  - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`, `tests/runtime/test_spec_runtime.py`, `docs/reference/spec-lifecycle-runtime.md`",
+                        "  - Acceptance: Helpers return grouped tasks and dependency state.",
+                        "  - Evidence: Pending.",
+                        "  - [ ] T002.1 Add list helper.",
+                        "    - Evidence: Pending.",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            payload = spec_runtime.task_list(spec)
+
+        self.assertEqual(3, payload["summary"]["total"])
+        self.assertEqual("Phase 1: Runtime", payload["phases"][0]["name"])
+        tasks = {task["task_id"]: task for task in payload["phases"][0]["tasks"]}
+        self.assertTrue(tasks["T002"]["dependency_state"]["ready"])
+        self.assertEqual(["T002.1"], tasks["T002"]["children"])
+        self.assertEqual("pending", tasks["T002"]["evidence_summary"]["state"])
+        self.assertTrue(tasks["T002"]["broad_task_warnings"])
+        self.assertEqual("broad_task", payload["findings"][0]["classification"])
+
+    def test_task_details_returns_traceability_parent_and_children(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+            (spec / "tasks.md").write_text(
+                "\n".join(
+                    [
+                        "# Tasks",
+                        "",
+                        "- [x] T001 Parent.",
+                        "  - Depends on: none",
+                        "  - Files: `docs/reference/current.md`",
+                        "  - Acceptance: Done.",
+                        "  - Evidence: Done.",
+                        "  - [ ] T001.1 Child.",
+                        "    - Evidence: Pending.",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            payload = spec_runtime.task_details(spec, "T001")
+
+        self.assertEqual("ready", payload["status"])
+        self.assertEqual("T001", payload["task"]["task_id"])
+        self.assertEqual(["T001.1"], payload["task"]["children"])
+        self.assertEqual("T001.1", payload["children"][0]["task_id"])
+        self.assertEqual("Requirement 1", payload["traceability_context"]["traceability_row"]["Requirements"])
+        self.assertTrue(payload["dependency_state"]["ready"])
+
     def test_closure_check_reports_completed_spec_ready(self):
         with tempfile.TemporaryDirectory() as tmp:
             spec = write_complete_spec(Path(tmp))

@@ -38,6 +38,8 @@ not available.
 | `summary` | Return a `specs://{spec_id}/summary`-style payload with task counts, artifact state, open decisions, durable-source references, and health. |
 | `lint` | Run deterministic document or package lint checks for frontmatter, required sections, task IDs, dependencies, evidence, optional artifacts, and waivers. |
 | `next-task` | Select the next runnable task whose dependencies are complete with evidence and include traceability context when available. |
+| `list-tasks` | Return grouped task records with normalized state, dependency readiness, evidence summaries, parent/subtask relationships, cross-spec references, and advisory findings. |
+| `task-details` | Return one parsed task with parent/subtask detail, dependency state, traceability context, linked requirements, verification, durable targets, gaps, and advisory split suggestions. |
 | `active-spec-preflight` | Return the active spec, next task, readiness context, no-active context, guidance, and validation commands. |
 | `validation-plan` | Plan read-only validation checks from changed files and optional spec/task context, including check applicability, validation state, and a validation contract. |
 | `agent-readiness-packet` | Return bounded implementation context for a specific task before coding. |
@@ -95,6 +97,8 @@ The server exposes read-only tools that delegate to the existing runtime:
 - `lint_spec_package`
 - `lint_doc`
 - `next_task`
+- `list_tasks`
+- `task_details`
 - `closure_check`
 - `archive_index`
 - `resolve_spec_reference`

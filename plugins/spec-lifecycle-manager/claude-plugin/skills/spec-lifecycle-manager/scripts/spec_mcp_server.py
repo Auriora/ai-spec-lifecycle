@@ -262,6 +262,26 @@ def tool_definitions() -> list[dict[str, Any]]:
             ["path"],
         ),
         tool_schema("next_task", "Select the next runnable task with traceability context.", SPEC_PATH_PROPERTIES, ["spec_path"]),
+        tool_schema(
+            "list_tasks",
+            "Return grouped tasks, dependency readiness, evidence summaries, and advisory findings.",
+            {
+                **SPEC_PATH_PROPERTIES,
+                "include_subtasks": {
+                    "type": ["boolean", "string"],
+                    "description": "Include subtasks in grouped output. Defaults to true.",
+                    "default": True,
+                },
+                "status": "Optional normalized task status filter.",
+            },
+            ["spec_path"],
+        ),
+        tool_schema(
+            "task_details",
+            "Return parsed task detail with parent/subtask, dependency, traceability, and advisory context.",
+            {**SPEC_PATH_PROPERTIES, "task_id": "Task ID such as T004."},
+            ["spec_path", "task_id"],
+        ),
         tool_schema("closure_check", "Check closure readiness and blockers.", SPEC_PATH_PROPERTIES, ["spec_path"]),
         tool_schema("archive_index", "Validate spec archive index and closure-log consistency.", {"repo_root": REPO_ROOT_PROPERTY}),
         tool_schema(
@@ -373,6 +393,15 @@ def call_tool(name: str, arguments: dict[str, Any], default_root: Path) -> tuple
         return {"path": str(path), "diagnostics": diagnostics, "summary": spec_runtime.diagnostic_summary(diagnostics)}, root
     if name == "next_task":
         return spec_runtime.next_task(spec_path_arg(arguments, default_root)), root
+    if name == "list_tasks":
+        include_subtasks = arguments.get("include_subtasks")
+        include = True if include_subtasks is None else bool_arg(arguments, "include_subtasks")
+        return spec_runtime.task_list(spec_path_arg(arguments, default_root), include_subtasks=include, status=arguments.get("status")), root
+    if name == "task_details":
+        task_id = arguments.get("task_id")
+        if not task_id:
+            raise ValueError("task_id is required")
+        return spec_runtime.task_details(spec_path_arg(arguments, default_root), str(task_id)), root
     if name == "closure_check":
         return spec_runtime.closure_check(spec_path_arg(arguments, default_root)), root
     if name == "archive_index":
