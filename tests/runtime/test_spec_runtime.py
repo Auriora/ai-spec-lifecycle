@@ -763,6 +763,62 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertFalse(archived["health"]["skipped"])
         self.assertGreater(archived["health"]["diagnostic_count"], 0)
 
+    def test_lifecycle_guide_reports_blank_repo_bootstrap_preview(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / ".git").mkdir()
+            payload = spec_runtime.lifecycle_guide(repo)
+
+        self.assertEqual("blank", payload["repo_classification"])
+        self.assertEqual("preview", payload["bootstrap"]["mode"])
+        self.assertEqual("blank", payload["bootstrap"]["repo_classification"])
+        self.assertTrue(any(item["path"] == "docs/README.md" for item in payload["bootstrap"]["writes"]))
+        self.assertTrue(any(item["name"] == "project_summary" for item in payload["bootstrap"]["required_user_values"]))
+        self.assertTrue(any(item["action"] == "review_bootstrap_plan" for item in payload["next_actions"]))
+        self.assertIn("lifecycle_guide", payload["tooling"]["mcp_tools"])
+
+    def test_lifecycle_guide_reports_active_spec_readiness(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            spec = write_complete_spec(repo)
+            tasks_path = spec / "tasks.md"
+            tasks_path.write_text(
+                tasks_path.read_text(encoding="utf-8")
+                .replace("- [x] T001 Do work.", "- [ ] T001 Do work.")
+                .replace("  - Evidence: Done.", "  - Evidence: Pending."),
+                encoding="utf-8",
+            )
+            payload = spec_runtime.lifecycle_guide(repo)
+
+        self.assertEqual("active_specs", payload["repo_classification"])
+        self.assertEqual("not_applicable", payload["bootstrap"]["mode"])
+        self.assertEqual(1, len(payload["spec_readiness"]))
+        self.assertEqual("001-current", payload["spec_readiness"][0]["spec_id"])
+        self.assertEqual("implement", payload["spec_readiness"][0]["stage"])
+        self.assertEqual("T001", payload["spec_readiness"][0]["next_task"]["task_id"])
+
+    def test_bootstrap_plan_is_preview_only_for_near_blank_repo(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / ".git").mkdir()
+            (repo / "README.md").write_text("# Example\n", encoding="utf-8")
+            payload = spec_runtime.bootstrap_plan(
+                repo,
+                project_summary="Example project.",
+                create_spec=True,
+                spec_slug="first-feature",
+            )
+
+        self.assertEqual("preview", payload["mode"])
+        self.assertEqual("near_blank", payload["repo_classification"])
+        self.assertFalse((repo / "docs").exists())
+        write_paths = {item["path"] for item in payload["writes"]}
+        self.assertIn("docs/README.md", write_paths)
+        self.assertIn("docs/reference/project-summary.md", write_paths)
+        self.assertIn("docs/specs/000-first-feature/", write_paths)
+        self.assertFalse(payload["required_user_values"])
+        self.assertTrue(all(item["preview_only"] for item in payload["writes"]))
+
     def test_durable_templates_do_not_override_spec_package_fallback(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
@@ -1618,11 +1674,34 @@ class SpecRuntimeTests(unittest.TestCase):
         payload = json.loads(completed.stdout)
         self.assertIn("specs", payload)
 
+    def test_cli_lifecycle_guide_and_bootstrap_plan_output_json(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / ".git").mkdir()
+            guide = subprocess.run(
+                [str(SCRIPT), "lifecycle-guide", str(repo)],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            bootstrap = subprocess.run(
+                [str(SCRIPT), "bootstrap-plan", str(repo), "--project-summary", "Example."],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+        guide_payload = json.loads(guide.stdout)
+        bootstrap_payload = json.loads(bootstrap.stdout)
+        self.assertEqual("blank", guide_payload["repo_classification"])
+        self.assertEqual("preview", bootstrap_payload["mode"])
+        self.assertEqual([], bootstrap_payload["required_user_values"])
+
     def test_prompt_definitions_are_discoverable_and_valid(self):
         payload = spec_runtime.load_prompt_definitions(ROOT)
 
         names = {prompt["name"] for prompt in payload["prompts"]}
-        self.assertTrue({"reconcile-spec", "choose-next-task", "task-context", "lint-spec"} <= names)
+        self.assertTrue({"reconcile-spec", "choose-next-task", "task-context", "lint-spec", "developer-start"} <= names)
         self.assertEqual({"error": 0, "warn": 0, "info": 0}, payload["summary"])
 
     def test_spec_authoring_context_recommends_next_artifact(self):
@@ -2047,7 +2126,7 @@ class SpecRuntimeTests(unittest.TestCase):
         )
 
         payload = json.loads(completed.stdout)
-        self.assertEqual(8, len(payload["prompts"]))
+        self.assertEqual(9, len(payload["prompts"]))
 
     def test_cli_spec_close_hook_exits_nonzero_when_blocking(self):
         with tempfile.TemporaryDirectory() as tmp:

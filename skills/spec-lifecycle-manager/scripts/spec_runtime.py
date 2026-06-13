@@ -56,7 +56,7 @@ AUTHORING_PREREQUISITES = {
     "verification.md": ["requirements.md", "design.md", "tasks.md"],
 }
 ARCHIVED_STATUSES = {"archived", "closed", "superseded"}
-REQUIRED_PROMPTS = ["reconcile-spec", "choose-next-task", "task-context", "lint-spec"]
+REQUIRED_PROMPTS = ["reconcile-spec", "choose-next-task", "task-context", "lint-spec", "developer-start"]
 REVIEW_PACKET_TYPES = {
     "requirements_template_review": "Does the requirements artifact satisfy required sections and EARS clarity?",
     "design_requirements_trace": "Does the design cover every requirement and success criterion?",
@@ -2011,6 +2011,355 @@ def next_task(spec_path: Path) -> dict[str, Any]:
 def active_spec_items(repo_root: Path, docs_root: str | None = None) -> list[dict[str, Any]]:
     scan = scan_specs(repo_root, docs_root)
     return [item for item in scan["specs"] if item["lifecycle"] == "active"]
+
+
+def repo_evidence(repo_root: Path, docs_root: str | None = None) -> dict[str, Any]:
+    root = repo_root.resolve()
+    docs_name = docs_root or "docs"
+    docs_path = (root / docs_name).resolve()
+    ignored_dirs = {
+        ".git",
+        ".hg",
+        ".svn",
+        ".codex",
+        ".agents",
+        ".idea",
+        ".vscode",
+        "__pycache__",
+        "node_modules",
+        ".venv",
+        "venv",
+        "dist",
+        "build",
+    }
+    metadata_names = {
+        "README",
+        "README.md",
+        "LICENSE",
+        "LICENSE.md",
+        "pyproject.toml",
+        "package.json",
+        "Cargo.toml",
+        "go.mod",
+        "pom.xml",
+        "build.gradle",
+        "Makefile",
+    }
+    source_suffixes = {
+        ".py",
+        ".js",
+        ".jsx",
+        ".ts",
+        ".tsx",
+        ".go",
+        ".rs",
+        ".java",
+        ".cs",
+        ".rb",
+        ".php",
+        ".sh",
+        ".sql",
+    }
+    source_dirs = {"src", "app", "lib", "tests", "test"}
+    metadata_files: list[str] = []
+    source_files: list[str] = []
+    top_level_dirs: set[str] = set()
+    for path in root.rglob("*"):
+        rel = path.relative_to(root)
+        if any(part in ignored_dirs for part in rel.parts):
+            continue
+        if docs_path.exists():
+            try:
+                path.relative_to(docs_path)
+                continue
+            except ValueError:
+                pass
+        if path.is_dir():
+            if len(rel.parts) == 1:
+                top_level_dirs.add(rel.as_posix())
+            continue
+        if rel.name in metadata_names:
+            metadata_files.append(rel.as_posix())
+        if rel.suffix in source_suffixes or any(part in source_dirs for part in rel.parts):
+            source_files.append(rel.as_posix())
+    return {
+        "docs_root": docs_name,
+        "docs_exists": docs_path.exists(),
+        "metadata_files": sorted(metadata_files),
+        "source_files": sorted(source_files),
+        "top_level_dirs": sorted(top_level_dirs),
+    }
+
+
+def classify_repository(repo_root: Path, docs_root: str | None = None, scan: dict[str, Any] | None = None) -> str:
+    root = repo_root.resolve()
+    scan_payload = scan or scan_specs(root, docs_root)
+    if scan_payload["summary"]["active"]:
+        return "active_specs"
+    archive = archive_index(root)
+    if archive["summary"].get("total", 0):
+        return "closed_only"
+    evidence = repo_evidence(root, docs_root)
+    if evidence["docs_exists"]:
+        return "documented_no_specs"
+    if evidence["source_files"] or evidence["metadata_files"] or evidence["top_level_dirs"]:
+        return "near_blank"
+    return "blank"
+
+
+def prompt_names(repo_root: Path) -> list[str]:
+    payload = load_prompt_definitions(repo_root)
+    return sorted(prompt["name"] for prompt in payload.get("prompts", []))
+
+
+def hook_status(repo_root: Path) -> list[dict[str, Any]]:
+    root = repo_root.resolve()
+    candidates = [
+        root / ".codex" / "hooks.json",
+        root / ".agents" / "hooks.json",
+        root / "plugins" / "spec-lifecycle-manager" / "hooks" / "hooks.json",
+    ]
+    return [
+        {
+            "path": path.relative_to(root).as_posix() if path.is_relative_to(root) else str(path),
+            "present": path.exists(),
+        }
+        for path in candidates
+    ]
+
+
+def docs_readiness(repo_root: Path, docs_root: str | None, scan: dict[str, Any]) -> dict[str, Any]:
+    root = repo_root.resolve()
+    docs_name = docs_root or scan.get("docs_root") or "docs"
+    docs = root / docs_name
+    durable_candidates = [
+        "README.md",
+        "governance",
+        "design",
+        "reference",
+        "backlog",
+        "roadmap",
+        "history/spec-closure-log.md",
+        "history/spec-archive-index.md",
+    ]
+    durable_docs = []
+    missing = []
+    for candidate in durable_candidates:
+        path = docs / candidate
+        record = {
+            "path": f"{docs_name}/{candidate}",
+            "status": "present" if path.exists() else "optional_missing",
+        }
+        if path.exists():
+            durable_docs.append(record)
+        else:
+            missing.append(record)
+    governance = [
+        path.relative_to(root).as_posix()
+        for path in [root / "AGENTS.md", docs / "governance", docs / "governance" / "constitution.md"]
+        if path.exists()
+    ]
+    return {
+        "docs_root": docs_name,
+        "exists": docs.exists(),
+        "template_authority": scan["template_authority"],
+        "governance": governance,
+        "durable_docs": durable_docs,
+        "missing": missing,
+    }
+
+
+def spec_stage(spec: dict[str, Any], next_payload: dict[str, Any] | None = None) -> str:
+    artifacts = spec.get("artifacts", {})
+    if artifacts.get("requirements.md") != "present":
+        return "requirements"
+    if artifacts.get("design.md") != "present":
+        return "design"
+    if artifacts.get("tasks.md") != "present":
+        return "tasks"
+    if spec.get("lifecycle") != "active":
+        return "close"
+    if next_payload and next_payload.get("selected"):
+        return "implement"
+    return "verify"
+
+
+def spec_readiness_items(repo_root: Path, scan: dict[str, Any]) -> list[dict[str, Any]]:
+    items: list[dict[str, Any]] = []
+    root = repo_root.resolve()
+    for spec in scan["specs"]:
+        if spec["lifecycle"] != "active":
+            continue
+        spec_path = Path(spec["path"])
+        next_payload = next_task(spec_path) if (spec_path / "tasks.md").exists() else {"selected": None}
+        selected = next_payload.get("selected")
+        readiness = agent_readiness_packet(spec_path, selected["task_id"]) if selected else None
+        items.append(
+            {
+                "spec_id": spec["spec_id"],
+                "path": spec_path.relative_to(root).as_posix() if spec_path.is_relative_to(root) else str(spec_path),
+                "stage": spec_stage(spec, next_payload),
+                "health": spec["health"],
+                "next_task": selected,
+                "next_blocking_artifact": None if selected or spec["format"] == "current" else "complete current spec artifacts",
+                "agent_readiness_contract": {
+                    "status": readiness["status"] if readiness else "not_applicable",
+                    "gaps": readiness["gaps"] if readiness else [],
+                },
+                "validation_commands": validation_commands_for_spec(spec_path, selected["task_id"] if selected else None),
+            }
+        )
+    return items
+
+
+def lifecycle_guide(repo_root: Path, docs_root: str | None = None, mode: str = "auto") -> dict[str, Any]:
+    root = repo_root.resolve()
+    scan = scan_specs(root, docs_root)
+    classification = classify_repository(root, docs_root, scan)
+    spec_items = spec_readiness_items(root, scan)
+    bootstrap = (
+        bootstrap_plan(root, docs_root=docs_root or "docs")
+        if classification in {"blank", "near_blank"}
+        else {"mode": "not_applicable", "reason": f"Repository classification is {classification}."}
+    )
+    next_actions: list[dict[str, Any]] = []
+    if spec_items:
+        for item in spec_items:
+            task = item.get("next_task")
+            next_actions.append(
+                {
+                    "action": "continue_active_spec",
+                    "spec_id": item["spec_id"],
+                    "task_id": task.get("task_id") if task else None,
+                    "risk": "implementation",
+                    "reason": "Active spec has a runnable next task." if task else "Active spec needs validation or closure review.",
+                }
+            )
+    elif classification in {"blank", "near_blank"}:
+        next_actions.append(
+            {
+                "action": "review_bootstrap_plan",
+                "risk": "preview_only",
+                "reason": "Repository lacks durable lifecycle docs; preview the smallest useful foundation.",
+            }
+        )
+    elif classification == "closed_only":
+        next_actions.append(
+            {
+                "action": "use_durable_history",
+                "risk": "read_only",
+                "reason": "No active specs exist; use closure log and archive index before starting new work.",
+            }
+        )
+    else:
+        next_actions.append(
+            {
+                "action": "inspect_durable_docs",
+                "risk": "read_only",
+                "reason": "Durable docs exist without active specs.",
+            }
+        )
+    return {
+        "repo_root": str(root),
+        "mode": mode,
+        "repo_classification": classification,
+        "tooling": {
+            "mcp_available": "unknown",
+            "mcp_tools": ["lifecycle_guide", "bootstrap_plan", "active_spec_preflight", "scan_specs", "task_context"],
+            "cli_commands": [
+                "PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py lifecycle-guide .",
+                "PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py scan .",
+                "PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py prompts .",
+            ],
+            "prompt_definitions": prompt_names(root),
+            "hooks": hook_status(root),
+        },
+        "docs_readiness": docs_readiness(root, docs_root, scan),
+        "spec_readiness": spec_items,
+        "bootstrap": bootstrap,
+        "next_actions": next_actions,
+        "scan_summary": scan["summary"],
+    }
+
+
+def bootstrap_plan(
+    repo_root: Path,
+    docs_root: str = "docs",
+    project_summary: str | None = None,
+    create_spec: bool = False,
+    spec_slug: str | None = None,
+) -> dict[str, Any]:
+    root = repo_root.resolve()
+    classification = classify_repository(root, docs_root)
+    docs = root / docs_root
+    writes = [
+        {
+            "path": f"{docs_root}/README.md",
+            "purpose": "Minimal lifecycle index and project summary entry point.",
+            "template_source": "generated-minimal-lifecycle-index",
+            "preview_only": True,
+        }
+    ]
+    required_values = []
+    if project_summary:
+        writes.append(
+            {
+                "path": f"{docs_root}/reference/project-summary.md",
+                "purpose": "User-confirmed project purpose and initial operating notes.",
+                "template_source": "project_summary",
+                "preview_only": True,
+                "values": {"project_summary": project_summary},
+            }
+        )
+    else:
+        required_values.append(
+            {
+                "name": "project_summary",
+                "reason": "Project purpose must be user-confirmed before generating durable guidance.",
+            }
+        )
+    if create_spec:
+        if spec_slug:
+            writes.append(
+                {
+                    "path": f"{docs_root}/specs/000-{spec_slug}/",
+                    "purpose": "Optional first spec package for an actual requested change.",
+                    "template_source": "references/spec-package",
+                    "preview_only": True,
+                }
+            )
+        else:
+            required_values.append({"name": "spec_slug", "reason": "A spec slug is required to preview an optional first spec package."})
+    assumptions = [
+        "Bootstrap is preview-only; no files are written by this runtime command.",
+        "Architecture or pattern docs are deferred until code, structure, or user-confirmed purpose supports them.",
+    ]
+    if classification not in {"blank", "near_blank"}:
+        assumptions.append(f"Repository classification is {classification}; normal lifecycle flow may be more appropriate than bootstrap.")
+    return {
+        "mode": "preview",
+        "repo_root": str(root),
+        "repo_classification": classification,
+        "docs_root": docs_root,
+        "docs_exists": docs.exists(),
+        "writes": writes,
+        "required_user_values": required_values,
+        "validation_commands": [
+            f"PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py scan . --docs-root {docs_root}",
+            "git diff --check",
+        ],
+        "deferred_recommendations": [
+            {
+                "artifact": "architecture overview",
+                "reason": "Deferred until repository evidence supports stable architecture guidance.",
+            },
+            {
+                "artifact": "pattern or agent directive guidance",
+                "reason": "Deferred until patterns are derived from docs, code, governance, or user confirmation.",
+            },
+        ],
+        "assumptions": assumptions,
+    }
 
 
 def agent_interface(tools: list[str]) -> dict[str, Any]:
@@ -4261,6 +4610,18 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     preflight.add_argument("--task-id")
     preflight.add_argument("--docs-root")
 
+    guide = sub.add_parser("lifecycle-guide", help="Return first-run lifecycle readiness and next actions.")
+    guide.add_argument("repo_root", type=Path, nargs="?", default=Path.cwd())
+    guide.add_argument("--docs-root")
+    guide.add_argument("--mode", default="auto")
+
+    bootstrap = sub.add_parser("bootstrap-plan", help="Preview minimal lifecycle bootstrap writes for blank or near-blank repos.")
+    bootstrap.add_argument("repo_root", type=Path, nargs="?", default=Path.cwd())
+    bootstrap.add_argument("--docs-root", default="docs")
+    bootstrap.add_argument("--project-summary")
+    bootstrap.add_argument("--create-spec", action="store_true")
+    bootstrap.add_argument("--spec-slug")
+
     validation = sub.add_parser("validation-plan", help="Plan validation checks from changed files and optional task context.")
     validation.add_argument("repo_root", type=Path, nargs="?", default=Path.cwd())
     validation.add_argument("--changed-files", nargs="*", default=[])
@@ -4394,6 +4755,10 @@ def main(argv: list[str] | None = None) -> int:
         )
     elif args.command == "active-spec-preflight":
         payload = active_spec_preflight(args.repo_root, args.spec_path, args.task_id, args.docs_root)
+    elif args.command == "lifecycle-guide":
+        payload = lifecycle_guide(args.repo_root, args.docs_root, args.mode)
+    elif args.command == "bootstrap-plan":
+        payload = bootstrap_plan(args.repo_root, args.docs_root, args.project_summary, args.create_spec, args.spec_slug)
     elif args.command == "validation-plan":
         payload = validation_plan(args.repo_root, args.changed_files, args.spec_path, args.task_id, args.risk_level)
     elif args.command == "evidence-quality":

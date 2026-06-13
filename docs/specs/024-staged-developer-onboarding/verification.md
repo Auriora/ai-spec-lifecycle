@@ -61,6 +61,11 @@ last_reviewed: 2026-06-13
 | 2026-06-13 | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py prompts`. | Pass | Prompt definitions returned 0 diagnostics. |
 | 2026-06-13 | `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'`. | Pass | 133 tests passed after syncing source skill changes to bundled Codex and Claude plugin copies. |
 | 2026-06-13 | `git diff --check`. | Pass | No whitespace errors. |
+| 2026-06-13 | Focused runtime and MCP tests for lifecycle guide and bootstrap plan. | Pass | 6 focused tests passed for blank/near-blank bootstrap previews, active-spec readiness, CLI JSON output, MCP tool listing, and read-only MCP tool calls. |
+| 2026-06-13 | MCP `lint_spec_package` for `docs/specs/024-staged-developer-onboarding`. | Pass | Phase 2 task evidence and state produced 0 diagnostics. |
+| 2026-06-13 | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py scan .`. | Pass | Active spec inventory reported 2 active specs, both passing, and skill-fallback template authority after phase 2. |
+| 2026-06-13 | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py prompts .`. | Pass | Prompt definitions returned 0 diagnostics with `developer-start` included. |
+| 2026-06-13 | `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'`. | Pass | 138 tests passed after lifecycle guide, bootstrap plan, MCP, and prompt updates. |
 
 ## Closure Requirements
 

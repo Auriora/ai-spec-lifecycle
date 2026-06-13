@@ -19,6 +19,7 @@ the source for scanner, lint, next-task, closure, and traceability payloads.
 Implemented prompt definitions:
 
 - `choose-next-task`
+- `developer-start`
 - `lifecycle-complete`
 - `lifecycle-status`
 - `lifecycle-triage`

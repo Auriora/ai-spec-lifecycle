@@ -149,6 +149,8 @@ class SpecMcpServerTests(unittest.TestCase):
         tools = {tool["name"] for tool in responses[0]["result"]["tools"]}
         self.assertIn("scan_specs", tools)
         self.assertIn("active_spec_preflight", tools)
+        self.assertIn("lifecycle_guide", tools)
+        self.assertIn("bootstrap_plan", tools)
         self.assertIn("validation_plan", tools)
         self.assertIn("agent_readiness_packet", tools)
         self.assertIn("agent_backed_tool", tools)
@@ -172,6 +174,38 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertIn("boolean", scan_schema["inputSchema"]["properties"]["include_archived_lint"]["type"])
         validation_schema = next(tool for tool in responses[0]["result"]["tools"] if tool["name"] == "validation_plan")
         self.assertEqual("array", validation_schema["inputSchema"]["properties"]["changed_files"]["type"])
+        bootstrap_schema = next(tool for tool in responses[0]["result"]["tools"] if tool["name"] == "bootstrap_plan")
+        self.assertIn("boolean", bootstrap_schema["inputSchema"]["properties"]["create_spec"]["type"])
+
+    def test_lifecycle_guide_and_bootstrap_plan_tools_are_read_only(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / ".git").mkdir()
+            responses = self.send(
+                rpc(1, "tools/call", {"name": "lifecycle_guide", "arguments": {"repo_root": str(repo)}}),
+                rpc(
+                    2,
+                    "tools/call",
+                    {
+                        "name": "bootstrap_plan",
+                        "arguments": {
+                            "repo_root": str(repo),
+                            "project_summary": "Example project.",
+                            "create_spec": True,
+                            "spec_slug": "first-feature",
+                        },
+                    },
+                ),
+                root=repo,
+            )
+
+        guide = responses[0]["result"]["structuredContent"]
+        bootstrap = responses[1]["result"]["structuredContent"]
+        self.assertEqual("blank", guide["repo_classification"])
+        self.assertEqual("preview", bootstrap["mode"])
+        self.assertEqual(".", bootstrap["repo_root"])
+        self.assertFalse((repo / "docs").exists())
+        self.assertTrue(any(item["path"] == "docs/specs/000-first-feature/" for item in bootstrap["writes"]))
 
     def test_spec_path_tools_advertise_repo_root(self):
         [response] = self.send(rpc(1, "tools/list"))

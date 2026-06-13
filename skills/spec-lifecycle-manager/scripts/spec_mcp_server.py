@@ -211,6 +211,26 @@ def tool_definitions() -> list[dict[str, Any]]:
             },
         ),
         tool_schema(
+            "lifecycle_guide",
+            "Return first-run lifecycle readiness, bootstrap guidance, and next actions.",
+            {
+                "repo_root": REPO_ROOT_PROPERTY,
+                "docs_root": "Optional docs root.",
+                "mode": "Optional guide mode. Defaults to auto.",
+            },
+        ),
+        tool_schema(
+            "bootstrap_plan",
+            "Preview minimal lifecycle bootstrap writes without mutating files.",
+            {
+                "repo_root": REPO_ROOT_PROPERTY,
+                "docs_root": "Optional docs root. Defaults to docs.",
+                "project_summary": "Optional user-confirmed project purpose statement.",
+                "create_spec": {"type": ["boolean", "string"], "description": "Preview an optional first spec package.", "default": False},
+                "spec_slug": "Optional slug for the first spec package when create_spec is true.",
+            },
+        ),
+        tool_schema(
             "validation_plan",
             "Plan validation checks from changed files and optional task context.",
             {
@@ -392,6 +412,16 @@ def call_tool(name: str, arguments: dict[str, Any], default_root: Path) -> tuple
     if name == "active_spec_preflight":
         spec_path = spec_path_arg(arguments, default_root) if arguments.get("spec_path") or arguments.get("spec_id") else None
         return spec_runtime.active_spec_preflight(root, spec_path, arguments.get("task_id"), arguments.get("docs_root")), root
+    if name == "lifecycle_guide":
+        return spec_runtime.lifecycle_guide(root, arguments.get("docs_root"), arguments.get("mode") or "auto"), root
+    if name == "bootstrap_plan":
+        return spec_runtime.bootstrap_plan(
+            root,
+            arguments.get("docs_root") or "docs",
+            arguments.get("project_summary"),
+            bool_arg(arguments, "create_spec"),
+            arguments.get("spec_slug"),
+        ), root
     if name == "validation_plan":
         spec_path = spec_path_arg(arguments, default_root) if arguments.get("spec_path") or arguments.get("spec_id") else None
         changed_files = arguments.get("changed_files") or []

@@ -40,29 +40,29 @@ T009 -> T010
 
 ## Phase 2: Runtime Readiness And Bootstrap Tools
 
-- [ ] T004 Implement lifecycle guide runtime output.
+- [x] T004 Implement lifecycle guide runtime output.
   - Depends on: T002
   - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`, `skills/spec-lifecycle-manager/scripts/spec_agent_schemas.py`
   - Acceptance: Runtime reports repo classification, lifecycle tooling availability, docs readiness, spec readiness, stage status, template authority, Agent Readiness Contract gaps, optional repo-evidence caveats, and next actions as deterministic JSON-compatible output.
-  - Evidence: Pending.
+  - Evidence: Added `lifecycle_guide`, repository classification, docs readiness, spec readiness, prompt/tooling/hook reporting, bootstrap recommendation, and next-action JSON payloads in `spec_runtime.py`; focused runtime and CLI tests passed on 2026-06-13.
 
-- [ ] T005 Implement blank-repo bootstrap planning.
+- [x] T005 Implement blank-repo bootstrap planning.
   - Depends on: T004
   - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`, `tests/runtime/`, `tests/fixtures/`
   - Acceptance: Runtime returns a preview-only bootstrap plan for blank and near-blank repos, including paths, template sources, required user values, validation commands, assumptions, and deferred architecture/pattern recommendations.
-  - Evidence: Pending.
+  - Evidence: Added preview-only `bootstrap_plan` runtime and CLI behavior for blank and near-blank repositories, including preview paths, template sources, required user values, validation commands, assumptions, and deferred architecture/pattern recommendations; focused runtime and CLI tests passed on 2026-06-13.
 
-- [ ] T006 Expose lifecycle guide and bootstrap plan through MCP.
+- [x] T006 Expose lifecycle guide and bootstrap plan through MCP.
   - Depends on: T005
   - Files: `skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`
   - Acceptance: MCP exposes read-only `lifecycle_guide` and `bootstrap_plan` tools, rejects mutation, and returns the runtime payloads with repo-root handling consistent with existing tools.
-  - Evidence: Pending.
+  - Evidence: Added read-only MCP schemas and dispatch for `lifecycle_guide` and `bootstrap_plan`; focused MCP tests passed on 2026-06-13 and confirmed no files are written by bootstrap previews.
 
-- [ ] T007 Add prompt entry point for first-run developer guidance.
+- [x] T007 Add prompt entry point for first-run developer guidance.
   - Depends on: T006
   - Files: `skills/spec-lifecycle-manager/prompts/`, `skills/spec-lifecycle-manager/prompts/README.md`
   - Acceptance: Prompt definitions include a first-run/developer-start flow that uses runtime-backed readiness and does not invent blank-repo architecture.
-  - Evidence: Pending.
+  - Evidence: Added `developer-start.json`, included it in prompt validation requirements, and updated the prompt README; `spec_runtime.py prompts .` returned 0 diagnostics on 2026-06-13.
 
 ## Phase 3: Stage Readiness And Traceability Coverage
 

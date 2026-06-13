@@ -1,0 +1,49 @@
+{
+  "name": "developer-start",
+  "description": "Guide a first-run developer through repository lifecycle readiness, bootstrap guidance, and the next safe action.",
+  "arguments": [
+    {
+      "name": "repo_root",
+      "required": false,
+      "description": "Repository root. Defaults to the current workspace when omitted."
+    },
+    {
+      "name": "docs_root",
+      "required": false,
+      "description": "Optional docs root. Defaults to docs."
+    },
+    {
+      "name": "project_summary",
+      "required": false,
+      "description": "Optional user-confirmed project purpose for previewing blank-repo bootstrap guidance."
+    }
+  ],
+  "resources": [
+    "specs://active",
+    "templates://spec-package",
+    "history://spec-archive-index"
+  ],
+  "tools": [
+    "lifecycle_guide",
+    "bootstrap_plan",
+    "active_spec_preflight",
+    "scan_specs"
+  ],
+  "instructions": [
+    "Use the spec-lifecycle-manager skill.",
+    "Call lifecycle_guide first when MCP tools are available.",
+    "If the repository is blank or near blank, use bootstrap_plan and keep the result preview-only until the user approves writes.",
+    "Do not invent architecture, pattern guidance, or agent directives for a blank repository.",
+    "Report the current repository classification, docs readiness, active spec readiness, bootstrap recommendation, tooling, and next safe actions."
+  ],
+  "return_format": [
+    "repo_classification",
+    "docs_readiness",
+    "spec_readiness",
+    "bootstrap",
+    "tooling",
+    "next_actions",
+    "validation_or_recovery_commands"
+  ],
+  "client_support_recovery": "If MCP tools are unavailable, run spec_runtime.py lifecycle-guide or spec_runtime.py bootstrap-plan from the repository root."
+}
