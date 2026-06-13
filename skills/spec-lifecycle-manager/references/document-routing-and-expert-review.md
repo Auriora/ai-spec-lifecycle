@@ -2,6 +2,10 @@
 
 Use this reference when a spec affects durable documentation or when review roles are needed. Map these roles onto the target repository's documented structure; do not create or require these folder names unless the repository already uses them.
 
+Use `durable-document-contract.md` for the shared human/agent contract that
+durable docs should satisfy: current-state labeling, source-of-truth metadata,
+validation, change rules, AGENTS.md boundaries, and anti-patterns.
+
 ## Durable Doc Roles
 
 | Durable doc role | Purpose |
@@ -91,6 +95,9 @@ Before implementation starts, review the spec package for:
 
 - requirement clarity and measurable acceptance criteria;
 - consistency with durable docs and existing code;
+- durable-doc readiness: authoritative docs, current/planned/deprecated state,
+  code-derived contracts that override prose, docs to update, and docs not to
+  change;
 - independently validatable task slices;
 - explicit open decisions and non-goals;
 - validation strategy and task completion criteria;

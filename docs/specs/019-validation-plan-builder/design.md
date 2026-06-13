@@ -23,6 +23,8 @@ repository.
 - Include baseline checks for lifecycle, package, plugin, and docs contexts.
 - Classify each check as required, recommended, optional, not applicable, or
   not run so doc-only changes do not create false validation noise.
+- Return a concise validation contract when task context is available, so the
+  implementation agent has a proof target before it starts editing.
 
 ## Low-Level Design
 
@@ -39,6 +41,23 @@ repository.
   missing inputs, credentials, tools, or environment.
 - If `task_id` is supplied, the planner uses existing traceability lookup and
   reports gaps instead of failing.
+- If a task, verification artifact, or traceability row names expected
+  evidence, the planner composes a `validation_contract` object:
+
+```json
+{
+  "automated_proof": [],
+  "manual_proof": [],
+  "evidence_location": [],
+  "residual_risk_if_not_run": [],
+  "false_positive_risk": [],
+  "false_negative_risk": [],
+  "gaps": []
+}
+```
+
+Missing contract fields are returned as gaps. Generic fallback proof text is not
+used because it would let agents treat weak validation as planned validation.
 
 Documentation-only changes should normally require `scan`, relevant package
 lint, archive or prompt checks when those documents changed, and
@@ -51,6 +70,9 @@ requires code validation.
 - The planner is advisory; users decide which commands to run.
 - Target repositories can extend validation manually until project-specific
   validator configuration exists.
+- The contract is a planning surface, not execution evidence. Completion still
+  requires actual command output, review evidence, or documented manual
+  verification.
 
 ## Open Questions
 

@@ -28,10 +28,12 @@ The implementation has five parts:
 - A blank-repo bootstrap planner that previews minimal docs/spec scaffolding.
 - A staged artifact state model for requirements, design, tasks,
   implementation, verification, promotion, and closure.
+- An Agent Readiness Contract that sits before implementation readiness and
+  constrains context, permissions, validation, review, and closure impact.
 - Runtime/MCP readiness output that reports stage health, foundations,
   traceability gaps, and next actions.
 - Guidance/template updates for agent directives, execution recovery,
-  properties-to-tests coverage, and numbered findings.
+  properties-to-tests coverage, numbered findings, and learning-loop routing.
 
 Existing packaging, plugin install behavior, and discovery layout are
 unchanged.
@@ -45,6 +47,7 @@ unchanged.
 | `requirements` | Capture problem, scope, user stories, acceptance criteria, and correctness properties. | `requirements.md`; optional `research.md`. | Requirements are coherent enough to design. |
 | `design` | Decide how accepted requirements will be implemented. | `design.md`; optional `open-decisions.md`, `change-impact.md`. | Design maps requirements to components, decisions, and validation strategy. |
 | `tasks` | Create ordered, traceable implementation and validation work. | `tasks.md`, `traceability.md`, optional `verification.md`. | Tasks cover requirements/properties and identify checkpoints. |
+| `agent_ready` | Package bounded context and constraints for a worker agent. | Readiness contract from preflight, task context, validation planner, governance, and durable sources. | The agent has must-read context, do-not-read guidance, permissions, validation contract, review needs, and closure impact. |
 | `implement` | Execute one coherent task slice at a time. | Code/tests/docs/config plus task evidence. | Selected task has evidence and status matching reality. |
 | `verify` | Record validation evidence and residual risk. | `verification.md`, task evidence, review records. | Required checks/reviews are complete or explicitly waived. |
 | `promote` | Move accepted behavior to durable docs. | Durable docs, backlog, roadmap, ADRs, runbooks, reference docs. | Durable docs describe current behavior or deferrals. |
@@ -119,6 +122,33 @@ MCP exposure may be either a new `stage_readiness` tool or an additional field
 in `active_spec_preflight`. Prefer extending existing preflight if the payload
 remains readable.
 
+### Agent Readiness Contract
+
+Extend `active_spec_preflight`, `agent_readiness_packet`, or stage readiness
+with a compact `agent_readiness_contract` payload. The contract is distinct from
+implementation readiness: a task can be coherent but still unsafe for an agent
+if context, permissions, validation, review, or durable-doc impact are unclear.
+
+The payload should include:
+
+- scope: selected task or requirement, risk level, likely affected files, and
+  explicit out-of-scope files;
+- context: must-read artifacts, optional artifacts, durable sources of truth,
+  stale or historical documents not to treat as current, and refresh points;
+- validation: required commands, expected pass/fail signal, manual proof,
+  evidence location, and residual risk from `validation_plan` when available;
+- permissions: allowed edits, forbidden edits, external services or secrets,
+  and human approval points;
+- review: required packet type, fresh-context review flag, and
+  security/privacy review flag;
+- closure impact: durable docs affected, backlog/roadmap/issue routing, and
+  release-note expectation.
+
+Context-budget rules should prefer `task_context` and traceability lookups over
+full-document loading, avoid archived specs unless historical audit or
+restoration is requested, and refresh context at phase boundaries. The contract
+should name missing fields as gaps instead of padding them with generic advice.
+
 ## Low-Level Design
 
 ### Runtime Commands
@@ -189,6 +219,16 @@ consume without parsing human prose.
   "coverage": {
     "properties": [],
     "acceptance_criteria": []
+  },
+  "agent_readiness_contract": {
+    "status": "ready | blocked | partial",
+    "scope": {},
+    "context": {},
+    "validation": {},
+    "permissions": {},
+    "review": {},
+    "closure_impact": {},
+    "gaps": []
   }
 }
 ```
@@ -237,10 +277,15 @@ Update `skills/spec-lifecycle-manager/SKILL.md` to add:
 - a blank-repo bootstrap rule that avoids architecture-first assumptions;
 - a staged artifact progression rule that names valid transitions and
   design-first handling;
+- a context-budget rule that tells agents what to read, what not to load unless
+  needed, and when to refresh context;
 - an execution recovery rule: one meaningfully different recovery attempt,
   then blocker evidence;
 - a directive-generation rule: durable agent directives must be evidence-derived
   or user-confirmed;
+- an instruction-as-code rule: repeated failures from missing or stale
+  instructions become candidate `AGENTS.md`, durable-doc, backlog, roadmap, or
+  follow-up spec updates;
 - a numbered-findings rule for persisted review/audit outputs.
 
 ### Templates
@@ -312,6 +357,27 @@ Persisted review/audit records should support a stable finding format:
 Runtime support can start as lint guidance for review records rather than a
 full review-management tool. Follow-up implementation can add structured review
 finding parsing if this proves useful.
+
+## Learning Loop And Failure Taxonomy
+
+Readiness and review outputs should classify repeated agent failures so metrics
+lead to concrete lifecycle changes. Initial categories:
+
+- misunderstood requirement;
+- missed durable source;
+- stale spec followed;
+- insufficient validation;
+- over-broad implementation;
+- invented behavior;
+- dependency or environment failure;
+- context overflow or noise;
+- unsafe tool use;
+- review missed defect;
+- documentation promotion missed.
+
+The runtime should report these as advisory learning-loop signals. It should
+not automatically rewrite `AGENTS.md`, durable docs, backlog, roadmap, or specs;
+the lead agent routes accepted changes to the right surface.
 
 ## Traceability And Validation
 

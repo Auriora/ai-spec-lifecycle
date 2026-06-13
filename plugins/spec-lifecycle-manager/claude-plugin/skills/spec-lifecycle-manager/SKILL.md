@@ -448,6 +448,13 @@ criteria, and evidence against actual code, tests, config, and durable-doc
 evidence. Call out status-stale candidates when validation or review is the
 current goal.
 
+For non-trivial implementation, also check durable-doc readiness before editing:
+identify the authoritative durable docs for the area, whether they describe
+current or planned behavior, any code-derived contracts that override prose,
+which docs must be updated if the change succeeds, and which docs are out of
+scope. Use `references/durable-document-contract.md` when the repository lacks
+its own durable-doc contract or when durable docs are ambiguous.
+
 Before editing, state:
 
 - selected task IDs or requirement IDs;
@@ -488,6 +495,14 @@ Verification should record:
 
 Before closing or claiming durable completion, route accepted spec content into the repository's current-state docs.
 
+Durable docs are the shared source of truth for human and AI developers. They
+should be readable by humans and usable by agents: current-state labels,
+invariants, interfaces or contracts, validation signals, change rules, and
+links to related code, tests, specs, backlog, roadmap, or ADRs. `AGENTS.md`
+should point agents to these sources and workflow constraints; it should not
+duplicate durable architecture, requirements, design, API contracts, or
+runbooks.
+
 Common routing:
 
 - requirements, non-goals, and acceptance criteria -> the repo's accepted requirements, product, contract, test, or reference docs;
@@ -522,6 +537,9 @@ Promotion should produce an explicit durable-doc map before closure:
 - residual spec-only content, if any, and why it remains.
 
 Read `references/document-routing-and-expert-review.md` when document routing or review roles are material to the task.
+Read `references/durable-document-contract.md` when creating, promoting, or
+reviewing durable docs, especially when a repository has no authoritative
+template system or when current and planned behavior are mixed.
 
 ## Review
 

@@ -17,7 +17,7 @@ T001 -> T002 -> T003 -> T004 -> T005
 
 - [ ] T001 Add runtime validation plan helper.
   - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`
-  - Acceptance: Helper returns deterministic plan items from changed files and optional task context, including `not_applicable` versus `not_run` classification.
+  - Acceptance: Helper returns deterministic plan items from changed files and optional task context, including `not_applicable` versus `not_run` classification and a validation contract when task evidence can support one.
   - Evidence: Pending.
 
 - [ ] T002 Expose validation planning through MCP.
@@ -29,13 +29,13 @@ T001 -> T002 -> T003 -> T004 -> T005
 - [ ] T003 Add tests for planner behavior.
   - Depends on: T001, T002
   - Files: `tests/runtime/test_spec_runtime.py`, `tests/runtime/test_spec_mcp_server.py`
-  - Acceptance: Tests cover file classification, package changes, spec changes, documentation-only changes, skipped-noise prevention, and MCP schema/call output.
+  - Acceptance: Tests cover file classification, package changes, spec changes, documentation-only changes, skipped-noise prevention, validation-contract gaps, and MCP schema/call output.
   - Evidence: Pending.
 
 - [ ] T004 Document the validation planner.
   - Depends on: T003
   - Files: `docs/reference/spec-lifecycle-runtime.md`
-  - Acceptance: Runtime docs describe command/tool inputs, output fields, and read-only behavior.
+  - Acceptance: Runtime docs describe command/tool inputs, output fields, validation contract fields, and read-only behavior.
   - Evidence: Pending.
 
 - [ ] T005 Mirror bundles and validate.

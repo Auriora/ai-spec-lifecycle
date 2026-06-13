@@ -35,6 +35,9 @@ last_reviewed: 2026-06-13
 
 - Add a clear first-run developer starting point for using the lifecycle skill
   and MCP tooling in an unfamiliar repository.
+- Make `ready_for_agent` distinct from `ready_to_implement` so agents receive a
+  bounded context, permissions, validation, and review contract before they
+  decide whether file edits are safe.
 - Improve blank-repo bootstrap so the tool can create the minimum useful
   lifecycle/documentation foundation without assuming an architecture document
   must come first.
@@ -46,6 +49,9 @@ last_reviewed: 2026-06-13
   lifecycle-manager-shaped way.
 - Keep artifact creation demand-driven. The tool should recommend or create the
   next useful artifact, not generate every possible file up front.
+- Treat missed context, stale instructions, weak validation, and over-broad
+  tasks as learning-loop inputs for templates, `AGENTS.md`, backlog, roadmap,
+  or follow-up specs.
 
 ## Non-Goals
 
@@ -259,6 +265,45 @@ without losing references.
 5. THE SYSTEM SHALL distinguish findings-only reviews from implementation
    tasks.
 
+### Requirement 9: Agent Readiness Contract
+
+**User Story:** As a lead agent, I want a compact readiness contract before
+implementation, so that the worker agent can act without guessing, over-reading,
+or skipping proof.
+
+#### Acceptance Criteria
+
+1. GIVEN an active spec or direct-patch request, WHEN readiness is requested,
+   THEN the system SHALL report `ready_for_agent` separately from
+   `ready_to_implement`.
+2. WHEN `ready_for_agent` is reported, THEN the output SHALL include risk
+   level, selected task or requirement, likely affected files, explicit
+   out-of-scope files, must-read context, optional context, durable source of
+   truth, and any documents that must not be treated as current.
+3. THE SYSTEM SHALL include context-budget guidance: smallest complete context,
+   preferred task-context or traceability lookup, archived-spec avoidance unless
+   historical audit is requested, and phase-boundary refresh points.
+4. THE SYSTEM SHALL include permission guidance: paths or actions the agent may
+   edit, paths or actions it must not edit, external services or secrets
+   involved, and human approval points.
+5. THE SYSTEM SHALL include validation guidance from the validation planner
+   where available, including required commands, expected pass/fail signal,
+   manual validation, and evidence location.
+6. THE SYSTEM SHALL include review guidance: required review type,
+   fresh-context review requirement, and security/privacy review requirement.
+7. THE SYSTEM SHALL include closure impact: durable docs affected,
+   backlog/roadmap/issue routing expected, and whether release notes are likely
+   needed.
+8. IF missing, stale, ambiguous, or conflicting repository instructions cause
+   agent failure or repeated correction, THEN the system SHALL route an
+   instruction-as-code candidate to `AGENTS.md`, durable docs, backlog, roadmap,
+   or a follow-up spec without mutating those surfaces automatically.
+9. WHEN learning-loop evidence is recorded, THEN the system SHALL classify the
+   failure using a stable taxonomy such as misunderstood requirement, missed
+   durable source, stale spec followed, insufficient validation, over-broad
+   implementation, invented behavior, environment failure, context noise,
+   unsafe tool use, review missed defect, or documentation promotion missed.
+
 ## Correctness Properties
 
 - CP-001: Readiness output SHALL be deterministic for the same repository state.
@@ -274,6 +319,11 @@ without losing references.
 - CP-007: Tooling additions SHALL preserve existing MCP/CLI scan, lint,
   preflight, traceability, prompt-validation, hook, and closure behavior.
 - CP-008: Packaging behavior SHALL remain unchanged by this spec.
+- CP-009: `ready_for_agent` SHALL remain a bounded context contract and SHALL
+  not require loading every durable document or every optional spec artifact.
+- CP-010: Learning-loop outputs SHALL be advisory routing signals until a
+  human or lead agent accepts a concrete backlog, roadmap, spec, or durable-doc
+  update.
 
 ## Success Criteria
 
@@ -282,6 +332,8 @@ without losing references.
 - Blank and near-blank repositories receive preview-first bootstrap guidance
   instead of architecture-first failure.
 - New and resumed specs expose staged readiness through runtime/MCP output.
+- Agent readiness output is compact enough to use before implementation and
+  separates required context from optional or historical context.
 - Requirements properties and acceptance criteria produce visible task or
   verification coverage before implementation readiness.
 - Existing MCP/CLI validation, prompt validation, advisory hooks, closure

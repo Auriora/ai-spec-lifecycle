@@ -27,6 +27,12 @@ material, and lasting decisions. Specs coordinate work while a change is being
 designed or implemented. Once implementation stabilizes, accepted behavior must
 move into durable docs that live with the code and reflect current state.
 
+Durable docs are also the shared development interface between human developers
+and coding agents. They should combine human-readable rationale with
+agent-usable structure: stable metadata, current-state labels, invariants,
+interfaces, validation signals, change rules, and links to related code, tests,
+contracts, backlog, roadmap, and specs.
+
 ## Spec Package Shape
 
 Use `docs/specs/[###-slug]/` for active specs by default. The numeric prefix
@@ -112,6 +118,13 @@ proposed/deferred sections. If a durable document intentionally contains future
 intent, it must be labeled so agents and tools do not treat it as current
 implementation guidance.
 
+Use the Durable Document Contract in
+`skills/spec-lifecycle-manager/references/durable-document-contract.md` when a
+repository lacks its own durable-doc template system or when reviewing whether a
+document is usable by both humans and agents. The contract is guidance for
+quality and routing; it does not require every project to create every durable
+doc class.
+
 ## Durable Source And Delta Rules
 
 The durable source of truth should always be referenced from an active spec. If
@@ -133,6 +146,11 @@ that must be updated before closure.
 
 If no durable source exists for behavior that should be stable, record that as
 a documentation gap and assign a durable promotion target.
+
+Before implementing non-trivial work, perform a durable-doc readiness check:
+identify authoritative docs, whether they describe current or planned state,
+which code-derived contracts override prose, which durable docs must be updated
+if the change succeeds, and which docs are explicitly out of scope.
 
 ## Reconciliation
 
@@ -257,6 +275,11 @@ When implementation stabilizes, promote accepted spec content into durable docs:
 | Deferred work ready for implementation | Issue tracker item or smaller follow-up spec. |
 
 Do not leave completed behavior documented only in `docs/specs/`.
+
+Durable promotion should also check that lasting facts have a source of truth:
+current behavior in durable docs or code-derived contracts, intended future
+work in backlog/roadmap/issues/follow-up specs, and historical evidence in
+closure logs, reviews, or archive indexes.
 
 ## Backlog And Roadmap Routing
 

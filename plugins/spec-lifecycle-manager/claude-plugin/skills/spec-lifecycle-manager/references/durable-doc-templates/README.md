@@ -17,6 +17,12 @@ These templates describe current-state documentation that should live with code
 and reflect implemented or accepted behavior. They are not active spec-package
 templates; temporary implementation specs use `../spec-package/`.
 
+Use [durable-document-contract.md](../durable-document-contract.md) as the
+shared human/agent contract for durable docs. It defines current-state labeling,
+metadata, baseline sections, AGENTS.md boundaries, readiness checks, and
+anti-patterns. The templates in this directory are examples of that contract,
+not a requirement to create every document class in every project.
+
 When a spec package closes, durable docs should contain the current-state
 requirements, design, contract, operations, decision, and reference material
 needed by future readers. The closed spec may be archived or removed according
@@ -31,6 +37,12 @@ for implemented behavior.
 4. Historical rationale, superseded material, and design history should be captured in ADRs, current-state docs, active specs, or archived docs only when the context is still useful.
 5. Runtime contracts should remain in machine-readable formats where possible, with companion prose only when needed.
 6. Generated documents may use a simplified structure when a script owns most of their content, but they should still be clearly identified as generated and linked from the appropriate class folder.
+7. `AGENTS.md` should point agents to durable sources of truth and workflow
+   constraints; it should not duplicate architecture, requirements, design,
+   API contracts, or runbooks.
+8. Durable docs should label planned, deprecated, removed, experimental,
+   decision, constraint, and example material when it appears alongside current
+   state.
 
 ## Required Metadata
 
@@ -48,6 +60,12 @@ last_reviewed: YYYY-MM-DD
 
 Use `doc_type: spec` only for temporary spec-package files. Durable documents
 should use the specific durable class that best describes their role.
+
+Additional durable-doc metadata such as `id`, `audience`, `applies_to`,
+`source_of_truth`, `related_code`, `related_tests`, `related_specs`,
+`validation`, `supersedes`, and `superseded_by` may be added when it improves
+traceability or agent readiness. Do not add empty metadata fields that the
+project is not prepared to maintain.
 
 Use `status: code-derived` only for documentation generated or assembled from
 implemented code, repository config, and existing docs that is intended to

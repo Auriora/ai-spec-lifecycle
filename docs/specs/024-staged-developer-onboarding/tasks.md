@@ -23,13 +23,13 @@ T009 -> T010
 
 - [ ] T001 Review and finalize the staged lifecycle contract.
   - Files: `docs/specs/024-staged-developer-onboarding/requirements.md`, `docs/specs/024-staged-developer-onboarding/design.md`
-  - Acceptance: Accepted ideas, non-goals, blank-repo behavior, staged flow, tooling preservation, and packaging exclusion are confirmed.
+  - Acceptance: Accepted ideas, non-goals, blank-repo behavior, staged flow, Agent Readiness Contract, context-budget rules, learning-loop taxonomy, tooling preservation, and packaging exclusion are confirmed.
   - Evidence: Pending.
 
 - [ ] T002 Update lifecycle skill guidance for first-run and staged flow.
   - Depends on: T001
   - Files: `skills/spec-lifecycle-manager/SKILL.md`
-  - Acceptance: Skill guidance covers first-run use, blank-repo bootstrap, staged artifacts, design-first exception handling, execution recovery, agent directives, properties-to-tests, numbered findings, and MCP-first tooling.
+  - Acceptance: Skill guidance covers first-run use, blank-repo bootstrap, staged artifacts, design-first exception handling, Agent Readiness Contract, context-budget rules, execution recovery, agent directives, properties-to-tests, instruction-as-code routing, numbered findings, and MCP-first tooling.
   - Evidence: Pending.
 
 - [ ] T003 Update fallback spec and durable-doc templates selectively.
@@ -43,7 +43,7 @@ T009 -> T010
 - [ ] T004 Implement lifecycle guide runtime output.
   - Depends on: T002
   - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`, `skills/spec-lifecycle-manager/scripts/spec_agent_schemas.py`
-  - Acceptance: Runtime reports repo classification, lifecycle tooling availability, docs readiness, spec readiness, stage status, template authority, and next actions as deterministic JSON-compatible output.
+  - Acceptance: Runtime reports repo classification, lifecycle tooling availability, docs readiness, spec readiness, stage status, template authority, Agent Readiness Contract gaps, and next actions as deterministic JSON-compatible output.
   - Evidence: Pending.
 
 - [ ] T005 Implement blank-repo bootstrap planning.
@@ -69,13 +69,13 @@ T009 -> T010
 - [ ] T008 Add stage readiness and coverage checks.
   - Depends on: T005
   - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`, `skills/spec-lifecycle-manager/scripts/traceability_lookup.py`, `tests/runtime/`, `tests/traceability/`
-  - Acceptance: Runtime reports stage readiness, downstream review needs, property-to-design mapping gaps, property-to-task/verification gaps, and acceptance-criteria coverage gaps before implementation readiness.
+  - Acceptance: Runtime reports stage readiness, downstream review needs, context-budget gaps, property-to-design mapping gaps, property-to-task/verification gaps, and acceptance-criteria coverage gaps before implementation readiness.
   - Evidence: Pending.
 
 - [ ] T009 Update runtime docs and design docs.
   - Depends on: T007, T008
   - Files: `docs/reference/spec-lifecycle-runtime.md`, `docs/design/spec-lifecycle-management.md`, `docs/reference/document-routing-and-expert-review-matrix.md`
-  - Acceptance: Durable docs explain lifecycle guide, bootstrap planning, staged flow, readiness output, properties-to-tests coverage, agent directives, numbered findings, and validation/recovery behavior.
+  - Acceptance: Durable docs explain lifecycle guide, bootstrap planning, staged flow, readiness output, Agent Readiness Contract, context-budget rules, properties-to-tests coverage, agent directives, numbered findings, learning-loop taxonomy, and validation/recovery behavior.
   - Evidence: Pending.
 
 ## Phase 4: Bundles, Tests, And Validation

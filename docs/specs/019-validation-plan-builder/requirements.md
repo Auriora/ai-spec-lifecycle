@@ -26,6 +26,9 @@ last_reviewed: 2026-06-13
 - Support direct changed-file input and optional active spec/task context.
 - Distinguish checks that are not applicable from checks that were skipped or
   not run, especially for documentation-only changes.
+- Make the validation contract explicit before non-trivial implementation work
+  starts, so agents know the pass/fail signal and expected evidence before
+  editing.
 - Keep the planner deterministic and dependency-free.
 
 ## Non-Goals
@@ -73,6 +76,13 @@ coverage reasons, so that I can understand why each check is required.
 5. IF a check would normally be required but cannot run because an input,
    credential, external service, or environment is unavailable, THEN THE SYSTEM
    SHALL classify it as `not_run` with the blocker and residual risk.
+6. WHEN a non-trivial implementation task is selected, THEN the plan SHALL
+   expose a validation contract with automated proof, manual proof, expected
+   evidence location, residual risk if proof cannot run, false-positive risk,
+   and false-negative risk where those fields can be derived from task,
+   verification, or changed-file context.
+7. IF a validation contract field cannot be derived, THEN the plan SHALL report
+   the missing field as a planning gap instead of inventing proof criteria.
 
 ### Requirement 3: MCP Surface
 
@@ -93,9 +103,13 @@ through MCP, so that validation guidance is available before edits or closure.
 - CP-003: Required checks SHALL be explainable from changed files, task
   context, or baseline lifecycle policy.
 - CP-004: `not_applicable` checks SHALL not be counted as missing validation.
+- CP-005: Validation contract fields SHALL be derived from repository, spec, or
+  task evidence and SHALL not be fabricated from generic defaults.
 
 ## Success Criteria
 
 - Runtime and MCP tests cover changed-file classification and output shape.
+- Runtime and MCP output can provide a concise validation contract for
+  non-trivial tasks before implementation starts.
 - Runtime docs publish the command/tool and payload contract.
 - Bundled Codex and Claude plugin copies remain in sync.
