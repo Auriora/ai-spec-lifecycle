@@ -1194,6 +1194,155 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertEqual("Requirement 1", payload["traceability_context"]["traceability_row"]["Requirements"])
         self.assertTrue(payload["dependency_state"]["ready"])
 
+    def test_task_state_audit_reports_core_findings(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            spec = write_complete_spec(repo)
+            (spec / "tasks.md").write_text(
+                "\n".join(
+                    [
+                        "# Tasks",
+                        "",
+                        "- [x] T001 Complete with pending evidence.",
+                        "  - Evidence: Pending.",
+                        "  - [ ] T001.1 Incomplete child.",
+                        "    - Evidence: Pending.",
+                        "",
+                        "- [ ] T002 Pending with work.",
+                        "  - Evidence: Runtime helper implemented.",
+                        "",
+                        "- [>] T003 Routed without destination.",
+                        "  - Evidence: Follow-up remains.",
+                        "",
+                        "- [~] T004 In progress pending.",
+                        "  - Evidence: Pending.",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            payload = spec_runtime.task_state_audit(spec)
+
+        classes = {item["classification"] for item in payload["findings"]}
+        self.assertIn("contradictory_completion_evidence", classes)
+        self.assertIn("complete_parent_with_incomplete_children", classes)
+        self.assertIn("candidate_complete", classes)
+        self.assertIn("metadata_missing", classes)
+        self.assertIn("non_pending_marker_with_pending_evidence", classes)
+
+    def test_task_state_audit_reports_cross_spec_dependency_untrusted(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            write_complete_spec(repo)
+            upstream = repo / "docs/specs/002-upstream"
+            upstream.mkdir(parents=True)
+            (upstream / "tasks.md").write_text("# Tasks\n\n- [ ] T001 Unfinished.\n  - Evidence: Pending.\n", encoding="utf-8")
+            spec = repo / "docs/specs/001-current"
+            (spec / "tasks.md").write_text(
+                "# Tasks\n\n- [ ] T001 Depends upstream.\n  - Upstream specs: `docs/specs/002-upstream`\n  - Evidence: Pending.\n",
+                encoding="utf-8",
+            )
+
+            payload = spec_runtime.task_state_audit(spec)
+
+        classes = {item["classification"] for item in payload["findings"]}
+        self.assertIn("cross_spec_dependency_untrusted", classes)
+
+    def test_set_task_state_defaults_to_dry_run_and_requires_write_intent(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+            before = (spec / "tasks.md").read_text(encoding="utf-8")
+
+            preview = spec_runtime.set_task_state(spec, "T001", "complete", "Unit tests passed.")
+            rejected = spec_runtime.set_task_state(spec, "T001", "complete", "Unit tests passed.", dry_run=False)
+            after = (spec / "tasks.md").read_text(encoding="utf-8")
+
+        self.assertEqual("preview", preview["status"])
+        self.assertEqual("rejected", rejected["status"])
+        self.assertEqual(before, after)
+        self.assertIn("TASK_STATE_WRITE_INTENT_MISSING", {item["code"] for item in rejected["validation"]["findings"]})
+
+    def test_set_task_state_writes_only_selected_block(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+            (spec / "tasks.md").write_text(
+                "# Tasks\n\n- [ ] T001 First.\n  - Evidence: Pending.\n\n- [ ] T002 Second.\n  - Evidence: Pending.\n",
+                encoding="utf-8",
+            )
+
+            payload = spec_runtime.set_task_state(
+                spec,
+                "T001",
+                "follow_up",
+                "Routed to backlog.",
+                destination="docs/backlog/README.md",
+                dry_run=False,
+                write_intent=True,
+                evidence_mode="routing",
+            )
+            text = (spec / "tasks.md").read_text(encoding="utf-8")
+
+        self.assertEqual("updated", payload["status"])
+        self.assertIn("- [>] T001 First.", text)
+        self.assertIn("- Evidence: Routed to backlog.", text)
+        self.assertIn("- Destination: docs/backlog/README.md", text)
+        self.assertIn("- [ ] T002 Second.", text)
+
+    def test_set_task_state_replaces_multiline_field_value(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+            (spec / "tasks.md").write_text(
+                "# Tasks\n\n- [ ] T001 Multiline evidence.\n  - Evidence: Old evidence.\n    stale continuation\n  - Acceptance: Done when tests pass.\n",
+                encoding="utf-8",
+            )
+
+            payload = spec_runtime.set_task_state(
+                spec,
+                "T001",
+                "complete",
+                "Unit tests passed.",
+                dry_run=False,
+                write_intent=True,
+            )
+            text = (spec / "tasks.md").read_text(encoding="utf-8")
+
+        self.assertEqual("updated", payload["status"])
+        self.assertIn("- Evidence: Unit tests passed.", text)
+        self.assertNotIn("stale continuation", text)
+        self.assertIn("- Acceptance: Done when tests pass.", text)
+
+    def test_set_task_state_rejects_unsafe_completion(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+
+            payload = spec_runtime.set_task_state(spec, "T001", "complete", "Pending follow-up review.")
+
+        self.assertEqual("rejected", payload["status"])
+        self.assertIn("TASK_STATE_UNSAFE_COMPLETION_EVIDENCE", {item["code"] for item in payload["validation"]["findings"]})
+
+    def test_set_task_state_rejects_contract_only_completion_without_acceptance(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+
+            payload = spec_runtime.set_task_state(spec, "T001", "complete", "Contract drafted.", evidence_mode="contract")
+
+        self.assertEqual("rejected", payload["status"])
+        self.assertIn("TASK_STATE_EVIDENCE_MODE_NOT_COMPLETABLE", {item["code"] for item in payload["validation"]["findings"]})
+
+    def test_set_task_state_rejects_out_of_bound_and_archived_specs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            outside = root / "notes"
+            outside.mkdir()
+            (outside / "tasks.md").write_text("# Tasks\n\n- [ ] T001 Outside.\n  - Evidence: Pending.\n", encoding="utf-8")
+            archived = write_complete_spec(root, status="archived")
+
+            outside_payload = spec_runtime.set_task_state(outside, "T001", "complete", "Done.")
+            archived_payload = spec_runtime.set_task_state(archived, "T001", "complete", "Done.")
+
+        self.assertIn("TASK_STATE_TARGET_INVALID", {item["code"] for item in outside_payload["validation"]["findings"]})
+        self.assertIn("TASK_STATE_ARCHIVED_SPEC", {item["code"] for item in archived_payload["validation"]["findings"]})
+
     def test_closure_check_reports_completed_spec_ready(self):
         with tempfile.TemporaryDirectory() as tmp:
             spec = write_complete_spec(Path(tmp))
@@ -1376,6 +1525,7 @@ class SpecRuntimeTests(unittest.TestCase):
 
         self.assertTrue(payload["blocked"])
         self.assertIn("TASK_EVIDENCE_MISSING", {item["code"] for item in payload["blocking"]})
+        self.assertIn("TASK_AUDIT_CONTRADICTORY_COMPLETION_EVIDENCE", {item["code"] for item in payload["diagnostics"]})
 
     def test_hook_implementation_task_complete_blocks_missing_evidence(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1416,6 +1566,25 @@ class SpecRuntimeTests(unittest.TestCase):
 
         self.assertTrue(payload["blocked"])
         self.assertIn("TASK_EVIDENCE_MISSING", {item["code"] for item in payload["blocking"]})
+
+    def test_agent_slice_start_reports_existing_in_progress_task(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            spec = write_complete_spec(repo)
+            (spec / "tasks.md").write_text(
+                "# Tasks\n\n- [~] T001 Existing.\n  - Evidence: Work started.\n\n- [ ] T002 New.\n  - Evidence: Pending.\n",
+                encoding="utf-8",
+            )
+
+            payload = spec_runtime.run_hook(
+                repo,
+                "agent-slice-start",
+                spec_path=spec,
+                task_id="T002",
+                severity_profile="advisory",
+            )
+
+        self.assertIn("TASK_IN_PROGRESS_EXISTS", {item["code"] for item in payload["diagnostics"]})
 
     def test_hook_verification_updated_checks_requirement_and_task_refs(self):
         with tempfile.TemporaryDirectory() as tmp:

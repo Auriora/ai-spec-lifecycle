@@ -40,6 +40,8 @@ not available.
 | `next-task` | Select the next runnable task whose dependencies are complete with evidence and include traceability context when available. |
 | `list-tasks` | Return grouped task records with normalized state, dependency readiness, evidence summaries, parent/subtask relationships, cross-spec references, and advisory findings. |
 | `task-details` | Return one parsed task with parent/subtask detail, dependency state, traceability context, linked requirements, verification, durable targets, gaps, and advisory split suggestions. |
+| `task-state-audit` | Audit task state, evidence depth, metadata, parent/child consistency, broad-task shape, and cross-spec dependency trust. |
+| `set-task-state` | Preview or write a guarded task-state update scoped to one task block in an active spec package `tasks.md`; defaults to dry-run and requires explicit write intent for mutation. |
 | `active-spec-preflight` | Return the active spec, next task, readiness context, no-active context, guidance, and validation commands. |
 | `validation-plan` | Plan read-only validation checks from changed files and optional spec/task context, including check applicability, validation state, and a validation contract. |
 | `agent-readiness-packet` | Return bounded implementation context for a specific task before coding. |
@@ -86,7 +88,11 @@ only as validation, CI, runtime debugging, or no-MCP recovery surfaces.
 
 ### MCP Tools
 
-The server exposes read-only tools that delegate to the existing runtime:
+The server exposes tools that delegate to the existing runtime. Most tools are
+read-only. `set_task_state` is the only write-capable task tool and is
+preview-first: it defaults to dry-run, requires explicit `write_intent` when
+`dry_run` is false, and is limited to the selected active spec package
+`tasks.md` task block.
 
 - `scan_specs`
 - `active_spec_preflight`
@@ -99,6 +105,8 @@ The server exposes read-only tools that delegate to the existing runtime:
 - `next_task`
 - `list_tasks`
 - `task_details`
+- `task_state_audit`
+- `set_task_state`
 - `closure_check`
 - `archive_index`
 - `resolve_spec_reference`

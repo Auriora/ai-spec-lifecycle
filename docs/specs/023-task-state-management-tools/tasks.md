@@ -54,29 +54,29 @@ T008 -> T009
 
 ## Phase 3: Audit And State Updates
 
-- [ ] T006 Implement task-state audit.
+- [x] T006 Implement task-state audit.
   - Depends on: T002
   - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`
   - Acceptance: Audit flags local contradictory completion evidence, broad tasks, incomplete child tasks under complete parents, follow-up prose without follow-up state, routed/review/attention states without required metadata, and non-pending markers with pending evidence.
-  - Evidence: Pending.
+  - Evidence: `task-state-audit` implemented and tested for contradictory completion evidence, broad tasks, unfinished child tasks, routing prose, missing routed/decision/attention metadata, and active-state markers with recorded evidence.
 
-- [ ] T010 Add cross-spec and evidence-depth reconciliation.
+- [x] T010 Add cross-spec and evidence-depth reconciliation.
   - Depends on: T005, T006
   - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`, `skills/spec-lifecycle-manager/scripts/traceability_lookup.py`, `tests/runtime/test_spec_runtime.py`, `tests/fixtures/`
   - Acceptance: Runtime reports cross-spec dependency health when local specs are available, classifies stale-open/candidate-complete/plan-only/blocked-output findings, and returns `split_task_suggestions` for broad profile-style work.
-  - Evidence: Pending.
+  - Evidence: Audit helpers report cross-spec dependency trust, stale-open/candidate-complete, plan-only/deferred-output, and split-task suggestion findings; runtime tests passed.
 
-- [ ] T007 Implement guarded task-state updates.
+- [x] T007 Implement guarded task-state updates.
   - Depends on: T010
   - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`
   - Acceptance: Dry-run and write modes update only the selected task marker/evidence/status note and optional metadata fields, reject unsafe completion, reject unsupported plan-only/dry-run/blocked-output completion, reject paths outside active spec package `tasks.md`, require explicit write intent, return a before/after patch summary, and require destination/decision metadata for non-final routed or attention states.
-  - Evidence: Pending.
+  - Evidence: `set-task-state` implemented with default dry-run, explicit write intent, task-block-scoped writes, unsafe completion rejection, metadata requirements, changed field reporting, and before/after patch summaries; runtime tests passed.
 
-- [ ] T008 Expose audit/update tools and hook checks.
+- [x] T008 Expose audit/update tools and hook checks.
   - Depends on: T003, T007, T010
   - Files: `skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`, `skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py`, `plugins/spec-lifecycle-manager/hooks/hooks.json`
   - Acceptance: MCP exposes `task_state_audit` and guarded `set_task_state`; existing advisory hooks report contradictory completion, stale-open tasks, plan-only completion candidates, and existing in-progress tasks without repeated noise.
-  - Evidence: Pending.
+  - Evidence: MCP `task_state_audit` and `set_task_state` schemas/dispatch implemented; task-checkbox, implementation-complete, spec-resumed, set-task-state, and agent-slice-start hooks consume shared audit diagnostics; MCP and hook tests passed.
 
 ## Phase 4: Guidance, Bundles, And Validation
 

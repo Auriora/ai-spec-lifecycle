@@ -262,10 +262,11 @@ Noise policy:
 
 ## Open Questions
 
-- Should `[?]` represent both review and decision, or should domain review and
-  implementation review be separate metadata under `Status:`?
-- Should `[-]` include deferred work, or should deferred work always use `[>]`
-  with a backlog/spec destination?
-- Should MCP `set_task_state` be enabled in the first implementation once the
-  spec-only preview guardrails pass tests, or staged behind an opt-in feature
-  flag during dogfooding?
+- Resolved for phase 1: `[?]` represents review or decision needed; specific
+  review type can be recorded in `Status:` or `Decision owner:`.
+- Resolved for phase 1: `[-]` includes no-op, not applicable, superseded, and
+  deferred-from-this-spec outcomes. Routed follow-up work should use `[>]` with
+  `Destination:`.
+- Resolved for phase 3: MCP `set_task_state` is enabled in v1 with
+  preview-first, spec-only, task-block-scoped guardrails. Non-dry-run writes
+  require explicit `write_intent`.

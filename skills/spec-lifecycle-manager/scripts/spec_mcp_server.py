@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Minimal stdio MCP adapter for the spec lifecycle runtime.
 
-The adapter is dependency-free and intentionally read-only. It exposes the
-tested spec runtime helpers as MCP resources, tools, and prompts without
-duplicating lifecycle policy or parsing logic.
+The adapter is dependency-free. It exposes the tested spec runtime helpers as
+MCP resources, tools, and prompts without duplicating lifecycle policy or
+parsing logic. Write-capable tools are preview-first and scoped by the runtime.
 """
 
 from __future__ import annotations
@@ -282,6 +282,29 @@ def tool_definitions() -> list[dict[str, Any]]:
             {**SPEC_PATH_PROPERTIES, "task_id": "Task ID such as T004."},
             ["spec_path", "task_id"],
         ),
+        tool_schema(
+            "task_state_audit",
+            "Audit task state, evidence, metadata, broad tasks, and dependency trust.",
+            {**SPEC_PATH_PROPERTIES, "task_id": "Optional task ID filter."},
+            ["spec_path"],
+        ),
+        tool_schema(
+            "set_task_state",
+            "Preview or write a guarded task-state update. Defaults to dry-run and requires write_intent for writes.",
+            {
+                **SPEC_PATH_PROPERTIES,
+                "task_id": "Task ID such as T004.",
+                "state": "Target normalized task state.",
+                "evidence": "Evidence text to write.",
+                "status_note": "Optional Status metadata.",
+                "evidence_mode": "Optional Evidence mode metadata.",
+                "destination": "Optional Destination metadata.",
+                "decision_owner": "Optional Decision owner metadata.",
+                "dry_run": {"type": ["boolean", "string"], "description": "Preview without writing. Defaults to true.", "default": True},
+                "write_intent": {"type": ["boolean", "string"], "description": "Required true when dry_run is false.", "default": False},
+            },
+            ["spec_path", "task_id", "state", "evidence"],
+        ),
         tool_schema("closure_check", "Check closure readiness and blockers.", SPEC_PATH_PROPERTIES, ["spec_path"]),
         tool_schema("archive_index", "Validate spec archive index and closure-log consistency.", {"repo_root": REPO_ROOT_PROPERTY}),
         tool_schema(
@@ -402,6 +425,29 @@ def call_tool(name: str, arguments: dict[str, Any], default_root: Path) -> tuple
         if not task_id:
             raise ValueError("task_id is required")
         return spec_runtime.task_details(spec_path_arg(arguments, default_root), str(task_id)), root
+    if name == "task_state_audit":
+        task_id = arguments.get("task_id")
+        return spec_runtime.task_state_audit(spec_path_arg(arguments, default_root), str(task_id) if task_id else None), root
+    if name == "set_task_state":
+        task_id = arguments.get("task_id")
+        state = arguments.get("state")
+        evidence = arguments.get("evidence")
+        if not task_id or not state or evidence is None:
+            raise ValueError("task_id, state, and evidence are required")
+        dry_run_value = arguments.get("dry_run")
+        dry_run = True if dry_run_value is None else bool_arg(arguments, "dry_run")
+        return spec_runtime.set_task_state(
+            spec_path_arg(arguments, default_root),
+            str(task_id),
+            str(state),
+            str(evidence),
+            status_note=arguments.get("status_note"),
+            dry_run=dry_run,
+            write_intent=bool_arg(arguments, "write_intent"),
+            evidence_mode=arguments.get("evidence_mode"),
+            destination=arguments.get("destination"),
+            decision_owner=arguments.get("decision_owner"),
+        ), root
     if name == "closure_check":
         return spec_runtime.closure_check(spec_path_arg(arguments, default_root)), root
     if name == "archive_index":

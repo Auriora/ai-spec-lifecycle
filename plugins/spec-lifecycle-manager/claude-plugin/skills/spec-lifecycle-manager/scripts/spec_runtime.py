@@ -114,8 +114,23 @@ TASK_STATUS_MARKERS = {
     "*": "attention",
     "e": "attention",
 }
+TASK_STATE_MARKERS = {
+    "pending": " ",
+    "complete": "x",
+    "in_progress": "~",
+    "partial": "/",
+    "follow_up": ">",
+    "no_op": "-",
+    "review_needed": "?",
+    "attention": "!",
+}
 RUNNABLE_TASK_STATUSES = {"pending", "in_progress", "partial"}
 TASK_LINE_RE = re.compile(r"^\s*-\s+\[([ xX~/>\-?!Yy*eE])\]\s+(T\d{3}(?:\.\d+)?)\b(.*)$")
+UNRESOLVED_EVIDENCE_RE = re.compile(
+    r"\b(pending|partial|follow[- ]?up|blocked|future|review|not verified|not run|todo|tbd)\b",
+    re.IGNORECASE,
+)
+COMPLETION_LIMITED_EVIDENCE_MODES = {"planner", "dry_run", "routing", "no_op", "blocked_output", "contract", "contract_only"}
 COMMIT_RE = re.compile(r"^[0-9a-f]{7,40}$", re.IGNORECASE)
 ARCHIVE_STATUSES = {"retained", "removed", "superseded"}
 ARCHIVE_ACTIONS = {"retained-as-history", "removed-after-index", "archived", "removed", "superseded"}
@@ -547,6 +562,8 @@ def split_task_suggestions(task: Task) -> list[dict[str, str]]:
 
 
 def broad_task_warnings(task: Task) -> list[dict[str, Any]]:
+    if task.complete:
+        return []
     suggestions = split_task_suggestions(task)
     if not suggestions:
         return []
@@ -574,6 +591,198 @@ def candidate_complete_findings(task: Task) -> list[dict[str, Any]]:
             }
         ]
     return []
+
+
+def task_has_pending_evidence(task: Task) -> bool:
+    evidence = task.evidence.strip().lower()
+    return evidence in {"", "pending", "pending."}
+
+
+def task_has_unresolved_evidence(task: Task) -> bool:
+    return bool(UNRESOLVED_EVIDENCE_RE.search(task.evidence or ""))
+
+
+def evidence_mode_allows_completion(task: Task, evidence_mode: str) -> bool:
+    if evidence_mode not in COMPLETION_LIMITED_EVIDENCE_MODES:
+        return True
+    acceptance = task.acceptance.lower()
+    variants = {evidence_mode, evidence_mode.replace("_", "-"), evidence_mode.replace("_", " ")}
+    return any(variant in acceptance for variant in variants)
+
+
+def task_audit_finding(
+    classification: str,
+    task: Task,
+    message: str,
+    severity: str = "warn",
+    evidence: str | None = None,
+    **extra: Any,
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "classification": classification,
+        "task_id": task.task_id,
+        "severity": severity,
+        "message": message,
+        "line": task.line,
+        "status": task.status,
+    }
+    if evidence:
+        payload["evidence"] = evidence
+    payload.update(extra)
+    return payload
+
+
+def cross_spec_dependency_findings(task: Task, spec_path: Path) -> list[dict[str, Any]]:
+    findings: list[dict[str, Any]] = []
+    for item in task_cross_spec_health(task, spec_path):
+        untrusted = item.get("status") == "missing"
+        tasks = item.get("tasks") if isinstance(item.get("tasks"), dict) else {}
+        by_status = tasks.get("by_status", {}) if isinstance(tasks, dict) else {}
+        if any(by_status.get(status, 0) for status in ["pending", "partial", "attention", "review_needed"]):
+            untrusted = True
+        if untrusted:
+            findings.append(
+                task_audit_finding(
+                    "cross_spec_dependency_untrusted",
+                    task,
+                    f"{task.task_id} references an unavailable or unfinished spec dependency: {item.get('reference')}.",
+                    "warn",
+                    reference=str(item.get("reference") or ""),
+                    dependency=item,
+                )
+            )
+    return findings
+
+
+def task_state_findings(task: Task, by_id: dict[str, Task], spec_path: Path) -> list[dict[str, Any]]:
+    findings: list[dict[str, Any]] = []
+    if task.complete and (task_has_pending_evidence(task) or task_has_unresolved_evidence(task)):
+        findings.append(
+            task_audit_finding(
+                "contradictory_completion_evidence",
+                task,
+                f"{task.task_id} is complete but evidence still reads as unresolved.",
+                "error",
+                task.evidence,
+            )
+        )
+    if not task.complete and not task_has_pending_evidence(task):
+        classification = "candidate_complete" if task.status in {"pending", "in_progress"} else "stale_open"
+        findings.append(
+            task_audit_finding(
+                classification,
+                task,
+                f"{task.task_id} is {task.status} but has recorded evidence.",
+                "info",
+                task.evidence,
+            )
+        )
+    if task.complete and task.evidence_mode in {"planner", "dry_run", "routing", "contract"}:
+        findings.append(
+            task_audit_finding(
+                "plan_only_completion",
+                task,
+                f"{task.task_id} is complete with {task.evidence_mode} evidence.",
+                "warn",
+                task.evidence,
+            )
+        )
+    if task.complete and task.evidence_mode == "blocked_output":
+        findings.append(
+            task_audit_finding(
+                "blocked_output",
+                task,
+                f"{task.task_id} is complete with blocked-output evidence.",
+                "warn",
+                task.evidence,
+            )
+        )
+    incomplete_children = [child_id for child_id in task.children if child_id in by_id and by_id[child_id].status not in {"complete", "follow_up", "no_op"}]
+    if task.complete and incomplete_children:
+        findings.append(
+            task_audit_finding(
+                "complete_parent_with_incomplete_children",
+                task,
+                f"{task.task_id} is complete but child tasks are not final: {', '.join(incomplete_children)}.",
+                "warn",
+                children=incomplete_children,
+            )
+        )
+    prose = f"{task.title} {task.acceptance} {task.evidence} {task.follow_up}".lower()
+    if task.status not in {"follow_up", "complete"} and re.search(r"\bfollow[- ]?up\b|\brouted?\b", prose):
+        findings.append(
+            task_audit_finding(
+                "follow_up_without_follow_up_state",
+                task,
+                f"{task.task_id} mentions follow-up or routing without follow_up state.",
+                "info",
+            )
+        )
+    if task.status == "follow_up" and not task.destination:
+        findings.append(task_audit_finding("metadata_missing", task, f"{task.task_id} is follow_up without Destination.", "warn", missing_field="Destination"))
+    if task.status == "review_needed" and not task.decision_owner:
+        findings.append(task_audit_finding("metadata_missing", task, f"{task.task_id} is review_needed without Decision owner.", "warn", missing_field="Decision owner"))
+    if task.status == "attention" and not (task.status_note or task.destination or task.evidence and not task_has_pending_evidence(task)):
+        findings.append(task_audit_finding("metadata_missing", task, f"{task.task_id} is attention without diagnostic evidence.", "warn", missing_field="Status"))
+    if task.status != "pending" and not task.complete and task_has_pending_evidence(task):
+        findings.append(
+            task_audit_finding(
+                "non_pending_marker_with_pending_evidence",
+                task,
+                f"{task.task_id} is {task.status} but evidence is pending.",
+                "warn",
+                task.evidence,
+            )
+        )
+    for warning in broad_task_warnings(task):
+        findings.append({**warning, "line": task.line, "status": task.status})
+    findings.extend(cross_spec_dependency_findings(task, spec_path))
+    return findings
+
+
+def task_state_audit(spec_path: Path, task_id: str | None = None) -> dict[str, Any]:
+    tasks = parse_tasks(spec_path / "tasks.md")
+    by_id = {task.task_id: task for task in tasks}
+    selected = [by_id[task_id]] if task_id and task_id in by_id else tasks
+    findings: list[dict[str, Any]] = []
+    if task_id and task_id not in by_id:
+        findings.append({"classification": "task_missing", "task_id": task_id, "severity": "error", "message": f"Task not found: {task_id}"})
+    for task in selected:
+        findings.extend(task_state_findings(task, by_id, spec_path))
+    by_classification: dict[str, int] = {}
+    for finding in findings:
+        key = str(finding.get("classification") or "unknown")
+        by_classification[key] = by_classification.get(key, 0) + 1
+    return {
+        "spec_path": str(spec_path.resolve()),
+        "task_id": task_id,
+        "status": "findings" if findings else "pass",
+        "findings": findings,
+        "summary": {
+            "error": sum(1 for item in findings if item.get("severity") == "error"),
+            "warn": sum(1 for item in findings if item.get("severity") == "warn"),
+            "info": sum(1 for item in findings if item.get("severity") == "info"),
+            "by_classification": by_classification,
+        },
+    }
+
+
+def task_audit_diagnostics(spec_path: Path, task_id: str | None = None) -> list[dict[str, Any]]:
+    payload = task_state_audit(spec_path, task_id)
+    diagnostics = []
+    for finding in payload["findings"]:
+        diagnostics.append(
+            diagnostic(
+                str(finding.get("severity") or "info"),
+                f"TASK_AUDIT_{str(finding.get('classification') or 'finding').upper()}",
+                spec_path / "tasks.md",
+                str(finding.get("message") or ""),
+                finding.get("line"),
+                "completion",
+                "tasks",
+            )
+        )
+    return diagnostics
 
 
 def durable_source_refs(requirements_path: Path) -> list[str]:
@@ -2455,6 +2664,174 @@ def task_details(spec_path: Path, task_id: str) -> dict[str, Any]:
     }
 
 
+def task_block_bounds(lines: list[str], task_id: str) -> tuple[int, int, re.Match[str]] | None:
+    starts: list[tuple[int, re.Match[str]]] = []
+    for idx, line in enumerate(lines):
+        match = TASK_LINE_RE.match(line)
+        if match:
+            starts.append((idx, match))
+    for pos, (start, match) in enumerate(starts):
+        if match.group(2) != task_id:
+            continue
+        end = starts[pos + 1][0] if pos + 1 < len(starts) else len(lines)
+        for idx in range(start + 1, end):
+            if lines[idx].startswith("## "):
+                end = idx
+                break
+        return start, end, match
+    return None
+
+
+def task_field_line_index(lines: list[str], start: int, end: int, field: str) -> int | None:
+    pattern = re.compile(rf"^\s+-\s+{re.escape(field)}:\s*")
+    for idx in range(start + 1, end):
+        if pattern.match(lines[idx]):
+            return idx
+    return None
+
+
+def set_task_field(lines: list[str], start: int, end: int, field: str, value: str) -> int:
+    line_idx = task_field_line_index(lines, start, end, field)
+    if line_idx is not None:
+        indent = re.match(r"^(\s*)", lines[line_idx]).group(1)
+        lines[line_idx] = f"{indent}- {field}: {value}"
+        remove_end = line_idx + 1
+        while remove_end < end:
+            line = lines[remove_end]
+            if TASK_LINE_RE.match(line) or re.match(r"^\s+-\s+\w[\w -]+:\s*", line) or line.startswith("## "):
+                break
+            if line.startswith(f"{indent}  ") or line.startswith("    ") or line.startswith("  "):
+                remove_end += 1
+                continue
+            break
+        if remove_end > line_idx + 1:
+            del lines[line_idx + 1 : remove_end]
+            return end - (remove_end - line_idx - 1)
+        return end
+    insert_at = end
+    lines.insert(insert_at, f"  - {field}: {value}")
+    return end + 1
+
+
+def validate_task_state_update(
+    spec_path: Path,
+    task: Task,
+    state: str,
+    evidence: str,
+    dry_run: bool,
+    write_intent: bool,
+    evidence_mode: str | None,
+    destination: str | None,
+    decision_owner: str | None,
+    status_note: str | None,
+) -> list[dict[str, Any]]:
+    findings: list[dict[str, Any]] = []
+    if state not in TASK_STATE_MARKERS:
+        findings.append({"severity": "error", "code": "TASK_STATE_UNSUPPORTED", "message": f"Unsupported task state: {state}"})
+    if not (spec_path / "tasks.md").is_file() or "specs" not in spec_path.parts:
+        findings.append({"severity": "error", "code": "TASK_STATE_TARGET_INVALID", "message": "Task state updates are limited to active spec package tasks.md files."})
+    if spec_lifecycle(spec_status(spec_path)) == "archived":
+        findings.append({"severity": "error", "code": "TASK_STATE_ARCHIVED_SPEC", "message": "Task state updates reject archived spec packages."})
+    if not dry_run and not write_intent:
+        findings.append({"severity": "error", "code": "TASK_STATE_WRITE_INTENT_MISSING", "message": "Non-dry-run updates require explicit write_intent."})
+    if not evidence.strip():
+        findings.append({"severity": "error", "code": "TASK_STATE_EVIDENCE_MISSING", "message": "Task state updates require evidence text."})
+    if state == "complete":
+        if UNRESOLVED_EVIDENCE_RE.search(evidence):
+            findings.append({"severity": "error", "code": "TASK_STATE_UNSAFE_COMPLETION_EVIDENCE", "message": "Completion evidence contains unresolved language."})
+        mode = evidence_mode or task.evidence_mode
+        if mode and not evidence_mode_allows_completion(task, mode):
+            findings.append({"severity": "error", "code": "TASK_STATE_EVIDENCE_MODE_NOT_COMPLETABLE", "message": f"{mode} evidence cannot complete this task acceptance."})
+    if state == "follow_up" and not destination:
+        findings.append({"severity": "error", "code": "TASK_STATE_DESTINATION_REQUIRED", "message": "follow_up state requires Destination metadata."})
+    if state == "review_needed" and not decision_owner:
+        findings.append({"severity": "error", "code": "TASK_STATE_DECISION_OWNER_REQUIRED", "message": "review_needed state requires Decision owner metadata."})
+    if state == "attention" and not (status_note or destination):
+        findings.append({"severity": "error", "code": "TASK_STATE_DIAGNOSTIC_REQUIRED", "message": "attention state requires Status or Destination metadata."})
+    return findings
+
+
+def set_task_state(
+    spec_path: Path,
+    task_id: str,
+    state: str,
+    evidence: str,
+    status_note: str | None = None,
+    dry_run: bool = True,
+    write_intent: bool = False,
+    evidence_mode: str | None = None,
+    destination: str | None = None,
+    decision_owner: str | None = None,
+) -> dict[str, Any]:
+    tasks_path = spec_path / "tasks.md"
+    lines = read_text(tasks_path).splitlines() if tasks_path.exists() else []
+    bounds = task_block_bounds(lines, task_id)
+    tasks = parse_tasks(tasks_path)
+    by_id = {task.task_id: task for task in tasks}
+    task = by_id.get(task_id)
+    if bounds is None or task is None:
+        return {
+            "spec_path": str(spec_path.resolve()),
+            "task_id": task_id,
+            "dry_run": dry_run,
+            "status": "rejected",
+            "validation": {"valid": False, "findings": [{"severity": "error", "code": "TASK_NOT_FOUND", "message": f"Task not found: {task_id}"}]},
+        }
+    findings = validate_task_state_update(spec_path, task, state, evidence, dry_run, write_intent, evidence_mode, destination, decision_owner, status_note)
+    if findings:
+        return {
+            "spec_path": str(spec_path.resolve()),
+            "task_id": task_id,
+            "dry_run": dry_run,
+            "status": "rejected",
+            "request": {"state": state, "evidence_mode": evidence_mode, "write_intent": write_intent},
+            "validation": {"valid": False, "findings": findings},
+        }
+
+    start, end, match = bounds
+    before = "\n".join(lines[start:end])
+    marker = TASK_STATE_MARKERS[state]
+    lines[start] = re.sub(r"\[[^\]]+\]", f"[{marker}]", lines[start], count=1)
+    end = set_task_field(lines, start, end, "Evidence", evidence)
+    if status_note is not None:
+        end = set_task_field(lines, start, end, "Status", status_note)
+    if evidence_mode is not None:
+        end = set_task_field(lines, start, end, "Evidence mode", evidence_mode)
+    if destination is not None:
+        end = set_task_field(lines, start, end, "Destination", destination)
+    if decision_owner is not None:
+        end = set_task_field(lines, start, end, "Decision owner", decision_owner)
+    after = "\n".join(lines[start:end])
+    changed_fields = ["marker", "Evidence"]
+    if status_note is not None:
+        changed_fields.append("Status")
+    if evidence_mode is not None:
+        changed_fields.append("Evidence mode")
+    if destination is not None:
+        changed_fields.append("Destination")
+    if decision_owner is not None:
+        changed_fields.append("Decision owner")
+    if not dry_run:
+        tasks_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return {
+        "spec_path": str(spec_path.resolve()),
+        "task_id": task_id,
+        "dry_run": dry_run,
+        "status": "preview" if dry_run else "updated",
+        "request": {
+            "tool": "set_task_state",
+            "task_id": task_id,
+            "target_state": state,
+            "evidence_mode": evidence_mode,
+            "write_intent": write_intent,
+        },
+        "validation": {"valid": True, "findings": []},
+        "changed_fields": changed_fields,
+        "line_range": {"start": start + 1, "end": end},
+        "patch_summary": {"before": before, "after": after},
+    }
+
+
 def task_verified(task: Task, by_id: dict[str, Task] | None = None) -> bool:
     if task.verified:
         return True
@@ -2793,6 +3170,7 @@ def run_hook(
             if tasks_path.exists():
                 affected_specs.append(str(spec))
                 diagnostics.extend(lint_doc(tasks_path, "tasks"))
+                diagnostics.extend(task_audit_diagnostics(spec))
     elif hook_name == "template-changed":
         for changed in changed_files:
             path = (root / changed).resolve()
@@ -2802,6 +3180,7 @@ def run_hook(
         for spec in affected:
             affected_specs.append(str(spec))
             diagnostics.extend(check_implementation_task_complete(spec, task_id, changed_files, root))
+            diagnostics.extend(task_audit_diagnostics(spec, task_id))
     elif hook_name == "verification-updated":
         for spec in affected:
             affected_specs.append(str(spec))
@@ -2810,14 +3189,20 @@ def run_hook(
         for spec in affected:
             affected_specs.append(str(spec))
             diagnostics.extend(check_spec_resumed(spec))
+            diagnostics.extend(task_audit_diagnostics(spec))
     elif hook_name == "spec-close-check":
         for spec in affected:
             affected_specs.append(str(spec))
             diagnostics.extend(check_spec_close_hook(spec))
+    elif hook_name == "set-task-state":
+        for spec in affected:
+            affected_specs.append(str(spec))
+            diagnostics.extend(task_audit_diagnostics(spec, task_id))
     elif hook_name == "agent-slice-start":
         for spec in affected:
             affected_specs.append(str(spec))
             diagnostics.extend(check_agent_slice_start(spec, task_id))
+            diagnostics.extend(check_existing_in_progress_tasks(spec, task_id))
     elif hook_name == "agent-response-check":
         for spec in affected:
             affected_specs.append(str(spec))
@@ -3050,6 +3435,26 @@ def check_agent_slice_start(spec_path: Path, task_id: str | None) -> list[dict[s
     diagnostics: list[dict[str, Any]] = []
     for gap in context.get("gaps", []):
         diagnostics.append(diagnostic(gap["severity"], gap["code"], spec_path, gap["message"], lifecycle_gate="agent", waivable=gap["severity"] != "error"))
+    return diagnostics
+
+
+def check_existing_in_progress_tasks(spec_path: Path, selected_task_id: str | None) -> list[dict[str, Any]]:
+    tasks_path = spec_path / "tasks.md"
+    diagnostics: list[dict[str, Any]] = []
+    for task in parse_tasks(tasks_path):
+        if task.status != "in_progress" or task.task_id == selected_task_id:
+            continue
+        diagnostics.append(
+            diagnostic(
+                "info",
+                "TASK_IN_PROGRESS_EXISTS",
+                tasks_path,
+                f"{task.task_id} is already in progress in this spec.",
+                task.line,
+                "agent",
+                "tasks",
+            )
+        )
     return diagnostics
 
 
@@ -3414,6 +3819,22 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     details.add_argument("spec_path", type=Path)
     details.add_argument("--task-id", required=True)
 
+    state_audit = sub.add_parser("task-state-audit", help="Audit task state and evidence consistency.")
+    state_audit.add_argument("spec_path", type=Path)
+    state_audit.add_argument("--task-id")
+
+    set_state = sub.add_parser("set-task-state", help="Preview or write a guarded task state update.")
+    set_state.add_argument("spec_path", type=Path)
+    set_state.add_argument("--task-id", required=True)
+    set_state.add_argument("--state", required=True)
+    set_state.add_argument("--evidence", required=True)
+    set_state.add_argument("--status-note")
+    set_state.add_argument("--evidence-mode")
+    set_state.add_argument("--destination")
+    set_state.add_argument("--decision-owner")
+    set_state.add_argument("--write", action="store_true")
+    set_state.add_argument("--write-intent", action="store_true")
+
     preflight = sub.add_parser("active-spec-preflight", help="Return active spec, next task, required context, and validation commands.")
     preflight.add_argument("repo_root", type=Path, nargs="?", default=Path.cwd())
     preflight.add_argument("--spec-path", type=Path)
@@ -3495,6 +3916,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
             "verification-updated",
             "spec-resumed",
             "spec-close-check",
+            "set-task-state",
             "agent-slice-start",
             "agent-response-check",
             "review-packet-dispatch",
@@ -3529,6 +3951,21 @@ def main(argv: list[str] | None = None) -> int:
         payload = task_list(args.spec_path.resolve(), include_subtasks=not args.no_subtasks, status=args.status)
     elif args.command == "task-details":
         payload = task_details(args.spec_path.resolve(), args.task_id)
+    elif args.command == "task-state-audit":
+        payload = task_state_audit(args.spec_path.resolve(), args.task_id)
+    elif args.command == "set-task-state":
+        payload = set_task_state(
+            args.spec_path.resolve(),
+            args.task_id,
+            args.state,
+            args.evidence,
+            status_note=args.status_note,
+            dry_run=not args.write,
+            write_intent=args.write_intent,
+            evidence_mode=args.evidence_mode,
+            destination=args.destination,
+            decision_owner=args.decision_owner,
+        )
     elif args.command == "active-spec-preflight":
         payload = active_spec_preflight(args.repo_root, args.spec_path, args.task_id, args.docs_root)
     elif args.command == "validation-plan":

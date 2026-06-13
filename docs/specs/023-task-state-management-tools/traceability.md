@@ -55,5 +55,5 @@ last_reviewed: 2026-06-13
 
 | Decision ID | Blocks | Affected Requirements | Affected Tasks | Resolution Needed |
 | --- | --- | --- | --- | --- |
-| D001 | Final marker contract | Requirement 1, Requirement 6 | T001, T002, T009 | Accept or adjust `[>]`, `[-]`, `[?]`, `[!]`, and `[/]` before parser implementation. |
-| D002 | Write-tool exposure | Requirement 3 | T007, T008 | Decide whether MCP `set_task_state` is enabled in v1 after preview-first spec-only guardrails are implemented. |
+| D001 | Final marker contract | Requirement 1, Requirement 6 | T001, T002, T009 | Resolved in phase 1: `[>]`, `[-]`, `[?]`, `[!]`, and `[/]` accepted as preferred markers with legacy compatibility. |
+| D002 | Write-tool exposure | Requirement 3 | T007, T008 | Resolved in phase 3: MCP `set_task_state` enabled with preview-first, spec-only, task-block-scoped guardrails and explicit write intent. |

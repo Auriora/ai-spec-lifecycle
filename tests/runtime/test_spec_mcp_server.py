@@ -159,6 +159,8 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertIn("mcp_audit", tools)
         self.assertIn("list_tasks", tools)
         self.assertIn("task_details", tools)
+        self.assertIn("task_state_audit", tools)
+        self.assertIn("set_task_state", tools)
         structured = responses[1]["result"]["structuredContent"]
         self.assertIn("specs", structured)
         self.assertEqual(".", structured["repo_root"])
@@ -181,6 +183,8 @@ class SpecMcpServerTests(unittest.TestCase):
             "next_task",
             "list_tasks",
             "task_details",
+            "task_state_audit",
+            "set_task_state",
             "closure_check",
             "reconcile_spec",
             "promotion_plan",
@@ -399,6 +403,44 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertEqual("T001", details["task_id"])
         self.assertEqual("Requirement 1", details["traceability_context"]["traceability_row"]["Requirements"])
         self.assertTrue(details["dependency_state"]["ready"])
+
+    def test_task_state_audit_and_update_tools_return_structured_output(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / ".git").mkdir()
+            write_current_spec(repo)
+            responses = self.send(
+                rpc(
+                    1,
+                    "tools/call",
+                    {
+                        "name": "task_state_audit",
+                        "arguments": {"repo_root": str(repo), "spec_path": "001-current"},
+                    },
+                ),
+                rpc(
+                    2,
+                    "tools/call",
+                    {
+                        "name": "set_task_state",
+                        "arguments": {
+                            "repo_root": str(repo),
+                            "spec_path": "001-current",
+                            "task_id": "T001",
+                            "state": "complete",
+                            "evidence": "Unit tests passed.",
+                        },
+                    },
+                ),
+                root=repo,
+            )
+
+        audit = responses[0]["result"]["structuredContent"]
+        update = responses[1]["result"]["structuredContent"]
+        self.assertIn("summary", audit)
+        self.assertEqual("preview", update["status"])
+        self.assertTrue(update["dry_run"])
+        self.assertTrue(update["validation"]["valid"])
 
     def test_validation_plan_tool_matches_runtime_payload(self):
         with tempfile.TemporaryDirectory() as tmp:
