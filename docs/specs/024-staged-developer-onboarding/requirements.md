@@ -298,11 +298,21 @@ or skipping proof.
    agent failure or repeated correction, THEN the system SHALL route an
    instruction-as-code candidate to `AGENTS.md`, durable docs, backlog, roadmap,
    or a follow-up spec without mutating those surfaces automatically.
-9. WHEN learning-loop evidence is recorded, THEN the system SHALL classify the
+9. IF Agent Workbench or an equivalent repository-evidence provider is
+   available, THEN readiness MAY include provider freshness, capability level,
+   evidence kinds, diagnostics status, validation-plan status, skipped evidence,
+   and residual risk; lack of such a provider SHALL NOT block readiness when
+   other repo evidence is sufficient.
+10. THE SYSTEM SHALL treat Workbench-style provider output as routing and
+   evidence input only, not as proof, lifecycle authority, task completion,
+   durable-doc promotion, spec closure, or governance override.
+11. WHEN learning-loop evidence is recorded, THEN the system SHALL classify the
    failure using a stable taxonomy such as misunderstood requirement, missed
    durable source, stale spec followed, insufficient validation, over-broad
    implementation, invented behavior, environment failure, context noise,
-   unsafe tool use, review missed defect, or documentation promotion missed.
+   unsafe tool use, review missed defect, documentation promotion missed,
+   routing evidence treated as proof, or planned validation treated as completed
+   validation.
 
 ## Correctness Properties
 

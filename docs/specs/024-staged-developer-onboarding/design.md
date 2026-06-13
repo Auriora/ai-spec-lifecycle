@@ -143,11 +143,18 @@ The payload should include:
   security/privacy review flag;
 - closure impact: durable docs affected, backlog/roadmap/issue routing, and
   release-note expectation.
+- optional repo evidence: provider name, repository freshness, confidence,
+  capability level, evidence kinds, diagnostics status, validation-plan status,
+  skipped evidence, and residual risk when Agent Workbench or an equivalent
+  provider is available.
 
 Context-budget rules should prefer `task_context` and traceability lookups over
 full-document loading, avoid archived specs unless historical audit or
 restoration is requested, and refresh context at phase boundaries. The contract
 should name missing fields as gaps instead of padding them with generic advice.
+Repo-evidence providers are advisory. Their outputs can guide context and
+validation planning, but they must not decide completion, promotion, closure, or
+governance outcomes.
 
 ## Low-Level Design
 

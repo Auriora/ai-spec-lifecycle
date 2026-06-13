@@ -6,6 +6,11 @@ Use `durable-document-contract.md` for the shared human/agent contract that
 durable docs should satisfy: current-state labeling, source-of-truth metadata,
 validation, change rules, AGENTS.md boundaries, and anti-patterns.
 
+Use `agent-workbench-evidence-boundary.md` when Agent Workbench, or an
+equivalent repository-evidence provider, contributes freshness, context,
+diagnostics, impact, or validation-plan evidence. Treat that evidence as input
+to review, not as proof or lifecycle authority.
+
 ## Durable Doc Roles
 
 | Durable doc role | Purpose |
@@ -71,6 +76,22 @@ Before closing a spec, route or dispose of every lasting element:
 | API and contract expert | API/schema compatibility, versioning, examples, error semantics, and contract source of truth. |
 | Data and integration architecture expert | Data lineage, integration boundaries, source/target contracts, data quality, idempotency, and replay behavior. |
 | Product and requirements analyst | Requirement clarity, scope, non-goals, acceptance criteria, and user-visible outcomes. |
+
+## Review Packet Stances
+
+Use these stances when building or requesting review packets. Runtime packet
+IDs may map some names to existing generic or implementation review packets
+until a dedicated selector exists.
+
+| Review stance | Reviewer stance |
+| --- | --- |
+| `requirements_design_trace` | Check whether planned work satisfies durable requirements, acceptance criteria, design intent, and open decisions. |
+| `implementation_diff` | Check whether the changed files are correct, minimal, maintainable, and consistent with local patterns. |
+| `test_adequacy` | Check whether tests, checks, or manual verification prove the acceptance criteria without hiding false-positive risk. |
+| `security_privacy` | Check whether the change can leak data, escalate access, corrupt state, or weaken auditability. |
+| `docs_promotion` | Check whether accepted behavior and lasting decisions moved into the right durable docs without duplicating temporary spec text. |
+| `closure_risk` | Check whether anything still only exists in the active spec, evidence is sufficient, and deferred work is routed. |
+| `workbench_evidence_quality` | Check whether Workbench-style evidence was fresh, capable, scoped, and not over-interpreted as validation proof or lifecycle authority. |
 
 ## Document Class Review Matrix
 

@@ -39,6 +39,11 @@ repository.
 - `not_applicable` means the changed-file/task context does not require the
   check. `not_run` means the check applies but has not executed or is blocked by
   missing inputs, credentials, tools, or environment.
+- Validation state is explicit: `planned` means a proof method is recommended
+  but not yet executed; `executed` means a supplied task, verification, or
+  review evidence reference proves it ran; `blocked` means it applies but cannot
+  run; `inspection_only` means the proof is manual review or inspection rather
+  than command output; `not_applicable` means the proof does not apply.
 - If `task_id` is supplied, the planner uses existing traceability lookup and
   reports gaps instead of failing.
 - If a task, verification artifact, or traceability row names expected
@@ -46,9 +51,11 @@ repository.
 
 ```json
 {
+  "status": "planned",
   "automated_proof": [],
   "manual_proof": [],
   "evidence_location": [],
+  "executed_evidence": [],
   "residual_risk_if_not_run": [],
   "false_positive_risk": [],
   "false_negative_risk": [],
@@ -58,6 +65,8 @@ repository.
 
 Missing contract fields are returned as gaps. Generic fallback proof text is not
 used because it would let agents treat weak validation as planned validation.
+The planner must not set `status` to `executed` unless evidence is supplied by
+task, verification, or review context.
 
 Documentation-only changes should normally require `scan`, relevant package
 lint, archive or prompt checks when those documents changed, and

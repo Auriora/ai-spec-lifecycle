@@ -405,6 +405,16 @@ The MCP tools and CLI helpers are advisory runtime surfaces, not replacements
 for lifecycle judgment. Use their structured results as evidence for
 reconciliation, task selection, lint findings, and closure blockers.
 
+Agent Workbench, when present, is also an optional repository-evidence provider,
+not a lifecycle authority or required dependency. Use Workbench-style evidence
+for repo freshness, context routing, impact analysis, diagnostics, and
+validation-plan suggestions only when available and relevant. Do not let
+Workbench decide completion, durable-doc promotion, spec closure, governance
+overrides, or human approval points. When Workbench or an equivalent tool
+affects confidence, record freshness, capability, skipped evidence, diagnostics
+status, validation-plan status, and residual risk using
+`references/agent-workbench-evidence-boundary.md`.
+
 `agent-backed-tool` is also advisory and read-only. The current runner
 implementation is a disabled stub: it builds the bounded review packet and
 returns a structured `unavailable` result instead of invoking a secondary

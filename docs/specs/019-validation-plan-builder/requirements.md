@@ -83,6 +83,14 @@ coverage reasons, so that I can understand why each check is required.
    verification, or changed-file context.
 7. IF a validation contract field cannot be derived, THEN the plan SHALL report
    the missing field as a planning gap instead of inventing proof criteria.
+8. THE SYSTEM SHALL distinguish planned validation, executed validation,
+   blocked validation, inspection-only validation, and not-applicable
+   validation, so that a recommended proof method is not presented as completed
+   evidence.
+9. IF executed validation evidence is supplied through task, verification, or
+   review context, THEN the plan SHALL preserve the evidence reference;
+   otherwise it SHALL classify the proof as planned, needed, blocked,
+   inspection-only, or not applicable.
 
 ### Requirement 3: MCP Surface
 
@@ -105,6 +113,7 @@ through MCP, so that validation guidance is available before edits or closure.
 - CP-004: `not_applicable` checks SHALL not be counted as missing validation.
 - CP-005: Validation contract fields SHALL be derived from repository, spec, or
   task evidence and SHALL not be fabricated from generic defaults.
+- CP-006: Planned validation SHALL not count as executed validation evidence.
 
 ## Success Criteria
 
