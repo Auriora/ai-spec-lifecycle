@@ -161,6 +161,16 @@ Task expectations:
 
 - Use stable task IDs (`T001`, `T002`, ...) and subtask IDs (`T004.1`) when useful.
 - Keep checkboxes as the visible status marker.
+- Use task markers consistently:
+  - `[ ]`: pending or not started.
+  - `[~]`: in progress. Update the selected task to `[~]` before starting work.
+  - `[Y]`: partial. Use when part of the task was completed but acceptance
+    criteria are not fully met; record what remains in `Evidence:` or a status note.
+  - `[*]`: on hold or stuck. Use when the task is intentionally paused by a
+    developer or agent; record the blocker or decision needed.
+  - `[e]`: error. Use when execution failed because of a problem that needs
+    intervention; record the error and next diagnostic step.
+  - `[x]`: complete and verified.
 - Use `[P]` only for tasks that can run in parallel without dependency or file conflicts.
 - Add `Depends on:`, `Files:`, `Acceptance:`, and `Evidence:` bullets where they materially improve execution or reconciliation.
 - Check off subtasks as work progresses, but check off the parent task only when acceptance criteria are met and evidence is recorded.
@@ -419,12 +429,16 @@ Before editing, state:
 
 Task status rules:
 
+- Before starting an implementation slice, mark the selected task or subtask
+  `[~]` and preserve any dependency, acceptance, and evidence fields.
 - Check off a parent task only when its acceptance criteria are met.
 - Prefer passing tests before marking implementation tasks `done`.
 - If automated tests do not apply, record the alternate verification method and residual risk.
 - If validation could not run, do not hide that. Check off the parent task only when it can be defensibly verified without that validation.
 - Update task `Evidence` when a task is checked complete; evidence can be a command, test result, review note, screenshot, log, commit, or manual verification note.
-- Mark a task or subtask as skipped only with a documented reason (intentional deferral, superseded, or out of scope).
+- Mark a task or subtask as partial, on hold, error, or skipped only with a
+  documented reason (remaining work, blocker, error needing intervention,
+  intentional deferral, superseded, or out of scope).
 
 ## Verify
 

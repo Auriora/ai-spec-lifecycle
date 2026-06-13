@@ -101,7 +101,16 @@ FRONTMATTER_RE = re.compile(r"\A---\n(.*?)\n---\n", re.DOTALL)
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$", re.MULTILINE)
 TASK_RE = re.compile(r"\bT\d{3}(?:\.\d+)?\b")
 REQ_RE = re.compile(r"\bRequirement\s+\d+[A-Z]?\b", re.IGNORECASE)
-TASK_LINE_RE = re.compile(r"^\s*-\s+\[([ xX])\]\s+(T\d{3}(?:\.\d+)?)\b(.*)$")
+TASK_STATUS_MARKERS = {
+    " ": "pending",
+    "x": "complete",
+    "~": "in_progress",
+    "y": "partial",
+    "*": "on_hold",
+    "e": "error",
+}
+RUNNABLE_TASK_STATUSES = {"pending", "in_progress", "partial"}
+TASK_LINE_RE = re.compile(r"^\s*-\s+\[([ xX~Yy*eE])\]\s+(T\d{3}(?:\.\d+)?)\b(.*)$")
 COMMIT_RE = re.compile(r"^[0-9a-f]{7,40}$", re.IGNORECASE)
 ARCHIVE_STATUSES = {"retained", "removed", "superseded"}
 ARCHIVE_ACTIONS = {"retained-as-history", "removed-after-index", "archived", "removed", "superseded"}
@@ -122,6 +131,8 @@ SYNC_EVIDENCE_PATHS = {
 class Task:
     task_id: str
     title: str
+    marker: str
+    status: str
     complete: bool
     block: str
     depends_on: list[str]
@@ -361,11 +372,19 @@ def spec_summary(spec_path: Path) -> dict[str, Any]:
             "complete": len([task for task in tasks if task.complete]),
             "verified": len([task for task in tasks if task_verified(task, by_id)]),
             "incomplete": len([task for task in tasks if not task.complete]),
+            "by_status": task_status_counts(tasks),
         },
         "open_decisions": open_decisions,
         "durable_source_references": durable_refs,
         "health": health_summary(spec_path),
     }
+
+
+def task_status_counts(tasks: list[Task]) -> dict[str, int]:
+    counts = {status: 0 for status in TASK_STATUS_MARKERS.values()}
+    for task in tasks:
+        counts[task.status] = counts.get(task.status, 0) + 1
+    return counts
 
 
 def durable_source_refs(requirements_path: Path) -> list[str]:
@@ -1454,11 +1473,16 @@ def parse_tasks_from_text(text: str) -> list[Task]:
                 break
         block_lines = lines[start:end]
         block = "\n".join(block_lines).strip()
+        raw_marker = match.group(1)
+        marker = raw_marker.lower()
+        status = TASK_STATUS_MARKERS[marker]
         tasks.append(
             Task(
                 task_id=match.group(2),
                 title=match.group(3).strip(),
-                complete=match.group(1).lower() == "x",
+                marker=raw_marker,
+                status=status,
+                complete=status == "complete",
                 block=block,
                 depends_on=field_task_ids(block, "Depends on"),
                 files=field_refs(block, "Files"),
@@ -1505,6 +1529,9 @@ def next_task(spec_path: Path) -> dict[str, Any]:
     blocked: list[dict[str, Any]] = []
     for task in tasks:
         if task.complete:
+            continue
+        if task.status not in RUNNABLE_TASK_STATUSES:
+            blocked.append({"task_id": task.task_id, "blockers": [{"reason": f"task status is {task.status}"}]})
             continue
         blockers = []
         for dep_id in task.depends_on:
@@ -1747,6 +1774,8 @@ def task_payload(task: Task) -> dict[str, Any]:
         "task_id": task.task_id,
         "title": task.title,
         "line": task.line,
+        "marker": task.marker,
+        "status": task.status,
         "complete": task.complete,
         "verified": task.verified,
         "depends_on": task.depends_on,
@@ -2402,14 +2431,19 @@ def reconcile_spec(spec_path: Path) -> dict[str, Any]:
                 )
             )
         elif not task.complete:
+            action = "Continue with dependency-safe task selection."
+            if task.status == "on_hold":
+                action = "Resolve or reclassify the hold before selecting this task."
+            elif task.status == "error":
+                action = "Intervene on the recorded error before selecting this task."
             findings.append(
                 reconciliation_finding(
                     "code incomplete",
                     "info",
-                    f"{task.task_id} is still incomplete.",
+                    f"{task.task_id} is {task.status}.",
                     "TASK_INCOMPLETE",
                     str(spec_path / "tasks.md"),
-                    recommended_action="Continue with dependency-safe task selection.",
+                    recommended_action=action,
                 )
             )
 

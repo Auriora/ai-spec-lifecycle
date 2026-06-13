@@ -170,7 +170,11 @@ current command surface and hook modes.
   non-implementable.
 - Prefer independently testable user-story slices over broad task batches.
 - Map tests and validation back to requirement IDs, acceptance criteria, success criteria, or task IDs where practical.
-- Update task status only when the task's completion criteria are satisfied.
+- Update the selected task to `[~]` before starting implementation so resumed
+  sessions can see what is in progress.
+- Update task status only when the recorded marker matches the actual state:
+  `[ ]` pending, `[~]` in progress, `[Y]` partial, `[*]` on hold or stuck,
+  `[e]` error needing intervention, and `[x]` complete.
 - Prefer passing tests before marking implementation tasks `done`.
 - Record task evidence before marking a task `done`.
 - If a task is not testable, blocked from local validation, or verified by inspection or documentation review instead of automated tests, record the verification method and residual risk.

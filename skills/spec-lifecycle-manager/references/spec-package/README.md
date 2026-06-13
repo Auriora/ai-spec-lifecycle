@@ -115,7 +115,15 @@ Requirements use EARS (Easy Approach to Requirements Syntax) keywords:
 
 Use checkboxes as the visible task status:
 
-- `- [ ] T001 ...`: not complete yet.
+- `- [ ] T001 ...`: pending or not started.
+- `- [~] T001 ...`: in progress. Mark the selected task this way before
+  starting work.
+- `- [Y] T001 ...`: partial. Some work is complete, but acceptance criteria are
+  not fully met.
+- `- [*] T001 ...`: on hold or stuck. A developer or agent must resolve the
+  blocker before normal execution resumes.
+- `- [e] T001 ...`: error. Completion failed because of a problem that needs
+  intervention.
 - `- [x] T001 ...`: complete and verified.
 - `- [ ] T001 ...` with `Status: skipped - reason`: intentionally deferred,
   superseded, or out of scope.
@@ -127,7 +135,9 @@ agent choose the next safe slice or verify completion.
 Check off subtasks as work progresses, but check off the parent task only after
 its acceptance criteria are met and evidence is recorded. Evidence can be a
 command, test result, review note, screenshot, log, commit, or manual
-verification note.
+verification note. Partial, on-hold, error, and skipped states should include
+the remaining work, blocker, error, or deferral reason in `Evidence:` or a
+`Status:` note.
 
 Tasks are an execution index, not a standalone specification. Before
 implementing a task, agents should review the relevant `requirements.md`,

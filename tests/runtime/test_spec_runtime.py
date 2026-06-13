@@ -814,6 +814,84 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertIsNone(payload["selected"])
         self.assertEqual("No runnable incomplete task found.", payload["message"])
 
+    def test_parse_tasks_reports_extended_task_status_markers(self):
+        text = "\n".join(
+            [
+                "# Tasks",
+                "",
+                "- [ ] T001 Pending.",
+                "- [~] T002 In progress.",
+                "- [Y] T003 Partial.",
+                "- [*] T004 On hold.",
+                "- [e] T005 Error.",
+                "- [x] T006 Complete.",
+            ]
+        )
+
+        tasks = spec_runtime.parse_tasks_from_text(text)
+        statuses = {task.task_id: task.status for task in tasks}
+
+        self.assertEqual(
+            {
+                "T001": "pending",
+                "T002": "in_progress",
+                "T003": "partial",
+                "T004": "on_hold",
+                "T005": "error",
+                "T006": "complete",
+            },
+            statuses,
+        )
+        self.assertTrue(next(task for task in tasks if task.task_id == "T006").complete)
+        self.assertFalse(next(task for task in tasks if task.task_id == "T003").complete)
+
+    def test_next_task_skips_held_and_error_tasks_but_selects_partial(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+            (spec / "tasks.md").write_text(
+                "\n".join(
+                    [
+                        "---",
+                        "title: Tasks",
+                        "doc_type: spec",
+                        "artifact_type: tasks",
+                        "status: draft",
+                        "owner: platform",
+                        "last_reviewed: 2026-06-05",
+                        "---",
+                        "",
+                        "# Tasks",
+                        "",
+                        "- [*] T001 Waiting on owner.",
+                        "  - Depends on: none",
+                        "  - Files: `docs/reference/current.md`",
+                        "  - Acceptance: Done.",
+                        "  - Evidence: Status: on hold - owner decision needed.",
+                        "",
+                        "- [e] T002 Failed migration.",
+                        "  - Depends on: none",
+                        "  - Files: `docs/reference/current.md`",
+                        "  - Acceptance: Done.",
+                        "  - Evidence: Status: error - missing credential.",
+                        "",
+                        "- [Y] T003 Finish remaining docs.",
+                        "  - Depends on: none",
+                        "  - Files: `docs/reference/current.md`",
+                        "  - Acceptance: Done.",
+                        "  - Evidence: Partial local docs update complete.",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            payload = spec_runtime.next_task(spec)
+
+        self.assertEqual("T003", payload["selected"]["task_id"])
+        self.assertEqual("partial", payload["selected"]["status"])
+        blocked = {item["task_id"]: item["blockers"][0]["reason"] for item in payload["blocked"]}
+        self.assertEqual("task status is on_hold", blocked["T001"])
+        self.assertEqual("task status is error", blocked["T002"])
+
     def test_closure_check_reports_completed_spec_ready(self):
         with tempfile.TemporaryDirectory() as tmp:
             spec = write_complete_spec(Path(tmp))

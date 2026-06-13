@@ -118,6 +118,9 @@ The following alignment changes were selected:
 
 - **Checklist-first structure**: Kiro-style checkboxes and nested subtasks are
   the default shape
+- **Task state markers**: `[ ]` pending, `[~]` in progress, `[Y]` partial,
+  `[*]` on hold or stuck, `[e]` error needing intervention, and `[x]`
+  complete and verified
 - **Phased grouping + dependency graph**: Phases provide visual structure;
   `Depends on` notes or a DAG provide execution order when needed
 - **Evidence and acceptance**: Parent tasks carry acceptance criteria and

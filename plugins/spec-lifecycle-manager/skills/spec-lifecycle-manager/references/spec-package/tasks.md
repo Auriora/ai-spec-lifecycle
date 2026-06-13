@@ -16,6 +16,15 @@ Use a Kiro-style checklist as the primary structure. Keep tasks readable and
 execution-focused; add metadata only where it helps an agent choose the next
 safe slice, verify completion, or promote durable docs.
 
+Task markers:
+
+- `[ ]`: pending or not started.
+- `[~]`: in progress. Mark the selected task this way before starting work.
+- `[Y]`: partial. Some work is complete, but acceptance criteria are not fully met.
+- `[*]`: on hold or stuck. A developer or agent must resolve the blocker.
+- `[e]`: error. Completion failed because of a problem that needs intervention.
+- `[x]`: complete and verified.
+
 ## Task Dependency Graph
 
 ```text
@@ -177,6 +186,8 @@ T010 -> T011
   coding. Do not use vague task wording as a reason to skip implementation when
   the package contains enough detail elsewhere.
 - Keep the checkbox/subtask structure as the default task shape.
+- Before starting an implementation slice, mark the selected task or subtask as
+  `[~]`.
 - Use `[P]` only when a task can run in parallel without dependency or file
   conflicts.
 - Use `Depends on:` for tasks whose execution order is not obvious from the
@@ -198,6 +209,14 @@ T010 -> T011
 - Mark skipped work with an explicit reason, for example:
   `- [ ] T009 ...`
   `  - Status: skipped - superseded by T014.`
+- Mark partial, held, or errored work with the relevant marker and reason, for
+  example:
+  `- [Y] T009 ...`
+  `  - Status: partial - local validation passed; production evidence remains.`
+  `- [*] T010 ...`
+  `  - Status: on hold - waiting for owner decision on API shape.`
+  `- [e] T011 ...`
+  `  - Status: error - migration command fails with missing credential.`
 
 ## Related Artifacts
 

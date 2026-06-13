@@ -97,6 +97,17 @@ class TraceabilityLookupTests(unittest.TestCase):
         self.assertIn("skills/spec-lifecycle-manager/SKILL.md", payload["durable_targets"])
         self.assertEqual([], [gap for gap in payload["gaps"] if gap["severity"] == "error"])
 
+    def test_task_lookup_accepts_extended_task_status_markers(self):
+        (self.spec / "tasks.md").write_text(
+            "# Tasks\n\n- [~] T012 Add MCP context.\n  - Evidence: In progress.\n",
+            encoding="utf-8",
+        )
+
+        payload = traceability_lookup.task_lookup(self.spec, "T012")
+
+        self.assertIn("- [~] T012 Add MCP context.", payload["task"]["source"])
+        self.assertEqual([], [gap for gap in payload["gaps"] if gap["severity"] == "error"])
+
     def test_reverse_requirement_lookup(self):
         payload = traceability_lookup.reverse_lookup(self.spec, "requirement", "Requirement 6A")
 

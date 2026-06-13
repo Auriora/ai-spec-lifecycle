@@ -321,6 +321,13 @@ Lifecycle prompts are convenience aliases:
 
 The hook runner supports advisory and blocking profiles.
 
+Task parsing recognizes the checklist markers used by `tasks.md`: `[ ]`
+pending, `[~]` in progress, `[Y]` partial, `[*]` on hold or stuck, `[e]`
+error needing intervention, and `[x]` complete. Only `[x]` is treated as
+complete. `next-task` can select pending, in-progress, and partial tasks when
+dependencies are satisfied; on-hold and error tasks are reported as blocked
+until their marker is changed.
+
 | Hook | Purpose |
 | --- | --- |
 | `spec-file-changed` | Return hierarchy-aware authoring guidance for affected spec packages from changed files. |
