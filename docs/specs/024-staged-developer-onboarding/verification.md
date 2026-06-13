@@ -66,6 +66,12 @@ last_reviewed: 2026-06-13
 | 2026-06-13 | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py scan .`. | Pass | Active spec inventory reported 2 active specs, both passing, and skill-fallback template authority after phase 2. |
 | 2026-06-13 | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py prompts .`. | Pass | Prompt definitions returned 0 diagnostics with `developer-start` included. |
 | 2026-06-13 | `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'`. | Pass | 138 tests passed after lifecycle guide, bootstrap plan, MCP, and prompt updates. |
+| 2026-06-13 | Focused runtime and MCP tests for stage readiness. | Pass | 7 focused tests passed for ready coverage, property and acceptance gaps, downstream review needs, CLI JSON output, MCP tool listing, and MCP `stage_readiness` calls. |
+| 2026-06-13 | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py stage-readiness docs/specs/024-staged-developer-onboarding`. | Pass | Stage readiness reported 0 blocking, context, downstream, property, and acceptance gaps after traceability coverage was updated. |
+| 2026-06-13 | MCP `lint_doc` for `docs/reference/spec-lifecycle-runtime.md`, `docs/design/spec-lifecycle-management.md`, and `docs/reference/document-routing-and-expert-review-matrix.md`. | Pass | Durable docs returned 0 diagnostics after lifecycle guide, bootstrap, stage readiness, Agent Readiness Contract, coverage, directive, numbered-finding, learning-loop, and recovery guidance updates. |
+| 2026-06-13 | MCP `lint_spec_package` for `docs/specs/024-staged-developer-onboarding`. | Pass | Phase 3 task evidence, traceability coverage, and durable-doc promotion produced 0 diagnostics. |
+| 2026-06-13 | Final validation for T010. | Pass | MCP spec lint, MCP prompts, MCP archive index, CLI scan, CLI prompts, CLI archive-index, package-contract, full unit suite, and `git diff --check` passed; full unit suite ran 141 tests. |
+| 2026-06-13 | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py sync-guard .`. | Advisory | Source-to-Codex-bundle and source-to-Claude-bundle parity passed; installed Codex cache drift remains and requires reinstall/reload if current-session MCP or hooks must use the refreshed package. |
 
 ## Closure Requirements
 

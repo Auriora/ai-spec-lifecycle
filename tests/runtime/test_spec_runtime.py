@@ -225,7 +225,7 @@ def write_complete_spec(repo: Path, status: str = "draft") -> Path:
                 "",
                 "### Task Context",
                 "",
-                "Return requirement, design, verification, and durable target links.",
+                "Return requirement, design, verification, durable target links, and CP-001 coverage.",
                 "",
                 "## Operational Considerations",
                 "",
@@ -262,6 +262,12 @@ def write_complete_spec(repo: Path, status: str = "draft") -> Path:
                 "| Design Section | Requirements | Tasks | Implementation Targets | Verification |",
                 "|----------------|--------------|-------|------------------------|--------------|",
                 "| `design.md#task-context` | Requirement 1 | T001 | `docs/reference/current.md` | `verification.md#quality-gates` |",
+                "",
+                "## Correctness Property Mapping",
+                "",
+                "| Property | Design | Covered by tasks | Verification |",
+                "|----------|--------|------------------|--------------|",
+                "| CP-001 | `design.md#task-context` | T001 | `verification.md#quality-gates` |",
                 "",
                 "## Open Decision Impact",
                 "",
@@ -796,6 +802,82 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertEqual("001-current", payload["spec_readiness"][0]["spec_id"])
         self.assertEqual("implement", payload["spec_readiness"][0]["stage"])
         self.assertEqual("T001", payload["spec_readiness"][0]["next_task"]["task_id"])
+
+    def test_stage_readiness_reports_ready_coverage(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            spec = write_complete_spec(repo)
+            tasks_path = spec / "tasks.md"
+            tasks_path.write_text(
+                tasks_path.read_text(encoding="utf-8")
+                .replace("- [x] T001 Do work.", "- [ ] T001 Do work.")
+                .replace("  - Evidence: Done.", "  - Evidence: Pending."),
+                encoding="utf-8",
+            )
+            payload = spec_runtime.stage_readiness(spec)
+
+        self.assertEqual("implement", payload["stage"])
+        self.assertTrue(payload["ready_for_agent"])
+        self.assertTrue(payload["ready_to_implement"])
+        self.assertEqual(0, payload["summary"]["blocking_gap_count"])
+        self.assertEqual(0, payload["summary"]["property_gap_count"])
+        self.assertEqual(0, payload["summary"]["acceptance_gap_count"])
+        self.assertEqual("CP-001", payload["coverage"]["properties"][0]["id"])
+        self.assertTrue(payload["coverage"]["properties"][0]["design_mapped"])
+
+    def test_stage_readiness_reports_property_and_acceptance_gaps(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            spec = write_complete_spec(repo)
+            tasks_path = spec / "tasks.md"
+            tasks_path.write_text(
+                tasks_path.read_text(encoding="utf-8")
+                .replace("- [x] T001 Do work.", "- [ ] T001 Do work.")
+                .replace("  - Evidence: Done.", "  - Evidence: Pending."),
+                encoding="utf-8",
+            )
+            design_path = spec / "design.md"
+            design_path.write_text(design_path.read_text(encoding="utf-8").replace(" and CP-001 coverage", ""), encoding="utf-8")
+            traceability_path = spec / "traceability.md"
+            traceability_path.write_text(
+                traceability_path.read_text(encoding="utf-8")
+                .replace("| T001 | Requirement 1 | AC1 |", "| T001 | Requirement 1 | none |")
+                .replace("| Requirement 1 | AC1 |", "| Requirement 1 | none |")
+                .replace("| CP-001 | `design.md#task-context` | T001 | `verification.md#quality-gates` |", "| CP-001 | none | none | none |"),
+                encoding="utf-8",
+            )
+            payload = spec_runtime.stage_readiness(spec)
+
+        gap_codes = {gap["code"] for gap in payload["blocking_gaps"]}
+        self.assertFalse(payload["ready_to_implement"])
+        self.assertIn("PROPERTY_DESIGN_MAPPING_MISSING", gap_codes)
+        self.assertIn("PROPERTY_TASK_MAPPING_MISSING", gap_codes)
+        self.assertIn("PROPERTY_VERIFICATION_MAPPING_MISSING", gap_codes)
+        self.assertEqual(3, payload["summary"]["property_gap_count"])
+        self.assertEqual(1, payload["summary"]["acceptance_gap_count"])
+        self.assertEqual("requirement_covered_acceptance_unspecified", payload["coverage"]["acceptance_criteria"][0]["status"])
+
+    def test_stage_readiness_reports_downstream_review_needs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            spec = write_complete_spec(repo)
+            tasks_path = spec / "tasks.md"
+            tasks_path.write_text(
+                tasks_path.read_text(encoding="utf-8")
+                .replace("- [x] T001 Do work.", "- [ ] T001 Do work.")
+                .replace("  - Evidence: Done.", "  - Evidence: Pending."),
+                encoding="utf-8",
+            )
+            older = 1_700_000_000
+            newer = older + 100
+            for name in ["design.md", "tasks.md", "traceability.md", "verification.md"]:
+                os.utime(spec / name, (older, older))
+            os.utime(spec / "requirements.md", (newer, newer))
+            payload = spec_runtime.stage_readiness(spec)
+
+        self.assertFalse(payload["ready_to_implement"])
+        self.assertEqual(4, payload["summary"]["downstream_review_need_count"])
+        self.assertEqual({"requirements.md"}, {item["source"] for item in payload["downstream_review_needs"]})
 
     def test_bootstrap_plan_is_preview_only_for_near_blank_repo(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1678,6 +1760,7 @@ class SpecRuntimeTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
             (repo / ".git").mkdir()
+            spec = write_complete_spec(repo)
             guide = subprocess.run(
                 [str(SCRIPT), "lifecycle-guide", str(repo)],
                 check=True,
@@ -1690,12 +1773,19 @@ class SpecRuntimeTests(unittest.TestCase):
                 capture_output=True,
                 text=True,
             )
+            stage = subprocess.run(
+                [str(SCRIPT), "stage-readiness", str(spec)],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
 
         guide_payload = json.loads(guide.stdout)
         bootstrap_payload = json.loads(bootstrap.stdout)
-        self.assertEqual("blank", guide_payload["repo_classification"])
+        stage_payload = json.loads(stage.stdout)
+        self.assertEqual("active_specs", guide_payload["repo_classification"])
         self.assertEqual("preview", bootstrap_payload["mode"])
-        self.assertEqual([], bootstrap_payload["required_user_values"])
+        self.assertEqual("001-current", stage_payload["spec_id"])
 
     def test_prompt_definitions_are_discoverable_and_valid(self):
         payload = spec_runtime.load_prompt_definitions(ROOT)

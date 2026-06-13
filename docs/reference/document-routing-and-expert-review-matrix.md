@@ -45,6 +45,8 @@ Use only the roles relevant to the changed documents. A small local-only code ta
 | Backlog or roadmap | Developer process expert, systems architect | Product and requirements analyst, operations and SRE expert |
 | Review or audit report | QA and test strategy expert, relevant technical expert | Documentation architect, developer process expert |
 | Spec package | Developer process expert, software architect, QA and test strategy expert | Systems architect, documentation architect, operations and SRE expert |
+| Agent directive section | Developer process expert, documentation architect | Software architect, senior developer, security and compliance expert |
+| Learning-loop or recovery note | Developer process expert, senior developer | QA and test strategy expert, documentation architect |
 
 ## Whole-Package Review
 
@@ -72,6 +74,7 @@ Before spec closure, review the whole package for:
 | Problem, goals, non-goals | Requirements or backlog, depending on whether the behavior is accepted or still planned. |
 | Functional requirements | Requirements, API contracts, data-flow contracts, or reference docs. |
 | Acceptance criteria | Requirements, tests, runbooks, or QA references. |
+| Correctness properties | Design behavior, traceability matrices, tests, verification plans, or documented manual validation methods. |
 | User stories | Requirements, product notes, or backlog if not implemented. |
 | Design overview and components | Technical design or architecture docs. |
 | Data and contract impact | API contracts, data-flow docs, schema references, or integration guides. |
@@ -80,6 +83,20 @@ Before spec closure, review the whole package for:
 | Research decisions | ADRs, reference docs, reviews, or discarded when no longer useful. |
 | Quickstart validation | Runbooks, getting-started docs, or deployment validation docs. |
 | Tasks and checkpoints | Remain in the spec while active; close, archive, or remove after promotion. |
+| Agent directives | Durable project, pattern, runbook, architecture, or governance docs only when derived from repository evidence or user-confirmed principles. |
+| Numbered review findings | `docs/reviews/`, backlog, roadmap, issues, follow-up specs, or durable docs when accepted behavior changes. Preserve stable finding IDs and resolution/routing evidence. |
+| Learning-loop failures | Runbooks, troubleshooting notes, backlog, roadmap, follow-up specs, or durable docs depending on whether the reusable lesson is operational, process, design, or governance guidance. |
+
+Before implementation readiness, route coverage gaps explicitly:
+
+- missing property-to-design mapping -> design or traceability update;
+- missing property-to-task or verification mapping -> task, verification, or
+  traceability update;
+- missing acceptance-criteria coverage -> task, verification, QA reference, or
+  traceability update;
+- downstream review needs after requirements or design changes -> review the
+  dependent design, tasks, traceability, and verification artifacts before
+  implementation continues.
 
 ## Review Record Guidance
 
@@ -93,3 +110,8 @@ Review evidence should state:
 - whether follow-up blocks implementation, release, or spec closure.
 
 The review record can live in the spec package while implementation is active. Durable findings should be promoted to requirements, design, runbooks, ADRs, reference docs, backlog, or reviews as appropriate.
+
+Numbered findings should be append-only for identity: add new IDs for new
+findings, preserve old IDs, and record accepted, rejected, deferred, or
+human-decision dispositions. A finding is not implementation evidence until the
+accepted change has its own task, validation, and durable destination.

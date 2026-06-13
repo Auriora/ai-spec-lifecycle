@@ -64,6 +64,9 @@ Current fallback package files:
   become runbooks or getting-started docs.
 - `open-decisions.md`: optional unresolved decisions that block stable
   implementation.
+- `traceability.md`: optional bidirectional matrix for task, requirement,
+  acceptance-criteria, design, durable target, verification, open-decision, and
+  correctness-property coverage when task text alone is not enough.
 
 The core package files are required because their intent is required, not
 because every concern deserves its own file. A small package should embed
@@ -92,6 +95,59 @@ should not duplicate current `requirements.md`, `design.md`, or durable docs.
 When an active package contains `spec.md`, reconciliation should classify it as
 feature brief, migration input, or deprecated duplicate before implementation
 continues.
+
+## Staged Flow And Readiness
+
+The default flow is staged: discover repository context, write or update
+requirements, draft design, create traceable tasks, implement one coherent task
+slice, validate, promote accepted behavior to durable docs, and close the spec.
+Design-first work is allowed only as an explicit exception: record partial
+requirements and require a later requirements completion step before
+implementation readiness.
+
+First-run guidance starts with `lifecycle_guide` through MCP or the
+`lifecycle-guide` CLI command. It reports repository classification, docs
+readiness, template authority, available lifecycle tooling, active-spec
+readiness, bootstrap guidance, and next actions. When a repository is blank or
+near blank, `bootstrap_plan` previews minimal lifecycle docs and an optional
+first spec package. Bootstrap planning is preview-only and must not invent
+architecture, coding patterns, or agent directives for a repository that lacks
+evidence or user-confirmed principles.
+
+`stage_readiness` is the stage gate before implementation. It reports required
+artifact state, optional traceability and verification artifacts, downstream
+review needs, context-budget gaps, correctness-property mappings, acceptance
+criteria coverage, and Agent Readiness Contract status. Requirements changed
+after design or tasks, or design changed after tasks, should trigger downstream
+review rather than silent artifact rewriting.
+
+Correctness properties and acceptance criteria are part of readiness, not
+closure-only paperwork. Each stable correctness property should map to design
+behavior and at least one task plus automated or documented manual
+verification. Acceptance criteria should be mapped explicitly in
+`traceability.md` or equivalent task/verification evidence. Repositories do not
+need to add a new property-test dependency just to satisfy the lifecycle; use
+the project’s accepted test framework or documented manual verification when
+that is the right validation path.
+
+The Agent Readiness Contract is distinct from `ready_to_implement`. It gives a
+worker agent bounded context: selected task or requirement, likely affected
+files, out-of-scope files, must-read context, optional context, durable sources
+of truth, stale documents to avoid, permission boundaries, validation commands,
+review expectations, and closure impact. A package can be `ready_for_agent`
+while still not `ready_to_implement` if lead-agent work remains, such as
+traceability repair, downstream review, or durable-doc promotion planning.
+
+Context-budget discipline keeps implementation slices small. Prefer
+`task_context`, `traceability_lookup`, and `agent_readiness_packet` over loading
+every spec and durable document. Avoid archived specs unless doing a historical
+audit, and refresh context at phase boundaries: after requirements changes,
+after design changes, before implementation, and before closure.
+
+Optional repository-evidence providers such as Agent Workbench can contribute
+freshness, diagnostics, impact, and validation-plan signals. Their output is
+routing evidence only; it is not lifecycle authority, proof of task completion,
+durable-doc promotion, spec closure, or governance override.
 
 ## Durable Documentation Roles
 
@@ -197,11 +253,12 @@ skills/spec-lifecycle-manager/scripts/traceability_lookup.py
 ```
 
 The runtime provides JSON outputs for spec scanning, summary resources, linting,
-next-task selection, closure checks, prompt-definition validation,
-reconciliation, promotion planning, review-packet generation, review-result
-disposition validation, disabled agent-backed tool execution, and hook checks.
-These outputs are advisory runtime surfaces; they do not replace the skill,
-repository governance, or durable documentation.
+next-task selection, lifecycle guidance, bootstrap planning, stage readiness,
+closure checks, prompt-definition validation, reconciliation, promotion
+planning, review-packet generation, review-result disposition validation,
+disabled agent-backed tool execution, and hook checks. These outputs are
+advisory runtime surfaces; they do not replace the skill, repository
+governance, or durable documentation.
 
 Agent-backed tool execution starts with a disabled runner interface. The runtime
 builds bounded packets and returns structured `unavailable` output until an
@@ -235,6 +292,8 @@ current command surface and hook modes.
   non-implementable.
 - Prefer independently testable user-story slices over broad task batches.
 - Map tests and validation back to requirement IDs, acceptance criteria, success criteria, or task IDs where practical.
+- Preserve correctness-property IDs through requirements, design,
+  traceability, tasks, and verification where the spec defines them.
 - Update the selected task to `[~]` before starting implementation so resumed
   sessions can see what is in progress.
 - Update task status only when the recorded marker matches the actual state:
@@ -243,6 +302,9 @@ current command surface and hook modes.
 - Prefer passing tests before marking implementation tasks `done`.
 - Record task evidence before marking a task `done`.
 - If a task is not testable, blocked from local validation, or verified by inspection or documentation review instead of automated tests, record the verification method and residual risk.
+- Use numbered findings for reviews and audits that may become work. Preserve
+  the original finding ID, status, severity or impact, evidence, routing, and
+  resolution or deferral notes instead of renumbering older findings.
 
 ## Verification Rules
 
@@ -253,6 +315,17 @@ structure.
 
 Verification should map evidence back to task IDs, requirements, acceptance
 criteria, and success criteria where practical.
+
+Recovery evidence is part of verification. When a task fails, record the exact
+error and at least one meaningfully different recovery attempt before declaring
+a blocker. If recovery succeeds and the lesson is reusable, route it to a
+durable gotcha, runbook, troubleshooting note, backlog item, roadmap item, or
+follow-up spec. Learning-loop findings should classify the failure, for example
+misunderstood requirement, missed durable source, stale spec followed,
+insufficient validation, over-broad implementation, invented behavior,
+environment failure, context noise, unsafe tool use, review missed defect,
+documentation promotion missed, routing evidence treated as proof, or planned
+validation treated as completed validation.
 
 Before release or closure, classify ship or closure risk as low, medium, or
 high. Record blast radius, rollback path, required human review, release-note

@@ -231,6 +231,12 @@ def tool_definitions() -> list[dict[str, Any]]:
             },
         ),
         tool_schema(
+            "stage_readiness",
+            "Return staged artifact, coverage, downstream review, and agent-readiness status.",
+            SPEC_PATH_PROPERTIES,
+            ["spec_path"],
+        ),
+        tool_schema(
             "validation_plan",
             "Plan validation checks from changed files and optional task context.",
             {
@@ -422,6 +428,8 @@ def call_tool(name: str, arguments: dict[str, Any], default_root: Path) -> tuple
             bool_arg(arguments, "create_spec"),
             arguments.get("spec_slug"),
         ), root
+    if name == "stage_readiness":
+        return spec_runtime.stage_readiness(spec_path_arg(arguments, default_root)), root
     if name == "validation_plan":
         spec_path = spec_path_arg(arguments, default_root) if arguments.get("spec_path") or arguments.get("spec_id") else None
         changed_files = arguments.get("changed_files") or []

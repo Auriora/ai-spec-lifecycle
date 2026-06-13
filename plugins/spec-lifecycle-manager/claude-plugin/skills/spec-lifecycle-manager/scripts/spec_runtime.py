@@ -2184,6 +2184,271 @@ def spec_stage(spec: dict[str, Any], next_payload: dict[str, Any] | None = None)
     return "verify"
 
 
+def requirement_blocks(spec_path: Path) -> list[dict[str, Any]]:
+    path = spec_path / "requirements.md"
+    if not path.exists():
+        return []
+    lines = read_text(path).splitlines()
+    starts: list[tuple[int, str]] = []
+    for idx, line in enumerate(lines):
+        match = re.match(r"^###\s+(Requirement\s+[^:]+):?\s*(.*?)\s*$", line)
+        if match:
+            starts.append((idx, match.group(1).strip()))
+    blocks: list[dict[str, Any]] = []
+    for pos, (start, req_id) in enumerate(starts):
+        end = starts[pos + 1][0] if pos + 1 < len(starts) else len(lines)
+        for idx in range(start + 1, end):
+            if lines[idx].startswith("## ") and not lines[idx].startswith("### "):
+                end = idx
+                break
+        text = "\n".join(lines[start:end])
+        criteria: list[dict[str, str]] = []
+        in_acceptance = False
+        current_number: str | None = None
+        current_text: list[str] = []
+        for line in lines[start:end]:
+            if line.strip().lower() == "#### acceptance criteria":
+                in_acceptance = True
+                continue
+            if in_acceptance and line.startswith("#### "):
+                break
+            if not in_acceptance:
+                continue
+            item = re.match(r"^\s*(\d+)\.\s+(.*)$", line)
+            if item:
+                if current_number:
+                    criteria.append({"id": f"{req_id} AC{current_number}", "text": " ".join(current_text).strip()})
+                current_number = item.group(1)
+                current_text = [item.group(2).strip()]
+            elif current_number and line.strip():
+                current_text.append(line.strip())
+        if current_number:
+            criteria.append({"id": f"{req_id} AC{current_number}", "text": " ".join(current_text).strip()})
+        blocks.append({"id": req_id, "text": text, "acceptance_criteria": criteria})
+    return blocks
+
+
+def correctness_properties(spec_path: Path) -> list[dict[str, str]]:
+    path = spec_path / "requirements.md"
+    if not path.exists():
+        return []
+    lines = read_text(path).splitlines()
+    in_properties = False
+    properties: list[dict[str, str]] = []
+    for line in lines:
+        if line.strip().lower() == "## correctness properties":
+            in_properties = True
+            continue
+        if in_properties and line.startswith("## "):
+            break
+        if not in_properties:
+            continue
+        match = re.match(r"^\s*-\s*(CP-\d+):\s*(.+?)\s*$", line)
+        if match:
+            properties.append({"id": match.group(1), "text": match.group(2)})
+    return properties
+
+
+def traceability_table_rows(spec_path: Path, heading: str) -> list[dict[str, str]]:
+    rows, _ = markdown_table_after_heading(spec_path / "traceability.md", heading)
+    return rows
+
+
+def value_mentions_id(value: str, identifier: str) -> bool:
+    return bool(re.search(rf"(?<![A-Za-z0-9-]){re.escape(identifier)}(?![A-Za-z0-9-])", value, re.IGNORECASE))
+
+
+def requirement_aliases(requirement_id: str) -> list[str]:
+    aliases = [requirement_id]
+    match = re.match(r"Requirement\s+([A-Za-z0-9.]+)$", requirement_id, re.IGNORECASE)
+    if match:
+        aliases.append(f"R{match.group(1)}")
+    return aliases
+
+
+def stage_readiness(spec_path: Path) -> dict[str, Any]:
+    spec = spec_path.resolve()
+    inventory = artifact_inventory(spec)
+    summary = spec_summary(spec)
+    next_payload = next_task(spec) if (spec / "tasks.md").exists() else {"selected": None}
+    selected = next_payload.get("selected")
+    scan_spec = {
+        "artifacts": inventory,
+        "lifecycle": summary["lifecycle"],
+        "format": summary["format"],
+    }
+    stage = spec_stage(scan_spec, next_payload)
+    required_artifacts = ["requirements.md", "design.md", "tasks.md"]
+    recommended_artifacts = ["traceability.md", "verification.md"]
+    blocking_gaps: list[dict[str, Any]] = []
+    for artifact in required_artifacts:
+        if inventory.get(artifact) != "present":
+            blocking_gaps.append(
+                {
+                    "severity": "error",
+                    "code": "REQUIRED_ARTIFACT_MISSING",
+                    "artifact": artifact,
+                    "message": f"{artifact} is required before implementation readiness.",
+                }
+            )
+    optional_artifacts = [
+        {"artifact": artifact, "status": inventory.get(artifact, "missing"), "required": False}
+        for artifact in recommended_artifacts
+    ]
+
+    requirements = requirement_blocks(spec)
+    properties = correctness_properties(spec)
+    design_text = read_text(spec / "design.md") if (spec / "design.md").exists() else ""
+    task_text = read_text(spec / "tasks.md") if (spec / "tasks.md").exists() else ""
+    verification_text = read_text(spec / "verification.md") if (spec / "verification.md").exists() else ""
+    property_rows = traceability_table_rows(spec, "Correctness Property Mapping")
+    requirement_rows = traceability_table_rows(spec, "Requirement To Delivery Matrix")
+    task_rows = traceability_table_rows(spec, "Task To Context Matrix")
+
+    coverage_properties: list[dict[str, Any]] = []
+    for prop in properties:
+        prop_id = prop["id"]
+        rows = [row for row in property_rows if any(value_mentions_id(value, prop_id) for value in row.values())]
+        design_values = [row.get("Design", "") or row.get("Design Sections", "") for row in rows]
+        task_values = [row.get("Covered by tasks", "") or row.get("Tasks", "") for row in rows]
+        verification_values = [row.get("Verification", "") for row in rows]
+        design_mapped = value_mentions_id(design_text, prop_id) or any(strip_markdown_value(value).lower() not in {"", "none", "n/a"} for value in design_values)
+        task_mapped = value_mentions_id(task_text, prop_id) or any(strip_markdown_value(value).lower() not in {"", "none", "n/a"} for value in task_values)
+        verification_mapped = value_mentions_id(verification_text, prop_id) or any(strip_markdown_value(value).lower() not in {"", "none", "n/a"} for value in verification_values)
+        gaps: list[dict[str, str]] = []
+        if not design_mapped:
+            gaps.append({"code": "PROPERTY_DESIGN_MAPPING_MISSING", "message": f"{prop_id} is not mapped to design behavior."})
+        if not task_mapped:
+            gaps.append({"code": "PROPERTY_TASK_MAPPING_MISSING", "message": f"{prop_id} is not mapped to a task."})
+        if not verification_mapped:
+            gaps.append({"code": "PROPERTY_VERIFICATION_MAPPING_MISSING", "message": f"{prop_id} is not mapped to verification."})
+        for gap in gaps:
+            blocking_gaps.append({"severity": "error", "property": prop_id, **gap})
+        coverage_properties.append(
+            {
+                "id": prop_id,
+                "design_mapped": design_mapped,
+                "task_mapped": task_mapped,
+                "verification_mapped": verification_mapped,
+                "gaps": gaps,
+            }
+        )
+
+    coverage_acceptance: list[dict[str, Any]] = []
+    for req in requirements:
+        aliases = requirement_aliases(req["id"])
+        req_rows = [
+            row for row in requirement_rows + task_rows
+            if any(value_mentions_id(value, alias) for value in row.values() for alias in aliases)
+        ]
+        for criterion in req["acceptance_criteria"]:
+            ac_token = criterion["id"].rsplit(" ", 1)[-1]
+            explicit_rows = [
+                row for row in req_rows
+                if any(value_mentions_id(value, ac_token) or value_mentions_id(value, criterion["id"]) for value in row.values())
+            ]
+            if explicit_rows:
+                status = "covered"
+                gaps: list[dict[str, str]] = []
+            elif req_rows:
+                status = "requirement_covered_acceptance_unspecified"
+                gaps = [
+                    {
+                        "code": "ACCEPTANCE_CRITERION_EXPLICIT_MAPPING_MISSING",
+                        "message": f"{criterion['id']} is covered only through requirement-level traceability.",
+                    }
+                ]
+            else:
+                status = "gap"
+                gaps = [
+                    {
+                        "code": "ACCEPTANCE_CRITERION_COVERAGE_MISSING",
+                        "message": f"{criterion['id']} is not covered by task or verification traceability.",
+                    }
+                ]
+                blocking_gaps.append({"severity": "error", "acceptance_criterion": criterion["id"], **gaps[0]})
+            coverage_acceptance.append({"id": criterion["id"], "status": status, "gaps": gaps})
+
+    downstream_review_needs: list[dict[str, Any]] = []
+    artifact_paths = {name: spec / name for name in ["requirements.md", "design.md", "tasks.md", "traceability.md", "verification.md"]}
+    existing = {name: path for name, path in artifact_paths.items() if path.exists()}
+    if "requirements.md" in existing:
+        source_mtime = existing["requirements.md"].stat().st_mtime
+        for artifact in ["design.md", "tasks.md", "traceability.md", "verification.md"]:
+            path = existing.get(artifact)
+            if path and source_mtime > path.stat().st_mtime:
+                downstream_review_needs.append(
+                    {
+                        "source": "requirements.md",
+                        "target": artifact,
+                        "code": "DOWNSTREAM_REVIEW_NEEDED",
+                        "message": f"requirements.md is newer than {artifact}; review downstream artifact before implementation readiness.",
+                    }
+                )
+    if "design.md" in existing:
+        source_mtime = existing["design.md"].stat().st_mtime
+        for artifact in ["tasks.md", "traceability.md", "verification.md"]:
+            path = existing.get(artifact)
+            if path and source_mtime > path.stat().st_mtime:
+                downstream_review_needs.append(
+                    {
+                        "source": "design.md",
+                        "target": artifact,
+                        "code": "DOWNSTREAM_REVIEW_NEEDED",
+                        "message": f"design.md is newer than {artifact}; review downstream artifact before implementation readiness.",
+                    }
+                )
+
+    readiness = agent_readiness_packet(spec, selected["task_id"]) if selected else None
+    context_gaps = list(readiness.get("gaps", [])) if readiness else []
+    if inventory.get("traceability.md") != "present":
+        context_gaps.append(
+            {
+                "severity": "warn",
+                "code": "TRACEABILITY_CONTEXT_MISSING",
+                "message": "task_context and traceability_lookup cannot provide bounded context without traceability.md.",
+            }
+        )
+    ready_for_agent = bool(readiness) and readiness.get("status") == "ready" and not context_gaps
+    ready_to_implement = ready_for_agent and not blocking_gaps and not downstream_review_needs
+    return {
+        "spec_path": str(spec),
+        "spec_id": spec.name,
+        "stage": stage,
+        "ready_for_agent": ready_for_agent,
+        "ready_to_implement": ready_to_implement,
+        "selected_task": selected,
+        "required_artifacts": [
+            {"artifact": artifact, "status": inventory.get(artifact, "missing"), "required": True}
+            for artifact in required_artifacts
+        ],
+        "recommended_optional_artifacts": optional_artifacts,
+        "downstream_review_needs": downstream_review_needs,
+        "context_budget": {
+            "status": "ready" if not context_gaps else "gaps",
+            "preferred_context": ["task_context", "traceability_lookup", "agent_readiness_packet"],
+            "phase_boundary_refresh_points": ["after requirements changes", "after design changes", "before implementation", "before closure"],
+            "gaps": context_gaps,
+        },
+        "coverage": {
+            "properties": coverage_properties,
+            "acceptance_criteria": coverage_acceptance,
+        },
+        "agent_readiness_contract": {
+            "status": readiness.get("status") if readiness else "not_applicable",
+            "gaps": readiness.get("gaps", []) if readiness else [],
+        },
+        "blocking_gaps": blocking_gaps,
+        "summary": {
+            "blocking_gap_count": len(blocking_gaps),
+            "downstream_review_need_count": len(downstream_review_needs),
+            "context_gap_count": len(context_gaps),
+            "property_gap_count": sum(len(item["gaps"]) for item in coverage_properties),
+            "acceptance_gap_count": sum(len(item["gaps"]) for item in coverage_acceptance),
+        },
+    }
+
+
 def spec_readiness_items(repo_root: Path, scan: dict[str, Any]) -> list[dict[str, Any]]:
     items: list[dict[str, Any]] = []
     root = repo_root.resolve()
@@ -2194,6 +2459,7 @@ def spec_readiness_items(repo_root: Path, scan: dict[str, Any]) -> list[dict[str
         next_payload = next_task(spec_path) if (spec_path / "tasks.md").exists() else {"selected": None}
         selected = next_payload.get("selected")
         readiness = agent_readiness_packet(spec_path, selected["task_id"]) if selected else None
+        stage_payload = stage_readiness(spec_path)
         items.append(
             {
                 "spec_id": spec["spec_id"],
@@ -2205,6 +2471,11 @@ def spec_readiness_items(repo_root: Path, scan: dict[str, Any]) -> list[dict[str
                 "agent_readiness_contract": {
                     "status": readiness["status"] if readiness else "not_applicable",
                     "gaps": readiness["gaps"] if readiness else [],
+                },
+                "stage_readiness": {
+                    "ready_for_agent": stage_payload["ready_for_agent"],
+                    "ready_to_implement": stage_payload["ready_to_implement"],
+                    "summary": stage_payload["summary"],
                 },
                 "validation_commands": validation_commands_for_spec(spec_path, selected["task_id"] if selected else None),
             }
@@ -4622,6 +4893,9 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     bootstrap.add_argument("--create-spec", action="store_true")
     bootstrap.add_argument("--spec-slug")
 
+    stage = sub.add_parser("stage-readiness", help="Return staged artifact, coverage, and agent readiness status.")
+    stage.add_argument("spec_path", type=Path)
+
     validation = sub.add_parser("validation-plan", help="Plan validation checks from changed files and optional task context.")
     validation.add_argument("repo_root", type=Path, nargs="?", default=Path.cwd())
     validation.add_argument("--changed-files", nargs="*", default=[])
@@ -4759,6 +5033,8 @@ def main(argv: list[str] | None = None) -> int:
         payload = lifecycle_guide(args.repo_root, args.docs_root, args.mode)
     elif args.command == "bootstrap-plan":
         payload = bootstrap_plan(args.repo_root, args.docs_root, args.project_summary, args.create_spec, args.spec_slug)
+    elif args.command == "stage-readiness":
+        payload = stage_readiness(args.spec_path.resolve())
     elif args.command == "validation-plan":
         payload = validation_plan(args.repo_root, args.changed_files, args.spec_path, args.task_id, args.risk_level)
     elif args.command == "evidence-quality":

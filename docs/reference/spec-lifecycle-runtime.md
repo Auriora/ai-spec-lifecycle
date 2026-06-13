@@ -43,6 +43,9 @@ not available.
 | `task-state-audit` | Audit task state, evidence depth, metadata, parent/child consistency, broad-task shape, and cross-spec dependency trust. |
 | `set-task-state` | Preview or write a guarded task-state update scoped to one task block in an active spec package `tasks.md`; defaults to dry-run and requires explicit write intent for mutation. |
 | `active-spec-preflight` | Return the active spec, next task, readiness context, no-active context, guidance, and validation commands. |
+| `lifecycle-guide` | Return first-run repository classification, docs readiness, lifecycle tooling, active-spec readiness summaries, bootstrap recommendations, and next actions. |
+| `bootstrap-plan` | Preview minimal lifecycle docs/spec bootstrap writes for blank or near-blank repositories without mutating files. |
+| `stage-readiness` | Return staged artifact readiness, downstream review needs, context-budget gaps, correctness-property coverage, acceptance-criteria coverage, and Agent Readiness Contract status for one spec package. |
 | `validation-plan` | Plan read-only validation checks from changed files and optional spec/task context, including check applicability, validation state, and a validation contract. |
 | `evidence-quality` | Review task and verification evidence quality, classify evidence strength, and return advisory diagnostics without mutating files. |
 | `closure-risk-review` | Aggregate closure readiness, promotion, validation, evidence, follow-up, decision, live-doc risk, and recovery signals into an advisory low/medium/high closure risk payload. |
@@ -98,6 +101,9 @@ preview-first: it defaults to dry-run, requires explicit `write_intent` when
 
 - `scan_specs`
 - `active_spec_preflight`
+- `lifecycle_guide`
+- `bootstrap_plan`
+- `stage_readiness`
 - `validation_plan`
 - `evidence_quality_check`
 - `closure_risk_review`
@@ -129,14 +135,55 @@ in scan inventory but are excluded from active authoring lint. Set
 `include_archived_lint` to `true` only when intentionally auditing historical
 packages against the current templates.
 
-The server does not expose write tools. It does not create specs, edit task
-evidence, update durable docs, archive packages, remove files, or commit.
+Except for guarded `set_task_state`, the server does not expose write tools. It
+does not create specs, update durable docs, archive packages, remove files, or
+commit.
+
+`lifecycle_guide` is the first-run and resume entry point. It classifies the
+repository as `active_specs`, `closed_only`, `documented_no_specs`,
+`near_blank`, or `blank`; reports docs readiness, template authority, prompt
+and hook availability, active-spec readiness summaries, and next actions; and
+returns equivalent validation commands for direct CLI recovery.
+
+`bootstrap_plan` is preview-only. It reports the smallest useful lifecycle
+foundation for blank or near-blank repositories, including proposed docs paths,
+template sources, required user values such as project purpose, validation
+commands, assumptions, and deferred architecture or pattern-discovery work. It
+does not create files through MCP or CLI.
+
+`stage_readiness` reports whether a spec is ready for a worker agent and
+whether it is ready to implement. It checks required artifacts, optional
+traceability and verification artifacts, downstream review needs when
+requirements or design changed after dependent artifacts, context-budget gaps,
+correctness-property mappings to design/task/verification, and explicit
+acceptance-criteria coverage. Coverage gaps appear before implementation
+readiness so callers can repair traceability instead of discovering missing
+proof at closure.
 
 `active_spec_preflight`, `agent_readiness_packet`, and
 `no_active_spec_context` are deterministic workflow tools. They compose scan,
 next-task, traceability, durable-doc, closure-log, and archive-index context so
 agents can decide what to read before implementation. They do not invoke
 secondary agents and do not mutate files.
+
+The Agent Readiness Contract is separate from implementation readiness.
+`agent_readiness_packet` returns bounded task context for a selected task:
+required artifacts, linked requirements and acceptance criteria, design
+sections, verification expectations, durable targets, open decisions,
+validation commands, and guardrails. `stage_readiness` combines that compact
+contract with staged artifact and coverage checks. A payload can be
+`ready_for_agent` while `ready_to_implement` is false when downstream review or
+coverage gaps still need lead-agent repair.
+
+Context-budget rules favor the smallest complete context: use `task_context`,
+`traceability_lookup`, or `agent_readiness_packet` for the selected task before
+loading whole packages; avoid archived packages unless doing historical audit;
+refresh at phase boundaries after requirements changes, after design changes,
+before implementation, and before closure. Agent Workbench or equivalent
+repo-evidence providers may add freshness, diagnostics, impact, or validation
+planning signals, but they remain optional evidence inputs. They do not prove
+completion, decide lifecycle state, promote durable docs, close specs, or
+override governance.
 
 `validation_plan` is a read-only planning surface. It accepts:
 

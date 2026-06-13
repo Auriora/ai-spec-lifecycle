@@ -66,25 +66,25 @@ T009 -> T010
 
 ## Phase 3: Stage Readiness And Traceability Coverage
 
-- [ ] T008 Add stage readiness and coverage checks.
+- [x] T008 Add stage readiness and coverage checks.
   - Depends on: T005
   - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`, `skills/spec-lifecycle-manager/scripts/traceability_lookup.py`, `tests/runtime/`, `tests/traceability/`
   - Acceptance: Runtime reports stage readiness, downstream review needs, context-budget gaps, property-to-design mapping gaps, property-to-task/verification gaps, and acceptance-criteria coverage gaps before implementation readiness.
-  - Evidence: Pending.
+  - Evidence: Completed on 2026-06-13: added `stage_readiness` runtime output, `stage-readiness` CLI, and read-only MCP `stage_readiness`; focused runtime/MCP tests passed 7 tests, and `spec_runtime.py stage-readiness docs/specs/024-staged-developer-onboarding` reported 0 blocking, context, downstream, property, and acceptance gaps.
 
-- [ ] T009 Update runtime docs and design docs.
+- [x] T009 Update runtime docs and design docs.
   - Depends on: T007, T008
   - Files: `docs/reference/spec-lifecycle-runtime.md`, `docs/design/spec-lifecycle-management.md`, `docs/reference/document-routing-and-expert-review-matrix.md`
   - Acceptance: Durable docs explain lifecycle guide, bootstrap planning, staged flow, readiness output, Agent Readiness Contract, optional repo-evidence boundary, context-budget rules, properties-to-tests coverage, agent directives, numbered findings, learning-loop taxonomy, and validation/recovery behavior.
-  - Evidence: Pending.
+  - Evidence: Completed on 2026-06-13: updated the three durable docs named by T009 with staged developer onboarding behavior; MCP `lint_doc` on each doc and MCP `lint_spec_package` returned 0 diagnostics.
 
 ## Phase 4: Bundles, Tests, And Validation
 
-- [ ] T010 Sync plugin bundle and validate.
+- [x] T010 Sync plugin bundle and validate.
   - Depends on: T009
   - Files: `plugins/spec-lifecycle-manager/`, `tests/`
   - Acceptance: Bundled skill/plugin copy matches source where required; unit tests, prompt validation, runtime scan, archive index, and whitespace checks pass.
-  - Evidence: Pending.
+  - Evidence: Completed on 2026-06-13: synced source skill to both bundled plugin copies; MCP spec lint, MCP prompts, MCP archive index, CLI scan, CLI prompts, CLI archive-index, package-contract, full unit suite with 141 tests, and `git diff --check` passed. `sync-guard` reported source bundle parity in sync and installed cache drift as an install/reload advisory.
 
 ## Execution Notes
 

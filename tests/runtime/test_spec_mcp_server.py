@@ -151,6 +151,7 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertIn("active_spec_preflight", tools)
         self.assertIn("lifecycle_guide", tools)
         self.assertIn("bootstrap_plan", tools)
+        self.assertIn("stage_readiness", tools)
         self.assertIn("validation_plan", tools)
         self.assertIn("agent_readiness_packet", tools)
         self.assertIn("agent_backed_tool", tools)
@@ -214,6 +215,7 @@ class SpecMcpServerTests(unittest.TestCase):
         for name in [
             "agent_readiness_packet",
             "agent_backed_tool",
+            "stage_readiness",
             "spec_summary",
             "lint_spec_package",
             "next_task",
@@ -397,15 +399,19 @@ class SpecMcpServerTests(unittest.TestCase):
             responses = self.send(
                 rpc(1, "tools/call", {"name": "active_spec_preflight", "arguments": {"repo_root": str(repo)}}),
                 rpc(2, "tools/call", {"name": "agent_readiness_packet", "arguments": {"repo_root": str(repo), "spec_path": "001-current", "task_id": "T001"}}),
+                rpc(3, "tools/call", {"name": "stage_readiness", "arguments": {"repo_root": str(repo), "spec_path": "001-current"}}),
                 root=repo,
             )
 
         preflight = responses[0]["result"]["structuredContent"]
         readiness = responses[1]["result"]["structuredContent"]
+        stage = responses[2]["result"]["structuredContent"]
         self.assertEqual("ready", preflight["status"])
         self.assertEqual("001-current", preflight["selected_spec"]["spec_id"])
         self.assertEqual("docs/specs/001-current", preflight["selected_spec"]["path"])
         self.assertEqual("T001", readiness["task_id"])
+        self.assertEqual("001-current", stage["spec_id"])
+        self.assertIn("coverage", stage)
         self.assertIn("Requirement 1", {item["id"] for item in readiness["required_review"]["requirements"]})
 
     def test_task_query_tools_return_structured_output(self):
