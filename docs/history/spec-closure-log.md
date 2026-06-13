@@ -14,6 +14,35 @@ requires visible archived docs.
 
 ## Entries
 
+### 2026-06-13 - 021-closure-risk-review
+
+- **Spec:** `docs/specs/021-closure-risk-review/`
+- **Title:** Closure risk review
+- **Final spec commit:** `36d0135`
+- **Closure cleanup commit:** `pending`
+- **Closure action:** removed
+- **Closed by:** platform
+- **Durable docs updated:**
+  - `docs/reference/spec-lifecycle-runtime.md`
+  - `docs/backlog/README.md`
+  - `docs/roadmap/README.md`
+  - `skills/spec-lifecycle-manager/scripts/spec_runtime.py`
+  - `skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`
+  - `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/spec_runtime.py`
+  - `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`
+  - `plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/scripts/spec_runtime.py`
+  - `plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`
+  - `tests/runtime/test_spec_runtime.py`
+  - `tests/runtime/test_spec_mcp_server.py`
+- **Verification summary:** Full unit suite passed with 133 tests. Lifecycle
+  scan, spec lint, evidence-quality check, closure-check, closure-risk review,
+  archive-index validation, prompt validation, package-contract validation,
+  sync-guard after install, and `git diff --check` passed before removal.
+- **Residual risks:** Already-running MCP sessions may need reload to pick up
+  the refreshed closure-risk tool. Closure-risk output is advisory and human
+  judgment remains required for semantic closure decisions.
+- **Follow-up:** None.
+
 ### 2026-06-13 - 020-evidence-quality-check
 
 - **Spec:** `docs/specs/020-evidence-quality-check/`
