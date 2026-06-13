@@ -190,13 +190,24 @@ Task expectations:
 - Use task markers consistently:
   - `[ ]`: pending or not started.
   - `[~]`: in progress. Update the selected task to `[~]` before starting work.
-  - `[Y]`: partial. Use when part of the task was completed but acceptance
+  - `[/]`: partial. Use when part of the task was completed but acceptance
     criteria are not fully met; record what remains in `Evidence:` or a status note.
-  - `[*]`: on hold or stuck. Use when the task is intentionally paused by a
-    developer or agent; record the blocker or decision needed.
-  - `[e]`: error. Use when execution failed because of a problem that needs
-    intervention; record the error and next diagnostic step.
+  - `[>]`: follow-up or routed. Use when work is moved to another task, spec,
+    backlog item, issue, or owner; record `Destination:` and remaining work.
+  - `[-]`: no-op or deferred. Use when work is intentionally unnecessary,
+    raw-only, not applicable, superseded, or deferred from the current spec;
+    record the reason and evidence.
+  - `[?]`: review or decision needed. Use when the task awaits review,
+    sign-off, or a decision; record `Decision owner:` when known.
+  - `[!]`: attention needed. Use when execution failed, a blocker exists, or
+    intervention is required; record the diagnostic state and next step.
   - `[x]`: complete and verified.
+- Legacy markers remain readable during migration: `[Y]` maps to `partial`,
+  while `[*]` and `[e]` map to `attention` and preserve their legacy marker in
+  runtime payloads.
+- Use optional metadata fields when they clarify non-final states:
+  `Evidence mode:`, `Follow-up:`, `Destination:`, `Decision owner:`,
+  `Upstream specs:`, and `Downstream specs:`.
 - Use `[P]` only for tasks that can run in parallel without dependency or file conflicts.
 - Add `Depends on:`, `Files:`, `Acceptance:`, and `Evidence:` bullets where they materially improve execution or reconciliation.
 - Check off subtasks as work progresses, but check off the parent task only when acceptance criteria are met and evidence is recorded.

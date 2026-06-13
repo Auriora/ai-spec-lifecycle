@@ -403,11 +403,20 @@ Lifecycle prompts are convenience aliases:
 The hook runner supports advisory and blocking profiles.
 
 Task parsing recognizes the checklist markers used by `tasks.md`: `[ ]`
-pending, `[~]` in progress, `[Y]` partial, `[*]` on hold or stuck, `[e]`
-error needing intervention, and `[x]` complete. Only `[x]` is treated as
-complete. `next-task` can select pending, in-progress, and partial tasks when
-dependencies are satisfied; on-hold and error tasks are reported as blocked
-until their marker is changed.
+pending, `[~]` in progress, `[/]` partial, `[>]` follow-up or routed, `[-]`
+no-op or deferred, `[?]` review or decision needed, `[!]` attention needed, and
+`[x]` complete. Compatibility markers remain readable during migration: `[Y]`
+maps to `partial`, while `[*]` and `[e]` map to `attention` and preserve a
+`legacy_marker` payload value for consumers that need the old distinction. Only
+`[x]` is treated as complete. `next-task` can select pending, in-progress, and
+partial tasks when dependencies are satisfied; follow-up, no-op, review-needed,
+and attention tasks are reported as blocked until their marker is changed.
+
+Parsed task payloads include normalized state, the source marker,
+`legacy_marker` when applicable, parent and child task IDs, status notes, and
+the optional metadata fields used for routed work and evidence-depth tracking:
+`Evidence mode:`, `Follow-up:`, `Destination:`, `Decision owner:`,
+`Upstream specs:`, and `Downstream specs:`.
 
 | Hook | Purpose |
 | --- | --- |

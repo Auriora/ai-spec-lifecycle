@@ -99,13 +99,13 @@ class TraceabilityLookupTests(unittest.TestCase):
 
     def test_task_lookup_accepts_extended_task_status_markers(self):
         (self.spec / "tasks.md").write_text(
-            "# Tasks\n\n- [~] T012 Add MCP context.\n  - Evidence: In progress.\n",
+            "# Tasks\n\n- [?] T012 Add MCP context.\n  - Evidence: Review pending.\n",
             encoding="utf-8",
         )
 
         payload = traceability_lookup.task_lookup(self.spec, "T012")
 
-        self.assertIn("- [~] T012 Add MCP context.", payload["task"]["source"])
+        self.assertIn("- [?] T012 Add MCP context.", payload["task"]["source"])
         self.assertEqual([], [gap for gap in payload["gaps"] if gap["severity"] == "error"])
 
     def test_reverse_requirement_lookup(self):

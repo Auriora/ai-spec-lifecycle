@@ -20,7 +20,7 @@ TASK_RE = re.compile(r"\bT\d{3}(?:\.\d+)?\b")
 REQ_RE = re.compile(r"\bRequirement\s+\d+[A-Z]?\b", re.IGNORECASE)
 MD_PATH_RE = re.compile(r"`([^`]+\.md(?:#[^`]+)?)`|\[([^\]]+)\]\(([^)]+\.md(?:#[^)]+)?)\)")
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
-TASK_LINE_RE = re.compile(r"^\s*-\s+\[[ xX~Yy*eE]\]\s+(T\d{3}(?:\.\d+)?)\b.*$")
+TASK_LINE_RE = re.compile(r"^\s*-\s+\[[ xX~/>\-?!Yy*eE]\]\s+(T\d{3}(?:\.\d+)?)\b.*$")
 
 
 @dataclass

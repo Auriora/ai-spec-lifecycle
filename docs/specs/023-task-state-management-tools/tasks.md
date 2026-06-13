@@ -21,22 +21,22 @@ T008 -> T009
 
 ## Phase 1: Contract And Parser
 
-- [ ] T001 Finalize the symbolic task-state contract.
+- [x] T001 Finalize the symbolic task-state contract.
   - Files: `skills/spec-lifecycle-manager/SKILL.md`, `docs/reference/spec-lifecycle-runtime.md`
   - Acceptance: Preferred keyboard markers, compatibility markers, normalized states, and unresolved open decisions are documented.
-  - Evidence: Pending.
+  - Evidence: Preferred markers `[ ]`, `[~]`, `[/]`, `[>]`, `[-]`, `[?]`, `[!]`, and `[x]` documented in skill/runtime docs; legacy `[Y]`, `[*]`, and `[e]` compatibility documented with normalized state behavior.
 
-- [ ] T002 Update task parsing and payloads.
+- [x] T002 Update task parsing and payloads.
   - Depends on: T001
   - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`, `skills/spec-lifecycle-manager/scripts/traceability_lookup.py`
   - Acceptance: Runtime parses preferred symbolic markers and legacy markers, returns normalized state, legacy marker where applicable, subtask relationships, status notes, evidence mode, destination, decision owner, and upstream/downstream spec references.
-  - Evidence: Pending.
+  - Evidence: Parser and payloads updated in source and bundled plugin copies; `traceability_lookup.py` accepts the preferred marker set; focused parser and traceability tests pass.
 
-- [ ] T003 Add parser and summary tests.
+- [x] T003 Add parser and summary tests.
   - Depends on: T002
   - Files: `tests/runtime/test_spec_runtime.py`, `tests/traceability/test_traceability_lookup.py`
   - Acceptance: Tests cover preferred markers, legacy `[Y]` and `[e]`, parent/subtask status, metadata fields, and summary counts.
-  - Evidence: Pending.
+  - Evidence: `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'` passed with 112 tests; `git diff --check` passed.
 
 ## Phase 2: Task Query Tools
 

@@ -538,8 +538,8 @@ class SpecRuntimeTests(unittest.TestCase):
 
         self.assertEqual(0, payload["summary"]["error"])
         self.assertEqual(0, payload["summary"]["warn"])
-        self.assertEqual(19, payload["summary"]["total"])
-        self.assertEqual(19, payload["summary"]["removed"])
+        self.assertEqual(20, payload["summary"]["total"])
+        self.assertEqual(20, payload["summary"]["removed"])
         self.assertEqual(0, payload["summary"]["retained"])
         self.assertEqual(0, payload["summary"]["superseded"])
         self.assertEqual(0, payload["summary"]["legacy_gaps"])
@@ -562,6 +562,7 @@ class SpecRuntimeTests(unittest.TestCase):
             "016-commit-sync-guard",
             "017-npm-distribution-packaging",
             "018-mcp-ergonomics-observability",
+            "019-validation-plan-builder",
             "023-hierarchical-spec-authoring-hooks",
         }
         entries = {entry["spec_id"]: entry for entry in payload["entries"]}
@@ -1002,31 +1003,86 @@ class SpecRuntimeTests(unittest.TestCase):
                 "",
                 "- [ ] T001 Pending.",
                 "- [~] T002 In progress.",
-                "- [Y] T003 Partial.",
-                "- [*] T004 On hold.",
-                "- [e] T005 Error.",
-                "- [x] T006 Complete.",
+                "- [/] T003 Partial.",
+                "- [>] T004 Follow-up.",
+                "- [-] T005 No-op.",
+                "- [?] T006 Review.",
+                "- [!] T007 Attention.",
+                "- [Y] T008 Legacy partial.",
+                "- [*] T009 Legacy hold.",
+                "- [e] T010 Legacy error.",
+                "- [x] T011 Complete.",
             ]
         )
 
         tasks = spec_runtime.parse_tasks_from_text(text)
         statuses = {task.task_id: task.status for task in tasks}
+        legacy_markers = {task.task_id: task.legacy_marker for task in tasks if task.legacy_marker}
+        counts = spec_runtime.task_status_counts(tasks)
 
         self.assertEqual(
             {
                 "T001": "pending",
                 "T002": "in_progress",
                 "T003": "partial",
-                "T004": "on_hold",
-                "T005": "error",
-                "T006": "complete",
+                "T004": "follow_up",
+                "T005": "no_op",
+                "T006": "review_needed",
+                "T007": "attention",
+                "T008": "partial",
+                "T009": "attention",
+                "T010": "attention",
+                "T011": "complete",
             },
             statuses,
         )
-        self.assertTrue(next(task for task in tasks if task.task_id == "T006").complete)
+        self.assertEqual(1, counts["pending"])
+        self.assertEqual(1, counts["in_progress"])
+        self.assertEqual(2, counts["partial"])
+        self.assertEqual(1, counts["follow_up"])
+        self.assertEqual(1, counts["no_op"])
+        self.assertEqual(1, counts["review_needed"])
+        self.assertEqual(3, counts["attention"])
+        self.assertEqual(1, counts["complete"])
+        self.assertEqual({"T008": "partial", "T009": "on_hold", "T010": "error"}, legacy_markers)
+        self.assertTrue(next(task for task in tasks if task.task_id == "T011").complete)
         self.assertFalse(next(task for task in tasks if task.task_id == "T003").complete)
 
-    def test_next_task_skips_held_and_error_tasks_but_selects_partial(self):
+    def test_parse_tasks_reports_metadata_and_subtask_relationships(self):
+        text = "\n".join(
+            [
+                "# Tasks",
+                "",
+                "- [~] T001 Parent task.",
+                "  - Status: Waiting for fixture coverage.",
+                "  - Evidence mode: implementation",
+                "  - Follow-up: Route downstream docs.",
+                "  - Destination: `docs/backlog/README.md`",
+                "  - Decision owner: platform",
+                "  - Upstream specs: `docs/specs/020-evidence-quality-check`, T002",
+                "  - Downstream specs: `docs/specs/024-staged-developer-onboarding`",
+                "  - Evidence: Parser payload updated.",
+                "  - [ ] T001.1 Child task.",
+                "    - Evidence: Pending.",
+            ]
+        )
+
+        tasks = spec_runtime.parse_tasks_from_text(text)
+        parent = tasks[0]
+        child = tasks[1]
+        payload = spec_runtime.task_payload(parent)
+
+        self.assertEqual(["T001.1"], parent.children)
+        self.assertEqual("T001", child.parent_id)
+        self.assertEqual("Waiting for fixture coverage.", payload["status_note"])
+        self.assertEqual("implementation", payload["evidence_mode"])
+        self.assertEqual("Route downstream docs.", payload["follow_up"])
+        self.assertEqual("docs/backlog/README.md", payload["destination"])
+        self.assertEqual("platform", payload["decision_owner"])
+        self.assertEqual(["docs/specs/020-evidence-quality-check"], payload["upstream_specs"])
+        self.assertEqual(["docs/specs/024-staged-developer-onboarding"], payload["downstream_specs"])
+
+    def test_next_task_skips_non_runnable_states_but_selects_partial(self):
         with tempfile.TemporaryDirectory() as tmp:
             spec = write_complete_spec(Path(tmp))
             (spec / "tasks.md").write_text(
@@ -1043,19 +1099,19 @@ class SpecRuntimeTests(unittest.TestCase):
                         "",
                         "# Tasks",
                         "",
-                        "- [*] T001 Waiting on owner.",
+                        "- [>] T001 Waiting on owner.",
                         "  - Depends on: none",
                         "  - Files: `docs/reference/current.md`",
                         "  - Acceptance: Done.",
-                        "  - Evidence: Status: on hold - owner decision needed.",
+                        "  - Evidence: Status: routed - owner decision needed.",
                         "",
-                        "- [e] T002 Failed migration.",
+                        "- [!] T002 Failed migration.",
                         "  - Depends on: none",
                         "  - Files: `docs/reference/current.md`",
                         "  - Acceptance: Done.",
-                        "  - Evidence: Status: error - missing credential.",
+                        "  - Evidence: Status: attention - missing credential.",
                         "",
-                        "- [Y] T003 Finish remaining docs.",
+                        "- [/] T003 Finish remaining docs.",
                         "  - Depends on: none",
                         "  - Files: `docs/reference/current.md`",
                         "  - Acceptance: Done.",
@@ -1070,8 +1126,8 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertEqual("T003", payload["selected"]["task_id"])
         self.assertEqual("partial", payload["selected"]["status"])
         blocked = {item["task_id"]: item["blockers"][0]["reason"] for item in payload["blocked"]}
-        self.assertEqual("task status is on_hold", blocked["T001"])
-        self.assertEqual("task status is error", blocked["T002"])
+        self.assertEqual("task status is follow_up", blocked["T001"])
+        self.assertEqual("task status is attention", blocked["T002"])
 
     def test_closure_check_reports_completed_spec_ready(self):
         with tempfile.TemporaryDirectory() as tmp:

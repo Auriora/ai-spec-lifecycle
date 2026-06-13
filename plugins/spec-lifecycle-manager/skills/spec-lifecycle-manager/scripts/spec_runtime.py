@@ -14,7 +14,7 @@ import os
 import re
 import subprocess
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -105,12 +105,17 @@ TASK_STATUS_MARKERS = {
     " ": "pending",
     "x": "complete",
     "~": "in_progress",
+    "/": "partial",
     "y": "partial",
-    "*": "on_hold",
-    "e": "error",
+    ">": "follow_up",
+    "-": "no_op",
+    "?": "review_needed",
+    "!": "attention",
+    "*": "attention",
+    "e": "attention",
 }
 RUNNABLE_TASK_STATUSES = {"pending", "in_progress", "partial"}
-TASK_LINE_RE = re.compile(r"^\s*-\s+\[([ xX~Yy*eE])\]\s+(T\d{3}(?:\.\d+)?)\b(.*)$")
+TASK_LINE_RE = re.compile(r"^\s*-\s+\[([ xX~/>\-?!Yy*eE])\]\s+(T\d{3}(?:\.\d+)?)\b(.*)$")
 COMMIT_RE = re.compile(r"^[0-9a-f]{7,40}$", re.IGNORECASE)
 ARCHIVE_STATUSES = {"retained", "removed", "superseded"}
 ARCHIVE_ACTIONS = {"retained-as-history", "removed-after-index", "archived", "removed", "superseded"}
@@ -158,13 +163,23 @@ class Task:
     title: str
     marker: str
     status: str
+    legacy_marker: str | None
     complete: bool
     block: str
     depends_on: list[str]
     files: list[str]
     acceptance: str
     evidence: str
+    status_note: str
+    evidence_mode: str
+    follow_up: str
+    destination: str
+    decision_owner: str
+    upstream_specs: list[str]
+    downstream_specs: list[str]
+    parent_id: str | None
     line: int
+    children: list[str] = field(default_factory=list)
 
     @property
     def verified(self) -> bool:
@@ -1519,22 +1534,46 @@ def parse_tasks_from_text(text: str) -> list[Task]:
         raw_marker = match.group(1)
         marker = raw_marker.lower()
         status = TASK_STATUS_MARKERS[marker]
+        task_id = match.group(2)
         tasks.append(
             Task(
-                task_id=match.group(2),
+                task_id=task_id,
                 title=match.group(3).strip(),
                 marker=raw_marker,
                 status=status,
+                legacy_marker=legacy_task_marker(marker),
                 complete=status == "complete",
                 block=block,
                 depends_on=field_task_ids(block, "Depends on"),
                 files=field_refs(block, "Files"),
                 acceptance=field_value(block, "Acceptance"),
                 evidence=field_value(block, "Evidence"),
+                status_note=field_value(block, "Status"),
+                evidence_mode=field_value(block, "Evidence mode"),
+                follow_up=field_value(block, "Follow-up"),
+                destination=field_plain_ref(block, "Destination"),
+                decision_owner=field_value(block, "Decision owner"),
+                upstream_specs=field_refs(block, "Upstream specs"),
+                downstream_specs=field_refs(block, "Downstream specs"),
+                parent_id=task_id.split(".", 1)[0] if "." in task_id else None,
                 line=start + 1,
             )
         )
+    by_id = {task.task_id: task for task in tasks}
+    for task in tasks:
+        if task.parent_id and task.parent_id in by_id:
+            by_id[task.parent_id].children.append(task.task_id)
     return tasks
+
+
+def legacy_task_marker(marker: str) -> str | None:
+    if marker == "y":
+        return "partial"
+    if marker == "e":
+        return "error"
+    if marker == "*":
+        return "on_hold"
+    return None
 
 
 def field_value(block: str, field: str) -> str:
@@ -1564,6 +1603,14 @@ def field_refs(block: str, field: str) -> list[str]:
     value = field_value(block, field)
     refs = re.findall(r"`([^`]+)`", value)
     return refs if refs else [item.strip() for item in value.split(",") if item.strip()]
+
+
+def field_plain_ref(block: str, field: str) -> str:
+    value = field_value(block, field)
+    refs = re.findall(r"`([^`]+)`", value)
+    if len(refs) == 1 and value.strip() == f"`{refs[0]}`":
+        return refs[0]
+    return value
 
 
 def next_task(spec_path: Path) -> dict[str, Any]:
@@ -2176,12 +2223,22 @@ def task_payload(task: Task) -> dict[str, Any]:
         "line": task.line,
         "marker": task.marker,
         "status": task.status,
+        "legacy_marker": task.legacy_marker,
         "complete": task.complete,
         "verified": task.verified,
+        "parent_id": task.parent_id,
+        "children": task.children,
         "depends_on": task.depends_on,
         "files": task.files,
         "acceptance": task.acceptance,
         "evidence": task.evidence,
+        "status_note": task.status_note,
+        "evidence_mode": task.evidence_mode,
+        "follow_up": task.follow_up,
+        "destination": task.destination,
+        "decision_owner": task.decision_owner,
+        "upstream_specs": task.upstream_specs,
+        "downstream_specs": task.downstream_specs,
         "source": task.block,
     }
 
@@ -2832,10 +2889,14 @@ def reconcile_spec(spec_path: Path) -> dict[str, Any]:
             )
         elif not task.complete:
             action = "Continue with dependency-safe task selection."
-            if task.status == "on_hold":
-                action = "Resolve or reclassify the hold before selecting this task."
-            elif task.status == "error":
-                action = "Intervene on the recorded error before selecting this task."
+            if task.status == "follow_up":
+                action = "Inspect the routed destination before selecting this task."
+            elif task.status == "no_op":
+                action = "Confirm the no-op or deferral evidence before closure."
+            elif task.status == "review_needed":
+                action = "Resolve the recorded review or decision before selecting this task."
+            elif task.status == "attention":
+                action = "Intervene on the recorded blocker or diagnostic before selecting this task."
             findings.append(
                 reconciliation_finding(
                     "code incomplete",
