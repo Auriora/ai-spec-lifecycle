@@ -19,7 +19,7 @@ requires visible archived docs.
 - **Spec:** `docs/specs/020-evidence-quality-check/`
 - **Title:** Evidence quality check
 - **Final spec commit:** `ac93f24`
-- **Closure cleanup commit:** `pending`
+- **Closure cleanup commit:** `28a9cef`
 - **Closure action:** removed
 - **Closed by:** platform
 - **Durable docs updated:**
