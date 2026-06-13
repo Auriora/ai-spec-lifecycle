@@ -14,6 +14,34 @@ requires visible archived docs.
 
 ## Entries
 
+### 2026-06-13 - 023-task-state-management-tools
+
+- **Spec:** `docs/specs/023-task-state-management-tools/`
+- **Title:** Task state management tools
+- **Final spec commit:** `83c09ae`
+- **Closure cleanup commit:** `pending`
+- **Closure action:** removed
+- **Closed by:** platform
+- **Durable docs updated:**
+  - `docs/reference/spec-lifecycle-runtime.md`
+  - `skills/spec-lifecycle-manager/SKILL.md`
+  - `skills/spec-lifecycle-manager/references/spec-package/`
+  - `skills/spec-lifecycle-manager/scripts/spec_runtime.py`
+  - `skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`
+  - `skills/spec-lifecycle-manager/scripts/traceability_lookup.py`
+  - `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/`
+  - `plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/`
+  - `tests/runtime/test_spec_runtime.py`
+  - `tests/runtime/test_spec_mcp_server.py`
+  - `tests/traceability/test_traceability_lookup.py`
+- **Verification summary:** Full unit suite passed with 125 tests. Lifecycle
+  lint, task-state audit, closure-check, package-contract parity, prompt
+  validation, scan, archive-index validation, and `git diff --check` passed
+  before removal.
+- **Residual risks:** Already-running MCP sessions may need reload to pick up
+  the newly exposed task-state tools and updated guidance.
+- **Follow-up:** None.
+
 ### 2026-06-13 - 019-validation-plan-builder
 
 - **Spec:** `docs/specs/019-validation-plan-builder/`
