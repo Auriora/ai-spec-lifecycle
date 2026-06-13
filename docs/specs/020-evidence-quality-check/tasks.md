@@ -4,7 +4,7 @@ doc_type: spec
 artifact_type: tasks
 status: active
 owner: platform
-last_reviewed: 2026-06-11
+last_reviewed: 2026-06-13
 ---
 
 # Tasks
@@ -17,7 +17,7 @@ T001 -> T002 -> T003 -> T004 -> T005
 
 - [ ] T001 Add evidence quality runtime helper.
   - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`
-  - Acceptance: Helper returns task evidence records, diagnostics, and summary counts.
+  - Acceptance: Helper returns task evidence records, diagnostics, and summary counts for concrete, vague, missing, waived, deferred, not-applicable, and not-run evidence.
   - Evidence: Pending.
 
 - [ ] T002 Expose evidence quality through MCP.
@@ -29,7 +29,7 @@ T001 -> T002 -> T003 -> T004 -> T005
 - [ ] T003 Add runtime and MCP tests.
   - Depends on: T001, T002
   - Files: `tests/runtime/test_spec_runtime.py`, `tests/runtime/test_spec_mcp_server.py`
-  - Acceptance: Tests cover concrete, vague, missing, waived, and deferred evidence.
+  - Acceptance: Tests cover concrete, vague, missing, waived, deferred, documentation-only not-applicable, and unsupported not-run evidence.
   - Evidence: Pending.
 
 - [ ] T004 Document evidence quality checks.

@@ -4,7 +4,7 @@ doc_type: spec
 artifact_type: traceability
 status: active
 owner: platform
-last_reviewed: 2026-06-11
+last_reviewed: 2026-06-13
 ---
 
 # Traceability Matrix
@@ -24,7 +24,7 @@ last_reviewed: 2026-06-11
 | Requirement | Acceptance Criteria | Design Sections | Tasks | Verification | Durable Targets |
 | --- | --- | --- | --- | --- | --- |
 | Requirement 1 | 1-3 | High-Level Design | T001, T003 | Runtime tests | Runtime helper |
-| Requirement 2 | 1-4 | Low-Level Design | T001, T003, T004 | Runtime tests | Runtime docs |
+| Requirement 2 | 1-6 | Low-Level Design | T001, T003, T004 | Runtime tests | Runtime docs |
 | Requirement 3 | 1-2 | High-Level Design | T002, T003, T005 | MCP tests | MCP server |
 
 ## Design To Implementation Matrix

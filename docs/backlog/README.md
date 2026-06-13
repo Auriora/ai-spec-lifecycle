@@ -3,7 +3,7 @@ title: Agent development lifecycle backlog
 doc_type: backlog
 status: active
 owner: platform
-last_reviewed: 2026-06-11
+last_reviewed: 2026-06-13
 ---
 
 # Backlog
@@ -281,24 +281,24 @@ dogfooding, not on factual claims from conversation content.
 |----------|------------|-----------|
 | P1 | B016 | Reduces repeated commit/sync/install drift after skill changes by checking installed/source parity and making sync status explicit. |
 | P1 | B026 | Makes the skill/MCP easier to install and update outside this repository through a useful npm package shape before broader adoption. |
-| P2 | B015 | Converts repeated corrections and workflow friction into candidate improvements without treating history as authoritative. |
-| P2 | B014 | Supports bounded feature discovery from selected history as advisory input only. |
-| P2 | B023 | Improves evidence quality by deriving validation plans from actual task and file context. |
-| P2 | B012 | Helps distinguish real task evidence from vague completion claims. |
-| P2 | B008 | Improves closure quality and durable-promotion confidence. |
+| P1 | B023 | Improves evidence quality by deriving validation plans from actual task, file, and documentation-only context while avoiding skipped-check noise. |
+| P1 | B037 | Directly targets stub-completion and weak task completion claims by checking implementation files and evidence together. |
+| P1 | B038 | Reduces context-loss errors before implementation by forcing task, requirement, design, and verification reloads through existing traceability surfaces. |
+| P1 | B012 | Helps distinguish real task evidence from vague, not-run, and genuinely not-applicable validation claims. |
+| P1 | B008 | Improves closure quality by separating historical recoverability from stale-active-document guidance risk. |
+| P2 | B029 | Makes workflow level explicit before agents choose whether to patch directly, open a spec, or stop for governance review. |
+| P2 | B031 | Turns lifecycle phase transitions into deterministic checks that can prevent stale requirements, incomplete design, or premature implementation. |
+| P2 | B033 | Gives agents a portable steering context without adopting Kiro-specific `.kiro/steering/` paths. |
 | P2 | B044 | Turns the pack-ready npm package into a governed CI/CD release path with validation, provenance, and guarded publish behavior. |
 | P2 | B025 | Adds operational visibility for MCP tools and runtime executables as the tool surface grows; should stay disabled by default and export to Jaeger only when configured. |
 | P2 | B028 | Gives an official standard conformance check once dependency and offline behavior are agreed. |
-| P2 | B029 | Makes workflow level explicit before agents choose whether to patch directly, open a spec, or stop for governance review. |
 | P2 | B030 | Clarifies autonomy and approval expectations before edits, especially for task checkpoints and governance-sensitive work. |
-| P2 | B031 | Turns lifecycle phase transitions into deterministic checks that can prevent stale requirements, incomplete design, or premature implementation. |
 | P2 | B032 | Improves requirement quality before design and implementation amplify ambiguous acceptance criteria. |
-| P2 | B033 | Gives agents a portable steering context without adopting Kiro-specific `.kiro/steering/` paths. |
-| P2 | B037 | Directly targets stub-completion and weak task completion claims by checking implementation files and evidence together. |
-| P2 | B038 | Reduces context-loss errors before implementation by forcing task, requirement, design, and verification reloads through existing traceability surfaces. |
 | P2 | B039 | Generalizes fallback-discipline and secrets concerns into a repository-policy review without hard-coding AWS-datalake behavior. |
 | P2 | B040 | Helps route broad prompts into direct patch, spec, or governance paths before agents start broad work. |
 | P2 | B045 | Clarifies how closure should handle functionally complete specs that lack preferred artifact files, reducing unnecessary retroactive documentation while preserving evidence quality. |
+| P2 | B015 | Converts repeated corrections and workflow friction into candidate improvements without treating history as authoritative. |
+| P2 | B014 | Supports bounded feature discovery from selected history as advisory input only. |
 | P3 | B009 | Useful for richer specs, but lower priority than preflight because traceability can already be hand-authored. |
 | P3 | B013 | Helps continuation between agents now that the preflight/context model exists. |
 | P3 | B022 | Valuable hygiene once agent instructions and MCP docs change more often. |

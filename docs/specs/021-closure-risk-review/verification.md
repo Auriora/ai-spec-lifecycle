@@ -4,7 +4,7 @@ doc_type: spec
 artifact_type: verification
 status: active
 owner: platform
-last_reviewed: 2026-06-11
+last_reviewed: 2026-06-13
 ---
 
 # Verification
@@ -23,6 +23,10 @@ last_reviewed: 2026-06-11
 
 - Risk classifier is deterministic and advisory.
 - Findings cite source artifacts or blind spots.
+- Stale active documentation risk is classified separately from historical
+  recoverability risk.
+- Closure log, archive index, and Git commit evidence lower recovery risk but
+  do not justify leaving obsolete docs in active context paths.
 - Closure risk complements, not replaces, closure-check.
 
 ## Evidence Log

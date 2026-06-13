@@ -4,7 +4,7 @@ doc_type: spec
 artifact_type: design
 status: active
 owner: platform
-last_reviewed: 2026-06-11
+last_reviewed: 2026-06-13
 ---
 
 # Design
@@ -30,6 +30,10 @@ verification evidence without running commands or checking implementation code.
 - Pending/missing signals include empty evidence, `Pending`, or absent evidence
   bullets on completed tasks.
 - Waived/deferred signals require explicit waiver/defer wording and a reason.
+- Not-applicable signals require a scoped reason such as documentation-only
+  changes plus supporting validation-plan context. Without that context, the
+  same wording is a weak or not-run signal because it may hide applicable
+  validation.
 
 ## Operational Considerations
 

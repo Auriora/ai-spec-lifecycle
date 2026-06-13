@@ -4,7 +4,7 @@ doc_type: spec
 artifact_type: verification
 status: active
 owner: platform
-last_reviewed: 2026-06-11
+last_reviewed: 2026-06-13
 ---
 
 # Verification
@@ -22,6 +22,10 @@ last_reviewed: 2026-06-11
 ## Quality Gates
 
 - Classifier is deterministic and advisory.
+- Not-applicable validation is accepted only when validation-plan or task
+  context supports the scope.
+- Unsupported documentation-only skip claims are reported as not-run or weak
+  evidence with residual risk.
 - Diagnostics point to task IDs or verification sections.
 - MCP output matches runtime output after normalization.
 

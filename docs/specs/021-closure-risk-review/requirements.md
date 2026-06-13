@@ -4,7 +4,7 @@ doc_type: spec
 artifact_type: requirements
 status: active
 owner: platform
-last_reviewed: 2026-06-11
+last_reviewed: 2026-06-13
 ---
 
 # Requirements
@@ -16,12 +16,17 @@ last_reviewed: 2026-06-11
   future validation/evidence surfaces provide existing inputs.
 - Closure policy requires durable promotion, evidence, residual risk, and
   cleanup records before package removal.
+- Conversation review on 2026-06-13 clarified that historical Git commits lower
+  recovery risk, but stale active documentation creates higher operational risk
+  because tools and agents can surface obsolete guidance as if it were current.
 
 ## Goals
 
 - Add deterministic closure risk review before active spec removal.
 - Combine closure readiness, promotion targets, evidence quality, validation
   plan coverage, and archive-index readiness.
+- Treat stale, superseded, or misleading active documentation as a live guidance
+  risk, not merely as a recoverable archive concern.
 - Keep the surface read-only and advisory.
 
 ## Non-Goals
@@ -46,6 +51,12 @@ that I can see whether a spec is truly safe to remove.
    blind spot instead of silently passing.
 3. IF closure check is ready but evidence quality is weak, THEN the system
    SHALL still report closure risk.
+4. IF stale or superseded documentation remains in active docs, THEN THE SYSTEM
+   SHALL report the paths and identify the consumer risk for tools, agents, or
+   maintainers that may use that content as current guidance.
+5. IF removed spec content remains recoverable through closure log, archive
+   index, and Git commits, THEN THE SYSTEM SHALL treat that as recovery
+   evidence, not as a reason to keep obsolete active docs.
 
 ### Requirement 2: Risk Classification
 
@@ -61,6 +72,13 @@ that I can decide whether to close, defer, or strengthen evidence.
    according to severity.
 3. WHEN package removal would lose the only current-state documentation, THEN
    the review SHALL return `high`.
+4. WHEN stale active documentation is likely to be surfaced by lifecycle tools,
+   Agent Workbench, search, or agent context assembly as current guidance, THEN
+   the review SHALL return `medium` or `high` even if the old content is
+   recoverable from Git history.
+5. WHEN the only concern is historical recoverability and the archive index,
+   closure log, and Git commit evidence are present, THEN the review SHALL
+   lower that concern to `low` or an informational finding.
 
 ### Requirement 3: MCP Surface
 
@@ -83,4 +101,6 @@ MCP, so that closure workflows can use it before cleanup.
 ## Success Criteria
 
 - Runtime/MCP tests cover low-risk and risky closure examples.
+- Runtime/MCP tests cover stale-active-doc risk separately from Git-history
+  recoverability.
 - Runtime docs publish closure risk review behavior.

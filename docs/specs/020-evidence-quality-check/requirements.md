@@ -4,7 +4,7 @@ doc_type: spec
 artifact_type: requirements
 status: active
 owner: platform
-last_reviewed: 2026-06-11
+last_reviewed: 2026-06-13
 ---
 
 # Requirements
@@ -20,6 +20,8 @@ last_reviewed: 2026-06-11
 
 - Classify task and verification evidence quality deterministically.
 - Distinguish concrete command/file evidence from vague completion claims.
+- Distinguish intentionally not-applicable validation from missing or skipped
+  validation.
 - Keep output advisory and waiver-friendly.
 - Build on validation plan outputs when available.
 
@@ -59,6 +61,13 @@ know what must be strengthened before closure.
    it as `missing`.
 4. WHEN evidence is an explicit waiver or deferral, THEN the system SHALL
    preserve the waiver reason and classify it as `waived` or `deferred`.
+5. WHEN validation evidence says checks were not run because the change was
+   documentation-only, THEN THE SYSTEM SHALL classify the evidence as
+   `not_applicable` only if a validation plan or task context supports that
+   scope.
+6. IF documentation-only wording is used to avoid a check that still applies to
+   the task acceptance or changed files, THEN THE SYSTEM SHALL classify the
+   evidence as `not_run` or `weak` with a residual-risk finding.
 
 ### Requirement 3: MCP Surface
 
@@ -78,8 +87,11 @@ MCP, so that closure and review tools can reuse the signal.
 - CP-002: Evidence review SHALL not mutate task status or verification files.
 - CP-003: Every diagnostic SHALL identify the source artifact and task or
   section where possible.
+- CP-004: `not_applicable` validation SHALL not be reported as weak evidence
+  when the validation plan supports it.
 
 ## Success Criteria
 
-- Runtime and MCP tests cover concrete, vague, missing, and waived evidence.
+- Runtime and MCP tests cover concrete, vague, missing, waived,
+  not-applicable, and not-run evidence.
 - Runtime docs publish the evidence quality contract.

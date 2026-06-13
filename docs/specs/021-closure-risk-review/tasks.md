@@ -4,7 +4,7 @@ doc_type: spec
 artifact_type: tasks
 status: active
 owner: platform
-last_reviewed: 2026-06-11
+last_reviewed: 2026-06-13
 ---
 
 # Tasks
@@ -17,7 +17,7 @@ T001 -> T002 -> T003 -> T004 -> T005
 
 - [ ] T001 Add closure risk runtime helper.
   - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`
-  - Acceptance: Helper aggregates closure, promotion, validation, evidence, and decision signals into risk findings.
+  - Acceptance: Helper aggregates closure, promotion, validation, evidence, decision, stale-active-doc, and historical-recoverability signals into risk findings.
   - Evidence: Pending.
 
 - [ ] T002 Expose closure risk through MCP.
@@ -29,7 +29,7 @@ T001 -> T002 -> T003 -> T004 -> T005
 - [ ] T003 Add closure risk tests.
   - Depends on: T001, T002
   - Files: `tests/runtime/test_spec_runtime.py`, `tests/runtime/test_spec_mcp_server.py`
-  - Acceptance: Tests cover low-risk closure, weak evidence, missing durable promotion, and blind spots.
+  - Acceptance: Tests cover low-risk closure, weak evidence, missing durable promotion, stale active documentation, Git-history recoverability, and blind spots.
   - Evidence: Pending.
 
 - [ ] T004 Document closure risk review.

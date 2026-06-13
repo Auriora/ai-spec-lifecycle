@@ -4,7 +4,7 @@ doc_type: spec
 artifact_type: requirements
 status: active
 owner: platform
-last_reviewed: 2026-06-11
+last_reviewed: 2026-06-13
 ---
 
 # Requirements
@@ -24,6 +24,8 @@ last_reviewed: 2026-06-11
 - Return command/tool recommendations with reasons, required inputs, and risk
   coverage.
 - Support direct changed-file input and optional active spec/task context.
+- Distinguish checks that are not applicable from checks that were skipped or
+  not run, especially for documentation-only changes.
 - Keep the planner deterministic and dependency-free.
 
 ## Non-Goals
@@ -64,6 +66,13 @@ coverage reasons, so that I can understand why each check is required.
    `package-contract`, `sync-guard`, and package dry-run guidance.
 3. WHERE specs or closure records changed, THE SYSTEM SHALL include scan,
    archive index, prompt, lint, or closure checks as appropriate.
+4. WHERE changed files are documentation-only, THE SYSTEM SHALL recommend
+   documentation and lifecycle checks and classify unrelated code/runtime checks
+   as `not_applicable` or optional with a reason, not as noisy skipped
+   validation.
+5. IF a check would normally be required but cannot run because an input,
+   credential, external service, or environment is unavailable, THEN THE SYSTEM
+   SHALL classify it as `not_run` with the blocker and residual risk.
 
 ### Requirement 3: MCP Surface
 
@@ -83,6 +92,7 @@ through MCP, so that validation guidance is available before edits or closure.
 - CP-002: The planner SHALL not mutate files, install packages, or run tests.
 - CP-003: Required checks SHALL be explainable from changed files, task
   context, or baseline lifecycle policy.
+- CP-004: `not_applicable` checks SHALL not be counted as missing validation.
 
 ## Success Criteria
 
