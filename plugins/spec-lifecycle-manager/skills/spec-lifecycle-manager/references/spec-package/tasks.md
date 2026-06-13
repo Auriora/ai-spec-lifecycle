@@ -20,10 +20,27 @@ Task markers:
 
 - `[ ]`: pending or not started.
 - `[~]`: in progress. Mark the selected task this way before starting work.
-- `[Y]`: partial. Some work is complete, but acceptance criteria are not fully met.
-- `[*]`: on hold or stuck. A developer or agent must resolve the blocker.
-- `[e]`: error. Completion failed because of a problem that needs intervention.
+- `[/]`: partial. Some work is complete, but acceptance criteria are not fully met.
+- `[>]`: follow-up or routed. Work moved to another task, spec, backlog item,
+  issue, or owner; record `Destination:`.
+- `[-]`: no-op or deferred. Work is intentionally unnecessary, not applicable,
+  superseded, raw-only, or deferred from this spec.
+- `[?]`: review or decision needed. Record `Decision owner:` when known.
+- `[!]`: attention needed. A blocker, error, or intervention needs diagnosis.
 - `[x]`: complete and verified.
+
+Legacy markers remain readable during migration: `[Y]` maps to `partial`;
+`[*]` and `[e]` map to `attention`.
+
+Optional metadata fields:
+
+- `Evidence mode:` one of `implementation`, `validation`, `planner`,
+  `contract`, `dry_run`, `routing`, `no_op`, or `blocked_output`.
+- `Follow-up:` human-readable remaining work.
+- `Destination:` routed backlog item, spec, task ID, issue, or owner.
+- `Decision owner:` role, person, or team responsible for review or sign-off.
+- `Upstream specs:` specs or task IDs that must be trusted before completion.
+- `Downstream specs:` specs or task IDs that depend on this task's state.
 
 ## Task Dependency Graph
 
@@ -74,8 +91,23 @@ T010 -> T011
     validation path.
   - Evidence: Pending.
   - [ ] T003.1 Add or update contract/schema definitions.
-  - [ ] T003.2 Add validation, logging, or operational guardrails.
-  - [ ] T003.3 Add focused tests for shared behavior.
+    - Evidence mode: implementation
+    - Evidence: Pending.
+  - [/] T003.2 Add validation, logging, or operational guardrails.
+    - Evidence mode: implementation
+    - Evidence: Guardrail implementation started; edge-path validation remains.
+  - [?] T003.3 Confirm optional integration policy.
+    - Decision owner: platform-owner
+    - Evidence mode: planner
+    - Evidence: Awaiting decision before implementation.
+  - [>] T003.4 Route out-of-scope migration cleanup.
+    - Destination: `docs/backlog/README.md`
+    - Evidence mode: routing
+    - Follow-up: Track cleanup separately from this spec's acceptance.
+    - Evidence: Migration cleanup is useful but not required for this slice.
+  - [-] T003.5 Skip superseded compatibility path.
+    - Evidence mode: no_op
+    - Evidence: Superseded by the current compatibility contract.
 
 - [ ] T004 Checkpoint - Foundation validation.
   - Depends on: T003
@@ -185,6 +217,11 @@ T010 -> T011
   `change-impact.md`, `verification.md`, and `open-decisions.md` before
   coding. Do not use vague task wording as a reason to skip implementation when
   the package contains enough detail elsewhere.
+- Split broad tasks before implementation when they cover multiple source
+  families, evidence modes, implementation outcomes, validation surfaces,
+  profiles, or cross-spec dependencies. Use subtasks with separate evidence
+  rather than one checkbox for implementation, validation, routing, no-op, and
+  blocked-output outcomes.
 - Keep the checkbox/subtask structure as the default task shape.
 - Before starting an implementation slice, mark the selected task or subtask as
   `[~]`.
@@ -204,18 +241,26 @@ T010 -> T011
   its acceptance criteria are met.
 - A task is complete only when evidence is recorded. Evidence can be a command,
   test result, review note, screenshot, log, commit, or manual verification.
+- `planner`, `contract`, `dry_run`, `routing`, `no_op`, and `blocked_output`
+  evidence modes do not complete ordinary implementation tasks unless the task
+  acceptance explicitly says that mode is sufficient.
 - If validation cannot run, leave the task unchecked unless the acceptance
   criteria can be defensibly verified by another recorded method.
 - Mark skipped work with an explicit reason, for example:
   `- [ ] T009 ...`
   `  - Status: skipped - superseded by T014.`
-- Mark partial, held, or errored work with the relevant marker and reason, for
+- Mark partial, routed, review-needed, or attention-needed work with the
+  relevant marker and reason, for
   example:
-  `- [Y] T009 ...`
+  `- [/] T009 ...`
   `  - Status: partial - local validation passed; production evidence remains.`
-  `- [*] T010 ...`
-  `  - Status: on hold - waiting for owner decision on API shape.`
-  `- [e] T011 ...`
+  `- [>] T010 ...`
+  `  - Destination: docs/backlog/README.md`
+  `  - Evidence: routed - cleanup belongs to a follow-up backlog item.`
+  `- [?] T011 ...`
+  `  - Decision owner: platform-owner`
+  `  - Evidence: waiting for owner decision on API shape.`
+  `- [!] T012 ...`
   `  - Status: error - migration command fails with missing credential.`
 
 ## Related Artifacts

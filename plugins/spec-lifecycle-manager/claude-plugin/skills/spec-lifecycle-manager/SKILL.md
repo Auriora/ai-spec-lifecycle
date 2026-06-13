@@ -208,6 +208,17 @@ Task expectations:
 - Use optional metadata fields when they clarify non-final states:
   `Evidence mode:`, `Follow-up:`, `Destination:`, `Decision owner:`,
   `Upstream specs:`, and `Downstream specs:`.
+- Treat `Evidence mode:` as part of the completion contract, not decorative
+  prose. `implementation` and `validation` evidence can complete ordinary
+  implementation tasks when acceptance is met. `planner`, `contract`,
+  `dry_run`, `routing`, `no_op`, and `blocked_output` evidence must not be used
+  to mark implementation complete unless the task acceptance explicitly says
+  that mode satisfies the task.
+- Split broad tasks before implementation when they span multiple source
+  families, evidence modes, implementation outcomes, validation surfaces,
+  profiles, or cross-spec dependencies. Prefer Kiro-style subtasks with their
+  own evidence over one checkbox that hides routing, no-op, blocked output, or
+  validation-only work.
 - Use `[P]` only for tasks that can run in parallel without dependency or file conflicts.
 - Add `Depends on:`, `Files:`, `Acceptance:`, and `Evidence:` bullets where they materially improve execution or reconciliation.
 - Check off subtasks as work progresses, but check off the parent task only when acceptance criteria are met and evidence is recorded.
@@ -447,7 +458,7 @@ slice unless a separate explicit spec defines sandboxing, permissions, review,
 rollback, and evidence requirements.
 
 When this skill's `scripts/spec_mcp_server.py` helper is available, configure
-it as a local read-only stdio MCP server for clients that support MCP:
+it as a local stdio MCP server for clients that support MCP:
 
 ```bash
 python3 skills/spec-lifecycle-manager/scripts/spec_mcp_server.py /path/to/repo
@@ -455,10 +466,12 @@ python3 plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/spe
 ```
 
 The MCP server exposes the existing runtime as resources, tools, and prompts.
-It is read-only: do not expect it to create specs, update task evidence, edit
-durable docs, archive packages, remove files, or commit. Use the Skill for
-lifecycle judgment and the MCP server, when visible, for structured context and
-deterministic checks.
+Most tools are read-only. `set_task_state` is the narrow write-capable
+exception: it is preview-first, limited to one selected task block in an active
+spec package `tasks.md`, and requires explicit write intent for mutation. Do
+not expect the MCP server to create specs, edit durable docs, archive packages,
+remove files, or commit. Use the Skill for lifecycle judgment and the MCP
+server, when visible, for structured context and deterministic checks.
 
 When this skill's `scripts/codex_spec_lifecycle_hook.py` helper is installed
 as a Codex `PostToolUse` hook, it provides advisory checks for changed spec

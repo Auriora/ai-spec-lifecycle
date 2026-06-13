@@ -3,7 +3,7 @@ title: Spec lifecycle runtime
 doc_type: reference
 status: active
 owner: platform
-last_reviewed: 2026-06-11
+last_reviewed: 2026-06-13
 ---
 
 # Spec Lifecycle Runtime
@@ -430,6 +430,15 @@ the optional metadata fields used for routed work and evidence-depth tracking:
 `Evidence mode:`, `Follow-up:`, `Destination:`, `Decision owner:`,
 `Upstream specs:`, and `Downstream specs:`.
 
+Evidence mode is part of the completion contract. `implementation` and
+`validation` can complete ordinary implementation tasks when task acceptance is
+met. `planner`, `contract`, `dry_run`, `routing`, `no_op`, and
+`blocked_output` evidence modes are advisory or non-implementation evidence
+unless the task acceptance explicitly says that mode satisfies the task.
+`task-state-audit` reports broad tasks with `split_task_suggestions` when one
+checkbox spans multiple source families, evidence modes, implementation
+outcomes, validation surfaces, profiles, or cross-spec dependencies.
+
 | Hook | Purpose |
 | --- | --- |
 | `spec-file-changed` | Return hierarchy-aware authoring guidance for affected spec packages from changed files. |
@@ -439,6 +448,7 @@ the optional metadata fields used for routed work and evidence-depth tracking:
 | `verification-updated` | Check verification artifact structure and references to task and requirement IDs. |
 | `spec-resumed` | Run resume checks for lint, old-format packages, closed status, and stale review dates. |
 | `spec-close-check` | Convert closure readiness blockers into hook diagnostics. |
+| `set-task-state` | Audit the changed task after a guarded state update. |
 | `agent-slice-start` | Check selected task traceability before an agent starts implementation. |
 | `agent-response-check` | Check claimed task completion against evidence and changed files. |
 | `review-packet-dispatch` | Validate bounded read-only review packet shape before dispatch. |
@@ -447,6 +457,12 @@ the optional metadata fields used for routed work and evidence-depth tracking:
 These runtime checks are reusable by Git hooks, Codex hooks, Agent Workbench
 hooks, or direct CLI invocations. Blocking profile adoption should remain a
 separate dogfood and promotion decision.
+
+Noise policy: hooks stay quiet when state and evidence agree, collapse repeated
+task-audit findings by task ID and classification, and reserve repeated
+reminders for state contradictions, preflight summaries, or explicit
+task-state writes. Advisory mode is the default; blocking use remains an
+explicit repository adoption choice.
 
 `spec-file-changed` is intentionally narrower than full package lint. During
 ordinary authoring it inspects the changed artifact in the context of the spec

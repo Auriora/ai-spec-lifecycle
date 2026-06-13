@@ -17,9 +17,9 @@ last_reviewed: 2026-06-13
 | VG-002 | Task query tools | Runtime and MCP tests cover list/detail output, traceability context, dependencies, and subtasks. | Passed. |
 | VG-003 | Task audit | Runtime/hook tests catch contradictory completion, broad tasks, and follow-up prose without state. | Passed. |
 | VG-004 | State update | Dry-run and write tests prove scoped edits, explicit write intent, before/after patch summaries, guarded completion, and rejection of paths outside active spec package `tasks.md`. | Passed. |
-| VG-005 | Guidance and bundle parity | Source docs/templates and bundled plugin copies match; full repo validation passes. | Passed for phase 1 source/docs/runtime bundle parity; template work remains in phase 4. |
+| VG-005 | Guidance and bundle parity | Source docs/templates and bundled plugin copies match; full repo validation passes. | Passed. |
 | VG-006 | Reconciliation depth | Fixtures cover stale-open tasks with evidence, candidate-complete findings, plan-only completion warnings, blocked-output warnings, `split_task_suggestions`, and cross-spec dependency health. | Passed. |
-| VG-007 | Metadata contract | Parser/query/update tests cover `Evidence mode:`, `Destination:`, `Decision owner:`, `Upstream specs:`, and `Downstream specs:` fields. | Parser coverage passed for phase 1; query/update coverage remains pending. |
+| VG-007 | Metadata contract | Parser/query/update tests cover `Evidence mode:`, `Destination:`, `Decision owner:`, `Upstream specs:`, and `Downstream specs:` fields. | Passed. |
 | VG-008 | MCP write boundary | MCP tests prove write tools are preview-first, spec-only, task-block-scoped, and reject ambiguous or out-of-bound targets. | Passed. |
 
 ## Evidence Log
@@ -32,6 +32,7 @@ last_reviewed: 2026-06-13
 | 2026-06-13 | Implemented phase 1 parser and contract slice; `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'`, `spec_runtime.py scan .`, `spec_runtime.py prompts .`, `spec_runtime.py archive-index .`, `spec_runtime.py lint docs/specs/023-task-state-management-tools`, `spec_runtime.py package-contract .`, and `git diff --check` passed. | T001, T002, T003; VG-001, phase 1 portions of VG-005 and VG-007. | Passed. |
 | 2026-06-13 | Implemented phase 2 task query tools; `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'`, `spec_runtime.py package-contract .`, `spec_runtime.py list-tasks docs/specs/023-task-state-management-tools --status in_progress`, and `spec_runtime.py task-details docs/specs/023-task-state-management-tools --task-id T004` passed. | T004, T005, VG-002. | Passed. |
 | 2026-06-13 | Implemented phase 3 audit/update/MCP/hook slice; `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'`, `spec_runtime.py package-contract .`, `spec_runtime.py task-state-audit docs/specs/023-task-state-management-tools --task-id T006`, and `spec_runtime.py set-task-state docs/specs/023-task-state-management-tools --task-id T006 --state complete --evidence "Phase 3 audit helpers implemented and tested."` passed. | T006, T010, T007, T008; VG-003, VG-004, VG-006, VG-008. | Passed. |
+| 2026-06-13 | Implemented phase 4 guidance/template/runtime-doc/bundle alignment; `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'`, `spec_runtime.py package-contract .`, `spec_runtime.py lint docs/specs/023-task-state-management-tools`, `spec_runtime.py prompts .`, and `git diff --check` passed. | T009; VG-005, VG-007, Requirement 6. | Passed. |
 
 ## Validation Commands
 

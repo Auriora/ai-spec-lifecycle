@@ -80,11 +80,13 @@ T008 -> T009
 
 ## Phase 4: Guidance, Bundles, And Validation
 
-- [ ] T009 Update skill guidance, templates, docs, bundles, and validation.
+- [x] T009 Update skill guidance, templates, docs, bundles, and validation.
   - Depends on: T008
   - Files: `skills/spec-lifecycle-manager/SKILL.md`, `skills/spec-lifecycle-manager/references/spec-package/`, `docs/reference/spec-lifecycle-runtime.md`, `plugins/spec-lifecycle-manager/`
   - Acceptance: Source skill, fallback templates, runtime docs, plugin bundle, Claude plugin bundle, and tests are aligned; validation commands pass.
-  - Evidence: Pending.
+  - Evidence: Skill guidance, fallback task template, runtime reference, Codex plugin bundle, and Claude plugin bundle aligned; full validation passed.
+  - Status: Completed phase 4 guidance, template, runtime docs, and bundle alignment.
+  - Evidence mode: implementation
 
 ## Execution Notes
 
