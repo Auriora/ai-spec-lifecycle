@@ -14,6 +14,36 @@ requires visible archived docs.
 
 ## Entries
 
+### 2026-06-13 - 019-validation-plan-builder
+
+- **Spec:** `docs/specs/019-validation-plan-builder/`
+- **Title:** Validation plan builder
+- **Final spec commit:** `d43166f`
+- **Closure cleanup commit:** `pending`
+- **Closure action:** removed
+- **Closed by:** platform
+- **Durable docs updated:**
+  - `docs/reference/spec-lifecycle-runtime.md`
+  - `skills/spec-lifecycle-manager/scripts/spec_runtime.py`
+  - `skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`
+  - `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/spec_runtime.py`
+  - `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`
+  - `plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/scripts/spec_runtime.py`
+  - `plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`
+  - `tests/runtime/test_spec_runtime.py`
+  - `tests/runtime/test_spec_mcp_server.py`
+- **Verification summary:** Full unit suite passed with 111 tests. Lifecycle
+  scan, archive-index validation, prompt validation, package-contract
+  validation, npm pack dry-run, sync-guard after install, closure-check, and
+  `git diff --check` passed. After install, `sync-guard` reported source
+  skill, Codex bundle, Claude bundle, and installed cache all in sync with no
+  findings.
+- **Residual risks:** Project-specific validation profiles remain future work.
+  Already-running MCP sessions may need reload to pick up the refreshed
+  installed runtime.
+- **Follow-up:** Add repository-specific validation profiles only after the
+  generic planner proves useful across target repositories.
+
 ### 2026-06-11 - 023-hierarchical-spec-authoring-hooks
 
 - **Spec:** `docs/specs/023-hierarchical-spec-authoring-hooks/`
