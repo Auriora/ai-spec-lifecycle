@@ -18,7 +18,7 @@ contradictory task state from hiding unfinished work.
 
 ## High-Level Design
 
-The implementation has four parts:
+The implementation has five parts:
 
 - Task state contract: normalize legacy letter markers and preferred symbolic
   markers into stable states.
@@ -30,6 +30,12 @@ The implementation has four parts:
   rails for completion.
 - Guidance and hooks: update skill/template/docs and add low-noise advisory
   checks.
+
+The MCP trust boundary changes deliberately in this spec. Existing MCP tools are
+read-only. New write-capable task tools may be introduced only for spec package
+task-state edits, with preview-first behavior and path restrictions. Any future
+durable-document write support must be explicitly scoped to documentation
+evidence fields and must not become a general file-editing surface.
 
 ## Task State Contract
 
@@ -77,6 +83,17 @@ markers. Extend the `Task` model with:
 The parser should keep existing fields: dependencies, files, acceptance,
 evidence, line number, and source block.
 
+Optional metadata fields parsed from task blocks:
+
+| Field | Purpose |
+| --- | --- |
+| `Evidence mode:` | One of the evidence-depth modes used by audit and guarded completion. |
+| `Follow-up:` | Human-readable follow-up work that remains after the current task. |
+| `Destination:` | Backlog item, spec, task ID, issue, or owner where routed work lives. |
+| `Decision owner:` | Person, role, or team responsible for `[?]` review/decision state. |
+| `Upstream specs:` | Specs or task IDs that must be trusted before this task can complete. |
+| `Downstream specs:` | Specs or task IDs that depend on this task's state. |
+
 ### Task List Tool
 
 Add `task_list(spec_path, include_subtasks=True, status=None)` to
@@ -90,6 +107,7 @@ Output:
 - dependency readiness
 - evidence summary
 - broad-task warnings
+- parsed evidence mode, destination, decision owner, and spec dependency fields
 
 MCP tool: `list_tasks`.
 
@@ -107,6 +125,7 @@ Output:
 - linked requirements
 - verification and durable target references
 - gaps and broad-task warnings
+- split-task suggestions when the task combines multiple outcomes
 
 MCP tool: `task_details`.
 
@@ -125,6 +144,8 @@ Add `task_state_audit(spec_path)` to identify:
   multiple outcome verbs;
 - tasks with follow-up language but no follow-up state or linked task;
 - tasks with pending evidence but non-pending markers.
+- tasks with missing destination/decision metadata for routed, review, or
+  attention states.
 
 MCP tool: `task_state_audit`.
 
@@ -143,6 +164,10 @@ The audit output should include stable machine-readable classifications:
 
 These classifications are advisory. They should make stale state visible without
 auto-changing task markers.
+
+Broad-task findings should include `split_task_suggestions` records. Each
+suggestion should include a proposed subtask title, evidence mode, likely files
+or artifact class, and the reason the split lowers completion ambiguity.
 
 ### Evidence Depth
 
@@ -164,14 +189,15 @@ acceptance explicitly says that mode satisfies the task.
 ### Task State Update Tool
 
 Add `set_task_state(spec_path, task_id, state, evidence, status_note=None,
-dry_run=True)`.
+dry_run=True, evidence_mode=None, destination=None, decision_owner=None)`.
 
 Behavior:
 
 - Default to dry-run.
-- Preserve unrelated task text.
+- Require explicit write intent for non-dry-run execution.
+- Preserve unrelated task text and unrelated files.
 - Change only the selected marker and the selected task's `Evidence:` or
-  `Status:` field.
+  `Status:` field, plus optional metadata fields in that same task block.
 - Reject `complete` when evidence contains unresolved language or no concrete
   evidence signal.
 - Reject `complete` when evidence mode is planner, dry-run, routing, no-op, or
@@ -179,8 +205,32 @@ Behavior:
   evidence mode.
 - Require reason/destination metadata for `follow_up`, `no_op`,
   `review_needed`, and `attention`.
+- Return a before/after patch summary and validation status.
+- Reject paths outside an active spec package. A later documented extension may
+  allow documentation evidence updates, but only for explicitly supported
+  durable-doc classes and fields.
 
 MCP tool: `set_task_state`.
+
+### Write-Tool Guardrails
+
+Write-capable MCP tools are allowed only under a narrow lifecycle boundary:
+
+- accepted target roots: active spec package paths returned by scan/preflight;
+- accepted file classes for v1: `tasks.md` only;
+- accepted edit scope: one selected task block and its marker/evidence/status
+  metadata;
+- default behavior: preview/dry-run with no file mutation;
+- write behavior: requires `dry_run=false` plus explicit `write_intent`;
+- output: normalized request, validation findings, changed line range, and
+  before/after text or patch summary;
+- rejection: ambiguous task IDs, archived specs, paths outside the selected spec
+  package, missing evidence, missing destination/decision metadata, and unsafe
+  completion evidence.
+
+This keeps the MCP surface useful for agents without turning it into a general
+editor. Human-readable guidance should still tell agents to inspect the preview
+before allowing a write.
 
 ### Hook Behavior
 
@@ -190,11 +240,14 @@ Extend existing advisory hooks:
 - `agent-slice-start`: report existing in-progress tasks in the selected spec.
 - `spec-resumed` or `active_spec_preflight`: summarize non-final task states
   and reconciliation warnings once per preflight response.
+- `set_task_state`: after a write, run the task audit for the changed task and
+  report only new or remaining findings.
 
 Noise policy:
 
 - No warning when state and evidence agree.
 - No repeated reminders on every write.
+- Repeated findings are collapsed by task ID and classification.
 - Advisory by default; blocking remains an explicit adoption choice.
 
 ## Operational Considerations
@@ -213,5 +266,6 @@ Noise policy:
   implementation review be separate metadata under `Status:`?
 - Should `[-]` include deferred work, or should deferred work always use `[>]`
   with a backlog/spec destination?
-- Should `set_task_state` be exposed in MCP immediately or kept CLI-only until
-  write-tool guardrails have enough dogfood evidence?
+- Should MCP `set_task_state` be enabled in the first implementation once the
+  spec-only preview guardrails pass tests, or staged behind an opt-in feature
+  flag during dogfooding?

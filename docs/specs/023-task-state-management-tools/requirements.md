@@ -49,6 +49,9 @@ last_reviewed: 2026-06-13
 - Do not create a full issue tracker, assignment system, or scheduling system.
 - Do not require blocking hooks by default.
 - Do not require non-keyboard glyphs for developer-authored task state.
+- Do not expose general-purpose file editing through task-management tools.
+  Write-capable tools are limited to spec packages and, if later accepted,
+  documented durable-doc evidence fields.
 
 ## Requirements
 
@@ -98,6 +101,9 @@ checkboxes or prose.
 6. IF files, tests, or evidence indicate that a pending task may already be
    implemented, THEN THE SYSTEM SHALL report a candidate-complete finding without
    changing the marker automatically.
+7. WHERE task metadata includes evidence mode, follow-up destination, decision
+   owner, or upstream/downstream spec references, THE SYSTEM SHALL parse and
+   return those fields in structured output.
 
 ### Requirement 3: Safe Task State Updates
 
@@ -119,6 +125,15 @@ so that agents cannot mark incomplete or routed work as complete by accident.
 5. WHERE the evidence is plan-only, dry-run-only, routed, blocked-output, or
    contract-only, THE SYSTEM SHALL reject direct completion unless the task
    acceptance explicitly says that evidence mode is sufficient.
+6. WHERE a task-state update is invoked through MCP, THE SYSTEM SHALL require an
+   explicit write intent, default to preview/dry-run, limit writes to the
+   selected spec package task block, and return a before/after patch summary.
+7. WHERE a write-capable tool receives a path outside an active spec package,
+   THEN THE SYSTEM SHALL reject the update unless a future documented durable-doc
+   evidence mode explicitly allows that document class.
+8. THE SYSTEM SHALL record enough update provenance for review, including tool
+   name, task ID, target state, evidence mode, changed fields, and validation
+   status.
 
 ### Requirement 4: Task State Reconciliation
 
@@ -143,6 +158,8 @@ checkboxes and plan-only completions do not mislead downstream implementation.
 5. IF a task mixes multiple profiles, source families, validation surfaces,
    blocked outputs, or cross-spec alignment, THEN the system SHALL suggest
    subtasks before implementation continues.
+6. THE SYSTEM SHALL expose broad-task findings through a `split_task_suggestions`
+   field that agents can apply manually or route to a follow-up task.
 
 ### Requirement 5: Completion Audit And Hooks
 
@@ -162,6 +179,8 @@ implementation.
    progress in the same spec, THEN the advisory hook SHALL report the existing
    in-progress task without blocking by default.
 4. Hooks SHALL stay quiet when task state and evidence are consistent.
+5. WHERE a preflight or resume summary includes reconciliation findings, THE
+   SYSTEM SHALL collapse repeated findings by task ID and classification.
 
 ### Requirement 6: Skill And Template Guidance
 
@@ -178,6 +197,9 @@ that verification tasks are decomposed before they become ambiguous.
    surface, hook behavior, and noise policy.
 4. The skill SHALL distinguish implementation completion from planning,
    contract, dry-run, classification, no-op, and blocked-output evidence.
+5. The task template SHALL document optional metadata fields: `Evidence mode:`,
+   `Follow-up:`, `Destination:`, `Decision owner:`, `Upstream specs:`, and
+   `Downstream specs:`.
 
 ## Correctness Properties
 
@@ -191,6 +213,10 @@ that verification tasks are decomposed before they become ambiguous.
   even if the preferred symbols change.
 - CP-006: Audit tools SHALL never silently promote stale-open or
   candidate-complete tasks to complete.
+- CP-007: Write-capable task tools SHALL never modify files outside their
+  declared spec/documentation boundary.
+- CP-008: MCP write tools SHALL be preview-first and reject ambiguous write
+  targets.
 
 ## Success Criteria
 
