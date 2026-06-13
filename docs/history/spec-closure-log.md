@@ -19,7 +19,7 @@ requires visible archived docs.
 - **Spec:** `docs/specs/024-staged-developer-onboarding/`
 - **Title:** Staged developer onboarding
 - **Final spec commit:** `4a2d5c8`
-- **Closure cleanup commit:** `pending`
+- **Closure cleanup commit:** `acc92ba`
 - **Closure action:** removed
 - **Closed by:** platform
 - **Durable docs updated:**
