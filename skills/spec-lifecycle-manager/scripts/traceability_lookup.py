@@ -174,6 +174,26 @@ def find_table_row(rows: list[dict[str, str]], column: str, lookup: str) -> dict
     return None
 
 
+def find_table_row_any(rows: list[dict[str, str]], columns: list[str], lookup: str) -> dict[str, str] | None:
+    for column in columns:
+        row = find_table_row(rows, column, lookup)
+        if row:
+            return row
+    return None
+
+
+def merged_task_traceability_row(tables: dict[str, list[dict[str, str]]], task_id: str) -> dict[str, str] | None:
+    context_row = find_table_row_any(tables.get("Task To Context Matrix", []), ["Task ID", "Task"], task_id)
+    if not context_row:
+        return None
+    delivery_row = find_table_row_any(tables.get("Task To Delivery Matrix", []), ["Task ID", "Task"], task_id)
+    if not delivery_row:
+        return context_row
+    merged = dict(delivery_row)
+    merged.update(context_row)
+    return merged
+
+
 def load_spec(spec_path: Path) -> tuple[dict[str, MarkdownDoc], list[dict[str, str]], dict[str, list[dict[str, str]]]]:
     docs: dict[str, MarkdownDoc] = {}
     gaps: list[dict[str, str]] = []
@@ -256,7 +276,7 @@ def add_reference_gaps(spec_path: Path, docs: dict[str, MarkdownDoc], row: dict[
 
 def task_lookup(spec_path: Path, task_id: str) -> dict[str, Any]:
     docs, gaps, tables = load_spec(spec_path)
-    row = find_table_row(tables.get("Task To Context Matrix", []), "Task ID", task_id)
+    row = merged_task_traceability_row(tables, task_id)
     if not row:
         gaps.append(
             {
@@ -307,6 +327,15 @@ def collect_requirements(doc: MarkdownDoc | None, value: str) -> list[dict[str, 
     if not doc:
         return []
     sections = extract_requirement_sections(doc.text)
+    if normalize_cell(value) in {"all requirements", "all requirement"}:
+        return [
+            {
+                "id": section.splitlines()[0].lstrip("#").strip().split(":", 1)[0],
+                "source": section,
+                "acceptance_criteria": extract_acceptance_criteria(section),
+            }
+            for section in sections.values()
+        ]
     results: list[dict[str, Any]] = []
     seen: set[str] = set()
     for match in REQ_RE.finditer(value):
