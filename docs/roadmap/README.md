@@ -47,7 +47,7 @@ for active implementation specs.
 | 2026-06-06 | Make commit sync guard the next lifecycle hardening horizon. | B007, B017, and B018 are delivered by the runtime/MCP surface; B016 is the highest-priority open friction item. | `docs/backlog/README.md`, R005 |
 | 2026-06-11 | Promote validation and release-readiness work after specs 017 and 018 closed. | R006-R009 sequence validation planning, evidence quality, closure risk, and npm publish/release workflow specs. | `docs/backlog/README.md`, archive entries for 019, 020, and 023, active specs 021-022 |
 | 2026-06-13 | Prioritize runtime packets that reduce implementation loops before conversation-history mining. | Validation planning, task-state audit, evidence quality, closure risk, and staged preflight address observed agent inefficiency more directly than another history scan. | `docs/backlog/README.md`, archive entries for 019, 020, and 023, active specs 021-024 |
-| 2026-06-13 | Treat stale active docs as higher risk than Git-history recoverability. | Closure risk must prefer removing or marking obsolete active docs because tools and agents may surface them as current guidance; Git history and archive indexes provide recovery. | `docs/specs/021-closure-risk-review/` |
+| 2026-06-13 | Treat misleading live documentation as higher risk than Git-history recoverability. | Closure risk must prefer removing or marking misleading live documents before cleanup. Git history and archive indexes provide recovery for removed package detail. | `docs/specs/021-closure-risk-review/` |
 
 ## Suggested Build Sequence
 

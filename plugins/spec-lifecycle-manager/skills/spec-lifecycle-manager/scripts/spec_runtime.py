@@ -144,6 +144,12 @@ EVIDENCE_CONCRETE_RE = re.compile(
     re.IGNORECASE,
 )
 EVIDENCE_VAGUE_RE = re.compile(r"^\s*(done|complete|completed|implemented|passed|fixed)\.?\s*$", re.IGNORECASE)
+CLOSURE_RISK_LEVELS = {"low": 0, "info": 0, "medium": 1, "high": 2}
+STALE_ACTIVE_DOC_RE = re.compile(r"\b(stale|obsolete|deprecated|outdated)\b", re.IGNORECASE)
+ACTIVE_GUIDANCE_RISK_RE = re.compile(
+    r"\b(active docs?|active documentation|current guidance|current-state|source of current|do not use|obsolete guidance|stale active)\b",
+    re.IGNORECASE,
+)
 COMMIT_RE = re.compile(r"^[0-9a-f]{7,40}$", re.IGNORECASE)
 ARCHIVE_STATUSES = {"retained", "removed", "superseded"}
 ARCHIVE_ACTIONS = {"retained-as-history", "removed-after-index", "archived", "removed", "superseded"}
@@ -2704,6 +2710,258 @@ def evidence_quality_check(spec_path: Path) -> dict[str, Any]:
     }
 
 
+def closure_risk_finding(
+    severity: str,
+    classification: str,
+    message: str,
+    source: str,
+    recommended_action: str,
+    **extra: Any,
+) -> dict[str, Any]:
+    item: dict[str, Any] = {
+        "severity": severity,
+        "classification": classification,
+        "message": message,
+        "source": source,
+        "recommended_action": recommended_action,
+    }
+    item.update(extra)
+    return item
+
+
+def closure_risk_level(findings: list[dict[str, Any]]) -> str:
+    if not findings:
+        return "low"
+    level = "low"
+    for item in findings:
+        severity = str(item.get("severity") or "info")
+        if CLOSURE_RISK_LEVELS.get(severity, 0) > CLOSURE_RISK_LEVELS[level]:
+            level = "high" if severity == "high" else "medium"
+    return level
+
+
+def closure_risk_recommendation(risk_level: str) -> str:
+    if risk_level == "high":
+        return "Do not close or remove the package until high-risk findings are resolved or explicitly deferred with durable evidence."
+    if risk_level == "medium":
+        return "Strengthen evidence, routing, or durable promotion before cleanup, or record an explicit accepted residual risk."
+    return "Closure risk is low; proceed through the normal closure-log and archive-index workflow after final validation."
+
+
+def active_doc_risk_records(repo_root: Path, spec_path: Path) -> list[dict[str, Any]]:
+    root = repo_root.resolve()
+    docs_root = root / "docs"
+    if not docs_root.exists():
+        return []
+    spec = spec_path.resolve()
+    records: list[dict[str, Any]] = []
+    for path in sorted(docs_root.rglob("*.md")):
+        resolved = path.resolve()
+        try:
+            relative_parts = resolved.relative_to(docs_root.resolve()).parts
+        except ValueError:
+            continue
+        if relative_parts and relative_parts[0] in {"history", "specs"}:
+            continue
+        if spec in resolved.parents:
+            continue
+        try:
+            lines = read_text(path).splitlines()
+        except OSError:
+            continue
+        for line_number, line in enumerate(lines, start=1):
+            if not STALE_ACTIVE_DOC_RE.search(line) or not ACTIVE_GUIDANCE_RISK_RE.search(line):
+                continue
+            lowered = line.lower()
+            severity = "high" if any(term in lowered for term in ["obsolete", "deprecated"]) else "medium"
+            records.append(
+                {
+                    "path": str(path),
+                    "line": line_number,
+                    "severity": severity,
+                    "matched_text": line.strip()[:240],
+                    "consumer_risk": "Active docs can be surfaced as current guidance by search, lifecycle tooling, Agent Workbench, or future agents.",
+                }
+            )
+    return records
+
+
+def archive_recovery_signal(repo_root: Path, spec_path: Path) -> dict[str, Any]:
+    archive = archive_index(repo_root)
+    target = spec_path.resolve()
+    matching = []
+    for entry in archive.get("entries", []):
+        package_path = repo_root.resolve() / str(entry.get("package_path", "")).rstrip("/")
+        if package_path.resolve() == target:
+            matching.append(entry)
+    return {
+        "archive_index_summary": archive.get("summary", {}),
+        "archive_index_diagnostics": archive.get("diagnostics", []),
+        "matching_entries": matching,
+        "recoverability": "indexed" if matching else "not_indexed_current_spec",
+    }
+
+
+def closure_risk_review(spec_path: Path) -> dict[str, Any]:
+    spec = spec_path.resolve()
+    repo_root = repo_root_for(spec)
+    findings: list[dict[str, Any]] = []
+    blind_spots: list[dict[str, str]] = []
+
+    closure = closure_check(spec)
+    promotion = promotion_plan(spec)
+    evidence = evidence_quality_check(spec)
+    validation = validation_plan(repo_root, [], spec)
+    recovery = archive_recovery_signal(repo_root, spec)
+    stale_docs = active_doc_risk_records(repo_root, spec)
+    open_decisions = parse_open_decisions(spec / "open-decisions.md")
+    tasks = parse_tasks(spec / "tasks.md")
+
+    for blocker in closure.get("blockers", []):
+        findings.append(
+            closure_risk_finding(
+                "high",
+                "closure_blocker",
+                str(blocker.get("message") or blocker.get("code") or "Closure blocker reported."),
+                str(blocker.get("path") or spec / "tasks.md"),
+                "Resolve the closure blocker before package cleanup.",
+                code=blocker.get("code"),
+                task_id=blocker.get("task_id"),
+            )
+        )
+
+    for target in promotion.get("missing_targets", []):
+        findings.append(
+            closure_risk_finding(
+                "high",
+                "missing_durable_promotion",
+                f"Promotion target is missing: {target.get('target')}",
+                str(spec / "traceability.md"),
+                "Promote accepted behavior to a durable destination or route the gap explicitly.",
+                target=target,
+            )
+        )
+
+    for diagnostic_item in evidence.get("diagnostics", []):
+        severity = "high" if diagnostic_item.get("severity") == "error" else "medium"
+        findings.append(
+            closure_risk_finding(
+                severity,
+                "weak_or_missing_evidence",
+                str(diagnostic_item.get("message") or diagnostic_item.get("code")),
+                str(diagnostic_item.get("path") or spec / "tasks.md"),
+                "Strengthen task or verification evidence before closure.",
+                code=diagnostic_item.get("code"),
+                line=diagnostic_item.get("line"),
+            )
+        )
+
+    for check in validation.get("checks", []):
+        if check.get("validation_state") == "blocked" or check.get("applicability") == "not_run":
+            findings.append(
+                closure_risk_finding(
+                    "medium",
+                    "validation_gap",
+                    f"Validation check {check.get('id')} is {check.get('validation_state')}.",
+                    "validation_plan",
+                    "Run the check, resolve its blocker, or record an explicit residual risk.",
+                    check_id=check.get("id"),
+                    blocker=check.get("blocker"),
+                )
+            )
+
+    for task in tasks:
+        if task.status == "follow_up" or task.follow_up or task.destination:
+            findings.append(
+                closure_risk_finding(
+                    "medium",
+                    "unresolved_follow_up",
+                    f"{task.task_id} has follow-up or routed work.",
+                    str(spec / "tasks.md"),
+                    "Confirm the follow-up destination is durable and non-blocking before closure.",
+                    task_id=task.task_id,
+                    destination=task.destination,
+                    follow_up=task.follow_up,
+                )
+            )
+
+    for decision in open_decisions:
+        findings.append(
+            closure_risk_finding(
+                "high",
+                "unresolved_decision",
+                f"Open decision remains: {decision.get('id')}",
+                str(spec / "open-decisions.md"),
+                "Resolve, defer, or route the decision before closure.",
+                decision=decision,
+            )
+        )
+
+    for item in stale_docs:
+        findings.append(
+            closure_risk_finding(
+                str(item["severity"]),
+                "stale_active_documentation",
+                f"Potential stale active documentation at {item['path']}:{item['line']}.",
+                item["path"],
+                "Remove, update, or clearly archive stale active documentation before relying on closure.",
+                line=item["line"],
+                consumer_risk=item["consumer_risk"],
+                matched_text=item["matched_text"],
+            )
+        )
+
+    if not evidence.get("records"):
+        blind_spots.append({"signal": "evidence_quality", "message": "No task or verification evidence records were found."})
+    if not validation.get("checks"):
+        blind_spots.append({"signal": "validation_plan", "message": "Validation plan returned no checks."})
+    if recovery.get("archive_index_summary", {}).get("error", 0):
+        blind_spots.append({"signal": "archive_index", "message": "Archive index has errors, so recovery evidence is not trustworthy."})
+
+    risk_level = closure_risk_level(findings)
+    by_severity: dict[str, int] = {}
+    by_classification: dict[str, int] = {}
+    for item in findings:
+        severity = str(item.get("severity") or "info")
+        classification = str(item.get("classification") or "unknown")
+        by_severity[severity] = by_severity.get(severity, 0) + 1
+        by_classification[classification] = by_classification.get(classification, 0) + 1
+
+    return {
+        "spec_path": str(spec),
+        "repo_root": str(repo_root),
+        "advisory": True,
+        "mutates_files": False,
+        "risk_level": risk_level,
+        "recommended_action": closure_risk_recommendation(risk_level),
+        "findings": findings,
+        "blind_spots": blind_spots,
+        "signals": {
+            "closure_check": {
+                "ready": closure.get("ready"),
+                "blocker_count": len(closure.get("blockers", [])),
+                "lint_summary": closure.get("lint_summary", {}),
+            },
+            "promotion_plan": {
+                "target_count": len(promotion.get("targets", [])),
+                "missing_target_count": len(promotion.get("missing_targets", [])),
+                "targets": promotion.get("targets", []),
+            },
+            "evidence_quality": evidence.get("summary", {}),
+            "validation_plan": validation.get("summary", {}),
+            "open_decisions": {"count": len(open_decisions), "items": open_decisions},
+            "active_documentation": {"stale_candidate_count": len(stale_docs), "stale_candidates": stale_docs},
+            "historical_recoverability": recovery,
+        },
+        "summary": {
+            "findings": len(findings),
+            "blind_spots": len(blind_spots),
+            "by_severity": by_severity,
+            "by_classification": by_classification,
+        },
+    }
+
+
 def traceability_context(spec_path: Path, task_id: str) -> dict[str, Any]:
     if not (spec_path / "traceability.md").exists():
         return {
@@ -4023,6 +4281,9 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     closure = sub.add_parser("closure-check", help="Check spec closure readiness.")
     closure.add_argument("spec_path", type=Path)
 
+    closure_risk = sub.add_parser("closure-risk-review", help="Review closure risk signals without mutating files.")
+    closure_risk.add_argument("spec_path", type=Path)
+
     reconcile = sub.add_parser("reconcile", help="Generate a classified reconciliation report.")
     reconcile.add_argument("spec_path", type=Path)
 
@@ -4143,6 +4404,8 @@ def main(argv: list[str] | None = None) -> int:
         payload = no_active_spec_context(args.repo_root)
     elif args.command == "closure-check":
         payload = closure_check(args.spec_path.resolve())
+    elif args.command == "closure-risk-review":
+        payload = closure_risk_review(args.spec_path.resolve())
     elif args.command == "reconcile":
         payload = reconcile_spec(args.spec_path.resolve())
     elif args.command == "promotion-plan":

@@ -45,6 +45,7 @@ not available.
 | `active-spec-preflight` | Return the active spec, next task, readiness context, no-active context, guidance, and validation commands. |
 | `validation-plan` | Plan read-only validation checks from changed files and optional spec/task context, including check applicability, validation state, and a validation contract. |
 | `evidence-quality` | Review task and verification evidence quality, classify evidence strength, and return advisory diagnostics without mutating files. |
+| `closure-risk-review` | Aggregate closure readiness, promotion, validation, evidence, follow-up, decision, live-doc risk, and recovery signals into an advisory low/medium/high closure risk payload. |
 | `agent-readiness-packet` | Return bounded implementation context for a specific task before coding. |
 | `no-active-spec-context` | Return durable docs, backlog, roadmap, closure-log, and archive-index context when no active spec exists. |
 | `closure-check` | Report whether a spec is ready to close and list blockers. |
@@ -99,6 +100,7 @@ preview-first: it defaults to dry-run, requires explicit `write_intent` when
 - `active_spec_preflight`
 - `validation_plan`
 - `evidence_quality_check`
+- `closure_risk_review`
 - `agent_readiness_packet`
 - `no_active_spec_context`
 - `spec_summary`
@@ -244,6 +246,60 @@ Classifications are deterministic heuristics:
 `not_applicable` is intentionally narrow. A bare "N/A" on a code or runtime
 task is reported as weak evidence unless surrounding task files or validation
 context prove that automated validation does not apply.
+
+`closure_risk_review` is a read-only advisory check for deciding whether a
+completed package is ready for durable promotion and cleanup. The direct CLI
+form is:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py closure-risk-review docs/specs/021-closure-risk-review
+```
+
+Inputs:
+
+- `spec_path`: active package path or ID through MCP; package path through the
+  direct CLI.
+- `repo_root`: optional MCP repository root. Defaults to the server-bound
+  workspace.
+
+The payload includes:
+
+- `risk_level`: `low`, `medium`, or `high`.
+- `recommended_action`: a deterministic next action for the reported level.
+- `findings`: classified risk items with severity, source, message, and
+  recommended action.
+- `blind_spots`: unavailable or untrustworthy signals, such as missing evidence
+  records or archive-index errors.
+- `signals`: summarized source payloads from `closure_check`,
+  `promotion_plan`, `evidence_quality_check`, `validation_plan`, open
+  decisions, live documentation scanning, and historical recoverability.
+- `summary`: finding counts by severity and classification.
+- `advisory: true` and `mutates_files: false`.
+
+Risk levels are intentionally conservative:
+
+- `high`: closure blockers, missing durable promotion targets, unresolved
+  decisions, evidence errors, or high-severity live documentation risk.
+- `medium`: weak evidence, validation gaps, routed follow-up work, or
+  medium-severity live documentation risk.
+- `low`: no findings after all available signals are aggregated.
+
+Historical recoverability is reported as a signal, not as permission to keep
+misleading live guidance. Matching closure-log and archive-index entries lower
+the concern that deleted package details are unrecoverable, but they do not
+override current closure blockers, missing durable promotion, unresolved
+decisions, weak evidence, or live documentation that may mislead agents or
+search users.
+
+Limitations:
+
+- The live documentation scan is heuristic. It looks for lines that combine
+  aged-status terms with current-guidance wording under `docs/`, excluding
+  `docs/history/` and active package directories.
+- The archive recovery signal uses archive-index and closure-log metadata. It
+  does not prove that Git objects are present.
+- The command does not write closure-log entries, update the archive index,
+  promote docs, remove packages, or commit.
 
 `resolve_spec_reference` is the preferred recovery surface when an agent has a
 spec ID, numeric prefix, or package path but does not know whether it is active

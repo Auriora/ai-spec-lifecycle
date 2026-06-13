@@ -384,7 +384,136 @@ def write_evidence_quality_spec(repo: Path) -> Path:
     return spec
 
 
+def write_closure_risk_ready_spec(repo: Path) -> Path:
+    spec = write_complete_spec(repo)
+    tasks = spec / "tasks.md"
+    tasks.write_text(
+        tasks.read_text(encoding="utf-8").replace("Evidence: Done.", "Evidence: `python3 -m unittest` passed 1 test."),
+        encoding="utf-8",
+    )
+    verification = spec / "verification.md"
+    verification.write_text(
+        verification.read_text(encoding="utf-8")
+        .replace("| 2026-06-06 | Fixture check | pass | T001 Requirement 1 |", "| 2026-06-06 | Fixture check | pass | `python3 -m unittest` passed 1 test. |")
+        .replace("None.", "No residual risk accepted after `python3 -m unittest` passed 1 test."),
+        encoding="utf-8",
+    )
+    write_archive_recovery_entry(repo, spec)
+    return spec
+
+
+def write_archive_recovery_entry(repo: Path, spec: Path) -> None:
+    history = repo / "docs/history"
+    history.mkdir(parents=True, exist_ok=True)
+    (history / "spec-closure-log.md").write_text(
+        "\n".join(
+            [
+                "# Spec Closure Log",
+                "",
+                "## Entries",
+                "",
+                "### 2026-06-13 - 001-current",
+                "",
+                "- **Spec:** `docs/specs/001-current/`",
+                "- **Title:** Current format",
+                "- **Final spec commit:** `abc1234`",
+                "- **Closure cleanup commit:** `def5678`",
+                "- **Closure action:** retained-as-history",
+                "- **Durable docs updated:**",
+                "  - `docs/reference/current.md`",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    (history / "spec-archive-index.md").write_text(
+        "\n".join(
+            [
+                "# Spec Archive Index",
+                "",
+                "## Entries",
+                "",
+                "| Spec ID | Title | Package path | Status | Final spec commit | Cleanup commit | Closure action | Durable destinations | Verification |",
+                "|---------|-------|--------------|--------|-------------------|----------------|----------------|----------------------|--------------|",
+                f"| 001-current | Current format | `{spec.relative_to(repo).as_posix()}/` | retained | abc1234 | def5678 | retained-as-history | `docs/reference/current.md` | `docs/history/spec-closure-log.md` |",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+
 class SpecRuntimeTests(unittest.TestCase):
+    def test_closure_risk_review_reports_low_risk_for_ready_spec(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_closure_risk_ready_spec(Path(tmp))
+
+            payload = spec_runtime.closure_risk_review(spec)
+
+        self.assertEqual("low", payload["risk_level"])
+        self.assertEqual([], payload["findings"])
+        self.assertEqual([], payload["blind_spots"])
+        self.assertTrue(payload["advisory"])
+        self.assertFalse(payload["mutates_files"])
+        self.assertTrue(payload["signals"]["closure_check"]["ready"])
+        self.assertEqual(1, payload["signals"]["promotion_plan"]["target_count"])
+
+    def test_closure_risk_review_reports_missing_promotion_and_weak_evidence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            spec = write_closure_risk_ready_spec(repo)
+            (spec / "requirements.md").write_text(
+                (spec / "requirements.md")
+                .read_text(encoding="utf-8")
+                .replace("- `docs/reference/current.md`", ""),
+                encoding="utf-8",
+            )
+            (spec / "traceability.md").unlink()
+            (spec / "tasks.md").write_text(
+                (spec / "tasks.md")
+                .read_text(encoding="utf-8")
+                .replace("Evidence: `python3 -m unittest` passed 1 test.", "Evidence: Done."),
+                encoding="utf-8",
+            )
+
+            payload = spec_runtime.closure_risk_review(spec)
+
+        classifications = {item["classification"] for item in payload["findings"]}
+        self.assertEqual("high", payload["risk_level"])
+        self.assertIn("missing_durable_promotion", classifications)
+        self.assertIn("weak_or_missing_evidence", classifications)
+        self.assertIn("closure_blocker", classifications)
+        self.assertEqual(1, payload["signals"]["promotion_plan"]["missing_target_count"])
+
+    def test_closure_risk_review_reports_active_doc_risk(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            spec = write_closure_risk_ready_spec(repo)
+            (repo / "docs/reference/search-result.md").write_text(
+                "# Search Result\n\nThis obsolete active documentation remains current guidance for 001-current.\n",
+                encoding="utf-8",
+            )
+
+            payload = spec_runtime.closure_risk_review(spec)
+
+        stale = [item for item in payload["findings"] if item["classification"] == "stale_active_documentation"]
+        self.assertEqual("high", payload["risk_level"])
+        self.assertEqual(1, len(stale))
+        self.assertEqual("high", stale[0]["severity"])
+        self.assertIn("consumer_risk", stale[0])
+        self.assertEqual(1, payload["signals"]["active_documentation"]["stale_candidate_count"])
+
+    def test_closure_risk_review_reports_archive_recovery_signal(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            spec = write_closure_risk_ready_spec(repo)
+            write_archive_recovery_entry(repo, spec)
+
+            payload = spec_runtime.closure_risk_review(spec)
+
+        recovery = payload["signals"]["historical_recoverability"]
+        self.assertEqual("indexed", recovery["recoverability"])
+        self.assertEqual(1, len(recovery["matching_entries"]))
+        self.assertEqual("001-current", recovery["matching_entries"][0]["spec_id"])
+
     def test_evidence_quality_check_classifies_task_and_verification_evidence(self):
         with tempfile.TemporaryDirectory() as tmp:
             spec = write_evidence_quality_spec(Path(tmp))

@@ -162,6 +162,7 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertIn("task_state_audit", tools)
         self.assertIn("set_task_state", tools)
         self.assertIn("evidence_quality_check", tools)
+        self.assertIn("closure_risk_review", tools)
         structured = responses[1]["result"]["structuredContent"]
         self.assertIn("specs", structured)
         self.assertEqual(".", structured["repo_root"])
@@ -187,6 +188,7 @@ class SpecMcpServerTests(unittest.TestCase):
             "task_state_audit",
             "set_task_state",
             "evidence_quality_check",
+            "closure_risk_review",
             "closure_check",
             "reconcile_spec",
             "promotion_plan",
@@ -502,6 +504,44 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertFalse(payload["mutates_files"])
         self.assertEqual("vague", payload["records"][0]["classification"])
         self.assertEqual("EVIDENCE_VAGUE", payload["diagnostics"][0]["code"])
+
+    def test_closure_risk_review_tool_returns_structured_output(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / ".git").mkdir()
+            spec = write_current_spec(repo)
+            (spec / "verification.md").write_text(
+                "# Verification\n\n## Quality Gates\n\n| Gate | Required | Status | Evidence |\n|------|----------|--------|----------|\n| MCP payload | yes | pass | `python3 -m unittest tests.runtime.test_spec_mcp_server` passed. |\n",
+                encoding="utf-8",
+            )
+            (repo / "docs/reference").mkdir(parents=True)
+            (repo / "docs/reference/current.md").write_text("# Current\n", encoding="utf-8")
+            (spec / "tasks.md").write_text(
+                (spec / "tasks.md")
+                .read_text(encoding="utf-8")
+                .replace("- [ ] T001", "- [x] T001")
+                .replace("Evidence: Pending.", "Evidence: `python3 -m unittest tests.runtime.test_spec_mcp_server` passed."),
+                encoding="utf-8",
+            )
+            [response] = self.send(
+                rpc(
+                    1,
+                    "tools/call",
+                    {
+                        "name": "closure_risk_review",
+                        "arguments": {"repo_root": str(repo), "spec_path": "001-current"},
+                    },
+                ),
+                root=repo,
+            )
+            expected = spec_mcp_server.normalize_mcp_payload(spec_runtime.closure_risk_review(spec), repo)
+
+        payload = response["result"]["structuredContent"]
+        self.assertEqual(expected, payload)
+        self.assertTrue(payload["advisory"])
+        self.assertFalse(payload["mutates_files"])
+        self.assertIn("signals", payload)
+        self.assertIn(payload["risk_level"], {"low", "medium", "high"})
 
     def test_no_active_spec_context_tool(self):
         with tempfile.TemporaryDirectory() as tmp:

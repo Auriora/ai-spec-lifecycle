@@ -233,6 +233,12 @@ def tool_definitions() -> list[dict[str, Any]]:
             ["spec_path"],
         ),
         tool_schema(
+            "closure_risk_review",
+            "Review closure risk signals without mutating files.",
+            SPEC_PATH_PROPERTIES,
+            ["spec_path"],
+        ),
+        tool_schema(
             "agent_readiness_packet",
             "Return bounded implementation context for a task before coding.",
             {**SPEC_PATH_PROPERTIES, "task_id": "Task ID such as T004."},
@@ -400,6 +406,8 @@ def call_tool(name: str, arguments: dict[str, Any], default_root: Path) -> tuple
         ), root
     if name == "evidence_quality_check":
         return spec_runtime.evidence_quality_check(spec_path_arg(arguments, default_root)), root
+    if name == "closure_risk_review":
+        return spec_runtime.closure_risk_review(spec_path_arg(arguments, default_root)), root
     if name == "agent_readiness_packet":
         task_id = arguments.get("task_id")
         if not task_id:
