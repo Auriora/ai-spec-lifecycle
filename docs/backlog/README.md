@@ -3,7 +3,7 @@ title: Agent development lifecycle backlog
 doc_type: backlog
 status: active
 owner: platform
-last_reviewed: 2026-06-13
+last_reviewed: 2026-06-14
 ---
 
 # Backlog
@@ -62,6 +62,7 @@ spec or that should not block the active spec currently being delivered.
 | B045 | candidate | Closure artifact exception policy | User discussion about completed specs blocked by missing `verification.md` or `traceability.md`; B008, B012, B023 | Consider lifecycle rules that distinguish missing evidence from missing preferred artifact containers. Support minimal final closure artifacts, explicit waivers, or evidence consolidation when tasks and durable promotion are complete but closure checks block on absent optional package files. |
 | B046 | done | Hierarchical spec authoring hook guidance | User report of noisy `PostToolUse` findings when creating spec files; advisory hook dogfood; spec `023-hierarchical-spec-authoring-hooks` | Added hierarchy-aware `spec-file-changed` guidance, concise Codex hook next-action output, runtime docs, tests, bundle mirrors, install verification, and sync-guard evidence. |
 | B047 | candidate | Spec package rationalisation and durable-doc integration | User discussion on spec document proliferation, `spec.md`, durable-doc precedence, and numbering | Clarify which spec intents are always required but embedded in core files, when optional artifacts should exist, and how legacy `spec.md` packages are handled without duplication. Also define how active specs reference, add to, or modify durable current-state docs. |
+| B048 | candidate | Task-start hook noise regression | User report of `PostToolUse` noise when changing selected tasks from `[ ]` to `[~]`; B046 residual risk; `task-checkbox-changed` hook | Treat normal task-start edits as authoring context, not completion evidence failures. Suppress or collapse `[~]` plus `Evidence: Pending` task-audit reminders during ordinary `tasks.md` authoring while preserving completion, resume, close, and explicit task-state diagnostics. See hook candidate details. |
 
 ## Kiro-Inspired Candidate Details
 
@@ -272,6 +273,27 @@ validation patterns.
   helper tools, and downstream review candidates.
 - Full package lint remains available for explicit validation, resume, and
   closure workflows.
+- Follow-up: see `B048` for the remaining `tasks.md` authoring-noise case where
+  `task-checkbox-changed` reports in-progress tasks with pending evidence even
+  though that is the expected state before evidence exists.
+
+### B048 Task-Start Hook Noise Regression
+
+This is a narrow follow-up to `B046`, not a broader task-completion audit.
+
+- Reproduce with a `tasks.md` edit that only changes selected tasks from
+  `[ ]` to `[~]` before work starts.
+- Treat `[~]` with `Evidence: Pending.` as state/evidence agreement during
+  ordinary authoring. It should not emit
+  `TASK_AUDIT_NON_PENDING_MARKER_WITH_PENDING_EVIDENCE`.
+- Keep diagnostics for completed tasks with missing or contradictory evidence,
+  explicit task-state writes, resume checks, close checks, and claimed
+  completion flows.
+- Collapse or suppress broad-task informational reminders during simple
+  task-start edits unless the hook can isolate the changed task and the finding
+  is directly actionable for that edit.
+- Preserve advisory-only behavior; this item is about signal quality, not
+  adopting blocking lifecycle hooks.
 
 ### B047 Spec Package Rationalisation And Durable-Doc Integration
 
@@ -350,6 +372,7 @@ dogfooding, not on factual claims from conversation content.
 | P2 | B040 | Helps route broad prompts into direct patch, spec, or governance paths before agents start broad work. |
 | P2 | B045 | Clarifies how closure should handle functionally complete specs that lack preferred artifact files, reducing unnecessary retroactive documentation while preserving evidence quality. |
 | P2 | B047 | Reduces spec document proliferation and duplication while strengthening the tie between active specs and durable current-state docs. |
+| P2 | B048 | Removes noisy reminders from normal task-start edits while keeping completion and closure evidence checks intact. |
 | P2 | B015 | Converts repeated corrections and workflow friction into candidate improvements without treating history as authoritative. |
 | P2 | B014 | Supports bounded feature discovery from selected history as advisory input only. |
 | P3 | B009 | Useful for richer specs, but lower priority than preflight because traceability can already be hand-authored. |

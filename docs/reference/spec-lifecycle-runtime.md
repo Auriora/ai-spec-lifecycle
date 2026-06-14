@@ -601,8 +601,12 @@ separate dogfood and promotion decision.
 Noise policy: hooks stay quiet when state and evidence agree, collapse repeated
 task-audit findings by task ID and classification, and reserve repeated
 reminders for state contradictions, preflight summaries, or explicit
-task-state writes. Advisory mode is the default; blocking use remains an
-explicit repository adoption choice.
+task-state writes. In ordinary `tasks.md` authoring, `[~]` with
+`Evidence: Pending.` is an expected task-start state, not a completion-evidence
+failure. `task-checkbox-changed` should therefore avoid warning on that pattern
+unless the edit is an explicit task-state audit or part of a resume, completion,
+or close check. Advisory mode is the default; blocking use remains an explicit
+repository adoption choice.
 
 `spec-file-changed` is intentionally narrower than full package lint. During
 ordinary authoring it inspects the changed artifact in the context of the spec
