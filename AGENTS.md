@@ -40,6 +40,9 @@ functions, deterministic JSON output for runtime tools, and concise Markdown
 frontmatter for docs. Active spec package names use
 `docs/specs/[###-slug]/`; task IDs use stable forms such as `T001` and
 `T001.1`.
+Use repo-relative paths in user-facing output, logs intended for users,
+diagnostics, docs, tests, and examples. Only show an absolute host path when
+the referenced file is outside the repository.
 
 ## Testing Guidelines
 

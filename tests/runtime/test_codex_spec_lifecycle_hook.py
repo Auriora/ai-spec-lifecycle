@@ -92,7 +92,9 @@ class CodexSpecLifecycleHookTests(unittest.TestCase):
         context = data["hookSpecificOutput"]["additionalContext"]
 
         self.assertIn("Spec lifecycle advisory guidance.", context)
+        self.assertIn("docs/specs/001-valid", context)
         self.assertIn("Next spec artifact: traceability.md", context)
+        self.assertNotIn(str(repo), context)
         self.assertNotRegex(context, r"\b(ERROR|WARN)\b")
         self.assertEqual("", result.stderr)
 
@@ -117,6 +119,7 @@ class CodexSpecLifecycleHookTests(unittest.TestCase):
 
         self.assertIn("docs/platform/specs/001-valid", context)
         self.assertIn("Next spec artifact: traceability.md", context)
+        self.assertNotIn(str(repo), context)
         self.assertEqual("", result.stderr)
 
     def test_hook_extracts_apply_patch_input_paths(self):

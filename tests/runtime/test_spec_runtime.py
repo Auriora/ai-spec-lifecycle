@@ -929,8 +929,8 @@ class SpecRuntimeTests(unittest.TestCase):
 
         self.assertEqual(0, payload["summary"]["error"])
         self.assertEqual(0, payload["summary"]["warn"])
-        self.assertEqual(23, payload["summary"]["total"])
-        self.assertEqual(23, payload["summary"]["removed"])
+        self.assertEqual(24, payload["summary"]["total"])
+        self.assertEqual(24, payload["summary"]["removed"])
         self.assertEqual(0, payload["summary"]["retained"])
         self.assertEqual(0, payload["summary"]["superseded"])
         self.assertEqual(0, payload["summary"]["legacy_gaps"])
@@ -956,6 +956,7 @@ class SpecRuntimeTests(unittest.TestCase):
             "019-validation-plan-builder",
             "020-evidence-quality-check",
             "021-closure-risk-review",
+            "024-staged-developer-onboarding",
             "023-task-state-management-tools",
             "023-hierarchical-spec-authoring-hooks",
         }
@@ -1827,10 +1828,14 @@ class SpecRuntimeTests(unittest.TestCase):
 
         context = payload["contexts"][0]
         downstream = {item["artifact"]: item["reason"] for item in context["downstream_review"]}
+        downstream_paths = {item["artifact"]: item["path"] for item in context["downstream_review"]}
         self.assertEqual("revision", context["mode"])
+        self.assertEqual("docs/specs/001-current", context["spec_path"])
         self.assertIsNone(context["next_authoring_step"])
         self.assertEqual("review_existing_downstream", downstream["design.md"])
         self.assertEqual("review_existing_downstream", downstream["tasks.md"])
+        self.assertEqual("docs/specs/001-current/tasks.md", downstream_paths["tasks.md"])
+        self.assertNotIn(str(repo), json.dumps(payload))
 
     def test_spec_authoring_context_reports_missing_prerequisite(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1848,10 +1853,13 @@ class SpecRuntimeTests(unittest.TestCase):
 
         context = payload["contexts"][0]
         missing = {(item["artifact"], item["for_artifact"]) for item in context["missing_prerequisites"]}
+        missing_paths = {item["artifact"]: item["path"] for item in context["missing_prerequisites"]}
         codes = {item["code"] for item in payload["diagnostics"]}
         self.assertEqual("initial_authoring", context["mode"])
         self.assertIn(("requirements.md", "design.md"), missing)
+        self.assertEqual("docs/specs/001-new/requirements.md", missing_paths["requirements.md"])
         self.assertIn("SPEC_AUTHORING_PREREQUISITE_MISSING", codes)
+        self.assertNotIn(str(repo), json.dumps(payload))
 
     def test_hook_spec_file_changed_reports_authoring_context_for_affected_package(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1868,7 +1876,24 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertFalse(payload["blocked"])
         self.assertEqual({"error": 0, "warn": 0, "info": 1}, payload["summary"])
         self.assertEqual(1, len(payload["affected_specs"]))
+        self.assertEqual(["docs/specs/001-current"], payload["affected_specs"])
         self.assertEqual("task_update", payload["authoring_context"]["contexts"][0]["mode"])
+        self.assertNotIn(str(repo), json.dumps(payload))
+
+    def test_hook_normalizes_absolute_changed_files_to_repo_relative_output(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            spec = write_complete_spec(repo)
+            payload = spec_runtime.run_hook(
+                repo,
+                "spec-file-changed",
+                changed_files=[str(spec / "requirements.md")],
+                severity_profile="advisory",
+            )
+
+        self.assertEqual(["docs/specs/001-current/requirements.md"], payload["changed_files"])
+        self.assertEqual(["docs/specs/001-current"], payload["affected_specs"])
+        self.assertNotIn(str(repo), json.dumps(payload))
 
     def test_hook_spec_file_changed_uses_authoring_context_without_package_lint_flood(self):
         with tempfile.TemporaryDirectory() as tmp:

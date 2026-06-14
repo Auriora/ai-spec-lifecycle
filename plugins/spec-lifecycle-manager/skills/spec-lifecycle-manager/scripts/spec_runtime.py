@@ -281,6 +281,61 @@ def diagnostic(
     return item
 
 
+def repo_display_path(path: Path | str, repo_root: Path) -> str:
+    candidate = Path(str(path))
+    if not candidate.is_absolute():
+        candidate = repo_root / candidate
+    try:
+        relative = candidate.resolve().relative_to(repo_root.resolve())
+        return relative.as_posix() or "."
+    except ValueError:
+        return candidate.as_posix()
+
+
+def relativize_diagnostic_paths(diagnostics: list[dict[str, Any]], repo_root: Path) -> list[dict[str, Any]]:
+    relativized: list[dict[str, Any]] = []
+    for item in diagnostics:
+        next_item = dict(item)
+        path = next_item.get("path")
+        if path:
+            next_item["path"] = repo_display_path(str(path), repo_root)
+        relativized.append(next_item)
+    return relativized
+
+
+def relativize_payload_paths(value: Any, repo_root: Path) -> Any:
+    root = repo_root.resolve()
+    if isinstance(value, dict):
+        return {key: relativize_payload_paths(item, root) for key, item in value.items()}
+    if isinstance(value, list):
+        return [relativize_payload_paths(item, root) for item in value]
+    if isinstance(value, str):
+        try:
+            path = Path(value)
+        except (TypeError, ValueError):
+            return value
+        if path.is_absolute():
+            try:
+                relative = path.resolve().relative_to(root)
+                return relative.as_posix() or "."
+            except ValueError:
+                return value
+    return value
+
+
+def output_repo_root_for_args(args: argparse.Namespace) -> Path:
+    repo_root = getattr(args, "repo_root", None)
+    if isinstance(repo_root, Path):
+        return repo_root.resolve()
+    spec_path = getattr(args, "spec_path", None)
+    if isinstance(spec_path, Path):
+        return repo_root_for(spec_path.resolve())
+    path = getattr(args, "path", None)
+    if isinstance(path, Path):
+        return repo_root_for(path.resolve())
+    return Path.cwd().resolve()
+
+
 def repo_root_for(path: Path) -> Path:
     for candidate in [path, *path.parents]:
         if (candidate / ".git").exists():
@@ -4070,6 +4125,7 @@ def next_authoring_step(inventory: dict[str, str], changed_artifacts: list[str],
 
 def spec_authoring_context(repo_root: Path, changed_files: list[str], hook_name: str) -> dict[str, Any]:
     root = repo_root.resolve()
+    changed_files = normalize_changed_files(root, changed_files)
     by_spec: dict[Path, list[str]] = {}
     for changed in changed_files:
         spec = spec_path_for_changed_file(root, changed)
@@ -4096,7 +4152,7 @@ def spec_authoring_context(repo_root: Path, changed_files: list[str], hook_name:
                         {
                             "artifact": prerequisite,
                             "for_artifact": artifact,
-                            "path": str(spec_path / prerequisite),
+                            "path": repo_display_path(spec_path / prerequisite, root),
                             "recommended_tools": recommended_tools_for_artifact(prerequisite, "initial_authoring"),
                         }
                     )
@@ -4114,7 +4170,7 @@ def spec_authoring_context(repo_root: Path, changed_files: list[str], hook_name:
                     downstream_review.append(
                         {
                             "artifact": artifact,
-                            "path": str(spec_path / artifact),
+                            "path": repo_display_path(spec_path / artifact, root),
                             "reason": "review_existing_downstream",
                         }
                     )
@@ -4144,11 +4200,12 @@ def spec_authoring_context(repo_root: Path, changed_files: list[str], hook_name:
                     lifecycle_gate="authoring",
                 )
             )
+        context_diagnostics = relativize_diagnostic_paths(context_diagnostics, root)
         diagnostics.extend(context_diagnostics)
 
         contexts.append(
             {
-                "spec_path": str(spec_path),
+                "spec_path": repo_display_path(spec_path, root),
                 "changed_files": files,
                 "changed_artifacts": changed_artifacts,
                 "existing_artifacts": existing_artifacts,
@@ -4165,7 +4222,7 @@ def spec_authoring_context(repo_root: Path, changed_files: list[str], hook_name:
         )
 
     return {
-        "repo_root": str(root),
+        "repo_root": ".",
         "hook": hook_name,
         "changed_files": changed_files,
         "contexts": contexts,
@@ -4185,7 +4242,7 @@ def run_hook(
     advisory: bool = False,
 ) -> dict[str, Any]:
     root = repo_root.resolve()
-    changed_files = changed_files or []
+    changed_files = normalize_changed_files(root, changed_files or [])
     effective_advisory = advisory or severity_profile == "advisory"
     diagnostics: list[dict[str, Any]] = []
     affected_specs: list[str] = []
@@ -4208,7 +4265,7 @@ def run_hook(
         for spec in affected:
             tasks_path = spec / "tasks.md"
             if tasks_path.exists():
-                affected_specs.append(str(spec))
+                affected_specs.append(repo_display_path(spec, root))
                 diagnostics.extend(lint_doc(tasks_path, "tasks"))
                 diagnostics.extend(task_audit_diagnostics(spec))
     elif hook_name == "template-changed":
@@ -4218,38 +4275,38 @@ def run_hook(
                 diagnostics.extend(lint_doc(path, path.stem))
     elif hook_name == "implementation-task-complete":
         for spec in affected:
-            affected_specs.append(str(spec))
+            affected_specs.append(repo_display_path(spec, root))
             diagnostics.extend(check_implementation_task_complete(spec, task_id, changed_files, root))
             diagnostics.extend(task_audit_diagnostics(spec, task_id))
     elif hook_name == "verification-updated":
         for spec in affected:
-            affected_specs.append(str(spec))
+            affected_specs.append(repo_display_path(spec, root))
             diagnostics.extend(check_verification_updated(spec))
     elif hook_name == "spec-resumed":
         for spec in affected:
-            affected_specs.append(str(spec))
+            affected_specs.append(repo_display_path(spec, root))
             diagnostics.extend(check_spec_resumed(spec))
             diagnostics.extend(task_audit_diagnostics(spec))
     elif hook_name == "spec-close-check":
         for spec in affected:
-            affected_specs.append(str(spec))
+            affected_specs.append(repo_display_path(spec, root))
             diagnostics.extend(check_spec_close_hook(spec))
     elif hook_name == "set-task-state":
         for spec in affected:
-            affected_specs.append(str(spec))
+            affected_specs.append(repo_display_path(spec, root))
             diagnostics.extend(task_audit_diagnostics(spec, task_id))
     elif hook_name == "agent-slice-start":
         for spec in affected:
-            affected_specs.append(str(spec))
+            affected_specs.append(repo_display_path(spec, root))
             diagnostics.extend(check_agent_slice_start(spec, task_id))
             diagnostics.extend(check_existing_in_progress_tasks(spec, task_id))
     elif hook_name == "agent-response-check":
         for spec in affected:
-            affected_specs.append(str(spec))
+            affected_specs.append(repo_display_path(spec, root))
             diagnostics.extend(check_agent_response(spec, task_id, changed_files, root))
     elif hook_name == "review-packet-dispatch":
         for spec in affected:
-            affected_specs.append(str(spec))
+            affected_specs.append(repo_display_path(spec, root))
             diagnostics.extend(check_review_packet_dispatch(spec))
     elif hook_name == "review-result-recorded":
         diagnostics.extend(check_review_result_recorded(result_path))
@@ -4258,10 +4315,11 @@ def run_hook(
             diagnostic("error", "HOOK_UNKNOWN", root, f"Unknown hook: {hook_name}", waivable=False)
         )
 
+    diagnostics = relativize_diagnostic_paths(diagnostics, root)
     blocking = hook_blockers(diagnostics, effective_advisory)
     payload = {
         "hook": hook_name,
-        "repo_root": str(root),
+        "repo_root": ".",
         "severity_profile": severity_profile,
         "advisory": effective_advisory,
         "changed_files": changed_files,
@@ -5084,6 +5142,7 @@ def main(argv: list[str] | None = None) -> int:
         )
     else:
         raise ValueError(args.command)
+    payload = relativize_payload_paths(payload, output_repo_root_for_args(args))
     print_payload(payload)
     if args.command == "hook":
         return 1 if payload["blocked"] else 0

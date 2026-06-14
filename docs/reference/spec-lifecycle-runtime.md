@@ -608,6 +608,10 @@ unless the edit is an explicit task-state audit or part of a resume, completion,
 or close check. Advisory mode is the default; blocking use remains an explicit
 repository adoption choice.
 
+Path policy: hook payloads and user-facing hook context use repo-relative paths
+for files inside the target repository. Absolute host paths are allowed only
+when the referenced file is outside the repository boundary.
+
 `spec-file-changed` is intentionally narrower than full package lint. During
 ordinary authoring it inspects the changed artifact in the context of the spec
 tree and reports:
