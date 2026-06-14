@@ -63,6 +63,7 @@ spec or that should not block the active spec currently being delivered.
 | B046 | done | Hierarchical spec authoring hook guidance | User report of noisy `PostToolUse` findings when creating spec files; advisory hook dogfood; spec `023-hierarchical-spec-authoring-hooks` | Added hierarchy-aware `spec-file-changed` guidance, concise Codex hook next-action output, runtime docs, tests, bundle mirrors, install verification, and sync-guard evidence. |
 | B047 | candidate | Spec package rationalisation and durable-doc integration | User discussion on spec document proliferation, `spec.md`, durable-doc precedence, and numbering | Clarify which spec intents are always required but embedded in core files, when optional artifacts should exist, and how legacy `spec.md` packages are handled without duplication. Also define how active specs reference, add to, or modify durable current-state docs. |
 | B048 | candidate | Task-start hook noise regression | User report of `PostToolUse` noise when changing selected tasks from `[ ]` to `[~]`; B046 residual risk; `task-checkbox-changed` hook | Treat normal task-start edits as authoring context, not completion evidence failures. Suppress or collapse `[~]` plus `Evidence: Pending` task-audit reminders during ordinary `tasks.md` authoring while preserving completion, resume, close, and explicit task-state diagnostics. See hook candidate details. |
+| B049 | active | Guided documentation wizard | User request for step-by-step documentation, feedback, and open-question guidance; active spec `026-guided-documentation-wizard` | Add a preview-first guided workflow that asks stage-specific questions, classifies open questions and feedback, and composes existing lifecycle-guide, stage-readiness, prompt, and task-context surfaces instead of creating a second lifecycle engine. |
 
 ## Kiro-Inspired Candidate Details
 
@@ -373,6 +374,7 @@ dogfooding, not on factual claims from conversation content.
 | P2 | B045 | Clarifies how closure should handle functionally complete specs that lack preferred artifact files, reducing unnecessary retroactive documentation while preserving evidence quality. |
 | P2 | B047 | Reduces spec document proliferation and duplication while strengthening the tie between active specs and durable current-state docs. |
 | P2 | B048 | Removes noisy reminders from normal task-start edits while keeping completion and closure evidence checks intact. |
+| P2 | B049 | Consolidates the missing wizard-like user guidance across requirements, design, tasks, feedback, and open questions into an active focused spec. |
 | P2 | B015 | Converts repeated corrections and workflow friction into candidate improvements without treating history as authoritative. |
 | P2 | B014 | Supports bounded feature discovery from selected history as advisory input only. |
 | P3 | B009 | Useful for richer specs, but lower priority than preflight because traceability can already be hand-authored. |
