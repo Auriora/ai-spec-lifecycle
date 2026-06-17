@@ -3,9 +3,8 @@
     "spec-lifecycle-manager": {
       "command": "python3",
       "args": [
-        "./skills/spec-lifecycle-manager/scripts/spec_mcp_server.py"
-      ],
-      "startup_timeout_sec": 30.0
+        "${CLAUDE_PLUGIN_ROOT}/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py"
+      ]
     }
   }
 }

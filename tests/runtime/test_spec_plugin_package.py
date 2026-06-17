@@ -10,6 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 PLUGIN = ROOT / "plugins" / "spec-lifecycle-manager"
 CLAUDE_PLUGIN = PLUGIN / "claude-plugin"
+MARKETPLACE = ROOT / ".claude-plugin" / "marketplace.json"
 NPM_PACKAGE = ROOT / "package.json"
 SOURCE_SKILL = ROOT / "skills" / "spec-lifecycle-manager"
 BUNDLED_SKILL = PLUGIN / "skills" / "spec-lifecycle-manager"
@@ -58,16 +59,32 @@ class SpecPluginPackageTests(unittest.TestCase):
         self.assertEqual("spec-lifecycle-manager", manifest["name"])
         self.assertEqual("./skills/", manifest["skills"])
         self.assertEqual("./.mcp.json", manifest["mcpServers"])
-        self.assertEqual("./hooks/hooks.json", manifest["hooks"])
+        # An explicit "hooks" key pointing at the default hooks/hooks.json path
+        # makes Claude Code load it twice and fail with "Duplicate hooks file
+        # detected", which disables the whole plugin's MCP server. Claude Code
+        # auto-discovers hooks/hooks.json by convention, so the key must stay out.
+        self.assertNotIn("hooks", manifest)
 
         mcp = json.loads((CLAUDE_PLUGIN / ".mcp.json").read_text(encoding="utf-8"))
         server = mcp["mcpServers"]["spec-lifecycle-manager"]
         self.assertEqual("python3", server["command"])
-        self.assertIn("./skills/spec-lifecycle-manager/scripts/spec_mcp_server.py", server["args"])
+        self.assertIn(
+            "${CLAUDE_PLUGIN_ROOT}/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py",
+            server["args"],
+        )
 
         hooks = json.loads((CLAUDE_PLUGIN / "hooks" / "hooks.json").read_text(encoding="utf-8"))
         post_tool = hooks["hooks"]["PostToolUse"][0]["hooks"][0]
         self.assertIn("${CLAUDE_PLUGIN_ROOT}/skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py", post_tool["command"])
+
+    def test_claude_marketplace_lists_claude_plugin_source(self):
+        marketplace = json.loads(MARKETPLACE.read_text(encoding="utf-8"))
+        entries = {entry["name"]: entry for entry in marketplace["plugins"]}
+        self.assertIn("spec-lifecycle-manager", entries)
+        self.assertEqual(
+            "./plugins/spec-lifecycle-manager/claude-plugin",
+            entries["spec-lifecycle-manager"]["source"],
+        )
 
     def test_bundled_skill_matches_source_skill(self):
         source_files = {

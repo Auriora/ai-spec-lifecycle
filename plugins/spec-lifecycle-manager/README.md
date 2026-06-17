@@ -30,8 +30,17 @@ For npm distribution after publish, use:
 npx @auriora/ai-spec-lifecycle install
 ```
 
-For Claude Code, load the bundled plugin wrapper from the unpacked package:
+For Claude Code, load the bundled plugin wrapper from the unpacked package for
+a single session:
 
 ```bash
 claude --plugin-dir plugins/spec-lifecycle-manager/claude-plugin
+```
+
+Or install it persistently from this repository's local marketplace
+(`.claude-plugin/marketplace.json` at the repository root):
+
+```bash
+claude plugin marketplace add /path/to/agent-dev-lifecycle
+claude plugin install spec-lifecycle-manager@ai-spec-lifecycle
 ```

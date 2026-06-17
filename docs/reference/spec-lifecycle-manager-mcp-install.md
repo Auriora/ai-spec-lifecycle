@@ -68,14 +68,19 @@ The manifest points to bundled components with plugin-root-relative paths:
 
 - `skills`: `./skills/`
 - `mcpServers`: `./.mcp.json`
-- `hooks`: `./hooks/hooks.json`
 
 The Claude Code plugin wrapper points to its nested bundled components with
-Claude-plugin-root-relative paths:
+the same plugin-root-relative paths:
 
 - `skills`: `./skills/`
 - `mcpServers`: `./.mcp.json`
-- `hooks`: `./hooks/hooks.json`
+
+Neither manifest declares a `hooks` key. Both runtimes auto-discover
+`hooks/hooks.json` at its default location by convention. In Claude Code,
+declaring `"hooks": "./hooks/hooks.json"` in `plugin.json` causes the file to
+load twice and fail with "Duplicate hooks file detected," which disables the
+whole plugin's MCP server. The `hooks` manifest key should only be used to
+point at additional hook files beyond the default location.
 
 ## Install Flow
 
@@ -125,21 +130,54 @@ Docker/GHCR image distribution is not the supported package path.
 
 ## Claude Code Plugin
 
-For Claude Code, load the bundled plugin wrapper from a checkout or unpacked
-npm package:
+For a one-off or development session, load the bundled plugin wrapper from a
+checkout or unpacked npm package without installing it:
 
 ```bash
 claude --plugin-dir plugins/spec-lifecycle-manager/claude-plugin
 ```
 
-The Claude plugin wrapper starts the MCP server from its own plugin root:
+This loads the plugin for that session only; you must pass `--plugin-dir`
+every time you start `claude`.
+
+For a persistent install that loads automatically every session, this
+repository is also a Claude Code marketplace via
+`.claude-plugin/marketplace.json` at the repository root, which lists the
+Claude plugin wrapper under the marketplace name `ai-spec-lifecycle`. From a
+local checkout:
+
+```bash
+claude plugin marketplace add /path/to/agent-dev-lifecycle
+claude plugin install spec-lifecycle-manager@ai-spec-lifecycle
+```
+
+Or, for other users adding the GitHub-hosted marketplace directly:
+
+```bash
+claude plugin marketplace add Auriora/ai-spec-lifecycle
+claude plugin install spec-lifecycle-manager@ai-spec-lifecycle
+```
+
+The git-based form uses the same relative `source` resolution and cache-copy
+behavior as the local-path form above (verified end-to-end); it was not
+re-verified against the live GitHub repository in this pass.
+
+After this, the plugin loads automatically in every new Claude Code session
+with no flag required. Use `claude plugin list` to confirm it is installed and
+enabled, and `claude plugin uninstall spec-lifecycle-manager@ai-spec-lifecycle`
+to remove it.
+
+The Claude plugin wrapper starts the MCP server from its own plugin root,
+using `${CLAUDE_PLUGIN_ROOT}` so the path resolves correctly regardless of the
+caller's working directory or install location:
 
 ```text
-python3 ./skills/spec-lifecycle-manager/scripts/spec_mcp_server.py
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py"
 ```
 
 After changing the plugin wrapper, skill, MCP config, or hooks, run
-`/reload-plugins` in Claude Code or restart Claude Code.
+`claude plugin marketplace update ai-spec-lifecycle` (persistent install) or
+`/reload-plugins` (per-session `--plugin-dir` load) to pick up the change.
 
 ## Hook Policy
 
@@ -213,3 +251,4 @@ If the tools are not visible after reload:
 - `plugins/spec-lifecycle-manager/.mcp.json`
 - `plugins/spec-lifecycle-manager/claude-plugin/.claude-plugin/plugin.json`
 - `plugins/spec-lifecycle-manager/claude-plugin/.mcp.json`
+- `.claude-plugin/marketplace.json`

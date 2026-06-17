@@ -9,10 +9,19 @@ The plugin is self-contained. Its MCP configuration launches:
 skills/spec-lifecycle-manager/scripts/spec_mcp_server.py
 ```
 
-Load it locally with:
+Load it for a single session with:
 
 ```bash
 claude --plugin-dir plugins/spec-lifecycle-manager/claude-plugin
 ```
 
-After plugin source changes, run `/reload-plugins` in Claude Code.
+For a persistent install that loads automatically every session, add the
+repository root as a local marketplace and install from it:
+
+```bash
+claude plugin marketplace add /path/to/agent-dev-lifecycle
+claude plugin install spec-lifecycle-manager@ai-spec-lifecycle
+```
+
+After plugin source changes, run `/reload-plugins` (per-session load) or
+`claude plugin marketplace update ai-spec-lifecycle` (persistent install).

@@ -1,0 +1,14 @@
+{
+  "name": "ai-spec-lifecycle",
+  "description": "Auriora spec lifecycle plugins for Claude Code.",
+  "owner": {
+    "name": "Auriora"
+  },
+  "plugins": [
+    {
+      "name": "spec-lifecycle-manager",
+      "source": "./plugins/spec-lifecycle-manager/claude-plugin",
+      "description": "Lifecycle guidance and read-only MCP tools for AI-assisted implementation specs."
+    }
+  ]
+}
