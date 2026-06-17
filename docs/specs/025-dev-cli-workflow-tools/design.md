@@ -135,7 +135,8 @@ CLI args
 
 ### Package Identity
 
-Recommended metadata:
+**Resolved 2026-06-17:** primary command is `adl`; package metadata uses
+`agent-dev-lifecycle-devcli`; no temporary `proj` alias is retained.
 
 ```toml
 [project]
@@ -146,7 +147,8 @@ description = "Developer CLI for agent-dev-lifecycle maintenance workflows"
 adl = "auriora_dev.cli:app"
 ```
 
-`proj` should be removed unless a temporary alias is explicitly desired.
+`proj` is removed, not aliased, per the non-goal against retaining
+template-specific naming.
 
 ### Shared Runner
 

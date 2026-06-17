@@ -29,7 +29,7 @@ T006 -> T007
 **Purpose**: Make the v1 wizard boundary explicit before editing runtime or
 prompt files.
 
-- [ ] T001 Decide v1 wizard surface and feedback model.
+- [~] T001 Decide v1 wizard surface and feedback model.
   - Depends on: none
   - Requirement: R1, R3, R4, R5
   - Files: `docs/specs/026-guided-documentation-wizard/design.md`,
@@ -37,7 +37,7 @@ prompt files.
   - Acceptance: D001-D004 are resolved or explicitly deferred with owner,
     blocking status, and artifact destination.
   - Evidence mode: planner
-  - Evidence: Pending.
+  - Evidence: D001-D004 resolved 2026-06-17 by the spec owner and recorded in design.md (Open Questions) and traceability.md (Open Decision Impact): prompt-only surface (D001), reuse of the existing accept/revise/defer/reject/human-decision disposition shape (D002), one-question-default pacing with checklist on request (D003), manual-only write boundary for v1 (D004). Downstream tasks T002 and T006 can proceed against these decisions; T003 marked no-op per D001.
 
 ## Phase 2: Prompt And Guidance
 
@@ -55,7 +55,7 @@ engine.
     preview-first.
   - Evidence: Pending.
 
-- [ ] T003 Implement deterministic wizard runtime if approved for v1.
+- [-] T003 Implement deterministic wizard runtime if approved for v1.
   - Depends on: T001
   - Requirement: R1, R2, R3, R4, R5, R6, R7
   - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`,
@@ -65,11 +65,14 @@ engine.
   - Acceptance: Runtime or MCP wizard output reports stage, next question, open
     questions, feedback dispositions, preview edit plan, readiness, validation
     commands, and residual risk.
-  - Evidence: Pending.
-  - [ ] T003.1 Add read-only runtime payload and CLI command.
-  - [ ] T003.2 Add MCP tool only if the runtime surface is accepted for v1.
-  - [ ] T003.3 Cover CP-001 through CP-005 in focused tests.
+  - Evidence: Not building per D001 (resolved 2026-06-17: v1 is prompt-only). Runtime/MCP design removed from design.md.
+  - [-] T003.1 Add read-only runtime payload and CLI command.
+  - Evidence: Not building per D001 (resolved 2026-06-17: v1 is prompt-only); no runtime payload or CLI command added.
+  - [-] T003.2 Add MCP tool only if the runtime surface is accepted for v1.
+  - Evidence: Not building per D001 (resolved 2026-06-17: v1 is prompt-only); no MCP tool added.
+  - [-] T003.3 Cover CP-001 through CP-005 in focused tests.
 
+  - Evidence: Not building per D001 (resolved 2026-06-17: v1 is prompt-only); CP-001 through CP-005 are covered by prompt content review instead of runtime tests.
 ## Phase 3: Durable Documentation
 
 **Purpose**: Promote accepted wizard behavior into durable current-state docs.

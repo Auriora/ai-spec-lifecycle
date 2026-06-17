@@ -62,7 +62,7 @@ last_reviewed: 2026-06-14
 
 | Decision | Affected requirements | Affected tasks | Blocking? |
 |----------|-----------------------|----------------|-----------|
-| Primary CLI name: confirm `adl` or choose another name | R1, R9 | T001, T003, T012 | Blocks implementation naming |
+| Primary CLI name: confirm `adl` or choose another name | R1, R9 | T001, T003, T012 | Resolved 2026-06-17: `adl`, no `proj` alias retained (see design.md Package Identity). |
 | Real tarball behavior for `adl package pack` | R5, R8 | T006, T009 | Blocks non-dry-run package command behavior |
 | Full skill-tree sync versus allowlist for `adl sync bundles` | R4, R10 | T005 | Blocks sync implementation details |
 | Test framework: pytest/Typer runner versus unittest-only | R10 | T002, T010 | Blocks test harness setup |

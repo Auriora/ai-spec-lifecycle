@@ -4,246 +4,180 @@ doc_type: spec
 artifact_type: design
 status: active
 owner: platform
-last_reviewed: 2026-06-14
+last_reviewed: 2026-06-17
 ---
 
 # Technical Design
 
 ## Overview
 
-Add a guided documentation wizard as a thin orchestration layer over existing
-spec lifecycle runtime and prompt surfaces. The wizard should not become a
-second lifecycle engine. It should inspect current lifecycle state, identify the
-next documentation stage, ask the next bounded question, and produce a
-preview-first update plan for the relevant spec or durable-document artifact.
+Add a guided documentation wizard as a prompt-based workflow over existing
+spec lifecycle runtime and prompt surfaces. The wizard does not add a new
+runtime helper, MCP tool, or JSON payload schema. It is a prompt definition
+that instructs Codex/Claude how to gather lifecycle context with existing
+read-only tools (`scan_specs`, `lifecycle_guide`, `active_spec_preflight`,
+`stage_readiness`, `task_context`, `traceability_lookup`,
+`no_active_spec_context`), ask one bounded question at a time, classify
+feedback, and produce a preview-first edit plan before any file write.
 
-The first implementation should favor deterministic runtime output and prompt
-guidance. Write-capable behavior remains out of scope unless a later task adds
-it under the existing guarded write policy.
+**Resolved 2026-06-17 (D001):** v1 is prompt-only plus durable guidance. No
+deterministic runtime/MCP `documentation_wizard` tool is implemented. See
+[Open Questions](#open-questions) for the full decision record.
 
 ## Requirement Coverage
 
 | Requirement | Acceptance Criteria | Design Coverage | Validation Approach |
-|-------------|---------------------|-----------------|---------------------|
-| R1 Stage-Aware Wizard Entry Point | AC1-AC4 | Wizard state model and existing lifecycle-guide/preflight composition | Runtime unit tests and manual prompt review |
-| R2 Step-By-Step Documentation Flow | AC1-AC4 | Stage catalog and question sets | Unit tests for stage transitions |
-| R3 Open-Question Guidance | AC1-AC4 | Question model with answer guidance and destinations | Unit tests for blocking/deferred questions |
-| R4 Feedback Disposition Workflow | AC1-AC4 | Feedback disposition model | Unit tests for dispositions and routing |
-| R5 Preview-First Edit Plan | AC1-AC4 | Edit-plan schema and write boundary | Unit tests for preview payload shape |
-| R6 Existing Tool Composition | AC1-AC4 | Reuse scan/preflight/stage readiness/prompt validation | Runtime and MCP tests |
-| R7 Durable Promotion And Closure Awareness | AC1-AC4 | Promotion and closure stage outputs | Closure/promotion scenario tests |
+|-------------|---------------------|------------------|---------------------|
+| R1 Stage-Aware Wizard Entry Point | AC1-AC4 | Prompt instructs the agent to call `scan_specs`/`lifecycle_guide`/`active_spec_preflight` and report stage, selection, and next action | Prompt content review and manual dogfood review |
+| R2 Step-By-Step Documentation Flow | AC1-AC4 | Stage catalog and per-stage question sets documented in the prompt | Prompt content review against stage catalog |
+| R3 Open-Question Guidance | AC1-AC4 | Prompt fields for why-it-matters, answer format, blocking status, destination | Prompt content review against question fields |
+| R4 Feedback Disposition Workflow | AC1-AC4 | Prompt instructs the agent to classify feedback using the existing review-result disposition shape (accept/revise/defer/reject/human-decision) | Prompt content review against disposition list |
+| R5 Preview-First Edit Plan | AC1-AC4 | Prompt requires a preview plan (file, section, change type, rationale) before any write | Prompt content review; no write-capable tool exists to test |
+| R6 Existing Tool Composition | AC1-AC4 | Prompt names the existing tools it composes and forbids independent parsing | `prompts_validate` and manual cross-check against tool list |
+| R7 Durable Promotion And Closure Awareness | AC1-AC4 | Prompt instructs the agent to report durable destinations and closure blockers at promotion/closure stages | Prompt content review against closure checklist |
 
 ## Correctness Property Coverage
 
 | Property | Design Behavior | Validation Direction | Notes |
 |----------|-----------------|----------------------|-------|
-| CP-001 | `ready_to_implement` remains false when blocking questions or downstream review needs exist. | Unit tests over wizard payloads and stage readiness inputs. | Applies before any implementation stage. |
-| CP-002 | Stage transitions advance only when required answers are present or an explicit exception is recorded. | Unit tests for requirements/design/task transition decisions. | Exceptions must be visible. |
-| CP-003 | Feedback payload requires one primary disposition before routing. | Unit tests for feedback classification. | Mirrors review-result disposition ideas. |
-| CP-004 | Edit-plan item schema requires path, section, change type, and rationale. | Unit tests for preview plan validation. | No write behavior in first slice. |
-| CP-005 | Closed specs are represented through closure/archive context only. | Unit tests or scenario fixture with removed package history. | Reuses no-active-spec context rules. |
+| CP-001 | Prompt instructs the agent never to report implementation readiness while blocking questions or downstream review needs remain | Prompt content review against `stage_readiness`/`closure_risk_review` output | Enforcement depends on the agent following prompt instructions, not code. |
+| CP-002 | Prompt instructs the agent to advance stages only when required answers are present or an explicit, recorded exception exists | Prompt content review | Same caveat as CP-001. |
+| CP-003 | Prompt instructs the agent to assign exactly one disposition before treating feedback as accepted, deferred, or rejected | Prompt content review | |
+| CP-004 | Prompt requires path, section, change type, and rationale in every preview edit item | Prompt content review | No write-capable flow exists in v1. |
+| CP-005 | Prompt instructs the agent to treat removed/closed spec packages as historical evidence only, using `no_active_spec_context`/archive index | Prompt content review | Depends on archive/closure history quality. |
+
+Because v1 is prompt-only, these properties are validated by reading the
+prompt content and by manual dogfood review, not by automated unit tests
+against runtime code.
 
 ## High-Level Design
 
 ### System Architecture
 
-The wizard has three layers:
+The wizard has two layers:
 
-1. **Lifecycle context input:** existing runtime outputs such as scan,
-   lifecycle guide, active spec preflight, stage readiness, task context, and
-   no-active-spec context.
-2. **Wizard decision model:** deterministic classification of current stage,
-   missing answers, open questions, feedback items, preview edits, and next
-   user prompt.
-3. **Agent-facing surface:** CLI/MCP runtime output plus a prompt definition
-   that tells Codex how to use the wizard without bypassing the skill.
+1. **Lifecycle context input:** existing read-only runtime/MCP outputs such
+   as `scan_specs`, `lifecycle_guide`, `active_spec_preflight`,
+   `stage_readiness`, `task_context`, `traceability_lookup`, and
+   `no_active_spec_context`.
+2. **Agent-facing prompt surface:** a prompt definition that tells
+   Codex/Claude which of the above tools to call, how to classify the
+   current stage, how to ask the next bounded question, how to classify
+   feedback, and how to produce a preview-first edit plan — without
+   bypassing the skill or inventing a second lifecycle engine.
+
+There is no separate "wizard decision model" code layer. The decision logic
+(stage selection, question selection, feedback classification, preview-plan
+construction) lives in the prompt's instructions to the agent, not in
+`spec_runtime.py` or a new MCP tool.
 
 ### Components and Changes
 
-- `skills/spec-lifecycle-manager/scripts/spec_runtime.py`
-  - Add a read-only `documentation_wizard(...)` helper or equivalent command.
-  - Compose existing helper functions instead of reparsing artifacts.
-  - Return deterministic JSON with stage, questions, feedback guidance, edit
-    preview, validation/recovery commands, and residual risk.
-- `skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`
-  - Expose the wizard helper as a read-only MCP tool if the runtime helper is
-    implemented.
 - `skills/spec-lifecycle-manager/prompts/`
-  - Add or refine a prompt such as `documentation-wizard` that instructs agents
-    to call the read-only tool first, ask one stage of questions, and avoid
-    file writes until approved.
+  - Add or refine a prompt such as `documentation-wizard` that instructs
+    agents to call the existing read-only tools above, ask one stage of
+    questions at a time by default (with an explicit checklist mode on
+    request, per D003), classify feedback (per D002, reusing the existing
+    review-result disposition shape), and stay preview-first.
 - `skills/spec-lifecycle-manager/SKILL.md`
   - Add concise workflow guidance for user feedback and answering open
     questions.
 - `docs/design/spec-lifecycle-management.md`
-  - Promote accepted design behavior once implemented.
+  - Promote accepted wizard behavior once implemented.
 - `docs/reference/spec-lifecycle-runtime.md`
-  - Document the runtime/MCP/prompt surface.
+  - Document the prompt surface and the existing tools it composes.
 
-### Data Models
+### Conversation Output Shape
 
-The wizard payload should use stable, JSON-friendly records:
-
-```text
-wizard_payload:
-  repo_classification
-  selected_spec
-  current_stage
-  next_question
-  question_set[]
-  open_questions[]
-  feedback_items[]
-  preview_edit_plan[]
-  readiness
-  validation_or_recovery_commands[]
-  residual_risk[]
-```
-
-Question record:
+The prompt should instruct the agent to structure its replies around the
+following information, reported in conversation rather than returned as a
+JSON payload from a new tool:
 
 ```text
-question:
-  id
-  stage
-  prompt
-  why_it_matters
-  expected_answer_format
-  artifact_destination
-  blocking
-  examples
-```
-
-Feedback record:
-
-```text
-feedback:
-  id
-  source
-  summary
-  disposition
-  affected_artifacts
-  validation_impact
-  destination
-  residual_risk
-```
-
-Preview edit item:
-
-```text
-preview_edit:
-  path
-  section
-  change_type
-  rationale
-  source_question_or_feedback
-  requires_approval
+- current stage, selected spec or selection need
+- next bounded question (or compact checklist, if requested)
+- open questions: why it matters, expected answer format, blocking status,
+  artifact destination
+- feedback items: source, summary, disposition (per the review-result
+  shape), affected artifacts, destination, residual risk
+- preview edit plan: path, section, change type, rationale
+- readiness signal (never "ready to implement" while blocking items remain)
+- equivalent CLI/MCP recovery commands
+- residual risk
 ```
 
 ### Data Flow
 
-1. Caller invokes the wizard with a repository root, optional spec path, optional
-   user input, optional current stage, and optional feedback text.
-2. Runtime gathers lifecycle context through existing helpers.
-3. Runtime determines the stage and missing inputs.
-4. Runtime emits the next question or feedback disposition guidance.
-5. If enough information exists to propose edits, runtime emits a preview edit
-   plan with target sections.
-6. Agent asks the user the next bounded question or requests approval for the
-   preview plan.
-7. A later implementation step may apply approved edits with ordinary Codex file
-   edits, not with an autonomous wizard write loop.
+1. The agent receives a guided-documentation request.
+2. The prompt instructs the agent to gather lifecycle context by calling
+   `scan_specs`, `lifecycle_guide`, `active_spec_preflight`, and
+   `stage_readiness` (when a spec is selected).
+3. The agent determines the current stage and missing inputs using the
+   prompt's stage catalog.
+4. The agent asks the next bounded question or reports feedback-disposition
+   guidance.
+5. If enough information exists, the agent proposes a preview edit plan with
+   target file, section, change type, and rationale.
+6. The user approves or revises the plan.
+7. The agent applies approved edits with ordinary file edits — there is no
+   wizard write tool in v1.
 
 ## Low-Level Design
 
-### Algorithms and Logic
+### Prompt Behavior
 
-```text
-function documentation_wizard(repo_root, spec_path, stage, user_input, feedback):
-    scan = scan_specs(repo_root)
-    guide = lifecycle_guide(repo_root)
-    selected = resolve selected spec or selection need
-    stage_context = stage_readiness(selected) when selected
-    questions = build_question_set(stage, selected, stage_context)
-    feedback_items = classify_feedback(feedback) when feedback provided
-    preview = build_preview_plan(questions, feedback_items, selected)
-    return payload
-```
-
-Stage selection should prefer:
+Stage selection should prefer, in order:
 
 1. Explicit caller stage when valid.
 2. Active spec artifact state and `stage_readiness`.
-3. No-active or blank-repo lifecycle-guide context.
+3. No-active or blank-repo `lifecycle_guide` context.
 4. Conservative fallback: ask for selection or requirements clarification.
-
-### Function Signatures and Interfaces
-
-Candidate runtime function:
-
-```text
-documentation_wizard(
-    repo_root: Path,
-    docs_root: str | None = None,
-    spec_path: str | None = None,
-    stage: str | None = None,
-    user_input: str | None = None,
-    feedback: str | None = None,
-) -> dict[str, Any]
-```
-
-Candidate CLI:
-
-```text
-skills/spec-lifecycle-manager/scripts/spec_runtime.py documentation-wizard .
-skills/spec-lifecycle-manager/scripts/spec_runtime.py documentation-wizard . --spec-path docs/specs/026-guided-documentation-wizard --stage requirements
-```
-
-Candidate MCP tool:
-
-```text
-documentation_wizard(repo_root?, docs_root?, spec_path?, stage?, user_input?, feedback?)
-```
 
 ### Error Handling
 
-- Invalid spec reference: return selection guidance and available active specs.
-- Multiple active specs without selection: ask selection question; do not guess.
+The prompt should instruct the agent to handle these cases:
+
+- Invalid spec reference: report selection guidance and available active
+  specs.
+- Multiple active specs without selection: ask a selection question; do not
+  guess.
 - Missing docs root: use blank/near-blank bootstrap guidance.
-- Unsupported stage: return valid stage list and a conservative next question.
-- Feedback without target spec: classify as advisory and ask for destination.
-- Any unavailable MCP feature: report equivalent CLI recovery commands.
+- Unsupported stage: report the valid stage list and a conservative next
+  question.
+- Feedback without a target spec: classify as advisory and ask for a
+  destination.
+- Any tool that is unavailable: report the equivalent CLI recovery command.
 
 ### Security, Trust, and Access
 
-The first implementation is read-only and preview-first. It must not execute
-external services, mutate user-level config, write repository files, or infer
-secrets. If later write behavior is proposed, it must stay scoped to active
-spec or durable documentation paths and require explicit write intent.
+The wizard is read-only and preview-first by construction: it has no
+write-capable tool to misuse. The prompt must not instruct the agent to write
+repository files outside ordinary, user-approved edits, infer secrets, or
+execute external services. A later write-capable wizard helper is a separate
+decision (see D004) and is out of scope for this prompt.
 
 ### Migration and Compatibility
 
-Existing prompt names and runtime commands must continue to work. The wizard can
-be introduced as a new prompt/tool without changing the behavior of
-`developer-start`, `lifecycle-triage`, or `task-context`. Existing active specs
-do not need migration unless they opt into wizard guidance.
+Existing prompt names and runtime commands must continue to work. The wizard
+is introduced as a new prompt without changing the behavior of
+`developer-start`, `lifecycle-triage`, or `task-context`. Existing active
+specs do not need migration unless they opt into wizard guidance.
 
 ## Validation Strategy
 
 | Validation | Covers | Evidence Location | Residual Risk |
-|------------|--------|-------------------|---------------|
-| Focused runtime unit tests | Stage selection, questions, feedback, preview schema | `tests/runtime/` and task evidence | Semantic quality of prompts still needs human review. |
-| MCP server tests | Tool exposure and payload normalization | `tests/runtime/test_spec_mcp_server.py` | Already-running MCP sessions may need reload. |
-| Prompt validation | Prompt JSON contract | `prompts_validate` and CLI prompts command | Prompt usefulness needs dogfood. |
-| Spec lint and scan | Package health | MCP `lint_spec_package`, `scan_specs` | Lint does not prove implementation quality. |
+|------------|--------|-------------------|----------------|
+| Prompt content review | Stage selection, questions, feedback, preview-plan guidance | `tests/runtime/test_spec_runtime.py` prompt fixtures and task evidence | Enforcement depends on agent compliance, not code; no unit test proves runtime behavior. |
+| Prompt validation | Prompt JSON contract | `prompts_validate` and CLI `prompts` command | Validates structure, not semantic quality. |
+| Spec lint and scan | Package health | MCP `lint_spec_package`, `scan_specs` | Lint does not prove guidance quality. |
 | Full unit suite | Regression coverage | `verification.md` | External plugin install parity needs sync/install checks if bundled files change. |
 
 ## Downstream Task Guidance
 
-- Required checkpoints before implementation:
-  - Confirm whether the first slice is prompt-only, runtime-only, or both.
-  - Confirm whether a write-capable wizard is explicitly out of scope for v1.
+- D001-D004 are resolved; see [Open Questions](#open-questions).
 - Properties or acceptance criteria that need explicit task coverage:
-  - CP-001 through CP-005.
+  - CP-001 through CP-005, validated by prompt content review since v1 has
+    no runtime code to unit test.
 - Optional artifacts needed before implementation:
   - None beyond this package.
 - Downstream review needed if this design changes after tasks are drafted:
@@ -251,22 +185,33 @@ do not need migration unless they opt into wizard guidance.
 
 ## Operational Considerations
 
-The wizard should reduce conversational drift, not create mandatory ceremony for
-small changes. It should be available when a user asks for guided documentation,
-rough idea to spec, open-question handling, feedback routing, or phase
-progression. Normal small direct patches can still bypass the wizard through
-existing lifecycle triage.
+The wizard should reduce conversational drift, not create mandatory ceremony
+for small changes. It should be available when a user asks for guided
+documentation, rough idea to spec, open-question handling, feedback routing,
+or phase progression. Normal small direct patches can still bypass the wizard
+through existing lifecycle triage.
 
 ## Open Questions
 
-- **D001:** Should v1 be prompt-only plus durable guidance, or include a
-  deterministic runtime/MCP `documentation_wizard` tool?
-- **D002:** Should feedback disposition reuse the existing review-result
-  template shape or have a smaller wizard-specific model?
-- **D003:** Should the wizard ask questions one at a time by default, or return a
-  compact stage checklist when the user wants speed?
-- **D004:** Should approved preview plans be applied manually by Codex only, or
-  should a later guarded write helper be considered?
+All four decisions below were resolved on 2026-06-17 during T001.
+
+- **D001 (resolved):** v1 is prompt-only plus durable guidance. No
+  deterministic runtime/MCP `documentation_wizard` tool is implemented.
+  Rationale: lower implementation cost; the prompt can compose existing
+  read-only tools directly. Residual risk: enforcement depends on the agent
+  following prompt instructions rather than code, so correctness properties
+  are validated by prompt content review, not unit tests. A future spec may
+  revisit a deterministic tool if prompt-only guidance proves insufficient.
+- **D002 (resolved):** Feedback disposition reuses the existing review-result
+  template shape rather than a smaller wizard-specific model, for
+  consistency with other review workflows.
+- **D003 (resolved):** The wizard asks one stage-specific question at a time
+  by default, with an explicit user-requested checklist/fast mode as a
+  documented exception (consistent with CP-002).
+- **D004 (resolved):** Preview plans are applied manually by Codex/the user
+  in v1; no write-capable wizard helper is built. A future guarded-write
+  helper, if pursued, is to be routed to `docs/backlog/README.md` under T004
+  rather than designed here.
 
 ## Related Artifacts
 

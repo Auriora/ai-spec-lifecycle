@@ -58,11 +58,11 @@ future implementation tasks T001-T007.
 
 | Property | Covered by | Evidence | Residual risk |
 |----------|------------|----------|---------------|
-| CP-001 | Runtime readiness tests or prompt review | pending | |
-| CP-002 | Stage transition tests or prompt review | pending | |
-| CP-003 | Feedback disposition tests or prompt review | pending | |
-| CP-004 | Preview edit schema tests or prompt review | pending | |
-| CP-005 | Closed-spec scenario test or manual review | pending | |
+| CP-001 | Prompt content review (no runtime code; D001 resolved prompt-only) | pending | |
+| CP-002 | Prompt content review | pending | |
+| CP-003 | Prompt content review | pending | |
+| CP-004 | Prompt content review | pending | |
+| CP-005 | Prompt content review or manual review | pending | |
 
 ## Agent Readiness Evidence
 
@@ -80,9 +80,9 @@ future implementation tasks T001-T007.
 
 | Task ID | Status | Evidence | Notes |
 |---------|--------|----------|-------|
-| T001 | pending | | |
+| T001 | in_progress | D001-D004 resolved 2026-06-17; see design.md Open Questions and traceability.md Open Decision Impact. | |
 | T002 | pending | | |
-| T003 | pending | | |
+| T003 | no_op | Not building per D001 (resolved 2026-06-17: v1 is prompt-only). | |
 | T004 | pending | | |
 | T005 | pending | | |
 | T006 | pending | | |
