@@ -3,7 +3,7 @@ title: Agent development lifecycle backlog
 doc_type: backlog
 status: active
 owner: platform
-last_reviewed: 2026-06-14
+last_reviewed: 2026-06-19
 ---
 
 # Backlog
@@ -64,6 +64,25 @@ spec or that should not block the active spec currently being delivered.
 | B047 | candidate | Spec package rationalisation and durable-doc integration | User discussion on spec document proliferation, `spec.md`, durable-doc precedence, and numbering | Clarify which spec intents are always required but embedded in core files, when optional artifacts should exist, and how legacy `spec.md` packages are handled without duplication. Also define how active specs reference, add to, or modify durable current-state docs. |
 | B048 | candidate | Task-start hook noise regression | User report of `PostToolUse` noise when changing selected tasks from `[ ]` to `[~]`; B046 residual risk; `task-checkbox-changed` hook | Treat normal task-start edits as authoring context, not completion evidence failures. Suppress or collapse `[~]` plus `Evidence: Pending` task-audit reminders during ordinary `tasks.md` authoring while preserving completion, resume, close, and explicit task-state diagnostics. See hook candidate details. |
 | B049 | active | Guided documentation wizard | User request for step-by-step documentation, feedback, and open-question guidance; active spec `026-guided-documentation-wizard` | Add a preview-first guided workflow that asks stage-specific questions, classifies open questions and feedback, and composes existing lifecycle-guide, stage-readiness, prompt, and task-context surfaces instead of creating a second lifecycle engine. |
+| B050 | candidate | Phase completion helper | External agent feedback in `docs/reviews/agent-feedback.md`; B012, B023, B031 | Add a structured helper for phase-level completion slices that can update task evidence, verification task tables, evidence logs, readiness status, and grouped task state from one reviewed input. Preserve separate validation and review evidence instead of treating batch updates as proof by themselves. |
+| B051 | candidate | Durable promotion prompt | External agent feedback in `docs/reviews/agent-feedback.md`; durable-doc promotion workflow | Add clearer runtime or prompt guidance that identifies which durable docs need current-state updates for a task or phase, including product, architecture, runbook, and verification targets when present. |
+| B052 | candidate | Review evidence capture | External agent feedback in `docs/reviews/agent-feedback.md`; B024 | Add a first-class review findings evidence section or helper so security, senior-engineer, or expert-review outcomes can be recorded as addressed, rejected, deferred, or accepted residual risk without forcing them into generic evidence rows. |
+| B053 | candidate | Repo validation command discovery | External agent feedback in `docs/reviews/agent-feedback.md`; B023 | Prefer validation commands discovered from repository docs, AGENTS guidance, package metadata, and common test entrypoints before returning generic lifecycle script suggestions. Keep command discovery read-only and report confidence. |
+| B054 | candidate | Security-sensitive task review gate | External agent feedback in `docs/reviews/agent-feedback.md`; B037, B039 | Warn when tasks or changed files touch auth, invitations, roles, audit logging, permissions, secrets, or similar sensitive surfaces, and require explicit review evidence or accepted residual risk before completion or closure. |
+
+## External Agent Feedback Candidates
+
+The raw feedback in `docs/reviews/agent-feedback.md` reported that the skill
+was useful for sequencing, traceability, MCP-backed context, and evidence
+hygiene, but expensive during implementation-heavy phases. The candidate items
+B050-B054 capture its concrete improvement requests without treating the
+feedback as accepted implementation scope.
+
+Promote one or more of these candidates into a focused spec only after deciding
+whether the intended surface is an MCP tool, prompt workflow, template update,
+lint rule, or advisory hook. Phase helpers must keep proof separate from status
+mutation: batch task updates should reference concrete commands, reviews, and
+durable-doc changes rather than replacing them.
 
 ## Kiro-Inspired Candidate Details
 
@@ -359,6 +378,9 @@ dogfooding, not on factual claims from conversation content.
 | P1 | B023 | Improves evidence quality by deriving validation plans from actual task, file, and documentation-only context while avoiding skipped-check noise. |
 | P1 | B037 | Directly targets stub-completion and weak task completion claims by checking implementation files and evidence together. |
 | P1 | B038 | Reduces context-loss errors before implementation by forcing task, requirement, design, and verification reloads through existing traceability surfaces. |
+| P1 | B050 | Targets the largest implementation-phase friction from external feedback by consolidating repeated phase-completion evidence updates while preserving proof boundaries. |
+| P1 | B053 | Makes validation advice more useful by deriving commands from the target repository's own docs before falling back to generic lifecycle checks. |
+| P1 | B054 | Adds explicit review pressure for security-sensitive lifecycle slices such as auth, invitations, roles, permissions, and audit logging. |
 | P1 | B012 | Helps distinguish real task evidence from vague, not-run, and genuinely not-applicable validation claims. |
 | P1 | B008 | Delivered closure quality improvements by separating historical recoverability from live-document guidance risk. |
 | P2 | B029 | Makes workflow level explicit before agents choose whether to patch directly, open a spec, or stop for governance review. |
@@ -375,6 +397,8 @@ dogfooding, not on factual claims from conversation content.
 | P2 | B047 | Reduces spec document proliferation and duplication while strengthening the tie between active specs and durable current-state docs. |
 | P2 | B048 | Removes noisy reminders from normal task-start edits while keeping completion and closure evidence checks intact. |
 | P2 | B049 | Consolidates the missing wizard-like user guidance across requirements, design, tasks, feedback, and open questions into an active focused spec. |
+| P2 | B051 | Reduces durable-doc promotion guesswork by asking agents which current-state docs must be updated for the selected task or phase. |
+| P2 | B052 | Keeps expert and security review outcomes traceable without overloading generic task evidence fields. |
 | P2 | B015 | Converts repeated corrections and workflow friction into candidate improvements without treating history as authoritative. |
 | P2 | B014 | Supports bounded feature discovery from selected history as advisory input only. |
 | P3 | B009 | Useful for richer specs, but lower priority than preflight because traceability can already be hand-authored. |
