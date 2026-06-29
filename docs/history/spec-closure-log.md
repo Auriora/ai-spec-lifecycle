@@ -14,6 +14,54 @@ requires visible archived docs.
 
 ## Entries
 
+### 2026-06-29 - 028-cross-platform-packaging
+
+- **Spec:** `docs/specs/028-cross-platform-packaging/`
+- **Title:** Cross-platform packaging
+- **Final spec commit:** `1ca961d`
+- **Closure cleanup commit:** pending
+- **Closure action:** removed
+- **Closed by:** platform
+- **Durable docs updated:**
+  - `docs/reference/spec-lifecycle-manager-mcp-install.md`
+  - `docs/reference/spec-lifecycle-runtime.md`
+  - `.github/workflows/cross-platform.yml`
+  - `packaging/spec-lifecycle-manager/installer.mjs`
+  - `packaging/spec-lifecycle-manager/resolve-python.mjs`
+  - `packaging/spec-lifecycle-manager/clean-pycache.mjs`
+  - `packaging/spec-lifecycle-manager/npm-install.js`
+  - `packaging/spec-lifecycle-manager/npm-package.json`
+  - `packaging/spec-lifecycle-manager/package-manifest.json`
+  - `package.json`
+  - `plugins/spec-lifecycle-manager/.mcp.json`
+  - `plugins/spec-lifecycle-manager/claude-plugin/.mcp.json`
+  - `plugins/spec-lifecycle-manager/hooks/hooks.json`
+  - `plugins/spec-lifecycle-manager/claude-plugin/hooks/hooks.json`
+  - `scripts/install-spec-lifecycle-manager-package.sh`
+  - `tests/runtime/installer.test.mjs`
+  - `tests/runtime/resolve-python.test.mjs`
+  - `tests/runtime/smoke_cross_platform.mjs`
+  - `tests/runtime/test_spec_plugin_package.py`
+  - `tests/runtime/test_spec_runtime.py`
+  - `tests/traceability/test_traceability_lookup.py`
+- **Verification summary:** Full local suite green (`npm run validate`: 147
+  Python + 17 Node tests, package-contract, `npm pack` dry-run; `git diff
+  --check` clean). Cross-platform CI matrix (run 28398785192) green on
+  ubuntu/macos/windows × Python 3.10 & 3.12: shell-free install, MCP
+  `initialize` handshake, and both hook copies (Codex shell-form and Claude
+  exec-form) executed exit 0 per OS, with the Windows interpreter resolving to
+  the `py` launcher as designed. The first matrix run (28386954873) went red and
+  surfaced two real defects — a pre-existing Python 3.10 floor and a Windows
+  test-harness `WinError 193` — both fixed. MCP spec lint and `closure_check`
+  clean (0/0/0, ready=true).
+- **Residual risks:** Codex exec-form hook support is unconfirmed against a live
+  Codex runtime; the Codex hook ships shell-form with the resolved interpreter
+  pinned in (design.md Resolved Decisions §4) — non-blocking, the fallback
+  stands. The Python floor was raised 3.9 → 3.10 to match the runtime's actual
+  requirement (3.9 is EOL); backporting to 3.9 remains possible if a hard need
+  arises.
+- **Follow-up:** none
+
 ### 2026-06-13 - 024-staged-developer-onboarding
 
 - **Spec:** `docs/specs/024-staged-developer-onboarding/`
