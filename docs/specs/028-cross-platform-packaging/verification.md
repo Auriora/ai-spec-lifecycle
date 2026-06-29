@@ -81,11 +81,27 @@ Each entry: OS, Python, interpreter resolved, command/outcome, link.
      made OS-agnostic via `os.path.join`. The `npm pack` test fix from the prior
      commit passed on Windows (not in the failure list), confirming the
      `shutil.which` approach.
-  All fixes are test/config/doc only — no product logic changed. The smoke test
-  (the actual install→MCP→hook proof) has **not yet executed on Windows/macOS**:
-  the red jobs died at the Python step, before the smoke step ran. The next push
-  is the first real Windows/macOS exercise of R1/R2/R3; record those run URLs and
-  the smoke outcome here. This remains the open verification gap.
+  All fixes are test/config/doc only — no product logic changed.
+- **Green CI matrix (run 28396955459, commit 1f30465) — all 6 jobs pass; the
+  verification gap is now CLOSED.**
+  <https://github.com/Auriora/ai-spec-lifecycle/actions/runs/28396955459>.
+  Every job ran all six steps (Node unit tests, Python runtime+hook tests,
+  package contract, **cross-platform smoke**, npm pack dry-run) to success on
+  `ubuntu-latest`, `macos-latest`, and `windows-latest` × Python 3.10 and 3.12.
+  The smoke step — the actual proof of R1/R2/R3 — executed and passed per OS:
+  - **windows-latest, Python 3.12, interpreter `py`.** `install completed
+    shell-free`; `MCP initialize handshake (protocolVersion=2025-06-18,
+    interpreter=py)`; `hook executed (exit 0)`; `SMOKE PASS`. The resolver
+    selected the PEP 397 `py` launcher first, exactly as designed (R2), and the
+    install/launch/hook path used no POSIX shell (R1/P1) — the core Windows
+    blocker the spec set out to remove.
+  - **macos-latest, Python 3.12, interpreter `python3`.** `install completed
+    shell-free`; MCP handshake (interpreter `python3`); hook exit 0; `SMOKE
+    PASS`.
+  - **ubuntu-latest** continues to pass (interpreter `python3`).
+  R1 (shell-free install), R2 (interpreter resolution + MCP launch), and R3
+  (hook execution with a Claude-shaped payload) are now evidenced on all three
+  OSes via executed CI, satisfying R4.2.
 
 ## Residual Risks
 
@@ -93,8 +109,10 @@ Each entry: OS, Python, interpreter resolved, command/outcome, link.
   prerequisite (design.md Resolved Decisions §1) rather than guaranteed
   resolution; confirm the trade-off still holds at closure and note any host
   where `python` is absent.
-- Windows CI runner availability may force manual verification for some gates;
-  any such gap must be recorded, not silently skipped.
+- ~~Windows CI runner availability may force manual verification for some
+  gates.~~ Resolved: the GitHub-hosted `windows-latest`/`macos-latest` runners
+  executed the full gate set (run 28396955459); no manual substitution was
+  needed.
 - Codex exec-form hook support is unconfirmed in-repo (design.md Resolved
   Decisions §4): the Codex hook ships shell-form with the resolved interpreter
   pinned in. T009 must confirm exec-form support against the live Codex runtime;

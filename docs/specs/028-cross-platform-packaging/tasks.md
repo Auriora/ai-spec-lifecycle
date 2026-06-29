@@ -156,11 +156,14 @@ T010 docs: platform/interpreter matrix  (after T009 evidence)
     runs the Node unit tests, the Python runtime+hook tests, package-contract,
     the install→MCP-initialize→hook smoke, and npm pack dry-run. The smoke
     (`smoke_cross_platform.mjs`) is shell-free (uses `installer.mjs` + a spawned
-    interpreter, no shell). Linux executed and green: SMOKE PASS — install
-    shell-free, MCP `initialize` handshake (protocolVersion 2025-06-18,
-    interpreter python3), hook exit 0; full `npm run validate` green. The
-    Windows/macOS matrix runs execute on first push to GitHub; their run URLs
-    are captured in `verification.md` (Evidence Log) as a tracked residual.
+    interpreter, no shell). The matrix is GREEN on all three OSes × Python 3.10
+    and 3.12 (run 28396955459,
+    <https://github.com/Auriora/ai-spec-lifecycle/actions/runs/28396955459>).
+    The first run (28386954873) went red and surfaced two real defects — a
+    pre-existing Python 3.10 floor and a Windows test-harness `WinError 193` —
+    both fixed (see `verification.md` Evidence Log). The smoke step passed per
+    OS: windows interpreter `py`, macOS/Linux `python3`; install shell-free, MCP
+    `initialize` handshake (protocolVersion 2025-06-18), hook exit 0.
 
 - [x] T010 Document the platform/interpreter matrix.
   - Depends on: T009
