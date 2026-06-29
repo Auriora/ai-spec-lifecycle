@@ -49,6 +49,7 @@ validation gates required before implementation and closure.
 | Requirement 4 | AC1-AC4 | Pending readiness/task-context integration. | MCP output shape may need compatibility care. |
 | Requirement 5 | AC1-AC4 | Pending closure-check or promotion-plan validation. | Initial severity policy needs D002. |
 | Requirement 6 | AC1-AC4 | Pending template/runtime tests. | Existing specs should not be forced to migrate. |
+| Requirement 7 | AC1-AC4 | Pending prompt/runtime fixture and dogfood creation scenario. | Automatic copying may remain preview-first when source authority is ambiguous. |
 
 ## Correctness Property Coverage
 
@@ -56,8 +57,9 @@ validation gates required before implementation and closure.
 |----------|------------|----------|---------------|
 | CP-001 | T002, T003, T005 docs/runtime review | Pending. | Needs explicit wording in durable docs and skill guidance. |
 | CP-002 | T004, T005 template/runtime checks | Pending. | Table parsing may be incremental. |
-| CP-003 | T005, T006, T007 closure guidance | Pending. | Severity depends on D002. |
-| CP-004 | T003, T005 readiness/task-context output | Pending. | Requires careful context-budget guidance. |
+| CP-003 | T006, T007, T009 closure guidance | Pending. | Severity depends on D002. |
+| CP-004 | T003, T005, T006 readiness/task-context output | Pending. | Requires careful context-budget guidance. |
+| CP-005 | T005, T006, T008 creation/resume import-plan behavior | Pending. | Needs dogfood proof that no second prompt is required. |
 
 ## Agent Readiness Evidence
 
@@ -82,6 +84,8 @@ validation gates required before implementation and closure.
 | T005 | pending | | |
 | T006 | pending | | |
 | T007 | pending | | |
+| T008 | pending | | |
+| T009 | pending | | |
 
 ## Evidence Log
 
@@ -103,6 +107,10 @@ No manual or external verification has been completed yet.
   durable docs, templates, and skill guidance.
 - Imported-source metadata could become too heavy. Mitigation: allow embedded
   sections for small specs and a separate artifact for higher-risk packages.
+- Creation flows could still rely on users to ask for imports after package
+  creation. Mitigation: require prompt/runtime behavior to produce
+  canonical-context artifacts or import plans during new-spec and resumed-spec
+  workflows.
 
 ## Durable Promotion And Cleanup
 
@@ -112,6 +120,7 @@ No manual or external verification has been completed yet.
 | Agent operating rule | `docs/design/coding-agent-operating-model.md` | pending | |
 | Agent-facing workflow | `skills/spec-lifecycle-manager/SKILL.md` | pending | |
 | Template guidance | `skills/spec-lifecycle-manager/references/spec-package/` | pending | |
+| Spec creation and resume prompt guidance | `skills/spec-lifecycle-manager/prompts/` | pending | Required to avoid a second user prompt for document imports. |
 | Runtime behavior | `docs/reference/spec-lifecycle-runtime.md` | pending | Required if runtime diagnostics are implemented. |
 | Migration guidance | `skills/spec-lifecycle-manager/references/migration-guide.md` | pending | Required if artifact rules change. |
 

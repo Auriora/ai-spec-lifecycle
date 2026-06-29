@@ -33,6 +33,8 @@ background only when the spec imports, references, or classifies them.
   contracts, and live evidence as external authorities.
 - Make copied or adapted durable content traceable to source path and source
   revision.
+- Make new-spec and resumed-spec flows proactively create or propose canonical
+  context in the right spec package location.
 - Require accepted spec-local context to be promoted or routed before closure.
 - Add template and runtime guidance so future specs can use the model
   consistently.
@@ -79,6 +81,7 @@ background only when the spec imports, references, or classifies them.
 | governance | unchanged | `docs/governance/constitution.md` | Governance remains an always-canonical external authority. |
 | skill guidance | modify | `skills/spec-lifecycle-manager/SKILL.md` | Add implementation, readiness, reconciliation, and closure guidance for canonical context. |
 | templates | add | `skills/spec-lifecycle-manager/references/spec-package/` | Add a canonical-context template or embedded template sections. |
+| prompts | modify | `skills/spec-lifecycle-manager/prompts/` | Ensure spec-creation and resume prompts proactively propose or populate canonical context. |
 | runtime reference | modify | `docs/reference/spec-lifecycle-runtime.md` | Document any lint/readiness behavior added for canonical context. |
 | tests | add | `tests/runtime/` or `tests/fixtures/` | Cover runtime diagnostics and template validation if runtime changes are implemented. |
 
@@ -213,6 +216,30 @@ canonical context authoring, so that the rule is easy to apply consistently.
 4. Existing specs SHALL NOT be forced to migrate unless they are resumed,
    modified for canonical context, or affected by a targeted migration decision.
 
+### Requirement 7: Proactive Context Projection During Spec Creation
+
+**User Story:** As a user creating or resuming a spec, I want the lifecycle
+workflow to automatically propose or create canonical context entries in the
+right spec package location, so that I do not have to prompt the agent a second
+time to copy relevant documents into the spec.
+
+#### Acceptance Criteria
+
+1. GIVEN a new spec request that mentions existing durable docs, legacy docs, or
+   stale-doc risk, WHEN the agent creates the package, THEN it SHALL create a
+   `canonical-context.md` artifact or embedded canonical-context section in the
+   active spec package.
+2. GIVEN durable sources are identified during discovery, WHEN the agent cannot
+   safely copy or adapt them automatically, THEN it SHALL produce a proposed
+   import plan naming the target spec-local location, source path, import mode,
+   canonical scope, and promotion target.
+3. WHEN repository templates include a canonical-context artifact, THEN new
+   spec creation SHALL place imported or proposed documents under the template's
+   documented location rather than leaving them in durable docs only.
+4. WHEN a resumed spec has durable-doc drift or stale-doc risk, THEN
+   reconciliation SHALL recommend adding or updating canonical context before
+   implementation readiness.
+
 ## Correctness Properties
 
 - **CP-001**: A spec-local canonical source cannot override an always-canonical
@@ -224,6 +251,9 @@ canonical context authoring, so that the rule is easy to apply consistently.
 - **CP-004**: Runtime guidance never instructs an agent to use stale or
   non-canonical background sources as implementation authority when a
   spec-local canonical source exists.
+- **CP-005**: New-spec and resumed-spec workflows that identify relevant
+  durable docs either create spec-local canonical context or return an explicit
+  import plan with target locations.
 
 ## Technical Context
 
@@ -248,6 +278,9 @@ canonical context authoring, so that the rule is easy to apply consistently.
   docs for broad implementation slices.
 - **SC-004**: Closure guidance blocks or flags accepted spec-local canonical
   content that has not been promoted, routed, or discarded.
+- **SC-005**: Dogfood creation of a new spec no longer requires a follow-up
+  prompt before relevant documents are proposed or placed in the spec-local
+  canonical-context location.
 
 ## Related Artifacts
 

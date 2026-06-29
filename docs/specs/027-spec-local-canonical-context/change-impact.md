@@ -23,6 +23,7 @@ and which durable docs, templates, and runtime surfaces must be updated.
 | `docs/governance/constitution.md` | Governance constraints outrank ordinary spec work. | high | Unchanged; must be listed as external authority. |
 | `skills/spec-lifecycle-manager/SKILL.md` | Agent-facing lifecycle process and implementation guidance. | high | Primary guidance target. |
 | `skills/spec-lifecycle-manager/references/spec-package/` | Fallback templates for package authoring. | high | Needs canonical context template support. |
+| `skills/spec-lifecycle-manager/prompts/` | Prompt definitions shape how agents create, resume, reconcile, and validate specs. | high | Needs proactive canonical-context import or import-plan behavior. |
 | `docs/reference/spec-lifecycle-runtime.md` | Documents runtime and MCP behavior. | high | Update if lint/readiness/closure diagnostics are added. |
 
 ## Change Type
@@ -40,6 +41,7 @@ and which durable docs, templates, and runtime surfaces must be updated.
 | Add coding-agent rule for canonical working context. | clarify | `docs/design/coding-agent-operating-model.md` | `docs/design/coding-agent-operating-model.md` | yes |
 | Add skill workflow guidance for discovery, implementation, readiness, promotion, and closure. | modify | `skills/spec-lifecycle-manager/SKILL.md` | `skills/spec-lifecycle-manager/SKILL.md` | yes |
 | Add fallback template support for `canonical-context.md` or equivalent embedded sections. | add | `skills/spec-lifecycle-manager/references/spec-package/` | `skills/spec-lifecycle-manager/references/spec-package/` | yes |
+| Update spec creation and resume prompts so agents create canonical context or return an import plan without a second user prompt. | modify | `skills/spec-lifecycle-manager/prompts/` | `skills/spec-lifecycle-manager/prompts/` | yes |
 | Add advisory runtime diagnostics for missing or incomplete canonical context where risk warrants it. | add | `skills/spec-lifecycle-manager/scripts/spec_runtime.py` | `docs/reference/spec-lifecycle-runtime.md` | yes if implemented |
 | Add tests and fixtures for lint/readiness/closure behavior. | add | `tests/` | `tests/` | no durable-doc promotion beyond evidence |
 
@@ -51,6 +53,7 @@ and which durable docs, templates, and runtime surfaces must be updated.
 | Agent operating rule | `docs/design/coding-agent-operating-model.md` | pending | Should be concise and point to lifecycle design. |
 | Authoring and implementation workflow | `skills/spec-lifecycle-manager/SKILL.md` | pending | Agent-facing source. |
 | Canonical context template | `skills/spec-lifecycle-manager/references/spec-package/canonical-context.md` or embedded sections | pending | Design decision D001. |
+| Creation/resume prompt behavior | `skills/spec-lifecycle-manager/prompts/` | pending | Must create/propose context during spec creation and resumption. |
 | Runtime diagnostic behavior | `docs/reference/spec-lifecycle-runtime.md` | pending | Required only after runtime changes land. |
 | Migration guidance | `skills/spec-lifecycle-manager/references/migration-guide.md` | pending | Required if artifact rules or diagnostics change. |
 

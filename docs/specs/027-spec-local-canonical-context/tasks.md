@@ -20,6 +20,8 @@ T003 -> T004
 T003 -> T005
 T004 + T005 -> T006
 T006 -> T007
+T006 -> T008
+T007 + T008 -> T009
 ```
 
 ## Phase 1: Design Decisions And Durable Guidance
@@ -68,23 +70,34 @@ checks.
     sources, non-canonical background sources, and promotion map examples.
   - Evidence: Pending.
 
-- [ ] T005 Add advisory runtime diagnostics.
+- [ ] T005 Update spec creation and resume prompts.
   - Depends on: T003
-  - Requirement: R1, R3, R4, R5, R6
+  - Requirement: R1, R3, R4, R6, R7
+  - Files: `skills/spec-lifecycle-manager/prompts/`,
+    `skills/spec-lifecycle-manager/SKILL.md`
+  - Acceptance: New-spec and resumed-spec flows proactively create a
+    canonical-context artifact or return an import plan with target spec-local
+    paths, import mode, canonical scope, and promotion target.
+  - Evidence: Pending.
+
+- [ ] T006 Add advisory runtime diagnostics and import-plan support.
+  - Depends on: T003
+  - Requirement: R1, R3, R4, R5, R6, R7
   - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`,
     `tests/runtime/`, `tests/fixtures/`
   - Acceptance: Lint, readiness, promotion, or closure checks warn about
     missing/incomplete canonical context only when durable-doc impact or
-    stale-doc risk warrants it.
+    stale-doc risk warrants it, and creation/resume support can produce an
+    explicit canonical-context import plan.
   - Evidence: Pending.
 
 ## Phase 3: Validation, Documentation, And Closure Readiness
 
 **Purpose**: Verify the behavior and prepare durable promotion before closure.
 
-- [ ] T006 Update runtime reference, migration guidance, and traceability.
-  - Depends on: T004, T005
-  - Requirement: R4, R5, R6
+- [ ] T007 Update runtime reference, migration guidance, and traceability.
+  - Depends on: T004, T006
+  - Requirement: R4, R5, R6, R7
   - Files: `docs/reference/spec-lifecycle-runtime.md`,
     `skills/spec-lifecycle-manager/references/migration-guide.md`,
     `docs/specs/027-spec-local-canonical-context/traceability.md`,
@@ -93,9 +106,18 @@ checks.
     or diagnostic behavior, and traceability remains current.
   - Evidence: Pending.
 
-- [ ] T007 Checkpoint - validate and prepare promotion.
-  - Depends on: T006
-  - Requirement: R1, R2, R3, R4, R5, R6
+- [ ] T008 Dogfood new-spec canonical context creation.
+  - Depends on: T005, T006
+  - Requirement: R7
+  - Files: `docs/specs/027-spec-local-canonical-context/verification.md`
+  - Acceptance: A dogfood run or deterministic fixture shows that a new spec
+    with durable-doc context gets a canonical-context artifact or import plan
+    without a second user prompt.
+  - Evidence: Pending.
+
+- [ ] T009 Checkpoint - validate and prepare promotion.
+  - Depends on: T007, T008
+  - Requirement: R1, R2, R3, R4, R5, R6, R7
   - Files: `docs/specs/027-spec-local-canonical-context/verification.md`,
     `docs/history/spec-closure-log.md`,
     `docs/history/spec-archive-index.md`

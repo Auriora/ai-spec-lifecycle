@@ -33,6 +33,7 @@ document synchronization engine.
 | Requirement 4 | AC1-AC4 | Agent Readiness Contract and task-context integration | Unit tests for readiness output or documented manual check |
 | Requirement 5 | AC1-AC4 | Promotion-plan and closure-check additions | Unit tests for closure blocker or warning |
 | Requirement 6 | AC1-AC4 | Fallback template and migration behavior | `prompts_validate`, full unittest suite, scan/lint |
+| Requirement 7 | AC1-AC4 | Spec creation and resume flow context projection | Prompt/runtime tests or dogfood creation scenario |
 
 ## Correctness Property Coverage
 
@@ -42,6 +43,7 @@ document synchronization engine.
 | CP-002 | Imported-source rows require source path and promotion target when canonical. | Runtime lint fixture. | Source revision/date can be warning-level if unavailable. |
 | CP-003 | Closure guidance reports residual canonical context not promoted, routed, or discarded. | Closure-check fixture or manual verification. | Exact severity may be warning initially if compatibility requires it. |
 | CP-004 | Task/readiness guidance lists spec-local canonical sources before stale background sources. | Readiness or task-context fixture. | Background docs may still appear as non-canonical context. |
+| CP-005 | Creation/resume flows create canonical context or return an import plan with spec-local target paths. | Prompt/runtime fixture and dogfood scenario. | Automatic copying may remain preview-first when source authority is ambiguous. |
 
 ## High-Level Design
 
@@ -85,6 +87,10 @@ must be promoted, routed, or discarded before closure.
   Add `canonical-context.md` or add a canonical-context section to package
   templates. Prefer a separate optional artifact because imported source lists
   can become substantial.
+- `skills/spec-lifecycle-manager/prompts/`:
+  Update spec-creation, developer-start, lifecycle-triage, reconcile, or
+  task-context prompts where they shape new/resumed package behavior so agents
+  proactively create or propose canonical context.
 - `skills/spec-lifecycle-manager/scripts/spec_runtime.py`:
   Add advisory diagnostics for active specs that declare broad durable impact,
   imported sources, or stale-doc risk without sufficient canonical context.
@@ -140,14 +146,18 @@ Canonical context can be represented as Markdown with stable headings:
 ### Data Flow
 
 1. Lead agent identifies durable baseline and stale-doc risk.
-2. Lead agent creates or updates `canonical-context.md`.
-3. Worker agents use task context and canonical context before broader durable
+2. During new-spec creation or resumption, the lead agent creates
+   `canonical-context.md`, embeds canonical context sections, or returns a
+   proposed import plan with target spec-local paths.
+3. Lead agent copies, adapts, summarizes, or records proposed imports under the
+   active spec package according to the template authority decision.
+4. Worker agents use task context and canonical context before broader durable
    doc scans.
-4. Reconciliation treats conflicts between canonical context and durable docs
+5. Reconciliation treats conflicts between canonical context and durable docs
    as explicit drift, not as silent implementation choice.
-5. Promotion plan maps accepted spec-local content back to durable docs,
+6. Promotion plan maps accepted spec-local content back to durable docs,
    backlog, roadmap, follow-up specs, or discard rationale.
-6. Closure check reports unresolved spec-local canonical content.
+7. Closure check reports unresolved spec-local canonical content.
 
 ## Low-Level Design
 
@@ -173,6 +183,14 @@ function lint_canonical_context(spec):
     if always-canonical section missing:
         info or warn depending on package risk
 
+function propose_canonical_context_imports(spec_intake):
+    sources = durable sources identified during discovery
+    for each source:
+        classify as external authority, spec-canonical, imported, or background
+        choose target path under active spec package
+        record import mode, canonical scope, and promotion target
+    return preview plan or created canonical-context artifact
+
 function closure_check(spec):
     existing closure blockers
     if canonical context has promotion rows still pending:
@@ -189,6 +207,7 @@ Likely internal helpers in `spec_runtime.py`:
 
 ```text
 collect_canonical_context(spec_path) -> dict
+propose_canonical_context_imports(spec_path, sources) -> dict
 lint_canonical_context(spec, artifacts) -> list[Diagnostic]
 canonical_context_readiness(spec, next_task) -> list[ReadinessGap]
 canonical_context_closure_gaps(spec) -> list[ClosureGap]
@@ -242,6 +261,8 @@ know whether to add a canonical-context artifact, embed the data in
 - Add durable design and skill guidance first so the model is explicit before
   runtime diagnostics encode it.
 - Add template support before runtime checks become noisy.
+- Add creation/resume prompt guidance before relying on users to ask for
+  document imports after package creation.
 - Keep runtime diagnostics warning-level until fixtures prove the false-positive
   rate is acceptable.
 - Update traceability and verification when task scope changes.
