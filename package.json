@@ -1,6 +1,6 @@
 {
   "name": "@auriora/ai-spec-lifecycle",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Codex plugin for spec lifecycle skills, read-only MCP tools, prompts, templates, and advisory hooks.",
   "license": "MIT",
   "author": "Auriora",
@@ -22,6 +22,7 @@
   },
   "files": [
     "AGENTS.md",
+    ".claude-plugin/marketplace.json",
     "docs/reference/spec-lifecycle-manager-mcp-install.md",
     "docs/reference/spec-lifecycle-runtime.md",
     "packaging/spec-lifecycle-manager/package-manifest.json",

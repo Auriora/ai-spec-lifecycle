@@ -210,6 +210,16 @@ claude plugin marketplace add Auriora/ai-spec-lifecycle
 claude plugin install spec-lifecycle-manager@ai-spec-lifecycle
 ```
 
+Or, from a **downloaded release tarball** (offline / version-pinned). The
+unpacked tarball ships its own `.claude-plugin/marketplace.json`, so its
+`package/` directory is a self-contained Claude marketplace root:
+
+```bash
+tar -xzf auriora-ai-spec-lifecycle-<version>.tgz
+claude plugin marketplace add ./package
+claude plugin install spec-lifecycle-manager@ai-spec-lifecycle
+```
+
 The git-based form uses the same relative `source` resolution and cache-copy
 behavior as the local-path form above (verified end-to-end); it was not
 re-verified against the live GitHub repository in this pass.
