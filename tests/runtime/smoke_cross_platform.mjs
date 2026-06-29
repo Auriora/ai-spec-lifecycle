@@ -90,28 +90,41 @@ async function main() {
     if (resp.result.serverInfo?.name !== "spec-lifecycle-manager") fail(`unexpected serverInfo: ${JSON.stringify(resp.result.serverInfo)}`);
     ok(`MCP initialize handshake (protocolVersion=${resp.result.protocolVersion}, interpreter=${server.command})`);
 
-    // 3) Hook fire with a Claude-shaped payload (tool_name "Write" + file_path).
-    // Codex hook is shell-form ("<interp> [args] \"<script>\""); parse it into
-    // an argv the same way a shell-free runtime would, then run from the repo so
-    // the advisory has a spec to evaluate.
-    const hooks = JSON.parse(fs.readFileSync(path.join(pluginRoot, "hooks", "hooks.json"), "utf8"));
-    const hookCmd = hooks.hooks.PostToolUse[0].hooks[0];
-    let command;
-    let args;
-    if (Array.isArray(hookCmd.args)) {
-      command = hookCmd.command;
-      args = hookCmd.args.map((a) => a.replace("${PLUGIN_ROOT}", pluginRoot).replace("${CLAUDE_PLUGIN_ROOT}", pluginRoot));
-    } else {
-      const m = hookCmd.command.match(/^(.*?)\s+"([^"]+)"\s*$/);
-      if (!m) fail(`cannot parse shell-form hook command: ${hookCmd.command}`);
-      const interp = m[1].split(/\s+/);
-      command = interp[0];
-      args = [...interp.slice(1), m[2].replace("${PLUGIN_ROOT}", pluginRoot)];
-    }
+    // 3) Hook fire with a Claude-shaped payload (tool_name "Write" + file_path)
+    // for BOTH installed hook copies. The Codex copy is shell-form
+    // ("<interp> [args] \"<script>\""); the Claude copy is exec form
+    // (command + args array). The exec-form path is the spec's headline fix --
+    // shell-form falls back to PowerShell on Windows -- so it must be *executed*
+    // on Windows, not just shape-asserted. Each is resolved into an argv the way
+    // a shell-free runtime would and run from the repo so the advisory has a
+    // spec to evaluate.
     const payload = { tool_name: "Write", tool_input: { file_path: path.join(repoRoot, "docs/specs/028-cross-platform-packaging/tasks.md") } };
-    const result = await fireHook(command, args, payload, repoRoot);
-    if (result.code !== 0) fail(`hook exited ${result.code}. stderr:\n${result.stderr}`);
-    ok(`hook executed (exit 0, ${result.out.trim() ? "advisory output emitted" : "no advisory output"})`);
+    const hookConfigs = [
+      { label: "Codex shell-form", file: path.join(pluginRoot, "hooks", "hooks.json"), tokenRoot: pluginRoot, expectExec: false },
+      { label: "Claude exec-form", file: path.join(pluginRoot, "claude-plugin", "hooks", "hooks.json"), tokenRoot: path.join(pluginRoot, "claude-plugin"), expectExec: true },
+    ];
+    for (const cfg of hookConfigs) {
+      const hooks = JSON.parse(fs.readFileSync(cfg.file, "utf8"));
+      const hookCmd = hooks.hooks.PostToolUse[0].hooks[0];
+      const isExec = Array.isArray(hookCmd.args);
+      if (cfg.expectExec && !isExec) fail(`${cfg.label} hook is not exec form (regressed to shell-form): ${JSON.stringify(hookCmd)}`);
+      const subst = (s) => s.replace("${PLUGIN_ROOT}", cfg.tokenRoot).replace("${CLAUDE_PLUGIN_ROOT}", cfg.tokenRoot);
+      let command;
+      let args;
+      if (isExec) {
+        command = hookCmd.command;
+        args = hookCmd.args.map(subst);
+      } else {
+        const m = hookCmd.command.match(/^(.*?)\s+"([^"]+)"\s*$/);
+        if (!m) fail(`cannot parse shell-form hook command: ${hookCmd.command}`);
+        const interp = m[1].split(/\s+/);
+        command = interp[0];
+        args = [...interp.slice(1), subst(m[2])];
+      }
+      const result = await fireHook(command, args, payload, repoRoot);
+      if (result.code !== 0) fail(`${cfg.label} hook exited ${result.code}. stderr:\n${result.stderr}`);
+      ok(`${cfg.label} hook executed (exit 0, ${result.out.trim() ? "advisory output emitted" : "no advisory output"})`);
+    }
 
     process.stdout.write("SMOKE PASS\n");
   } finally {

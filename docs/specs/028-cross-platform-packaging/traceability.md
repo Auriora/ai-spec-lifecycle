@@ -63,4 +63,4 @@ remain open. Retained here for traceability.
 | Marketplace static config: `python` + PATH prerequisite | R2 | T002, T003, T007 | Resolved 2026-06-29 (design.md Resolved Decisions §1) |
 | Windows interpreter order `py -3` → `python` → `python3` | R2 | T001 | Resolved 2026-06-29 (§2) |
 | Override variable `SPEC_LIFECYCLE_PYTHON` | R2 | T001 | Resolved 2026-06-29 (§3) |
-| Codex exec-form hook support unconfirmed; ship shell-form with resolved interpreter | R3 | T003, T009 | Resolved 2026-06-29 (§4); confirm in T009 |
+| Codex exec-form hook support unconfirmed; ship shell-form with resolved interpreter | R3 | T003, T009 | Resolved 2026-06-29 (§4); T009 complete — Codex exec-form deferred/non-blocking, shell-form fallback stands; Claude exec-form executed on Windows by the smoke |

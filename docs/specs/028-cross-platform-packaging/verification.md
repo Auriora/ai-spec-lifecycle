@@ -115,9 +115,13 @@ Each entry: OS, Python, interpreter resolved, command/outcome, link.
   needed.
 - Codex exec-form hook support is unconfirmed in-repo (design.md Resolved
   Decisions §4): the Codex hook ships shell-form with the resolved interpreter
-  pinned in. T009 must confirm exec-form support against the live Codex runtime;
-  upgrade to exec form if it passes, otherwise the shell-form-with-resolved-
-  interpreter fallback stands.
+  pinned in. This is **deferred and non-blocking** — T009 is complete and did
+  not confirm exec-form against a live Codex runtime, so the
+  shell-form-with-resolved-interpreter fallback stands by design. The Claude
+  hook ships exec form and is executed on Windows by the smoke (interpreter `py`,
+  shell-free), so the portability fix is proven for the runtime that documents
+  exec-form support. Upgrade the Codex copy to exec form if/when Codex confirms
+  it; until then the fallback is correct, not a gap.
 
 ## Closure Readiness
 
