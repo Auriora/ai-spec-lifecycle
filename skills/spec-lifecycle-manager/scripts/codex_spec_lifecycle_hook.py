@@ -16,8 +16,18 @@ from typing import Any
 SCRIPT_DIR = Path(__file__).resolve().parent
 SPEC_RUNTIME = SCRIPT_DIR / "spec_runtime.py"
 DEFAULT_LOG_PATH = Path.home() / ".codex" / "hooks" / "spec_lifecycle_hook.log.jsonl"
-WRITE_STYLE_TOOL_NAMES = {"write_file", "create_file"}
-WRITE_STYLE_PATH_KEYS = ("path", "file_path", "filepath", "filename", "target_file")
+# Codex emits write_file/create_file (and apply_patch, handled separately); Claude Code
+# emits Write/Edit/MultiEdit/NotebookEdit. Both runtimes share this hook, so recognize
+# every write-style tool name or the hook silently skips one runtime's edits.
+WRITE_STYLE_TOOL_NAMES = {
+    "write_file",
+    "create_file",
+    "Write",
+    "Edit",
+    "MultiEdit",
+    "NotebookEdit",
+}
+WRITE_STYLE_PATH_KEYS = ("path", "file_path", "filepath", "filename", "target_file", "notebook_path")
 HOOK_TIMEOUT_SECONDS = 5
 MAX_DIAGNOSTICS = 6
 

@@ -191,6 +191,46 @@ class CodexSpecLifecycleHookTests(unittest.TestCase):
         self.assertIn("templates://spec-package", context)
         self.assertNotIn("CORE_ARTIFACT_MISSING", context)
 
+    def test_hook_handles_claude_write_tool_payload(self):
+        # Claude Code emits tool_name "Write"/"Edit"/"MultiEdit" with a file_path,
+        # not codex's write_file/apply_patch. Regression guard: the hook must extract
+        # the changed file and emit guidance instead of silently skipping.
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            spec = repo / "docs/specs/001-new"
+            spec.mkdir(parents=True)
+            (repo / ".git").mkdir()
+            (spec / "requirements.md").write_text("# Requirements\n", encoding="utf-8")
+            (spec / "design.md").write_text("# Design\n", encoding="utf-8")
+            payload = {
+                "hook_event_name": "PostToolUse",
+                "cwd": str(repo),
+                "tool_name": "Write",
+                "tool_input": {
+                    "file_path": "docs/specs/001-new/design.md"
+                },
+            }
+
+            result = run_hook(payload)
+        data = json.loads(result.stdout)
+        context = data["hookSpecificOutput"]["additionalContext"]
+
+        self.assertIn("Next spec artifact: tasks.md", context)
+        self.assertIn("templates://spec-package", context)
+        self.assertEqual("", result.stderr)
+
+    def test_hook_extracts_claude_edit_and_notebookedit_paths(self):
+        # Edit/MultiEdit use file_path; NotebookEdit uses notebook_path.
+        for tool_name, key in (("Edit", "file_path"), ("NotebookEdit", "notebook_path")):
+            with self.subTest(tool_name=tool_name):
+                paths = hook_module.extract_write_tool_paths(
+                    {
+                        "tool_name": tool_name,
+                        "tool_input": {key: "docs/specs/001-new/tasks.md"},
+                    }
+                )
+                self.assertEqual(["docs/specs/001-new/tasks.md"], paths)
+
     def test_hook_wrapper_logs_unexpected_errors_without_failing_codex(self):
         def fail() -> int:
             raise RuntimeError("forced hook failure")
