@@ -7,7 +7,7 @@
     "npm_package": "@auriora/ai-spec-lifecycle",
     "npm_publish_status": "pack-ready-not-published"
   },
-  "installer": "scripts/install-spec-lifecycle-manager-package.sh",
+  "installer": "packaging/spec-lifecycle-manager/installer.mjs",
   "entrypoint": "plugin-bundled mcpServers entry: plugins/spec-lifecycle-manager/.mcp.json",
   "dependency_install": {
     "python": ">=3.9",
@@ -28,7 +28,7 @@
     "mcp_server_id": "spec-lifecycle-manager",
     "plugin_manifest": "plugins/spec-lifecycle-manager/.codex-plugin/plugin.json",
     "skill_path": "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager",
-    "hook_config_fallback": "scripts/install-spec-lifecycle-manager-package.sh"
+    "hook_config_fallback": "packaging/spec-lifecycle-manager/installer.mjs"
   },
   "claude_code": {
     "plugin_root": "plugins/spec-lifecycle-manager/claude-plugin",

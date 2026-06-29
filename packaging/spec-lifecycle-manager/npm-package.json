@@ -12,6 +12,8 @@
     "package.json",
     "packaging/spec-lifecycle-manager/npm-package.json",
     "packaging/spec-lifecycle-manager/npm-install.js",
+    "packaging/spec-lifecycle-manager/installer.mjs",
+    "packaging/spec-lifecycle-manager/resolve-python.mjs",
     "packaging/spec-lifecycle-manager/package-manifest.json",
     "plugins/spec-lifecycle-manager/.codex-plugin/plugin.json",
     "plugins/spec-lifecycle-manager/.mcp.json",

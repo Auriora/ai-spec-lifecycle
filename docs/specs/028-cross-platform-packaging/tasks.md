@@ -118,14 +118,24 @@ T010 docs: platform/interpreter matrix  (after T009 evidence)
     the "Python 3 on PATH" prerequisite and the `SPEC_LIFECYCLE_PYTHON` override.
   - Evidence: Pending.
 
-- [ ] T008 Update packaging manifests for the new install model.
+- [x] T008 Update packaging manifests for the new install model.
   - Depends on: T004, T006
   - Files: `packaging/spec-lifecycle-manager/npm-package.json`,
-    `package-manifest.json`, root `package.json` `files`
-  - Acceptance: `installer`/`hook_config_fallback`/`files` reference
-    `installer.mjs`; `.sh` references updated or removed; `npm pack --dry-run`
+    `package-manifest.json`, root `package.json` (`files` + `prepack`),
+    `packaging/spec-lifecycle-manager/clean-pycache.mjs` (new),
+    `tests/runtime/test_spec_plugin_package.py`
+  - Acceptance: `installer`/`hook_config_fallback`/`files`/`required_paths`
+    reference `installer.mjs` (+`resolve-python.mjs`); `npm pack --dry-run`
     includes the new files and the package-parity test stays green.
-  - Evidence: Pending.
+  - Evidence: `package.json#files` and `npm-package.json#required_paths` now list
+    `installer.mjs` + `resolve-python.mjs`; `package-manifest.json` `installer`
+    and `codex.hook_config_fallback` point at `installer.mjs`. `npm pack
+    --dry-run` payload contains both runtime files (asserted in the parity test).
+    Found+fixed a real defect: the `files` allowlist shipped stray
+    `__pycache__`/`*.pyc` despite `.npmignore`; added a cross-platform `prepack`
+    cleaner (`clean-pycache.mjs`) so release tarballs are always clean (verified
+    by planting a `.pyc` and confirming exclusion). `npm run validate` green:
+    147 python + 17 node, package-contract pass, npm pack dry-run.
 
 ## Phase 4: Verification
 
