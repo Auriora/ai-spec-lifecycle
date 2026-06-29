@@ -445,10 +445,10 @@ primary agent-facing surface for lifecycle context and deterministic checks:
   `archive_index`, `reconcile_spec`, `promotion_plan`, `review_packet`,
   `agent_backed_tool`, and `prompts_validate` for their matching workflows.
 
-Use `scripts/spec_runtime.py` and `scripts/traceability_lookup.py` directly as
-implementation, CI, validation, and recovery interfaces only: MCP unavailable,
-installed-runtime validation, MCP adapter debugging, or a repository validation
-checklist that explicitly requires the CLI command.
+Use the repo-local helpers under `skills/spec-lifecycle-manager/scripts/`
+directly as implementation, CI, validation, and recovery interfaces only: MCP
+unavailable, installed-runtime validation, MCP adapter debugging, or a
+repository validation checklist that explicitly requires the CLI command.
 
 If MCP tools are unavailable and this skill's `scripts/traceability_lookup.py`
 helper is available, use it for the first lookup:
@@ -465,8 +465,9 @@ missing referenced artifacts, or missing heading anchors. Treat reported gaps
 as reconciliation inputs before implementing the task.
 
 When MCP tools are unavailable or CLI validation is explicitly required, the
-underlying `scripts/spec_runtime.py` helper provides deterministic scanner,
-linter, next-task, closure-check, hook, review, and prompt-validation passes:
+repo-local `skills/spec-lifecycle-manager/scripts/spec_runtime.py` helper
+provides deterministic scanner, linter, next-task, closure-check, hook,
+review, and prompt-validation passes:
 
 ```bash
 skills/spec-lifecycle-manager/scripts/spec_runtime.py scan .
