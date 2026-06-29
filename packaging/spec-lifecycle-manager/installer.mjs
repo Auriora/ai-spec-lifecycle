@@ -301,6 +301,63 @@ function writeMarketplaceJson(marketplaceJson, marketplaceName, dryRun) {
   fs.writeFileSync(marketplaceJson, `${JSON.stringify(data, null, 2)}\n`, "utf8");
 }
 
+// --- T002/T003: pin the resolved interpreter into the installed configs ---
+
+/** Pin `.mcp.json`: replace the interpreter, preserve the `*.py` script arg. */
+function pinMcpFile(file, pythonCmd) {
+  const data = JSON.parse(fs.readFileSync(file, "utf8"));
+  const servers = data.mcpServers || {};
+  for (const key of Object.keys(servers)) {
+    const server = servers[key];
+    const scriptArg = (server.args || []).find((arg) => String(arg).endsWith(".py"));
+    if (!scriptArg) continue;
+    server.command = pythonCmd[0];
+    server.args = [...pythonCmd.slice(1), scriptArg];
+  }
+  fs.writeFileSync(file, `${JSON.stringify(data, null, 2)}\n`, "utf8");
+}
+
+/**
+ * Pin `hooks.json`: exec form (Claude, has `args`) gets command+args; shell
+ * form (Codex, OQ4) keeps its quoted script tail with the resolved interpreter
+ * swapped in.
+ */
+function pinHookFile(file, pythonCmd) {
+  const data = JSON.parse(fs.readFileSync(file, "utf8"));
+  for (const group of data.hooks?.PostToolUse || []) {
+    for (const hook of group.hooks || []) {
+      if (hook.type !== "command") continue;
+      if (Array.isArray(hook.args)) {
+        const scriptArg = hook.args.find((arg) => String(arg).endsWith(".py")) ?? hook.args.at(-1);
+        hook.command = pythonCmd[0];
+        hook.args = [...pythonCmd.slice(1), scriptArg];
+      } else if (typeof hook.command === "string") {
+        const quote = hook.command.indexOf('"');
+        const tail = quote >= 0 ? hook.command.slice(quote) : `"${hook.command.split(/\s+/).pop()}"`;
+        hook.command = `${pythonCmd.join(" ")} ${tail}`;
+      }
+    }
+  }
+  fs.writeFileSync(file, `${JSON.stringify(data, null, 2)}\n`, "utf8");
+}
+
+function pinOne(file, pythonCmd, dryRun, transform) {
+  if (!fs.existsSync(file)) return;
+  if (dryRun) {
+    process.stdout.write(`dry-run: pin interpreter '${pythonCmd.join(" ")}' into ${file}\n`);
+    return;
+  }
+  transform(file, pythonCmd);
+}
+
+/** Pin both the Codex and Claude config copies under an installed plugin root. */
+function pinInstalledConfigs(root, pythonCmd, dryRun) {
+  pinOne(path.join(root, ".mcp.json"), pythonCmd, dryRun, pinMcpFile);
+  pinOne(path.join(root, "claude-plugin", ".mcp.json"), pythonCmd, dryRun, pinMcpFile);
+  pinOne(path.join(root, "hooks", "hooks.json"), pythonCmd, dryRun, pinHookFile);
+  pinOne(path.join(root, "claude-plugin", "hooks", "hooks.json"), pythonCmd, dryRun, pinHookFile);
+}
+
 function installCodexPlugin(marketplaceName, dryRun) {
   requireCommand("codex", "Install Codex or pass --skip-plugin-add to copy files without registering the plugin.");
   const ref = `spec-lifecycle-manager@${marketplaceName}`;
@@ -348,7 +405,7 @@ export async function install(argv = []) {
     const marketplaceJson = path.join(marketplaceRoot, ".agents", "plugins", "marketplace.json");
     const pluginSource = path.join(sourceRoot, "plugins", "spec-lifecycle-manager");
 
-    ensurePython();
+    const pythonCmd = ensurePython();
     removeOldSkillInstall(codexHome, opts.dryRun);
     copyTree(pluginSource, pluginInstallRoot, opts.dryRun);
     copyTree(pluginSource, marketplacePluginRoot, opts.dryRun);
@@ -357,6 +414,11 @@ export async function install(argv = []) {
         chmodExecutable(path.join(root, script), opts.dryRun);
       }
     }
+    // T002/T003: pin the host-resolved interpreter into both installed copies
+    // (install root and marketplace root), so whichever copy Codex/Claude runs
+    // launches with an interpreter proven to exist on this host.
+    pinInstalledConfigs(pluginInstallRoot, pythonCmd, opts.dryRun);
+    pinInstalledConfigs(marketplacePluginRoot, pythonCmd, opts.dryRun);
 
     if (opts.writeCodexConfig) removeOldCodexConfig(codexHome, opts.dryRun);
     if (opts.writeCodexHooks) removeOldCodexHooksJson(codexHome, opts.dryRun);

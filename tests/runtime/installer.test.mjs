@@ -76,6 +76,49 @@ test("--skip-marketplace leaves the marketplace untouched", async () => {
   }
 });
 
+test("pins the resolved interpreter into installed configs (override = py -3)", async () => {
+  const { base, home, mkt } = tempHomes();
+  const prev = process.env.SPEC_LIFECYCLE_PYTHON;
+  process.env.SPEC_LIFECYCLE_PYTHON = "py -3";
+  try {
+    const code = await install([
+      "--source", repoRoot,
+      "--codex-home", home,
+      "--marketplace-root", mkt,
+      "--skip-plugin-add",
+    ]);
+    assert.equal(code, 0);
+
+    const root = path.join(home, "plugins", "spec-lifecycle-manager");
+
+    const codexMcp = JSON.parse(fs.readFileSync(path.join(root, ".mcp.json"), "utf8"));
+    const codexServer = codexMcp.mcpServers["spec-lifecycle-manager"];
+    assert.equal(codexServer.command, "py");
+    assert.deepEqual(codexServer.args, [
+      "-3",
+      "./skills/spec-lifecycle-manager/scripts/spec_mcp_server.py",
+    ]);
+
+    // Claude hook: exec form (command + args), no shell string.
+    const claudeHook = JSON.parse(
+      fs.readFileSync(path.join(root, "claude-plugin", "hooks", "hooks.json"), "utf8"),
+    );
+    const claudeCmd = claudeHook.hooks.PostToolUse[0].hooks[0];
+    assert.equal(claudeCmd.command, "py");
+    assert.equal(claudeCmd.args[0], "-3");
+    assert.match(claudeCmd.args.at(-1), /codex_spec_lifecycle_hook\.py$/);
+
+    // Codex hook: shell form retained (OQ4) but interpreter resolved.
+    const codexHook = JSON.parse(fs.readFileSync(path.join(root, "hooks", "hooks.json"), "utf8"));
+    const codexCmd = codexHook.hooks.PostToolUse[0].hooks[0].command;
+    assert.match(codexCmd, /^py -3 "\$\{PLUGIN_ROOT\}.*codex_spec_lifecycle_hook\.py"$/);
+  } finally {
+    if (prev === undefined) delete process.env.SPEC_LIFECYCLE_PYTHON;
+    else process.env.SPEC_LIFECYCLE_PYTHON = prev;
+    fs.rmSync(base, { recursive: true, force: true });
+  }
+});
+
 test("missing package component fails loudly", async () => {
   const { base, home, mkt } = tempHomes();
   const emptySource = path.join(base, "empty-source");

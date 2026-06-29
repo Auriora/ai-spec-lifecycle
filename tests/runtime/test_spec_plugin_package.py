@@ -44,15 +44,23 @@ class SpecPluginPackageTests(unittest.TestCase):
         self.assertNotIn("hooks", manifest)
 
     def test_mcp_and_hooks_use_bundled_runtime(self):
+        # Spec 028: the shipped (marketplace) default interpreter is the
+        # portable name "python"; the installer pins the host-resolved
+        # interpreter (py -3 / python3 / python) at install time.
         mcp = json.loads((PLUGIN / ".mcp.json").read_text(encoding="utf-8"))
         server = mcp["mcpServers"]["spec-lifecycle-manager"]
         self.assertEqual(".", server["cwd"])
-        self.assertEqual("python3", server["command"])
+        self.assertEqual("python", server["command"])
         self.assertIn("./skills/spec-lifecycle-manager/scripts/spec_mcp_server.py", server["args"])
 
+        # Codex hook keeps exec-via-shell-string form (OQ4) with the portable
+        # default interpreter and the runtime-expanded ${PLUGIN_ROOT} token.
         hooks = json.loads((PLUGIN / "hooks" / "hooks.json").read_text(encoding="utf-8"))
         post_tool = hooks["hooks"]["PostToolUse"][0]["hooks"][0]
-        self.assertIn("${PLUGIN_ROOT}/skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py", post_tool["command"])
+        self.assertEqual(
+            'python "${PLUGIN_ROOT}/skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py"',
+            post_tool["command"],
+        )
 
     def test_claude_plugin_manifest_mcp_and_hooks_use_bundled_runtime(self):
         manifest = json.loads((CLAUDE_PLUGIN / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8"))
@@ -67,15 +75,21 @@ class SpecPluginPackageTests(unittest.TestCase):
 
         mcp = json.loads((CLAUDE_PLUGIN / ".mcp.json").read_text(encoding="utf-8"))
         server = mcp["mcpServers"]["spec-lifecycle-manager"]
-        self.assertEqual("python3", server["command"])
+        self.assertEqual("python", server["command"])
         self.assertIn(
             "${CLAUDE_PLUGIN_ROOT}/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py",
             server["args"],
         )
 
+        # Claude hook uses exec form (command + args array) so it is spawned
+        # without a shell on every OS (Spec 028 R3/P1).
         hooks = json.loads((CLAUDE_PLUGIN / "hooks" / "hooks.json").read_text(encoding="utf-8"))
         post_tool = hooks["hooks"]["PostToolUse"][0]["hooks"][0]
-        self.assertIn("${CLAUDE_PLUGIN_ROOT}/skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py", post_tool["command"])
+        self.assertEqual("python", post_tool["command"])
+        self.assertIn(
+            "${CLAUDE_PLUGIN_ROOT}/skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py",
+            post_tool["args"],
+        )
 
     def test_claude_marketplace_lists_claude_plugin_source(self):
         marketplace = json.loads(MARKETPLACE.read_text(encoding="utf-8"))

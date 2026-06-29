@@ -2,7 +2,7 @@
   "mcpServers": {
     "spec-lifecycle-manager": {
       "cwd": ".",
-      "command": "python3",
+      "command": "python",
       "args": [
         "./skills/spec-lifecycle-manager/scripts/spec_mcp_server.py"
       ],
