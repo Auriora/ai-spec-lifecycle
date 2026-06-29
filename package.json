@@ -32,7 +32,8 @@
   ],
   "scripts": {
     "pack:dry-run": "npm_config_cache=/tmp/spec-lifecycle-npm-cache npm pack --dry-run --json",
-    "validate": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py' && PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract . && npm_config_cache=/tmp/spec-lifecycle-npm-cache npm pack --dry-run --json"
+    "test:node": "node --test tests/runtime/*.test.mjs",
+    "validate": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py' && node --test tests/runtime/*.test.mjs && PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract . && npm_config_cache=/tmp/spec-lifecycle-npm-cache npm pack --dry-run --json"
   },
   "engines": {
     "node": ">=18"

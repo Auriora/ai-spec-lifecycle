@@ -24,14 +24,23 @@ T010 docs: platform/interpreter matrix  (after T009 evidence)
 
 ## Phase 1: Interpreter resolution
 
-- [ ] T001 Add the Python interpreter resolver.
+- [x] T001 Add the Python interpreter resolver.
   - Depends on: none
-  - Files: `packaging/spec-lifecycle-manager/resolve-python.mjs` (new)
+  - Files: `packaging/spec-lifecycle-manager/resolve-python.mjs` (new);
+    `tests/runtime/resolve-python.test.mjs` (new); `package.json`
+    (`test:node` script + wired into `validate`)
   - Acceptance: Honors `SPEC_LIFECYCLE_PYTHON`; else probes `py -3`/`python`/
     `python3` per platform, verifying Python ≥ 3 via `--version`; throws an
     actionable error when none resolve. Unit-tested with injected env/platform.
     Satisfies Requirement 2.1-2.4, P2, P4.
-  - Evidence: Pending.
+  - Evidence: `node --test tests/runtime/resolve-python.test.mjs` — 11/11 pass
+    (override-honored-verbatim, win32 `py -3`→`python`→`python3` order, POSIX
+    `python3`→`python` order, blank-override skip, P4 actionable throw). Real-host
+    smoke: `resolvePython()` → `["python3"]` on Linux; `reportsPython3` accepts
+    `python3`, rejects a missing command. Override is honored verbatim (not
+    probe-gated) so it can rescue environments where probing cannot run
+    (design.md Resolved Decisions §3; advisor-confirmed reading of the
+    acceptance criteria).
 
 ## Phase 2: Cross-platform installer
 
