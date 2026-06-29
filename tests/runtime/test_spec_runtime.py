@@ -911,7 +911,7 @@ class SpecRuntimeTests(unittest.TestCase):
 
         self.assertEqual("skill-fallback", authority["authority"])
         self.assertEqual(str(repo / "docs/templates"), authority["durable_templates_path"])
-        self.assertTrue(authority["path"].endswith("references/spec-package"))
+        self.assertTrue(authority["path"].endswith(os.path.join("references", "spec-package")))
 
     def test_repository_spec_package_templates_override_fallback(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1748,7 +1748,7 @@ class SpecRuntimeTests(unittest.TestCase):
 
     def test_cli_scan_outputs_json(self):
         completed = subprocess.run(
-            [str(SCRIPT), "scan", str(ROOT)],
+            [sys.executable, str(SCRIPT),"scan", str(ROOT)],
             check=True,
             capture_output=True,
             text=True,
@@ -1763,19 +1763,19 @@ class SpecRuntimeTests(unittest.TestCase):
             (repo / ".git").mkdir()
             spec = write_complete_spec(repo)
             guide = subprocess.run(
-                [str(SCRIPT), "lifecycle-guide", str(repo)],
+                [sys.executable, str(SCRIPT),"lifecycle-guide", str(repo)],
                 check=True,
                 capture_output=True,
                 text=True,
             )
             bootstrap = subprocess.run(
-                [str(SCRIPT), "bootstrap-plan", str(repo), "--project-summary", "Example."],
+                [sys.executable, str(SCRIPT),"bootstrap-plan", str(repo), "--project-summary", "Example."],
                 check=True,
                 capture_output=True,
                 text=True,
             )
             stage = subprocess.run(
-                [str(SCRIPT), "stage-readiness", str(spec)],
+                [sys.executable, str(SCRIPT),"stage-readiness", str(spec)],
                 check=True,
                 capture_output=True,
                 text=True,
@@ -2177,7 +2177,7 @@ class SpecRuntimeTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             spec = write_complete_spec(Path(tmp))
             completed = subprocess.run(
-                [str(SCRIPT), "agent-backed-tool", str(spec), "--tool-name", "closure_risk_review", "--model-class", "cheap"],
+                [sys.executable, str(SCRIPT),"agent-backed-tool", str(spec), "--tool-name", "closure_risk_review", "--model-class", "cheap"],
                 check=True,
                 capture_output=True,
                 text=True,
@@ -2234,7 +2234,7 @@ class SpecRuntimeTests(unittest.TestCase):
 
     def test_cli_prompts_outputs_json(self):
         completed = subprocess.run(
-            [str(SCRIPT), "prompts", str(ROOT)],
+            [sys.executable, str(SCRIPT),"prompts", str(ROOT)],
             check=True,
             capture_output=True,
             text=True,
@@ -2248,6 +2248,7 @@ class SpecRuntimeTests(unittest.TestCase):
             spec = self.write_incomplete_spec(Path(tmp))
             completed = subprocess.run(
                 [
+                    sys.executable,
                     str(SCRIPT),
                     "hook",
                     "spec-close-check",
@@ -2270,7 +2271,7 @@ class SpecRuntimeTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             spec = write_complete_spec(Path(tmp))
             completed = subprocess.run(
-                [str(SCRIPT), "review-packet", str(spec), "--review-type", "design_requirements_trace"],
+                [sys.executable, str(SCRIPT),"review-packet", str(spec), "--review-type", "design_requirements_trace"],
                 check=True,
                 capture_output=True,
                 text=True,

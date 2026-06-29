@@ -94,7 +94,7 @@ POSIX shell, so no `bash`, Git Bash, WSL, MSYS2, or Cygwin is required on any OS
 |------|-------------|
 | OS | Windows, macOS, Linux (CI: `windows-latest`, `macos-latest`, `ubuntu-latest`) |
 | Node.js | 18 or newer (the installer/bin is Node) |
-| Python | 3.9 or newer (standard library only; no third-party deps) |
+| Python | 3.10 or newer (standard library only; no third-party deps) |
 
 ### Interpreter resolution
 
@@ -103,7 +103,7 @@ absent on Windows; `py` is absent on macOS/Linux; `python` is guaranteed
 nowhere), the interpreter is resolved explicitly at install time and pinned into
 the installed `.mcp.json`/`hooks.json`. Resolution order:
 
-| Platform | Order (first that reports Python ≥ 3.9 wins) |
+| Platform | Order (first that reports Python ≥ 3.10 wins) |
 |----------|----------------------------------------------|
 | Windows | `py -3` → `python` → `python3` |
 | macOS / Linux | `python3` → `python` |
@@ -118,7 +118,7 @@ launch.
 
 When the plugin is added directly from a marketplace, no installer runs, so the
 shipped `.mcp.json`/`hooks.json` ship the portable default command `python`.
-Ensure a **Python 3.9+ interpreter named `python` is on PATH**, or set
+Ensure a **Python 3.10+ interpreter named `python` is on PATH**, or set
 `SPEC_LIFECYCLE_PYTHON`, for that zero-config path. The npm/installer path does
 not need this — it pins the host-resolved interpreter.
 
@@ -137,7 +137,7 @@ the two cannot diverge.
 The installer:
 
 - resolves the host Python interpreter (see above) and fails loudly if none
-  meets the 3.9 floor;
+  meets the 3.10 floor;
 - removes the old managed standalone skill copy at
   `~/.codex/skills/spec-lifecycle-manager/`;
 - removes the old managed host-level MCP config block when present;
@@ -148,7 +148,7 @@ The installer:
 - runs `codex plugin add spec-lifecycle-manager@<marketplace-name>`
   (skip with `--skip-plugin-add`).
 
-The plugin has no third-party runtime dependencies. It requires Python 3.9 or
+The plugin has no third-party runtime dependencies. It requires Python 3.10 or
 newer and otherwise uses the Python standard library.
 
 ## npm Distribution Package

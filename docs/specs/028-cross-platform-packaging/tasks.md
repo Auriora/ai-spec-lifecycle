@@ -152,7 +152,7 @@ T010 docs: platform/interpreter matrix  (after T009 evidence)
     MCP launch smoke + hook execution with a Claude-shaped payload
     (`tool_name:"Write"`). Satisfies Requirement 4.2. Record a manual run if a
     Windows runner is unavailable and note the gap.
-  - Evidence: CI workflow authored — matrix ubuntu/macos/windows × py 3.9/3.12
+  - Evidence: CI workflow authored — matrix ubuntu/macos/windows × py 3.10/3.12
     runs the Node unit tests, the Python runtime+hook tests, package-contract,
     the install→MCP-initialize→hook smoke, and npm pack dry-run. The smoke
     (`smoke_cross_platform.mjs`) is shell-free (uses `installer.mjs` + a spawned
@@ -169,7 +169,7 @@ T010 docs: platform/interpreter matrix  (after T009 evidence)
   - Acceptance: Supported OS/Python matrix, interpreter resolution order, and
     `SPEC_LIFECYCLE_PYTHON` override documented. Satisfies Requirement 4.1, 4.3.
   - Evidence: Install doc gained a "Cross-Platform Support and Python
-    Interpreter" section: supported OS / Node 18+ / Python 3.9+ matrix,
+    Interpreter" section: supported OS / Node 18+ / Python 3.10+ matrix,
     per-platform resolution order (Windows `py -3`→`python`→`python3`; POSIX
     `python3`→`python`), `SPEC_LIFECYCLE_PYTHON` override, and the marketplace
     default — satisfying Requirement 4.1/4.3. Stale `python3`/`.sh` references

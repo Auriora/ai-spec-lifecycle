@@ -208,7 +208,7 @@ class TraceabilityLookupTests(unittest.TestCase):
 
     def test_cli_json_output(self):
         completed = subprocess.run(
-            [str(SCRIPT), str(self.spec), "--task", "T012"],
+            [sys.executable, str(SCRIPT), str(self.spec), "--task", "T012"],
             check=True,
             capture_output=True,
             text=True,

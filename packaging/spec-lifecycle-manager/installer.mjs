@@ -135,8 +135,10 @@ function chmodExecutable(target, dryRun) {
 
 function ensurePython() {
   // R2/P4: resolve the host interpreter explicitly instead of assuming the
-  // literal name `python3`, and enforce the 3.9 floor the .sh required by
-  // composing the floor into the candidate probe (so ordering and floor agree).
+  // literal name `python3`, and enforce the 3.10 floor the runtime requires
+  // (spec_runtime.py uses 3.10+ features such as zip(strict=) and PEP 604
+  // unions) by composing the floor into the candidate probe so ordering and
+  // floor agree.
   const probe = (command) => {
     const [bin, ...args] = command;
     if (!bin) return false;
@@ -146,16 +148,16 @@ function ensurePython() {
     const match = text.match(/Python\s+(\d+)\.(\d+)/i);
     if (!match) return false;
     const [major, minor] = [Number(match[1]), Number(match[2])];
-    return major > 3 || (major === 3 && minor >= 9);
+    return major > 3 || (major === 3 && minor >= 10);
   };
   try {
     return resolvePython({ probe });
   } catch {
     throw new InstallError(
-      "Python 3.9 or newer is required. Install it (Windows: python.org or "
+      "Python 3.10 or newer is required. Install it (Windows: python.org or "
         + "'winget install Python.Python.3'; macOS: 'brew install python'; Linux: "
         + "your distribution's python3 package), or set SPEC_LIFECYCLE_PYTHON to a "
-        + "Python 3.9+ interpreter.",
+        + "Python 3.10+ interpreter.",
     );
   }
 }

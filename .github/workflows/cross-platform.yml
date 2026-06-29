@@ -19,7 +19,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         node: ["20"]
-        python: ["3.9", "3.12"]
+        python: ["3.10", "3.12"]
     env:
       PYTHONDONTWRITEBYTECODE: "1"
     # Use bash on every runner (Git Bash on Windows) for consistent globbing.

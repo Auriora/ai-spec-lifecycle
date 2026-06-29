@@ -10,7 +10,7 @@
   "installer": "packaging/spec-lifecycle-manager/installer.mjs",
   "entrypoint": "plugin-bundled mcpServers entry: plugins/spec-lifecycle-manager/.mcp.json",
   "dependency_install": {
-    "python": ">=3.9",
+    "python": ">=3.10",
     "install_command": "none",
     "runtime_dependencies": [
     "Python 3 standard library"

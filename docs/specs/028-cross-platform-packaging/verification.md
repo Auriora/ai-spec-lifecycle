@@ -51,7 +51,7 @@ Each entry: OS, Python, interpreter resolved, command/outcome, link.
   Claude hook exec form `py`/`["-3", …hook.py]`; Codex hook shell-string
   `py -3 "${PLUGIN_ROOT}/…hook.py"`.
 - **Fail-loud (P4).** Installer with no Python on PATH and no override → exits 1
-  with the actionable "Python 3.9 or newer is required …" message.
+  with the actionable "Python 3.10 or newer is required …" message.
 - **Windows test-harness hardening (R4.2).** The package-contract test launched
   `subprocess.run(["npm", …])` and set a hardcoded `/tmp/…` npm cache — both fail
   on `windows-latest` for harness reasons (CreateProcess ignores PATHEXT so a bare
@@ -59,10 +59,33 @@ Each entry: OS, Python, interpreter resolved, command/outcome, link.
   resolve `npm` via `shutil.which` (PATHEXT-aware) and use
   `tempfile.gettempdir()`, so the CI matrix can actually go green on Windows
   rather than reding before exercising the implementation. Re-run green on Linux.
-- **Windows / macOS — pending first CI run.** `.github/workflows/cross-platform.yml`
-  runs the same gates on `windows-latest` and `macos-latest` (Python 3.9 & 3.12)
-  on push; record those run URLs here when available. This is the open
-  verification gap (see Residual Risks).
+- **First CI matrix run (run 28386954873, commit 2ca0a21) — RED, two real
+  defects surfaced; fixed in follow-up.** The matrix did its job: it exposed
+  cross-OS/version problems a Linux-only run never could. Results were
+  ubuntu-3.12 ✅, macos-3.12 ✅, and red on every 3.9 lane plus windows-3.12.
+  Two distinct causes:
+  1. **Python 3.10+ floor (all OSes at 3.9, including ubuntu).** Not a
+     cross-platform issue — pre-existing product code already required 3.10
+     (`spec_runtime.py` uses `zip(strict=)` and PEP 604 `X | None` runtime
+     unions). The "3.9+" claim was never accurate. Resolution: raise the
+     documented/probed floor to **3.10** (CI matrix `3.10`/`3.12`, installer
+     probe `minor >= 10`, install doc, `package-manifest.json` `>=3.10`); the
+     product needs no change. 3.9 is also EOL as of 2025-10.
+  2. **Windows test-harness subprocess (`WinError 193`, windows-3.12).** Nine
+     test call-sites invoked `spec_runtime.py`/`traceability_lookup.py` *by
+     path*, relying on the `#!/usr/bin/env python3` shebang — works on POSIX,
+     impossible on Windows. The shipped product is unaffected (MCP via
+     `command: python`, hook exec form, internal `sys.executable`); only the
+     tests were wrong. Fixed by prefixing every site with `sys.executable`.
+     A path-separator assertion (`endswith("references/spec-package")`) was also
+     made OS-agnostic via `os.path.join`. The `npm pack` test fix from the prior
+     commit passed on Windows (not in the failure list), confirming the
+     `shutil.which` approach.
+  All fixes are test/config/doc only — no product logic changed. The smoke test
+  (the actual install→MCP→hook proof) has **not yet executed on Windows/macOS**:
+  the red jobs died at the Python step, before the smoke step ran. The next push
+  is the first real Windows/macOS exercise of R1/R2/R3; record those run URLs and
+  the smoke outcome here. This remains the open verification gap.
 
 ## Residual Risks
 
