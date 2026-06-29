@@ -69,6 +69,7 @@ spec or that should not block the active spec currently being delivered.
 | B052 | candidate | Review evidence capture | External agent feedback in `docs/reviews/agent-feedback.md`; B024 | Add a first-class review findings evidence section or helper so security, senior-engineer, or expert-review outcomes can be recorded as addressed, rejected, deferred, or accepted residual risk without forcing them into generic evidence rows. |
 | B053 | candidate | Repo validation command discovery | External agent feedback in `docs/reviews/agent-feedback.md`; B023 | Prefer validation commands discovered from repository docs, AGENTS guidance, package metadata, and common test entrypoints before returning generic lifecycle script suggestions. Keep command discovery read-only and report confidence. |
 | B054 | candidate | Security-sensitive task review gate | External agent feedback in `docs/reviews/agent-feedback.md`; B037, B039 | Warn when tasks or changed files touch auth, invitations, roles, audit logging, permissions, secrets, or similar sensitive surfaces, and require explicit review evidence or accepted residual risk before completion or closure. |
+| B055 | candidate | Consolidate spec-lifecycle-manager on JS/TS | User discussion about a planned new JS/TS MCP for agent-dev-lifecycle; cross-platform packaging spec `028-cross-platform-packaging`; `../agent-workbench` Node/TS reference | Evaluate rewriting the Python lifecycle runtime, MCP server, and hook (`spec_runtime.py`, `spec_mcp_server.py`, `codex_spec_lifecycle_hook.py`, plus `tests/runtime/`) in JS/TS to converge on one toolchain alongside the planned new MCP. Converging removes the `python3`/`py`/`python` interpreter-resolution problem entirely (Node is one cross-platform command), so this would supersede spec `028`'s Requirement 2 if it lands. Treat as a language-migration decision distinct from `028`'s surgical packaging fix; promote into a focused spec only when the new MCP's scope, shared-scaffolding plan, and test-port strategy are agreed. Decide whether to drop the Python runtime entirely or run both during transition. |
 
 ## External Agent Feedback Candidates
 
@@ -416,6 +417,7 @@ dogfooding, not on factual claims from conversation content.
 | P3 | B035 | Supports packaging and adoption once the plugin distribution shape is clearer. |
 | P3 | B036 | Valuable for Kiro interoperability, but lower priority than improving this repository's native `docs/specs/` lifecycle. |
 | P3 | B041 | Useful for resumability, but should build on B013 and remain non-mutating by default. |
+| P3 | B055 | Strategic toolchain consolidation; gate on the planned new JS/TS MCP firming up. Would supersede spec `028` interpreter resolution, so sequence it against `028` before investing heavily in Python-specific packaging work. |
 
 ## Advisory Discovery Notes
 
