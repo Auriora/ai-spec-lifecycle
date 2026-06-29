@@ -929,8 +929,8 @@ class SpecRuntimeTests(unittest.TestCase):
 
         self.assertEqual(0, payload["summary"]["error"])
         self.assertEqual(0, payload["summary"]["warn"])
-        self.assertEqual(24, payload["summary"]["total"])
-        self.assertEqual(24, payload["summary"]["removed"])
+        self.assertEqual(25, payload["summary"]["total"])
+        self.assertEqual(25, payload["summary"]["removed"])
         self.assertEqual(0, payload["summary"]["retained"])
         self.assertEqual(0, payload["summary"]["superseded"])
         self.assertEqual(0, payload["summary"]["legacy_gaps"])
@@ -959,6 +959,7 @@ class SpecRuntimeTests(unittest.TestCase):
             "024-staged-developer-onboarding",
             "023-task-state-management-tools",
             "023-hierarchical-spec-authoring-hooks",
+            "028-cross-platform-packaging",
         }
         entries = {entry["spec_id"]: entry for entry in payload["entries"]}
         self.assertEqual(expected, set(entries))
