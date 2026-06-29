@@ -2,3 +2,8 @@
 .codex/
 __pycache__
 *.tgz
+.idea/
+.kiro/
+.agents/
+.claude/
+.claude-plugin/
