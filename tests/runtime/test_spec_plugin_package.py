@@ -3,6 +3,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -156,14 +157,19 @@ class SpecPluginPackageTests(unittest.TestCase):
         self.assertIn("packaging/spec-lifecycle-manager/npm-package.json", package["files"])
 
     def test_npm_pack_dry_run_contains_distribution_payload(self):
-        if shutil.which("npm") is None:
+        # shutil.which honors PATHEXT, so on Windows it resolves npm.cmd; pass the
+        # resolved path to subprocess because CreateProcess does not apply PATHEXT
+        # to a bare "npm" argument (would raise FileNotFoundError on Windows CI).
+        npm = shutil.which("npm")
+        if npm is None:
             raise unittest.SkipTest("npm is required for package dry-run validation")
 
+        cache_dir = os.path.join(tempfile.gettempdir(), "spec-lifecycle-npm-cache")
         result = subprocess.run(
-            ["npm", "pack", "--dry-run", "--json"],
+            [npm, "pack", "--dry-run", "--json"],
             cwd=ROOT,
             check=True,
-            env={**os.environ, "npm_config_cache": "/tmp/spec-lifecycle-npm-cache"},
+            env={**os.environ, "npm_config_cache": cache_dir},
             text=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

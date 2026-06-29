@@ -52,6 +52,13 @@ Each entry: OS, Python, interpreter resolved, command/outcome, link.
   `py -3 "${PLUGIN_ROOT}/…hook.py"`.
 - **Fail-loud (P4).** Installer with no Python on PATH and no override → exits 1
   with the actionable "Python 3.9 or newer is required …" message.
+- **Windows test-harness hardening (R4.2).** The package-contract test launched
+  `subprocess.run(["npm", …])` and set a hardcoded `/tmp/…` npm cache — both fail
+  on `windows-latest` for harness reasons (CreateProcess ignores PATHEXT so a bare
+  `npm` cannot find `npm.cmd`; `/tmp` is not a valid Windows path). Hardened to
+  resolve `npm` via `shutil.which` (PATHEXT-aware) and use
+  `tempfile.gettempdir()`, so the CI matrix can actually go green on Windows
+  rather than reding before exercising the implementation. Re-run green on Linux.
 - **Windows / macOS — pending first CI run.** `.github/workflows/cross-platform.yml`
   runs the same gates on `windows-latest` and `macos-latest` (Python 3.9 & 3.12)
   on push; record those run URLs here when available. This is the open
