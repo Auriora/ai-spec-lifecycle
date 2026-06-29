@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 "use strict";
 
-const { spawnSync } = require("node:child_process");
 const path = require("node:path");
+const { pathToFileURL } = require("node:url");
 
 const packageRoot = path.resolve(__dirname, "..", "..");
-const installer = path.join(packageRoot, "scripts", "install-spec-lifecycle-manager-package.sh");
+const installerUrl = pathToFileURL(path.join(__dirname, "installer.mjs"));
 
 function usage() {
   process.stdout.write(`Usage: spec-lifecycle-manager <command> [installer options]
@@ -20,28 +20,31 @@ Examples:
 `);
 }
 
-const args = process.argv.slice(2);
-const command = args.shift() || "install";
+async function main() {
+  const args = process.argv.slice(2);
+  const command = args.shift() || "install";
 
-if (command === "help" || command === "--help" || command === "-h") {
-  usage();
-  process.exit(0);
+  if (command === "help" || command === "--help" || command === "-h") {
+    usage();
+    return 0;
+  }
+
+  if (command !== "install") {
+    process.stderr.write(`Unknown command: ${command}\n\n`);
+    usage();
+    return 2;
+  }
+
+  const installerArgs = args[0] === "--" ? args.slice(1) : args;
+  // installer.mjs is ESM; this entrypoint is CommonJS, so load it via dynamic
+  // import and call it in-process (no shell, no spawned .sh).
+  const { install } = await import(installerUrl.href);
+  return install(["--source", packageRoot, ...installerArgs]);
 }
 
-if (command !== "install") {
-  process.stderr.write(`Unknown command: ${command}\n\n`);
-  usage();
-  process.exit(2);
-}
-
-const installerArgs = args[0] === "--" ? args.slice(1) : args;
-const result = spawnSync(installer, ["--source", packageRoot, ...installerArgs], {
-  stdio: "inherit",
-});
-
-if (result.error) {
-  process.stderr.write(`${result.error.message}\n`);
-  process.exit(1);
-}
-
-process.exit(result.status === null ? 1 : result.status);
+main()
+  .then((code) => process.exit(code))
+  .catch((error) => {
+    process.stderr.write(`${error?.stack || error}\n`);
+    process.exit(1);
+  });

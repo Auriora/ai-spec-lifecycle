@@ -44,46 +44,67 @@ T010 docs: platform/interpreter matrix  (after T009 evidence)
 
 ## Phase 2: Cross-platform installer
 
-- [ ] T002 Pin the resolved interpreter into the installed `.mcp.json`.
+- [x] T002 Pin the resolved interpreter into the installed `.mcp.json`.
   - Depends on: T001, T004
-  - Files: installed `.mcp.json` generation in `installer.mjs`; templates
+  - Files: `installer.mjs` (`pinMcpFile`/`pinInstalledConfigs`); templates
     `plugins/spec-lifecycle-manager/.mcp.json`,
     `plugins/spec-lifecycle-manager/claude-plugin/.mcp.json`
   - Acceptance: Installed config uses exec form with the resolved `command`/
     `args`; no bare `python3` assumption. Satisfies Requirement 2.2.
-  - Evidence: Pending.
+  - Evidence: Templates default to the portable `python` (OQ1). Real install
+    pins the host interpreter: host run → `"command":"python3"`; `py -3`
+    override → `"command":"py","args":["-3",".../spec_mcp_server.py"]` (verified
+    on both Codex and Claude `.mcp.json` copies). Both installed roots pinned.
+    `installer.test.mjs` "pins the resolved interpreter" case green.
 
-- [ ] T003 Convert hook config to exec form with the resolved interpreter.
+- [x] T003 Convert hook config to exec form with the resolved interpreter.
   - Depends on: T001, T004
   - Files: `plugins/spec-lifecycle-manager/hooks/hooks.json`,
-    `plugins/spec-lifecycle-manager/claude-plugin/hooks/hooks.json`
-  - Acceptance: `"command":"<resolved>","args":[...,"${PLUGIN_ROOT|CLAUDE_PLUGIN_ROOT}/.../codex_spec_lifecycle_hook.py"]`;
-    no shell-form `python3 "..."` string. Codex matcher/token preserved.
-    Satisfies Requirement 3.1-3.2.
-  - Evidence: Pending.
+    `plugins/spec-lifecycle-manager/claude-plugin/hooks/hooks.json`;
+    `installer.mjs` (`pinHookFile`)
+  - Acceptance: Claude hook in exec form `"command":"<resolved>","args":[...,
+    "${CLAUDE_PLUGIN_ROOT}/.../codex_spec_lifecycle_hook.py"]`; Codex hook keeps
+    shell-string form (OQ4) with the resolved interpreter and `${PLUGIN_ROOT}`
+    token. Satisfies Requirement 3.1-3.2.
+  - Evidence: Claude template converted to exec form; installer pins resolved
+    interpreter (host `python3`; override `py`/`["-3",...]`). Codex shell-string
+    rebuilt as `py -3 "${PLUGIN_ROOT}/...hook.py"` under override. Updated
+    `test_spec_plugin_package.py` assertions + `installer.test.mjs` green.
 
-- [ ] T004 Port the installer to Node (`installer.mjs`).
+- [x] T004 Port the installer to Node (`installer.mjs`).
   - Depends on: none
   - Files: `packaging/spec-lifecycle-manager/installer.mjs` (new)
   - Acceptance: Reproduces `install-spec-lifecycle-manager-package.sh` steps
     (validate `--source`, copy files, register plugin/hook, honor flags) using
     only `node:fs/path/os`. Satisfies Requirement 1.1-1.2.
-  - Evidence: Pending.
+  - Evidence: Oracle diff vs the `.sh` (before pinning) byte-identical: dry-run
+    output, real-install `diff -r` of both trees, and the config.toml /
+    hooks.json / marketplace.json edit paths. Dependency presence via shell-free
+    PATH lookup. `installer.test.mjs` (help/unknown/real-install/skip-marketplace/
+    missing-component) green.
 
-- [ ] T005 Wire `npm-install.js` to call `installer.mjs` in-process.
+- [x] T005 Wire `npm-install.js` to call `installer.mjs` in-process.
   - Depends on: T004
   - Files: `packaging/spec-lifecycle-manager/npm-install.js`
   - Acceptance: No `spawnSync` of a `.sh`; imports and calls `installer.mjs`;
     actionable failure naming the missing prerequisite. Satisfies Requirement
     1.4, P4.
-  - Evidence: Pending.
+  - Evidence: CJS entry now `await import()`s the ESM `installer.mjs` and calls
+    `install()`; no `.sh` spawn. `npm-install.js install -- --skip-plugin-add`
+    installs and pins; `help`→0, `bogus`→2. Missing-Python yields the actionable
+    error (exit 1).
 
-- [ ] T006 Retire or delegate the legacy `.sh` installer.
+- [x] T006 Retire or delegate the legacy `.sh` installer.
   - Depends on: T004
   - Files: `scripts/install-spec-lifecycle-manager-package.sh`
   - Acceptance: Removed, or reduced to `exec node .../installer.mjs "$@"` so it
     cannot diverge. Satisfies Requirement 1.3, P3.
-  - Evidence: Pending.
+  - Evidence: Reduced to a POSIX-`sh` delegator that `exec node installer.mjs`
+    (forwarding `"$@"`, preserving the legacy checkout-root default `--source`
+    that user args still override). No copy/JSON/TOML logic remains
+    (`grep copy_tree|awk|mktemp` → 0 hits, P3). `.sh --help` delegates
+    byte-identically to the Node installer. `node` absence yields an actionable
+    error before exec.
 
 ## Phase 3: Marketplace and packaging
 
