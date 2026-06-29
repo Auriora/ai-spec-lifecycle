@@ -98,7 +98,10 @@ async function main() {
     // on Windows, not just shape-asserted. Each is resolved into an argv the way
     // a shell-free runtime would and run from the repo so the advisory has a
     // spec to evaluate.
-    const payload = { tool_name: "Write", tool_input: { file_path: path.join(repoRoot, "docs/specs/028-cross-platform-packaging/tasks.md") } };
+    // A Claude-shaped Write payload; the file_path is a stable repo doc so the
+    // hook has a real path to evaluate. The smoke asserts the hook spawns and
+    // exits 0 cross-platform (shell-free), not a specific advisory verdict.
+    const payload = { tool_name: "Write", tool_input: { file_path: path.join(repoRoot, "docs/history/spec-closure-log.md") } };
     const hookConfigs = [
       { label: "Codex shell-form", file: path.join(pluginRoot, "hooks", "hooks.json"), tokenRoot: pluginRoot, expectExec: false },
       { label: "Claude exec-form", file: path.join(pluginRoot, "claude-plugin", "hooks", "hooks.json"), tokenRoot: path.join(pluginRoot, "claude-plugin"), expectExec: true },
