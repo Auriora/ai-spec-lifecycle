@@ -1,0 +1,62 @@
+name: cross-platform
+
+# Spec 028: prove the spec-lifecycle-manager plugin installs, launches its MCP
+# server, and runs its PostToolUse hook on Windows, macOS, and Linux using a
+# host-resolved Python interpreter and no POSIX shell in the install/launch path.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  matrix:
+    name: ${{ matrix.os }} / node ${{ matrix.node }} / py ${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: ["20"]
+        python: ["3.9", "3.12"]
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+    # Use bash on every runner (Git Bash on Windows) for consistent globbing.
+    # The shell-freedom that Spec 028 guarantees is for the *installed* plugin,
+    # exercised by the smoke step below -- not for this CI orchestration.
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Runtime versions
+        run: |
+          node --version
+          python --version
+
+      - name: Resolver + installer unit tests (Node)
+        run: node --test tests/runtime/*.test.mjs
+
+      - name: Runtime + hook parity tests (Python)
+        run: python -m unittest discover -s tests -p 'test_*.py'
+
+      - name: Package contract
+        run: python skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .
+
+      - name: Cross-platform install + MCP launch + hook smoke
+        run: node tests/runtime/smoke_cross_platform.mjs
+
+      - name: Package payload (npm pack dry-run)
+        run: npm pack --dry-run

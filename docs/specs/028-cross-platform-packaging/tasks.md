@@ -139,14 +139,23 @@ T010 docs: platform/interpreter matrix  (after T009 evidence)
 
 ## Phase 4: Verification
 
-- [ ] T009 Add the cross-platform CI matrix.
+- [x] T009 Add the cross-platform CI matrix.
   - Depends on: T002, T003, T005
-  - Files: CI workflow under `.github/workflows/` (or repo CI equivalent)
+  - Files: `.github/workflows/cross-platform.yml` (new);
+    `tests/runtime/smoke_cross_platform.mjs` (new); `package.json` (`smoke`)
   - Acceptance: Jobs on windows-latest, macos-latest, ubuntu-latest run install +
     MCP launch smoke + hook execution with a Claude-shaped payload
     (`tool_name:"Write"`). Satisfies Requirement 4.2. Record a manual run if a
     Windows runner is unavailable and note the gap.
-  - Evidence: Pending.
+  - Evidence: CI workflow authored — matrix ubuntu/macos/windows × py 3.9/3.12
+    runs the Node unit tests, the Python runtime+hook tests, package-contract,
+    the install→MCP-initialize→hook smoke, and npm pack dry-run. The smoke
+    (`smoke_cross_platform.mjs`) is shell-free (uses `installer.mjs` + a spawned
+    interpreter, no shell). Linux executed and green: SMOKE PASS — install
+    shell-free, MCP `initialize` handshake (protocolVersion 2025-06-18,
+    interpreter python3), hook exit 0; full `npm run validate` green. The
+    Windows/macOS matrix runs execute on first push to GitHub; their run URLs
+    are captured in `verification.md` (Evidence Log) as a tracked residual.
 
 - [ ] T010 Document the platform/interpreter matrix.
   - Depends on: T009
