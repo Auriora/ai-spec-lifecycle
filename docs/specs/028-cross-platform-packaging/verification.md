@@ -91,10 +91,16 @@ Each entry: OS, Python, interpreter resolved, command/outcome, link.
   The smoke step — the actual proof of R1/R2/R3 — executed and passed per OS:
   - **windows-latest, Python 3.12, interpreter `py`.** `install completed
     shell-free`; `MCP initialize handshake (protocolVersion=2025-06-18,
-    interpreter=py)`; `hook executed (exit 0)`; `SMOKE PASS`. The resolver
-    selected the PEP 397 `py` launcher first, exactly as designed (R2), and the
-    install/launch/hook path used no POSIX shell (R1/P1) — the core Windows
-    blocker the spec set out to remove.
+    interpreter=py)`; **both** hook copies executed exit 0 — `Codex shell-form
+    hook executed` and `Claude exec-form hook executed`; `SMOKE PASS`. The
+    resolver selected the PEP 397 `py` launcher first, exactly as designed (R2),
+    and the install/launch/hook path used no POSIX shell (R1/P1) — the core
+    Windows blocker the spec set out to remove. The Claude **exec-form** hook
+    (command + args array, no shell) is the spec's headline fix for shell-form's
+    PowerShell fallback on Windows; the smoke fires it directly (and asserts it
+    is genuinely exec form), so R3's exec-form-on-Windows is now *executed*, not
+    inferred. (Confirmed by run 28398785192, commit ce69cf9, which added the
+    second hook fire.)
   - **macos-latest, Python 3.12, interpreter `python3`.** `install completed
     shell-free`; MCP handshake (interpreter `python3`); hook exit 0; `SMOKE
     PASS`.
