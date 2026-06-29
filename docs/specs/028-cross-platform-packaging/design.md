@@ -180,3 +180,10 @@ All four open questions were resolved on 2026-06-29 before implementation start.
    against the live Codex runtime during T009; upgrade the Codex entry to exec
    form if it passes. Either way the portability fix (explicit interpreter
    resolution) holds, so this does not block implementation.
+
+## Open Questions
+
+None remaining. All four open questions were resolved on 2026-06-29 before
+implementation — see **Resolved Decisions** above. The only carried-forward
+verification item (Codex exec-form hook support, §4) is tracked in
+`verification.md`, not as an open design question.

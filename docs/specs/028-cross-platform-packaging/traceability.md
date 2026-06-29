@@ -53,7 +53,10 @@ last_reviewed: 2026-06-29
 | Marketplace fallback (Resolved Decisions §1) | T007 | Static `python` default + prerequisite doc |
 | Operational Considerations / Verification | T009, T010 | CI matrix + durable matrix docs |
 
-## Resolved Decision Impact
+## Open Decision Impact
+
+All decisions below were resolved on 2026-06-29 before implementation; none
+remain open. Retained here for traceability.
 
 | Decision | Affected requirements | Affected tasks | Status |
 |----------|-----------------------|----------------|--------|
