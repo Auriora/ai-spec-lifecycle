@@ -671,6 +671,11 @@ Recommended global Codex hook entry:
 }
 ```
 
+Replace `python3` with the interpreter that exists on your OS — `py -3` on
+Windows, `python3` on macOS/Linux — or whatever `SPEC_LIFECYCLE_PYTHON` names.
+The bundled plugin hook resolves this automatically at install time; this global
+example is hand-authored, so pick the interpreter present on the host.
+
 If another `PostToolUse` entry already matches write tools, append this hook to
 that entry's `hooks` list or add a second matching entry. Keep the hook
 advisory until false-positive behavior has been dogfooded.

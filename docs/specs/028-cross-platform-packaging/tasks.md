@@ -108,15 +108,20 @@ T010 docs: platform/interpreter matrix  (after T009 evidence)
 
 ## Phase 3: Marketplace and packaging
 
-- [ ] T007 Encode the marketplace static-config decision.
+- [x] T007 Encode the marketplace static-config decision.
   - Depends on: T001
-  - Files: shipped `.mcp.json`/`hooks.json` defaults; durable install docs
+  - Files: shipped `.mcp.json`/`hooks.json` defaults (T002/T003); durable install
+    docs (`docs/reference/spec-lifecycle-manager-mcp-install.md`)
   - Decision (2026-06-29): static `command` is `python` + a documented
     "Python 3 on PATH" prerequisite (design.md Resolved Decisions §1). This task
     now only encodes that decision; the choice itself is settled.
   - Acceptance: shipped configs ship `python` in exec form; install docs state
     the "Python 3 on PATH" prerequisite and the `SPEC_LIFECYCLE_PYTHON` override.
-  - Evidence: Pending.
+  - Evidence: All four shipped configs default to `command:"python"` (Codex/
+    Claude `.mcp.json`; Claude hook exec form; Codex hook shell-string). Install
+    doc's new "Cross-Platform Support and Python Interpreter" section documents
+    the marketplace `python`-on-PATH prerequisite and the `SPEC_LIFECYCLE_PYTHON`
+    override for the zero-config path.
 
 - [x] T008 Update packaging manifests for the new install model.
   - Depends on: T004, T006
@@ -157,9 +162,18 @@ T010 docs: platform/interpreter matrix  (after T009 evidence)
     Windows/macOS matrix runs execute on first push to GitHub; their run URLs
     are captured in `verification.md` (Evidence Log) as a tracked residual.
 
-- [ ] T010 Document the platform/interpreter matrix.
+- [x] T010 Document the platform/interpreter matrix.
   - Depends on: T009
-  - Files: durable install/operations docs; spec `verification.md`
+  - Files: `docs/reference/spec-lifecycle-manager-mcp-install.md`,
+    `docs/reference/spec-lifecycle-runtime.md`; spec `verification.md`
   - Acceptance: Supported OS/Python matrix, interpreter resolution order, and
     `SPEC_LIFECYCLE_PYTHON` override documented. Satisfies Requirement 4.1, 4.3.
-  - Evidence: Pending.
+  - Evidence: Install doc gained a "Cross-Platform Support and Python
+    Interpreter" section: supported OS / Node 18+ / Python 3.9+ matrix,
+    per-platform resolution order (Windows `py -3`→`python`→`python3`; POSIX
+    `python3`→`python`), `SPEC_LIFECYCLE_PYTHON` override, and the marketplace
+    default — satisfying Requirement 4.1/4.3. Stale `python3`/`.sh` references
+    corrected across the install doc and the runtime doc's global-hook example.
+    `verification.md` Evidence Log populated with the executed Linux runs (the
+    Windows/macOS CI-run capture is tracked there as T009's residual, not a docs
+    gap).

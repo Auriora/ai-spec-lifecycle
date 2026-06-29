@@ -82,23 +82,71 @@ load twice and fail with "Duplicate hooks file detected," which disables the
 whole plugin's MCP server. The `hooks` manifest key should only be used to
 point at additional hook files beyond the default location.
 
+## Cross-Platform Support and Python Interpreter
+
+The plugin installs and runs on **Windows, macOS, and Linux**. The installer is
+a shell-free Node program and the MCP server and hook are launched without a
+POSIX shell, so no `bash`, Git Bash, WSL, MSYS2, or Cygwin is required on any OS.
+
+### Supported matrix
+
+| Item | Requirement |
+|------|-------------|
+| OS | Windows, macOS, Linux (CI: `windows-latest`, `macos-latest`, `ubuntu-latest`) |
+| Node.js | 18 or newer (the installer/bin is Node) |
+| Python | 3.9 or newer (standard library only; no third-party deps) |
+
+### Interpreter resolution
+
+Because no single Python command name exists on every OS (`python3` is usually
+absent on Windows; `py` is absent on macOS/Linux; `python` is guaranteed
+nowhere), the interpreter is resolved explicitly at install time and pinned into
+the installed `.mcp.json`/`hooks.json`. Resolution order:
+
+| Platform | Order (first that reports Python ≥ 3.9 wins) |
+|----------|----------------------------------------------|
+| Windows | `py -3` → `python` → `python3` |
+| macOS / Linux | `python3` → `python` |
+
+Override the choice on any OS with the `SPEC_LIFECYCLE_PYTHON` environment
+variable (honored verbatim, including arguments, e.g. `py -3` or an absolute
+path). If no interpreter resolves, the installer fails with an actionable error
+naming the missing prerequisite rather than installing a config that cannot
+launch.
+
+### Marketplace (no-installer) default
+
+When the plugin is added directly from a marketplace, no installer runs, so the
+shipped `.mcp.json`/`hooks.json` ship the portable default command `python`.
+Ensure a **Python 3.9+ interpreter named `python` is on PATH**, or set
+`SPEC_LIFECYCLE_PYTHON`, for that zero-config path. The npm/installer path does
+not need this — it pins the host-resolved interpreter.
+
 ## Install Flow
 
-Use the package installer from this repository:
+Use the cross-platform installer from this repository (Node, no shell):
 
 ```bash
-scripts/install-spec-lifecycle-manager-package.sh
+node packaging/spec-lifecycle-manager/installer.mjs
 ```
+
+`scripts/install-spec-lifecycle-manager-package.sh` is retained for existing
+Unix workflows but is now a thin delegator that `exec`s the Node installer, so
+the two cannot diverge.
 
 The installer:
 
+- resolves the host Python interpreter (see above) and fails loudly if none
+  meets the 3.9 floor;
 - removes the old managed standalone skill copy at
   `~/.codex/skills/spec-lifecycle-manager/`;
 - removes the old managed host-level MCP config block when present;
 - removes the old managed global advisory hook when present;
 - copies the self-contained plugin to the local marketplace plugin directory;
+- pins the resolved interpreter into the installed `.mcp.json`/`hooks.json`;
 - updates the local marketplace entry; and
-- runs `codex plugin add spec-lifecycle-manager@<marketplace-name>`.
+- runs `codex plugin add spec-lifecycle-manager@<marketplace-name>`
+  (skip with `--skip-plugin-add`).
 
 The plugin has no third-party runtime dependencies. It requires Python 3.9 or
 newer and otherwise uses the Python standard library.
@@ -111,22 +159,26 @@ The repository defines an npm package contract:
 package.json
 packaging/spec-lifecycle-manager/npm-package.json
 packaging/spec-lifecycle-manager/npm-install.js
+packaging/spec-lifecycle-manager/installer.mjs
+packaging/spec-lifecycle-manager/resolve-python.mjs
 ```
 
 The package name is `@auriora/ai-spec-lifecycle`. It packages the plugin
-bundle, package metadata, and the existing installer script. Its current status
-is `pack-ready-not-published`.
-
-After publish, the intended install command is:
+bundle, package metadata, and the cross-platform Node installer. It is
+**marketplace-ready but not published** to the npm registry; the package is
+distributed as the `npm pack` tarball attached to **GitHub releases**. Install
+from a downloaded/unpacked tarball with its bin:
 
 ```bash
 npx @auriora/ai-spec-lifecycle install
 ```
 
-The npm bin resolves the unpacked package root and invokes
-`scripts/install-spec-lifecycle-manager-package.sh --source <package-root>`.
-Local marketplace install remains supported for checkout-based development.
-Docker/GHCR image distribution is not the supported package path.
+The npm bin resolves the unpacked package root and calls
+`packaging/spec-lifecycle-manager/installer.mjs` in-process (no shell, no
+spawned `.sh`) with `--source <package-root>`. A `prepack` step strips any
+Python bytecode caches so the tarball is clean. Local marketplace install
+remains supported for checkout-based development. Docker/GHCR image distribution
+is not the supported package path.
 
 ## Claude Code Plugin
 
@@ -167,12 +219,16 @@ with no flag required. Use `claude plugin list` to confirm it is installed and
 enabled, and `claude plugin uninstall spec-lifecycle-manager@ai-spec-lifecycle`
 to remove it.
 
-The Claude plugin wrapper starts the MCP server from its own plugin root,
-using `${CLAUDE_PLUGIN_ROOT}` so the path resolves correctly regardless of the
-caller's working directory or install location:
+The Claude plugin wrapper starts the MCP server from its own plugin root in exec
+form (`command` + `args`), using `${CLAUDE_PLUGIN_ROOT}` so the path resolves
+correctly regardless of the caller's working directory or install location. The
+shipped default `command` is `python`; the installer pins the host-resolved
+interpreter (e.g. `py` with arg `-3` on Windows, `python3` on macOS/Linux):
 
-```text
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py"
+```jsonc
+// shipped default; installer pins the resolved interpreter
+{ "command": "python",
+  "args": ["${CLAUDE_PLUGIN_ROOT}/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py"] }
 ```
 
 After changing the plugin wrapper, skill, MCP config, or hooks, run
@@ -187,10 +243,11 @@ Spec lifecycle hooks are advisory-only. The bundled hook file is:
 plugins/spec-lifecycle-manager/hooks/hooks.json
 ```
 
-The hook runs:
+The Codex hook runs as a shell-form command string (the resolved interpreter is
+pinned in place of the `python` default):
 
 ```text
-python3 "${PLUGIN_ROOT}/skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py"
+python "${PLUGIN_ROOT}/skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py"
 ```
 
 Plugin-bundled hooks follow Codex's plugin hook trust flow. They should stay
@@ -200,10 +257,12 @@ that defines event source, payload, command, timeout, severity profile,
 false-positive handling, rollback path, and validation evidence.
 
 The Claude Code wrapper uses the same advisory hook script from its nested
-plugin root:
+plugin root, but in **exec form** (`command` + `args`) so it is spawned without
+a shell on every OS:
 
-```text
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py"
+```jsonc
+{ "command": "python",
+  "args": ["${CLAUDE_PLUGIN_ROOT}/skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py"] }
 ```
 
 ## Validation Checklist

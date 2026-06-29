@@ -31,9 +31,31 @@ unavailable — a recorded manual run with the gap noted.
 
 ## Evidence Log
 
-- Pending. Record per-OS CI run URLs or manual-run transcripts here as tasks
-  complete. Each entry: OS, Python version, interpreter resolved, command,
-  outcome, link.
+Each entry: OS, Python, interpreter resolved, command/outcome, link.
+
+- **Linux (local), Python 3.12.4, interpreter `python3`.** Full suite green:
+  `npm run validate` → 147 Python tests + 17 Node tests, package-contract pass,
+  `npm pack --dry-run`. Cross-platform smoke (`smoke_cross_platform.mjs`):
+  SMOKE PASS — shell-free install, MCP `initialize` handshake (protocolVersion
+  2025-06-18, serverInfo `spec-lifecycle-manager`), PostToolUse hook with a
+  Claude-shaped payload (`tool_name:"Write"`) exit 0.
+- **Installer oracle parity (Linux).** `installer.mjs` proven byte-identical to
+  the legacy `.sh` before interpreter-pinning: dry-run output, real-install
+  `diff -r` of both copied trees, and the `config.toml` / `hooks.json` /
+  `marketplace.json` edit paths.
+- **Interpreter resolution (P2).** `resolve-python.test.mjs` 11/11: win32
+  `py -3`→`python`→`python3`, POSIX `python3`→`python`, `SPEC_LIFECYCLE_PYTHON`
+  honored verbatim, P4 actionable throw when none resolve.
+- **Pinning (R2/R3).** `installer.test.mjs` with `SPEC_LIFECYCLE_PYTHON="py -3"`:
+  installed Codex/Claude `.mcp.json` → `command:"py", args:["-3", …server.py]`;
+  Claude hook exec form `py`/`["-3", …hook.py]`; Codex hook shell-string
+  `py -3 "${PLUGIN_ROOT}/…hook.py"`.
+- **Fail-loud (P4).** Installer with no Python on PATH and no override → exits 1
+  with the actionable "Python 3.9 or newer is required …" message.
+- **Windows / macOS — pending first CI run.** `.github/workflows/cross-platform.yml`
+  runs the same gates on `windows-latest` and `macos-latest` (Python 3.9 & 3.12)
+  on push; record those run URLs here when available. This is the open
+  verification gap (see Residual Risks).
 
 ## Residual Risks
 
