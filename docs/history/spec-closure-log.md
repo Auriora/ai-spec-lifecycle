@@ -19,7 +19,7 @@ requires visible archived docs.
 - **Spec:** `docs/specs/028-cross-platform-packaging/`
 - **Title:** Cross-platform packaging
 - **Final spec commit:** `1ca961d`
-- **Closure cleanup commit:** pending
+- **Closure cleanup commit:** `42a79c9`
 - **Closure action:** removed
 - **Closed by:** platform
 - **Durable docs updated:**
