@@ -220,6 +220,24 @@ claude plugin marketplace add ./package
 claude plugin install spec-lifecycle-manager@ai-spec-lifecycle
 ```
 
+### Version-pinned remote marketplace (add by URL)
+
+`packaging/spec-lifecycle-manager/marketplace-pinned.json` is a standalone,
+URL-hostable marketplace file. Its plugin `source` is a `git-subdir` pinned to a
+release tag, so it resolves even when Claude downloads only the JSON (a relative
+`source` would not). Users install a pinned version without cloning or
+downloading anything manually:
+
+```bash
+claude plugin marketplace add https://raw.githubusercontent.com/Auriora/ai-spec-lifecycle/main/packaging/spec-lifecycle-manager/marketplace-pinned.json
+claude plugin install spec-lifecycle-manager@ai-spec-lifecycle
+```
+
+Note: a marketplace plugin `source` cannot point at a GitHub release `.tgz`
+asset directly — the supported source types are local path, `github`, git
+`url`, `git-subdir`, and `npm`. This file uses `git-subdir` against the release
+tag; bump its `ref` (and the `version`) each release.
+
 The git-based form uses the same relative `source` resolution and cache-copy
 behavior as the local-path form above (verified end-to-end); it was not
 re-verified against the live GitHub repository in this pass.

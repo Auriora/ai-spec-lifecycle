@@ -1,20 +1,25 @@
 {
   "name": "ai-spec-lifecycle",
-  "description": "Auriora spec lifecycle plugins for Claude Code.",
+  "description": "Auriora spec lifecycle plugins for Claude Code (version-pinned remote install). Host this file at a URL and add it with `claude plugin marketplace add <url>`; the git-subdir source resolves without cloning manually and pins to the release tag.",
   "owner": {
     "name": "Auriora"
   },
   "plugins": [
     {
       "name": "spec-lifecycle-manager",
-      "source": "./plugins/spec-lifecycle-manager/claude-plugin",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/Auriora/ai-spec-lifecycle.git",
+        "path": "plugins/spec-lifecycle-manager/claude-plugin",
+        "ref": "v0.2.0"
+      },
       "displayName": "Spec Lifecycle Manager",
       "description": "Lifecycle guidance and read-only MCP tools for AI-assisted implementation specs.",
       "version": "0.2.0",
       "author": {
         "name": "Auriora"
       },
-      "homepage": "https://github.com/Auriora/ai-spec-lifecycle/tree/main/plugins/spec-lifecycle-manager/claude-plugin",
+      "homepage": "https://github.com/Auriora/ai-spec-lifecycle/tree/v0.2.0/plugins/spec-lifecycle-manager/claude-plugin",
       "repository": "https://github.com/Auriora/ai-spec-lifecycle",
       "license": "MIT",
       "keywords": [
