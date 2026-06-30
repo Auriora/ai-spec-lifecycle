@@ -10,7 +10,7 @@
       "source": "./plugins/spec-lifecycle-manager/claude-plugin",
       "displayName": "Spec Lifecycle Manager",
       "description": "Lifecycle guidance and read-only MCP tools for AI-assisted implementation specs.",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "author": {
         "name": "Auriora"
       },

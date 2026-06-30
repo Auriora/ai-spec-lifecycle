@@ -1,7 +1,7 @@
 {
   "name": "spec-lifecycle-manager",
   "displayName": "Spec Lifecycle Manager",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Lifecycle guidance and read-only MCP tools for AI-assisted implementation specs.",
   "author": {
     "name": "Auriora"
