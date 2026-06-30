@@ -263,6 +263,53 @@ After changing the plugin wrapper, skill, MCP config, or hooks, run
 `claude plugin marketplace update ai-spec-lifecycle` (persistent install) or
 `/reload-plugins` (per-session `--plugin-dir` load) to pick up the change.
 
+### Windows quick-start
+
+A self-contained walkthrough for installing the Claude plugin on Windows.
+
+**Prerequisites**
+
+1. **Claude Code** installed (the `claude` command works in your terminal).
+2. **Python 3.10+ with `python` on PATH.** Install from
+   [python.org](https://www.python.org/downloads/) and check **"Add python.exe
+   to PATH"** during setup, then confirm in a *new* terminal:
+
+   ```powershell
+   python --version
+   ```
+
+   It must print `3.10` or higher. The zero-installer marketplace path uses the
+   shipped static `command: python`, so a working `python` (not just the `py`
+   launcher) must resolve. If `python` opens the Microsoft Store, disable
+   **Settings → Apps → App execution aliases → python.exe** or reinstall Python
+   with the PATH option. (Node.js is not required for the Claude path — only for
+   the npm/Codex installer.)
+
+**Install** (one command each, no manual download):
+
+```powershell
+claude plugin marketplace add Auriora/ai-spec-lifecycle
+claude plugin install spec-lifecycle-manager@ai-spec-lifecycle
+```
+
+To pin to a specific release, append the tag: `Auriora/ai-spec-lifecycle@v0.2.1`.
+For an offline install, download the release tarball, `tar -xzf` it, and
+`claude plugin marketplace add .\package` instead of the first line.
+
+**Confirm and use**
+
+```powershell
+claude plugin list
+```
+
+`spec-lifecycle-manager` should appear. Start `claude` in any project; the
+plugin loads automatically, exposing the spec-lifecycle MCP tools and the
+advisory PostToolUse hook. If the tools do not appear, it is almost always that
+`python` is not a working Python 3.10+ on PATH — re-check `python --version` in a
+fresh terminal.
+
+Uninstall with `claude plugin uninstall spec-lifecycle-manager@ai-spec-lifecycle`.
+
 ## Hook Policy
 
 Spec lifecycle hooks are advisory-only. The bundled hook file is:
