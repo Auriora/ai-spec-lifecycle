@@ -19,7 +19,7 @@ requires visible archived docs.
 - **Spec:** `docs/specs/027-spec-local-canonical-context/`
 - **Title:** Spec-local canonical context
 - **Final spec commit:** `93766d1`
-- **Closure cleanup commit:** `0000000`
+- **Closure cleanup commit:** `8f77bff`
 - **Closure action:** removed
 - **Closed by:** platform
 - **Durable docs updated:**
