@@ -14,6 +14,42 @@ requires visible archived docs.
 
 ## Entries
 
+### 2026-07-02 - 027-spec-local-canonical-context
+
+- **Spec:** `docs/specs/027-spec-local-canonical-context/`
+- **Title:** Spec-local canonical context
+- **Final spec commit:** `93766d1`
+- **Closure cleanup commit:** `0000000`
+- **Closure action:** removed
+- **Closed by:** platform
+- **Durable docs updated:**
+  - `docs/design/spec-lifecycle-management.md`
+  - `docs/design/coding-agent-operating-model.md`
+  - `docs/reference/kiro-compatibility-review.md`
+  - `docs/reference/spec-lifecycle-runtime.md`
+  - `skills/spec-lifecycle-manager/SKILL.md`
+  - `skills/spec-lifecycle-manager/prompts/`
+  - `skills/spec-lifecycle-manager/references/migration-guide.md`
+  - `skills/spec-lifecycle-manager/references/spec-package/README.md`
+  - `skills/spec-lifecycle-manager/references/spec-package/canonical-context.md`
+  - `skills/spec-lifecycle-manager/scripts/spec_runtime.py`
+  - `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/`
+  - `plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/`
+  - `tests/runtime/test_spec_runtime.py`
+- **Verification summary:** Full unit suite passed with 151 tests. Spec 027
+  lint had zero diagnostics; active spec scan reported four active specs, all
+  pass; prompt validation had zero diagnostics; archive-index validation had
+  zero diagnostics; package-contract passed; promotion-plan had no missing
+  targets; task-state audit passed; evidence-quality reported all 14 records
+  concrete; closure-risk review reported low risk with no findings;
+  closure-check reported ready with no blockers; `git diff --check` passed.
+- **Residual risks:** Already-running Codex or Claude sessions may need plugin
+  reinstall/reload to use the refreshed skill, MCP prompt, runtime, and hook
+  guidance. Installed-cache sync guard may still report expected
+  installer-normalized config differences (`python` to `python3`, `30.0` to
+  `30`) in MCP and hook metadata.
+- **Follow-up:** none
+
 ### 2026-06-29 - 028-cross-platform-packaging
 
 - **Spec:** `docs/specs/028-cross-platform-packaging/`
