@@ -19,6 +19,12 @@ adds task-state markers, validation semantics, closure checks, artifact rules,
 or durable-document integration requirements, update this guide in the same
 release slice so old packages can be migrated consistently.
 
+Current task markers are `[ ]` pending, `[~]` in progress, `[/]` partial,
+`[>]` follow-up or routed, `[-]` no-op or deferred, `[?]` review or decision
+needed, `[!]` attention needed, and `[x]` complete. Legacy `[Y]`, `[*]`, and
+`[e]` remain readable during migration as partial or attention states, but do
+not use them in new task updates.
+
 ## Migration Decision Gate
 
 When an active package uses the old format, choose one path before
@@ -63,6 +69,24 @@ required even if package migration is not performed. Repository spec-package
 templates remain authoritative unless the user explicitly asks to revise them.
 Durable documentation templates under `docs/templates/` do not by themselves
 override this skill's spec-package fallback templates.
+
+For resumed specs with broad durable-doc impact, imported or adapted durable
+sources, stale-doc risk, or conflicting older docs, also make a canonical
+context decision:
+
+```markdown
+Canonical Context Decision:
+- Needed: yes/no
+- Shape: separate canonical-context.md | embedded sections | not needed
+- Reason: ...
+- Imported or proposed sources: source path -> target spec-local path -> import mode -> canonical scope -> promotion target
+- Always-canonical external sources: ...
+- Non-canonical background sources: ...
+```
+
+Do not force every old package to add `canonical-context.md`. Add it, or embed
+equivalent sections, only when it reduces stale-doc ambiguity or records
+imported durable sources that agents need during implementation.
 
 ## Template Authority And Selective Template Migration
 

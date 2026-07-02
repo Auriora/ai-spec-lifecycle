@@ -108,6 +108,15 @@ system, current workflow, and accepted operating decisions. When a spec
 stabilizes behavior that should outlive implementation, promote that behavior
 into durable docs before closure.
 
+For broad or durable-doc-impacting implementation work, agents should use the
+active spec's declared canonical context as the first working-context surface.
+That context may import, adapt, supersede, or classify durable docs for the
+current slice. It narrows implementation context, but it does not override
+system, developer, or user instructions, `AGENTS.md`, governance, policy,
+security, generated/source-code contracts, tests, or live evidence. Conflicting
+unlisted durable docs should be treated as background or drift evidence until
+reconciled.
+
 ## Dogfood Decision
 
 Recent lifecycle work validated this model across:

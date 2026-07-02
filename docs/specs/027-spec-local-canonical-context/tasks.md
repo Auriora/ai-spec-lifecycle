@@ -29,48 +29,64 @@ T007 + T008 -> T009
 **Purpose**: Land the authority model before templates or runtime checks encode
 it.
 
-- [ ] T001 Resolve canonical context artifact shape.
+- [x] T001 Resolve canonical context artifact shape.
   - Depends on: none
   - Requirement: R1, R2, R3, R6
   - Files: `docs/specs/027-spec-local-canonical-context/design.md`,
     `docs/specs/027-spec-local-canonical-context/traceability.md`
   - Acceptance: D001 and D002 are resolved or explicitly deferred with owner,
     blocking status, and artifact destination.
-  - Evidence mode: planner
-  - Evidence: Pending.
+  - Evidence mode: validation
+  - Evidence: 2026-07-02: D001 resolved to optional separate
+    `canonical-context.md` plus embedded-section allowance; D002 resolved to
+    authoring/readiness warnings and closure blocker for unresolved required
+    canonical promotion. Updated `design.md`, `change-impact.md`,
+    `traceability.md`, and `canonical-context.md`.
 
-- [ ] T002 Update durable lifecycle and operating-model docs.
+- [x] T002 Update durable lifecycle and operating-model docs.
   - Depends on: T001
   - Requirement: R1, R2, R4, R5
   - Files: `docs/design/spec-lifecycle-management.md`,
     `docs/design/coding-agent-operating-model.md`
   - Acceptance: Durable docs define spec-local canonical context, authority
     exceptions, stale-doc handling, and closure promotion discipline.
-  - Evidence: Pending.
+  - Evidence: 2026-07-02: Updated
+    `docs/design/spec-lifecycle-management.md`,
+    `docs/design/coding-agent-operating-model.md`, and the Kiro compatibility
+    reference; validation passed with full unittest suite, spec lint, scan,
+    prompts, package-contract, and `git diff --check`.
 
-- [ ] T003 Update skill guidance for active implementation.
+- [x] T003 Update skill guidance for active implementation.
   - Depends on: T002
   - Requirement: R1, R2, R3, R4, R5
   - Files: `skills/spec-lifecycle-manager/SKILL.md`
   - Acceptance: Skill guidance tells agents how to discover, read, apply,
     reconcile, promote, and close spec-local canonical context.
-  - Evidence: Pending.
+  - Evidence: 2026-07-02: Updated `skills/spec-lifecycle-manager/SKILL.md`
+    with canonical-context artifact, import-plan, implementation, and closure
+    guidance; mirrored to both plugin bundles; validation passed with prompts,
+    package-contract, full unittest suite, scan, spec lint, and
+    `git diff --check`.
 
 ## Phase 2: Templates And Runtime Support
 
 **Purpose**: Make the model easy to use in new specs and visible in lifecycle
 checks.
 
-- [ ] T004 Add fallback template support.
+- [x] T004 Add fallback template support.
   - Depends on: T003
   - Requirement: R1, R2, R3, R6
   - Files: `skills/spec-lifecycle-manager/references/spec-package/`
   - Acceptance: Fallback templates include canonical context guidance with
     always-canonical external sources, spec-canonical working sources, imported
     sources, non-canonical background sources, and promotion map examples.
-  - Evidence: Pending.
+  - Evidence: 2026-07-02: Added
+    `skills/spec-lifecycle-manager/references/spec-package/canonical-context.md`
+    and updated the fallback README with artifact guidance and current task
+    marker semantics; mirrored to plugin bundles; spec lint and full unittest
+    suite passed.
 
-- [ ] T005 Update spec creation and resume prompts.
+- [x] T005 Update spec creation and resume prompts.
   - Depends on: T003
   - Requirement: R1, R3, R4, R6, R7
   - Files: `skills/spec-lifecycle-manager/prompts/`,
@@ -78,9 +94,12 @@ checks.
   - Acceptance: New-spec and resumed-spec flows proactively create a
     canonical-context artifact or return an import plan with target spec-local
     paths, import mode, canonical scope, and promotion target.
-  - Evidence: Pending.
+  - Evidence: 2026-07-02: Updated `choose-next-task`, `developer-start`,
+    `lifecycle-triage`, `reconcile-spec`, and `task-context` prompt definitions
+    for canonical-context/import-plan behavior; `spec_runtime.py prompts .`
+    passed with zero diagnostics.
 
-- [ ] T006 Add advisory runtime diagnostics and import-plan support.
+- [x] T006 Add advisory runtime diagnostics and import-plan support.
   - Depends on: T003
   - Requirement: R1, R3, R4, R5, R6, R7
   - Files: `skills/spec-lifecycle-manager/scripts/spec_runtime.py`,
@@ -89,13 +108,17 @@ checks.
     missing/incomplete canonical context only when durable-doc impact or
     stale-doc risk warrants it, and creation/resume support can produce an
     explicit canonical-context import plan.
-  - Evidence: Pending.
+  - Evidence: 2026-07-02: Added canonical-context artifact inventory, lint,
+    readiness, agent-readiness, promotion-plan, closure-check, and import-plan
+    behavior in `spec_runtime.py`, with focused runtime tests covering missing
+    context warnings, accepted metadata, promotion targets, and closure
+    blockers. Full unittest suite passed: 150 tests.
 
 ## Phase 3: Validation, Documentation, And Closure Readiness
 
 **Purpose**: Verify the behavior and prepare durable promotion before closure.
 
-- [ ] T007 Update runtime reference, migration guidance, and traceability.
+- [x] T007 Update runtime reference, migration guidance, and traceability.
   - Depends on: T004, T006
   - Requirement: R4, R5, R6, R7
   - Files: `docs/reference/spec-lifecycle-runtime.md`,
@@ -104,18 +127,30 @@ checks.
     `docs/specs/027-spec-local-canonical-context/verification.md`
   - Acceptance: Durable docs and migration guidance describe any new artifact
     or diagnostic behavior, and traceability remains current.
-  - Evidence: Pending.
+  - Evidence: 2026-07-02: Updated
+    `docs/reference/spec-lifecycle-runtime.md`,
+    `skills/spec-lifecycle-manager/references/migration-guide.md`,
+    `traceability.md`, and `verification.md` for canonical-context behavior;
+    spec lint and scan passed with zero diagnostics/warnings.
 
-- [ ] T008 Dogfood new-spec canonical context creation.
+- [x] T008 Dogfood new-spec canonical context creation.
   - Depends on: T005, T006
   - Requirement: R7
   - Files: `docs/specs/027-spec-local-canonical-context/verification.md`
   - Acceptance: A dogfood run or deterministic fixture shows that a new spec
     with durable-doc context gets a canonical-context artifact or import plan
     without a second user prompt.
-  - Evidence: Pending.
+  - Evidence mode: validation
+  - Evidence: 2026-07-02: Added deterministic dogfood coverage in
+    `tests/runtime/test_spec_runtime.py`:
+    `test_stage_readiness_returns_canonical_context_import_plan_for_stale_doc_risk`.
+    The fixture injects stale durable-doc risk into a new-style spec without
+    `canonical-context.md`; `stage_readiness` returns
+    `CANONICAL_CONTEXT_MISSING` plus an import plan targeting
+    `canonical-context.md` and source `docs/reference/current.md`. Focused
+    canonical runtime tests passed: 4 tests.
 
-- [ ] T009 Checkpoint - validate and prepare promotion.
+- [x] T009 Checkpoint - validate and prepare promotion.
   - Depends on: T007, T008
   - Requirement: R1, R2, R3, R4, R5, R6, R7
   - Files: `docs/specs/027-spec-local-canonical-context/verification.md`,
@@ -127,7 +162,13 @@ checks.
   - Validation: Run full unit tests, scan, package lint, prompt validation if
     prompts changed, archive-index when preparing closure, and `git diff
     --check`.
-  - Evidence: Pending.
+  - Evidence mode: validation
+  - Evidence: 2026-07-02: Required checkpoint validation passed. Full unittest
+    suite passed with 151 tests; Spec 027 lint had zero diagnostics; scan
+    reported four active specs, all pass; prompts had zero diagnostics;
+    archive-index had zero diagnostics; package-contract passed; promotion-plan
+    had no missing targets; task-state-audit passed; closure-check reported
+    ready with no blockers; `git diff --check` passed.
 
 ## Execution Rules
 

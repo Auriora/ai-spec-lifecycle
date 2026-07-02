@@ -26,6 +26,7 @@
     "Use the spec-lifecycle-manager skill.",
     "Classify the request as trivial, small, spec-needed, review, or closure.",
     "Use repository governance, active spec state, durable docs, and risk level to justify the classification.",
+    "For spec-needed work with broad durable-doc impact, stale-doc risk, imported durable sources, or resumed-spec drift, require canonical-context.md or an explicit canonical-context import plan before implementation readiness.",
     "Route trivial and small work to proportionate validation; route behavior, cross-module, packaging, governance, or ambiguous work to an active or new spec."
   ],
   "return_format": [
@@ -34,6 +35,7 @@
     "active_spec_context",
     "recommended_workflow",
     "required_evidence",
+    "canonical_context_need",
     "decision_gate"
   ],
   "client_support_recovery": "If MCP tools are unavailable, inspect AGENTS.md, docs/backlog, docs/roadmap, and run spec_runtime.py scan before classifying."

@@ -160,6 +160,13 @@ acceptance-criteria coverage. Coverage gaps appear before implementation
 readiness so callers can repair traceability instead of discovering missing
 proof at closure.
 
+When a package declares broad durable-doc impact, stale-doc risk, imported
+sources, or canonical-context intent, lint and readiness surfaces also check for
+`canonical-context.md` or embedded `## Canonical Context` sections. Missing
+context is warning-level during authoring/readiness and may include an import
+plan derived from durable-source references. `canonical-context.md` is optional
+for small packages that do not need it.
+
 `active_spec_preflight`, `agent_readiness_packet`, and
 `no_active_spec_context` are deterministic workflow tools. They compose scan,
 next-task, traceability, durable-doc, closure-log, and archive-index context so
@@ -174,6 +181,13 @@ validation commands, and guardrails. `stage_readiness` combines that compact
 contract with staged artifact and coverage checks. A payload can be
 `ready_for_agent` while `ready_to_implement` is false when downstream review or
 coverage gaps still need lead-agent repair.
+
+When `canonical-context.md` exists, the readiness packet includes it in the
+review artifact set and adds a guardrail to read it before broad durable-doc
+scans. Always-canonical external authorities still outrank spec-local context:
+system/developer/user instructions, applicable `AGENTS.md`, governance, policy,
+security, generated contracts, source-code contracts, tests, and live/system
+evidence.
 
 Context-budget rules favor the smallest complete context: use `task_context`,
 `traceability_lookup`, or `agent_readiness_packet` for the selected task before
@@ -578,6 +592,32 @@ unless the task acceptance explicitly says that mode satisfies the task.
 `task-state-audit` reports broad tasks with `split_task_suggestions` when one
 checkbox spans multiple source families, evidence modes, implementation
 outcomes, validation surfaces, profiles, or cross-spec dependencies.
+
+## Canonical Context Diagnostics
+
+`canonical-context.md` is an optional spec artifact for working-context
+authority. The runtime reports advisory diagnostics when a package names stale
+or non-canonical docs, imported or adapted durable sources, supersession,
+durable source mapping, broad durable-doc impact, or canonical-context intent
+without providing `canonical-context.md` or embedded `## Canonical Context`
+sections.
+
+The canonical-context template uses these stable sections:
+
+- `Purpose`
+- `Authority Hierarchy`
+- `Always-Canonical External Sources`
+- `Spec-Canonical Working Sources`
+- `Imported Sources`
+- `Non-Canonical Background Sources`
+- `Promotion Map`
+
+Lint warns when imported canonical sources with `copied`, `adapted`,
+`summarized`, or `supersedes` status lack source path, canonical scope, or
+promotion target metadata. Closure check blocks when a promotion-map row is
+marked required before closure but has no durable destination, route, or discard
+rationale. `promotion-plan` treats canonical-context promotion-map destinations
+as candidate durable targets.
 
 | Hook | Purpose |
 | --- | --- |

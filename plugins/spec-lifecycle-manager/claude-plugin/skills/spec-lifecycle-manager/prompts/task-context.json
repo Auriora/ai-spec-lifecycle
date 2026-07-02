@@ -22,6 +22,7 @@
   ],
   "instructions": [
     "Use traceability as the first lookup point.",
+    "When canonical-context.md exists, include it in must-read context and treat spec-canonical working sources as the first implementation context while preserving always-canonical external authorities.",
     "Verify referenced requirements, acceptance criteria, design sections, verification expectations, durable targets, and open decisions against source artifacts.",
     "Report missing or stale matrix rows as gaps before implementation."
   ],
@@ -32,6 +33,7 @@
     "design_sections",
     "verification",
     "durable_targets",
+    "canonical_context",
     "open_decisions",
     "gaps"
   ],

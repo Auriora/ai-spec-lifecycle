@@ -18,7 +18,7 @@ targets, and open decisions for the spec-local canonical context work.
 
 | Task ID | Requirements | Acceptance Criteria | Design Sections | Change Impact | Verification | Durable Targets | Open Decisions |
 |---------|--------------|---------------------|-----------------|---------------|--------------|-----------------|----------------|
-| T001 | Requirement 1, Requirement 2, Requirement 3, Requirement 6 | R1 AC1-AC4, R2 AC1-AC4, R3 AC1-AC4, R6 AC1-AC4 | `design.md#data-models`, `design.md#open-questions` | `change-impact.md#open-questions` | `verification.md#quality-gates` | `skills/spec-lifecycle-manager/references/spec-package/` | D001, D002 |
+| T001 | Requirement 1, Requirement 2, Requirement 3, Requirement 6 | R1 AC1-AC4, R2 AC1-AC4, R3 AC1-AC4, R6 AC1-AC4 | `design.md#data-models`, `design.md#open-questions` | `change-impact.md#open-questions` | `verification.md#quality-gates` | `skills/spec-lifecycle-manager/references/spec-package/` | D001 resolved 2026-07-02; D002 resolved 2026-07-02 |
 | T002 | Requirement 1, Requirement 2, Requirement 4, Requirement 5 | R1 AC1-AC4, R2 AC1-AC4, R4 AC1-AC4, R5 AC1-AC4 | `design.md#system-architecture`, `design.md#components-and-changes` | `change-impact.md#proposed-changes` | `verification.md#validation-commands` | `docs/design/spec-lifecycle-management.md`, `docs/design/coding-agent-operating-model.md` | D001 |
 | T003 | Requirement 1, Requirement 2, Requirement 3, Requirement 4, Requirement 5 | R1 AC1-AC4, R2 AC1-AC4, R3 AC1-AC4, R4 AC1-AC4, R5 AC1-AC4 | `design.md#low-level-design`, `design.md#security-trust-and-access` | `change-impact.md#proposed-changes` | `verification.md#validation-commands` | `skills/spec-lifecycle-manager/SKILL.md` | D001, D002 |
 | T004 | Requirement 1, Requirement 2, Requirement 3, Requirement 6 | R1 AC1-AC4, R2 AC1-AC2, R3 AC1-AC4, R6 AC1-AC2, R6 AC4 | `design.md#data-models`, `design.md#migration-and-compatibility` | `change-impact.md#promotion-targets` | `verification.md#validation-commands` | `skills/spec-lifecycle-manager/references/spec-package/` | D001 |
@@ -64,13 +64,14 @@ targets, and open decisions for the spec-local canonical context work.
 
 | Decision ID | Blocks | Affected Requirements | Affected Tasks | Resolution Needed |
 |-------------|--------|-----------------------|----------------|-------------------|
-| D001 | Template and creation-flow implementation | Requirement 1, Requirement 3, Requirement 6, Requirement 7 | T001, T004, T005, T007 | Decide separate optional `canonical-context.md` template vs embedded-only guidance. |
-| D002 | Runtime severity and closure behavior | Requirement 5, Requirement 6 | T001, T006, T007 | Decide warning vs closure blocker timing for incomplete canonical promotion metadata. |
+| D001 | Template and creation-flow implementation | Requirement 1, Requirement 3, Requirement 6, Requirement 7 | T001, T004, T005, T007 | Resolved 2026-07-02: add optional `canonical-context.md` template and allow embedded sections for small packages. |
+| D002 | Runtime severity and closure behavior | Requirement 5, Requirement 6 | T001, T006, T007 | Resolved 2026-07-02: warn during authoring/readiness and block closure for accepted required canonical content without destination, route, or discard rationale. |
 
 ## Maintenance Notes
 
 - Update this matrix when task IDs, target files, diagnostic scope, or template
   shape changes.
-- Treat unresolved D001/D002 as readiness gaps before implementing T004-T007.
+- D001 and D002 were resolved before implementing T004-T007; keep future
+  changes aligned with those decisions.
 - Keep authority hierarchy changes aligned with `AGENTS.md` and governance
   instructions.

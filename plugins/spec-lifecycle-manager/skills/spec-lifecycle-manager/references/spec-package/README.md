@@ -55,6 +55,9 @@ Use the artifacts as a progressive chain:
    requirements, acceptance criteria, design sections, change impact,
    verification, durable targets, and open decisions. Use it for larger specs
    or when agents need a task-ID lookup surface before implementation.
+10. `canonical-context.md`: optional working-context map for specs that import
+    or adapt durable docs, have broad durable-doc impact, name stale-doc risk,
+    or resume work where older docs could be mistaken for current authority.
 
 Small, low-risk work can use a smaller package. Create only the files that help
 coordinate implementation, validation, or future promotion.
@@ -72,6 +75,9 @@ questions somewhere in the core files:
 - Which decisions are open, who owns them, and whether they block
   implementation, verification, or closure?
 - What content must be promoted to durable docs before the spec is closed?
+- Which sources are spec-canonical for this slice, which external sources
+  remain always-canonical, and which stale or historical docs are only
+  background?
 
 Create separate artifacts only when they reduce ambiguity or make large work
 easier to resume. Do not create them only to satisfy ceremony.
@@ -135,6 +141,7 @@ intent as current implementation guidance.
 - `quickstart.md`
 - `open-decisions.md`
 - `traceability.md`
+- `canonical-context.md`
 
 ## Acceptance Criteria Format
 
@@ -153,15 +160,21 @@ Use checkboxes as the visible task status:
 - `- [ ] T001 ...`: pending or not started.
 - `- [~] T001 ...`: in progress. Mark the selected task this way before
   starting work.
-- `- [Y] T001 ...`: partial. Some work is complete, but acceptance criteria are
+- `- [/] T001 ...`: partial. Some work is complete, but acceptance criteria are
   not fully met.
-- `- [*] T001 ...`: on hold or stuck. A developer or agent must resolve the
-  blocker before normal execution resumes.
-- `- [e] T001 ...`: error. Completion failed because of a problem that needs
-  intervention.
+- `- [>] T001 ...`: follow-up or routed. Work moved to another task, spec,
+  backlog item, issue, or owner; record `Destination:`.
+- `- [-] T001 ...`: no-op or deferred. Work is intentionally unnecessary, not
+  applicable, superseded, raw-only, or deferred from this spec.
+- `- [?] T001 ...`: review or decision needed. Record `Decision owner:` when
+  known.
+- `- [!] T001 ...`: attention needed. A blocker, error, or intervention needs
+  diagnosis; record the diagnostic state and next step.
 - `- [x] T001 ...`: complete and verified.
-- `- [ ] T001 ...` with `Status: skipped - reason`: intentionally deferred,
-  superseded, or out of scope.
+
+Legacy markers remain readable during migration: `[Y]` maps to `partial`;
+`[*]` and `[e]` map to `attention`. Do not use legacy markers in new package
+templates or new task updates.
 
 Use nested subtasks for the natural Kiro task shape. Add `Depends on:`, `Files:`,
 `Acceptance:`, and `Evidence:` bullets under parent tasks when they help an
@@ -170,9 +183,9 @@ agent choose the next safe slice or verify completion.
 Check off subtasks as work progresses, but check off the parent task only after
 its acceptance criteria are met and evidence is recorded. Evidence can be a
 command, test result, review note, screenshot, log, commit, or manual
-verification note. Partial, on-hold, error, and skipped states should include
-the remaining work, blocker, error, or deferral reason in `Evidence:` or a
-`Status:` note.
+verification note. Partial, follow-up, no-op, review-needed, and attention
+states should include the remaining work, destination, decision owner, blocker,
+error, or deferral reason in `Evidence:` or a `Status:` note.
 
 Tasks are an execution index, not a standalone specification. Before
 implementing a task, agents should review the relevant `requirements.md`,

@@ -84,9 +84,9 @@ must be promoted, routed, or discarded before closure.
 - `docs/design/coding-agent-operating-model.md`:
   Add a concise agent operating rule for active-spec working context.
 - `skills/spec-lifecycle-manager/references/spec-package/`:
-  Add `canonical-context.md` or add a canonical-context section to package
-  templates. Prefer a separate optional artifact because imported source lists
-  can become substantial.
+  Add an optional `canonical-context.md` fallback template and document that
+  small packages may embed equivalent sections when a separate artifact would
+  add ceremony.
 - `skills/spec-lifecycle-manager/prompts/`:
   Update spec-creation, developer-start, lifecycle-triage, reconcile, or
   task-context prompts where they shape new/resumed package behavior so agents
@@ -282,11 +282,14 @@ set.
 
 - D001: Should the fallback template add a separate `canonical-context.md`, or
   should small packages embed canonical context in `requirements.md` and
-  `change-impact.md`? Proposed answer: add an optional separate template and
-  allow embedded sections for small packages.
+  `change-impact.md`? Resolved 2026-07-02: add an optional separate
+  `canonical-context.md` fallback template and allow embedded sections for
+  small packages.
 - D002: Should missing promotion targets for canonical imported sources be a
-  lint warning or closure blocker? Proposed answer: warning during authoring,
-  blocker during closure when content is accepted and still canonical.
+  lint warning or closure blocker? Resolved 2026-07-02: warning during
+  authoring/readiness; closure blocker when accepted canonical content is still
+  required before closure and lacks a durable destination, route, or discard
+  rationale.
 
 ## Related Artifacts
 

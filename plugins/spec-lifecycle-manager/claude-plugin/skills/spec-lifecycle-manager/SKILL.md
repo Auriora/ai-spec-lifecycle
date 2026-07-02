@@ -133,6 +133,14 @@ Use spec artifacts as a progressive chain, not interchangeable notes:
   requirements, acceptance criteria, design sections, change impact,
   verification, durable targets, and open decisions. Use it when the package is
   large enough that task text may not carry enough context by itself.
+- `canonical-context.md`: optional working-context map that identifies
+  always-canonical external sources, spec-canonical working sources, imported
+  durable sources, non-canonical background sources, and promotion routes. Use
+  it for broad or durable-doc-impacting specs, imported or adapted durable
+  sources, stale-doc risk, or resumed specs where older docs may otherwise be
+  mistaken for implementation authority. Small specs may embed equivalent
+  `## Canonical Context` sections in core artifacts when a separate file would
+  add ceremony.
 
 Not every task needs every artifact. For small, low-risk work, create only the
 files that add clear value, but do not drop the underlying intent. Embed the
@@ -140,6 +148,17 @@ needed durable-source baseline, durable-document impact, verification
 expectations, traceability links, open decisions, and promotion targets in
 `requirements.md`, `design.md`, or `tasks.md` when separate files would only
 duplicate content.
+
+Spec-local canonical context narrows implementation context for an active
+slice, but it never overrides always-canonical external authorities: system,
+developer, and user instructions, applicable `AGENTS.md`, governance, policy,
+security, privacy or compliance rules, generated contracts, source-code
+contracts, tests, and live/system evidence. When a spec imports, adapts, or
+supersedes durable docs, record source path, source revision or date when
+available, import mode, canonical scope, and promotion target. Durable or
+historical docs not listed as canonical, imported, or explicitly referenced by
+the active spec are background or drift evidence when they conflict with the
+declared working context.
 
 Use staged artifact progression for new or resumed specs:
 
@@ -393,6 +412,14 @@ docs, or updating templates:
 
 Do not force migration for archived specs, mid-task collaboration, or small changes where migration would create more risk than value. Do not migrate repository templates wholesale just because this skill prefers a richer package shape. Template migration must be selective: identify the specific document classes affected, the existing docs that would be impacted, required field additions, compatibility risks, and whether old packages should remain untouched.
 
+When broad durable-doc impact, stale-doc risk, imported durable sources, or
+resumed-spec drift are present and no canonical context exists, create
+`canonical-context.md`, embed `## Canonical Context` sections in the active
+package, or return an explicit import plan. The import plan should name the
+source path, target spec-local path, import mode, canonical scope, and promotion
+target. If the package uses repository templates, follow their documented
+canonical-context location.
+
 Archived, closed, or superseded specs are historical delivery records. Default
 runtime scans keep them visible in inventory but exclude them from active
 authoring lint health. Use explicit lint or scan audit mode only when
@@ -432,6 +459,14 @@ selected task ID, then verify the referenced requirements, design sections,
 verification expectations, durable targets, and open decisions against the
 source artifacts. If the matrix is missing, stale, or incomplete, reconcile it
 from the full package instead of proceeding from task text alone.
+
+When `canonical-context.md` exists, read it before broader durable-doc scans for
+the selected slice. Treat its spec-canonical working sources and imported
+sources as the first working context, while preserving always-canonical external
+authorities. If a durable doc conflicts with declared canonical context and is
+not listed as always-canonical, imported, or explicitly referenced, classify the
+conflict as drift and reconcile before using that doc as implementation
+authority.
 
 ### Runtime Access Order
 
@@ -757,21 +792,23 @@ Before closing, perform a final spec cleanup check:
    if present.
 2. Classify each lasting element as promoted, explicitly deferred, discarded, or
    retained as history.
-3. Confirm durable destinations exist and are linked from the relevant indexes.
-4. Confirm active docs no longer point readers to the spec as the source of
+3. Confirm any spec-local canonical context has been promoted, routed to
+   backlog/roadmap/follow-up spec, or discarded with rationale.
+4. Confirm durable destinations exist and are linked from the relevant indexes.
+5. Confirm active docs no longer point readers to the spec as the source of
    current behavior.
-5. Decide the package disposition according to the target repository's document
+6. Decide the package disposition according to the target repository's document
    lifecycle. Prefer `removed` after durable promotion; use `archived` or
    `retained-as-history` only when explicit repository policy requires visible
    historical spec packages.
-6. Update active spec indexes, sequencing docs, task boards, or README entries
+7. Update active spec indexes, sequencing docs, task boards, or README entries
    so the package no longer appears active.
-7. Require a final spec commit hash that contains the complete final package
+8. Require a final spec commit hash that contains the complete final package
    before removal. Do not remove the package when that commit is missing.
-8. Add or update the repository's closure record with spec ID, title, closed
+9. Add or update the repository's closure record with spec ID, title, closed
    date, final spec commit, closure action, durable destinations,
    verification summary, residual risks, and follow-up work.
-9. Record closure evidence in `verification.md`, the closure log, or the
+10. Record closure evidence in `verification.md`, the closure log, or the
    repository's chosen closure record.
 
 Use these closure actions consistently:

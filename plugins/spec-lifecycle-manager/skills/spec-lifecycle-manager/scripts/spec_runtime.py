@@ -34,6 +34,7 @@ from spec_agent_schemas import (
 CORE_ARTIFACTS = ["requirements.md", "design.md", "tasks.md"]
 OPTIONAL_ARTIFACTS = [
     "change-impact.md",
+    "canonical-context.md",
     "verification.md",
     "research.md",
     "quickstart.md",
@@ -45,6 +46,7 @@ AUTHORING_ARTIFACT_ORDER = [
     "research.md",
     "requirements.md",
     "design.md",
+    "canonical-context.md",
     "tasks.md",
     "traceability.md",
     "verification.md",
@@ -889,7 +891,7 @@ def lint_frontmatter(path: Path, text: str, artifact_type: str) -> list[dict[str
     diagnostics: list[dict[str, Any]] = []
     data = parse_frontmatter(text)
     required = ["title", "doc_type", "status", "owner", "last_reviewed"]
-    if artifact_type in {"requirements", "design", "tasks", "traceability", "verification", "change-impact"}:
+    if artifact_type in {"requirements", "design", "tasks", "traceability", "verification", "change-impact", "canonical-context"}:
         required.append("artifact_type")
     for key in required:
         if not data.get(key):
@@ -968,7 +970,147 @@ def lint_doc(path: Path, artifact_type: str | None = None) -> list[dict[str, Any
             ("Promotion Targets", "CHANGE_IMPACT_PROMOTION_TARGETS_MISSING"),
         ]:
             require_heading(title, code)
+    elif artifact == "canonical-context":
+        for title, code in [
+            ("Purpose", "CANONICAL_CONTEXT_PURPOSE_MISSING"),
+            ("Authority Hierarchy", "CANONICAL_CONTEXT_AUTHORITY_MISSING"),
+            ("Always-Canonical External Sources", "CANONICAL_CONTEXT_EXTERNAL_SOURCES_MISSING"),
+            ("Spec-Canonical Working Sources", "CANONICAL_CONTEXT_WORKING_SOURCES_MISSING"),
+            ("Imported Sources", "CANONICAL_CONTEXT_IMPORTED_SOURCES_MISSING"),
+            ("Non-Canonical Background Sources", "CANONICAL_CONTEXT_BACKGROUND_SOURCES_MISSING"),
+            ("Promotion Map", "CANONICAL_CONTEXT_PROMOTION_MAP_MISSING"),
+        ]:
+            require_heading(title, code)
     return apply_waivers(text, diagnostics)
+
+
+def canonical_context_texts(spec_path: Path) -> dict[str, str]:
+    texts: dict[str, str] = {}
+    for name in SPEC_ARTIFACTS:
+        path = spec_path / name
+        if path.exists():
+            texts[name] = read_text(path)
+    return texts
+
+
+def has_canonical_context(spec_path: Path) -> bool:
+    if (spec_path / "canonical-context.md").exists():
+        return True
+    for name in ["requirements.md", "design.md", "change-impact.md", "verification.md"]:
+        path = spec_path / name
+        if path.exists() and "## Canonical Context" in read_text(path):
+            return True
+    return False
+
+
+def canonical_context_risk_signals(spec_path: Path) -> list[str]:
+    texts = canonical_context_texts(spec_path)
+    combined = "\n".join(texts.values()).lower()
+    signals: list[str] = []
+    if re.search(r"\b(stale[- ]?doc|stale doc|legacy docs?|obsolete|outdated|non-canonical|background source)\b", combined):
+        signals.append("stale-doc-risk")
+    if re.search(r"\b(imported sources?|copied or adapted|copy or adapt|adapted durable|supersedes|source revision|promotion target)\b", combined):
+        signals.append("imported-source-risk")
+    if re.search(r"\b(broad durable|durable-doc-impacting)\b", combined):
+        signals.append("durable-doc-impact")
+    if "canonical context" in combined or "spec-local canonical" in combined:
+        signals.append("canonical-context-intent")
+    return list(dict.fromkeys(signals))
+
+
+def canonical_context_import_plan(spec_path: Path) -> list[dict[str, str]]:
+    plan: list[dict[str, str]] = []
+    for ref in durable_source_refs(spec_path / "requirements.md"):
+        path_ref = markdown_path_from_ref(ref) or strip_markdown_value(ref)
+        if not path_ref or path_ref.lower() == "tbd":
+            continue
+        plan.append(
+            {
+                "source_path": path_ref,
+                "target_spec_path": "canonical-context.md",
+                "import_mode": "summarized",
+                "canonical_scope": "candidate working context; confirm before implementation",
+                "promotion_target": path_ref,
+            }
+        )
+    return plan
+
+
+def canonical_context_promotion_rows(spec_path: Path) -> list[dict[str, str]]:
+    path = spec_path / "canonical-context.md"
+    if not path.exists():
+        return []
+    rows, _line_numbers = markdown_table_after_heading(path, "Promotion Map")
+    return [{key: strip_markdown_value(value) for key, value in row.items()} for row in rows]
+
+
+def canonical_context_closure_blockers(spec_path: Path) -> list[dict[str, Any]]:
+    blockers: list[dict[str, Any]] = []
+    for row in canonical_context_promotion_rows(spec_path):
+        required = row.get("Required before closure", "").strip().lower()
+        destination = row.get("Durable destination or route", "") or row.get("Durable destination", "")
+        content = row.get("Spec-local content", "canonical context")
+        if required not in {"yes", "true", "required"}:
+            continue
+        if destination.strip().lower() in {"", "tbd", "pending", "none", "n/a"}:
+            blockers.append(
+                {
+                    "code": "CANONICAL_CONTEXT_PROMOTION_UNRESOLVED",
+                    "message": f"Canonical context promotion is unresolved for {content}.",
+                    "path": str(spec_path / "canonical-context.md"),
+                }
+            )
+    return blockers
+
+
+def canonical_context_diagnostics(spec_path: Path) -> list[dict[str, Any]]:
+    diagnostics: list[dict[str, Any]] = []
+    signals = canonical_context_risk_signals(spec_path)
+    if signals and not has_canonical_context(spec_path):
+        diagnostics.append(
+            diagnostic(
+                "warn",
+                "CANONICAL_CONTEXT_MISSING",
+                spec_path,
+                "Spec declares durable-doc impact, stale-doc risk, imported sources, or canonical-context intent without canonical-context.md or embedded Canonical Context sections.",
+                lifecycle_gate="agent_ready",
+                artifact_type="canonical-context",
+            )
+        )
+        diagnostics[-1]["signals"] = signals
+        plan = canonical_context_import_plan(spec_path)
+        if plan:
+            diagnostics[-1]["import_plan"] = plan
+        return diagnostics
+
+    context_path = spec_path / "canonical-context.md"
+    if not context_path.exists():
+        return diagnostics
+
+    rows, line_numbers = markdown_table_after_heading(context_path, "Imported Sources")
+    canonical_statuses = {"copied", "adapted", "summarized", "supersedes"}
+    for row, line_number in zip(rows, line_numbers, strict=True):
+        status = strip_markdown_value(row.get("Status", "")).lower()
+        if status not in canonical_statuses:
+            continue
+        missing = [
+            field
+            for field in ["Source path", "Canonical scope", "Promotion target"]
+            if strip_markdown_value(row.get(field, "")).lower() in {"", "tbd", "none", "n/a", "pending"}
+        ]
+        if missing:
+            diagnostics.append(
+                diagnostic(
+                    "warn",
+                    "CANONICAL_CONTEXT_IMPORTED_SOURCE_METADATA_MISSING",
+                    context_path,
+                    f"Imported canonical source is missing metadata: {', '.join(missing)}.",
+                    line_number,
+                    "agent_ready",
+                    "canonical-context",
+                )
+            )
+    return diagnostics
 
 
 def apply_waivers(text: str, diagnostics: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -1043,6 +1185,7 @@ def lint_spec_package(spec_path: Path, include_summary: bool = True) -> list[dic
     for artifact in OPTIONAL_ARTIFACTS:
         if inventory[artifact] == "present":
             diagnostics.extend(lint_doc(spec_path / artifact, artifact.removesuffix(".md")))
+    diagnostics.extend(canonical_context_diagnostics(spec_path))
     if include_summary:
         return {
             "spec_path": str(spec_path.resolve()),
@@ -2334,7 +2477,7 @@ def stage_readiness(spec_path: Path) -> dict[str, Any]:
     }
     stage = spec_stage(scan_spec, next_payload)
     required_artifacts = ["requirements.md", "design.md", "tasks.md"]
-    recommended_artifacts = ["traceability.md", "verification.md"]
+    recommended_artifacts = ["canonical-context.md", "traceability.md", "verification.md"]
     blocking_gaps: list[dict[str, Any]] = []
     for artifact in required_artifacts:
         if inventory.get(artifact) != "present":
@@ -2462,6 +2605,17 @@ def stage_readiness(spec_path: Path) -> dict[str, Any]:
                 "severity": "warn",
                 "code": "TRACEABILITY_CONTEXT_MISSING",
                 "message": "task_context and traceability_lookup cannot provide bounded context without traceability.md.",
+            }
+        )
+    for item in canonical_context_diagnostics(spec):
+        context_gaps.append(
+            {
+                "severity": item["severity"],
+                "code": item["code"],
+                "message": item["message"],
+                "path": item["path"],
+                "import_plan": item.get("import_plan", []),
+                "signals": item.get("signals", []),
             }
         )
     ready_for_agent = bool(readiness) and readiness.get("status") == "ready" and not context_gaps
@@ -2795,6 +2949,8 @@ def agent_readiness_packet(spec_path: Path, task_id: str) -> dict[str, Any]:
             }
         )
     artifacts = artifact_inventory(spec)
+    canonical_diagnostics = canonical_context_diagnostics(spec)
+    gaps.extend(canonical_diagnostics)
     return {
         "spec_path": str(spec),
         "task_id": task_id,
@@ -2803,7 +2959,7 @@ def agent_readiness_packet(spec_path: Path, task_id: str) -> dict[str, Any]:
         "task": task_payload(task) if task else None,
         "traceability_context": context,
         "required_review": {
-            "artifacts": [name for name in ["requirements.md", "design.md", "tasks.md", "traceability.md", "verification.md", "change-impact.md", "open-decisions.md"] if artifacts.get(name) == "present"],
+            "artifacts": [name for name in ["requirements.md", "design.md", "canonical-context.md", "tasks.md", "traceability.md", "verification.md", "change-impact.md", "open-decisions.md"] if artifacts.get(name) == "present"],
             "requirements": context.get("requirements", []),
             "acceptance_criteria": context.get("acceptance_criteria", []),
             "design_sections": context.get("design_sections", []),
@@ -2816,9 +2972,15 @@ def agent_readiness_packet(spec_path: Path, task_id: str) -> dict[str, Any]:
         "validation_commands": validation_commands_for_spec(spec, task_id),
         "guardrails": [
             "Do not implement from the task line alone.",
+            "Read canonical-context.md first when present, while preserving always-canonical external authorities.",
             "Resolve traceability gaps or unresolved open decisions before coding.",
             "Record concrete evidence before marking a task complete.",
         ],
+        "canonical_context": {
+            "present": has_canonical_context(spec),
+            "diagnostics": canonical_diagnostics,
+            "import_plan": canonical_context_import_plan(spec) if canonical_diagnostics else [],
+        },
         "gaps": gaps,
     }
 
@@ -3969,6 +4131,7 @@ def closure_check(spec_path: Path) -> dict[str, Any]:
     for item in lint_result["diagnostics"]:
         if item["severity"] == "error":
             blockers.append({"code": item["code"], "message": item["message"], "path": item["path"]})
+    blockers.extend(canonical_context_closure_blockers(spec_path))
     return {
         "spec_path": str(spec_path.resolve()),
         "ready": not blockers,
@@ -4712,6 +4875,11 @@ def promotion_plan(spec_path: Path) -> dict[str, Any]:
             context = traceability_context(spec_path, task.task_id)
             for target in context.get("durable_targets", []):
                 targets[target] = {"target": target, "source": f"traceability.md {task.task_id}", "status": "candidate"}
+    for row in canonical_context_promotion_rows(spec_path):
+        target = row.get("Durable destination or route", "") or row.get("Durable destination", "")
+        target = strip_markdown_value(target)
+        if target and target.lower() not in {"tbd", "pending", "none", "n/a"}:
+            targets[target] = {"target": target, "source": "canonical-context.md promotion map", "status": "candidate"}
     if not targets:
         targets["TBD"] = {"target": "TBD", "source": "inferred", "status": "missing"}
     return {

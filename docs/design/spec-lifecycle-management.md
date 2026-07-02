@@ -67,6 +67,10 @@ Current fallback package files:
 - `traceability.md`: optional bidirectional matrix for task, requirement,
   acceptance-criteria, design, durable target, verification, open-decision, and
   correctness-property coverage when task text alone is not enough.
+- `canonical-context.md`: optional working-context map for broad or
+  durable-doc-impacting specs, imported durable sources, stale-doc risk, or
+  resumed specs where older docs may otherwise be mistaken for implementation
+  authority.
 
 The core package files are required because their intent is required, not
 because every concern deserves its own file. A small package should embed
@@ -77,6 +81,8 @@ would add ceremony without reducing risk.
 
 Separate supporting artifacts are justified when they reduce ambiguity:
 
+- create `canonical-context.md` when the active package imports, adapts,
+  supersedes, or classifies durable docs for the implementation slice;
 - create `change-impact.md` when existing durable behavior changes across
   several documents, contracts, or migration paths;
 - create `verification.md` when validation has multiple gates, environments,
@@ -143,6 +149,17 @@ Context-budget discipline keeps implementation slices small. Prefer
 every spec and durable document. Avoid archived specs unless doing a historical
 audit, and refresh context at phase boundaries: after requirements changes,
 after design changes, before implementation, and before closure.
+
+For broad or durable-doc-impacting work, the active spec may define
+spec-local canonical context. That context is the package-local set of working
+sources agents should read first for the implementation slice. It can be a
+separate `canonical-context.md` artifact or clearly labeled embedded sections
+in core artifacts for small packages. Spec-local context does not override
+system, developer, or user instructions, `AGENTS.md`, governance, policy,
+security, generated contracts, source-code contracts, tests, or live/system
+evidence. Durable docs not imported, adapted, or explicitly referenced by the
+active spec remain background or drift evidence when they conflict with the
+declared working context.
 
 Optional repository-evidence providers such as Agent Workbench can contribute
 freshness, diagnostics, impact, and validation-plan signals. Their output is
@@ -297,8 +314,10 @@ current command surface and hook modes.
 - Update the selected task to `[~]` before starting implementation so resumed
   sessions can see what is in progress.
 - Update task status only when the recorded marker matches the actual state:
-  `[ ]` pending, `[~]` in progress, `[Y]` partial, `[*]` on hold or stuck,
-  `[e]` error needing intervention, and `[x]` complete.
+  `[ ]` pending, `[~]` in progress, `[/]` partial, `[>]` follow-up or routed,
+  `[-]` no-op or deferred, `[?]` review or decision needed, `[!]` attention
+  needed, and `[x]` complete. Legacy `[Y]`, `[*]`, and `[e]` markers remain
+  readable during migration but should not be used for new task updates.
 - Prefer passing tests before marking implementation tasks `done`.
 - Record task evidence before marking a task `done`.
 - If a task is not testable, blocked from local validation, or verified by inspection or documentation review instead of automated tests, record the verification method and residual risk.

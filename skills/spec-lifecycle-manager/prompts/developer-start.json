@@ -33,6 +33,7 @@
     "Use the spec-lifecycle-manager skill.",
     "Call lifecycle_guide first when MCP tools are available.",
     "If the repository is blank or near blank, use bootstrap_plan and keep the result preview-only until the user approves writes.",
+    "When durable docs, legacy docs, stale-doc risk, or imported sources shape a new spec, create canonical-context.md or return an import plan with source path, target spec-local path, import mode, canonical scope, and promotion target.",
     "Do not invent architecture, pattern guidance, or agent directives for a blank repository.",
     "Report the current repository classification, docs readiness, active spec readiness, bootstrap recommendation, tooling, and next safe actions."
   ],
@@ -41,6 +42,7 @@
     "docs_readiness",
     "spec_readiness",
     "bootstrap",
+    "canonical_context_or_import_plan",
     "tooling",
     "next_actions",
     "validation_or_recovery_commands"

@@ -1384,6 +1384,169 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertIn("summary", payload)
         self.assertIsInstance(payload["diagnostics"], list)
 
+    def test_lint_spec_package_warns_for_missing_canonical_context_when_risk_declared(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+            requirements = spec / "requirements.md"
+            requirements.write_text(
+                requirements.read_text(encoding="utf-8")
+                + "\n\n## Stale Doc Risk\n\nLegacy docs may be non-canonical background sources.\n",
+                encoding="utf-8",
+            )
+
+            payload = spec_runtime.lint_spec_package(spec)
+
+        diagnostics = payload["diagnostics"]
+        self.assertIn("CANONICAL_CONTEXT_MISSING", {item["code"] for item in diagnostics})
+        diagnostic = next(item for item in diagnostics if item["code"] == "CANONICAL_CONTEXT_MISSING")
+        self.assertEqual("warn", diagnostic["severity"])
+        self.assertTrue(diagnostic["import_plan"])
+
+    def test_stage_readiness_returns_canonical_context_import_plan_for_stale_doc_risk(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+            requirements = spec / "requirements.md"
+            requirements.write_text(
+                requirements.read_text(encoding="utf-8")
+                + "\n\n## Stale Doc Risk\n\nLegacy docs may be non-canonical background sources.\n",
+                encoding="utf-8",
+            )
+
+            payload = spec_runtime.stage_readiness(spec)
+
+        canonical_gap = next(
+            item
+            for item in payload["context_budget"]["gaps"]
+            if item["code"] == "CANONICAL_CONTEXT_MISSING"
+        )
+        self.assertEqual("warn", canonical_gap["severity"])
+        self.assertIn("stale-doc-risk", canonical_gap["signals"])
+        self.assertTrue(canonical_gap["import_plan"])
+        self.assertEqual("canonical-context.md", canonical_gap["import_plan"][0]["target_spec_path"])
+        self.assertEqual("docs/reference/current.md", canonical_gap["import_plan"][0]["source_path"])
+
+    def test_lint_spec_package_accepts_canonical_context_metadata(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+            (spec / "canonical-context.md").write_text(
+                "\n".join(
+                    [
+                        "---",
+                        "title: Canonical Context",
+                        "doc_type: spec",
+                        "artifact_type: canonical-context",
+                        "status: draft",
+                        "owner: platform",
+                        "last_reviewed: 2026-07-02",
+                        "---",
+                        "",
+                        "# Canonical Context",
+                        "",
+                        "## Purpose",
+                        "Use an imported source.",
+                        "",
+                        "## Authority Hierarchy",
+                        "AGENTS.md and governance remain authoritative.",
+                        "",
+                        "## Always-Canonical External Sources",
+                        "| Source | Authority reason | Handling |",
+                        "|--------|------------------|----------|",
+                        "| `AGENTS.md` | repo instructions | read first |",
+                        "",
+                        "## Spec-Canonical Working Sources",
+                        "| Source | Role | Scope | Notes |",
+                        "|--------|------|-------|-------|",
+                        "| `requirements.md` | intent | this spec | none |",
+                        "",
+                        "## Imported Sources",
+                        "| Spec path | Source path | Source revision or date | Status | Canonical scope | Promotion target |",
+                        "|-----------|-------------|-------------------------|--------|-----------------|------------------|",
+                        "| `canonical-context.md` | `docs/reference/current.md` | 2026-07-02 | adapted | current behavior | `docs/reference/current.md` |",
+                        "",
+                        "## Non-Canonical Background Sources",
+                        "| Source | Reason non-canonical | Handling |",
+                        "|--------|----------------------|----------|",
+                        "| `docs/reference/old.md` | stale | background only |",
+                        "",
+                        "## Promotion Map",
+                        "| Spec-local content | Durable destination or route | Required before closure |",
+                        "|--------------------|------------------------------|-------------------------|",
+                        "| imported current behavior | `docs/reference/current.md` | yes |",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            payload = spec_runtime.lint_spec_package(spec)
+            promotion = spec_runtime.promotion_plan(spec)
+            closure = spec_runtime.closure_check(spec)
+
+        self.assertNotIn("CANONICAL_CONTEXT_MISSING", {item["code"] for item in payload["diagnostics"]})
+        self.assertIn("docs/reference/current.md", {item["target"] for item in promotion["targets"]})
+        self.assertTrue(closure["ready"])
+
+    def test_closure_check_blocks_unresolved_required_canonical_promotion(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+            (spec / "canonical-context.md").write_text(
+                "\n".join(
+                    [
+                        "---",
+                        "title: Canonical Context",
+                        "doc_type: spec",
+                        "artifact_type: canonical-context",
+                        "status: draft",
+                        "owner: platform",
+                        "last_reviewed: 2026-07-02",
+                        "---",
+                        "",
+                        "# Canonical Context",
+                        "",
+                        "## Purpose",
+                        "Use an imported source.",
+                        "",
+                        "## Authority Hierarchy",
+                        "AGENTS.md and governance remain authoritative.",
+                        "",
+                        "## Always-Canonical External Sources",
+                        "| Source | Authority reason | Handling |",
+                        "|--------|------------------|----------|",
+                        "| `AGENTS.md` | repo instructions | read first |",
+                        "",
+                        "## Spec-Canonical Working Sources",
+                        "| Source | Role | Scope | Notes |",
+                        "|--------|------|-------|-------|",
+                        "| `requirements.md` | intent | this spec | none |",
+                        "",
+                        "## Imported Sources",
+                        "| Spec path | Source path | Source revision or date | Status | Canonical scope | Promotion target |",
+                        "|-----------|-------------|-------------------------|--------|-----------------|------------------|",
+                        "| `canonical-context.md` | `docs/reference/current.md` | 2026-07-02 | adapted | current behavior | TBD |",
+                        "",
+                        "## Non-Canonical Background Sources",
+                        "| Source | Reason non-canonical | Handling |",
+                        "|--------|----------------------|----------|",
+                        "| none | none | none |",
+                        "",
+                        "## Promotion Map",
+                        "| Spec-local content | Durable destination or route | Required before closure |",
+                        "|--------------------|------------------------------|-------------------------|",
+                        "| imported current behavior | TBD | yes |",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            lint_payload = spec_runtime.lint_spec_package(spec)
+            closure = spec_runtime.closure_check(spec)
+
+        self.assertIn(
+            "CANONICAL_CONTEXT_IMPORTED_SOURCE_METADATA_MISSING",
+            {item["code"] for item in lint_payload["diagnostics"]},
+        )
+        self.assertFalse(closure["ready"])
+        self.assertIn("CANONICAL_CONTEXT_PROMOTION_UNRESOLVED", {item["code"] for item in closure["blockers"]})
+
     def test_next_task_selects_first_unblocked_task_with_context(self):
         with tempfile.TemporaryDirectory() as tmp:
             spec = write_complete_spec(Path(tmp))

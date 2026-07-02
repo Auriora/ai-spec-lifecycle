@@ -52,7 +52,7 @@ and which durable docs, templates, and runtime surfaces must be updated.
 | Authority hierarchy and caveats | `docs/design/spec-lifecycle-management.md` | pending | Must preserve governance and policy exceptions. |
 | Agent operating rule | `docs/design/coding-agent-operating-model.md` | pending | Should be concise and point to lifecycle design. |
 | Authoring and implementation workflow | `skills/spec-lifecycle-manager/SKILL.md` | pending | Agent-facing source. |
-| Canonical context template | `skills/spec-lifecycle-manager/references/spec-package/canonical-context.md` or embedded sections | pending | Design decision D001. |
+| Canonical context template | `skills/spec-lifecycle-manager/references/spec-package/canonical-context.md` plus embedded-section allowance | in progress | D001 resolved 2026-07-02. |
 | Creation/resume prompt behavior | `skills/spec-lifecycle-manager/prompts/` | pending | Must create/propose context during spec creation and resumption. |
 | Runtime diagnostic behavior | `docs/reference/spec-lifecycle-runtime.md` | pending | Required only after runtime changes land. |
 | Migration guidance | `skills/spec-lifecycle-manager/references/migration-guide.md` | pending | Required if artifact rules or diagnostics change. |
@@ -80,9 +80,12 @@ and which durable docs, templates, and runtime surfaces must be updated.
 
 ## Open Questions
 
-- D001: Separate `canonical-context.md` template vs embedded sections only.
-- D002: Diagnostic severity for missing promotion target metadata before
-  closure.
+- D001: Resolved 2026-07-02: add an optional separate
+  `canonical-context.md` template and allow embedded sections for small
+  packages.
+- D002: Resolved 2026-07-02: use authoring/readiness warnings and closure
+  blockers when accepted canonical content still lacks a destination, route, or
+  discard rationale.
 
 ## Related Artifacts
 

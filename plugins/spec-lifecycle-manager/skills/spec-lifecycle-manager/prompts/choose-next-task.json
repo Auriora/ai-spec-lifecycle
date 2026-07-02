@@ -24,6 +24,7 @@
   "instructions": [
     "Use the spec-lifecycle-manager skill.",
     "Do not select a task whose dependencies are incomplete or lack evidence.",
+    "If the task touches durable docs, stale-doc risk, or imported sources, include canonical-context.md or an import-plan gap in the selection result.",
     "Return the selected task with requirement, design, verification, durable target, and open-decision context.",
     "If no task is runnable, return concrete blockers."
   ],
