@@ -34,6 +34,7 @@ for active implementation specs.
 | R008 | delivered | done | Closure risk review | B008, R006, R007, archive index entry `021-closure-risk-review` | Closure readiness incorporates validation-plan, evidence-quality, live-doc risk, and recovery signals before a package is removed. | platform | `docs/history/spec-archive-index.md`, `docs/history/spec-closure-log.md` |
 | R009 | delivered | done | npm publish and release workflow | B044, B026, archive index entry `022-npm-publish-release-workflow` | GitHub Actions validates, packages, and gates npm publish/release artifacts with documented rollback and install verification. | platform | `docs/history/spec-archive-index.md`, `docs/history/spec-closure-log.md` |
 | R010 | delivered | done | Task state and implementation-readiness tools | B037, B038, archive index entry `023-task-state-management-tools` | Runtime and MCP can identify stale-open tasks, plan-only completion, blocked-output completion, broad-task splits, and required task context before implementation. | platform | `docs/history/spec-archive-index.md`, `docs/history/spec-closure-log.md` |
+| R011 | delivered | done | Guided documentation wizard | B049, archive index entry `026-guided-documentation-wizard` | Prompt-only wizard guides stage-specific questions, open-question routing, feedback dispositions, preview-first edit plans, and closure awareness by composing existing lifecycle surfaces. | platform | `docs/history/spec-archive-index.md`, `docs/history/spec-closure-log.md` |
 
 ## Decision History
 
@@ -51,11 +52,8 @@ for active implementation specs.
 
 ## Suggested Build Sequence
 
-1. **Staged developer onboarding (`024`):** add `lifecycle_guide`,
-   `bootstrap_plan`, and stage readiness once validation and task-state signals
-   are available to feed it.
-2. **Guided documentation wizard (`026`, B049):** continue the active
-   prompt-first wizard slice now that release automation is delivered.
+No active build sequence is selected. Choose the next implementation-ready
+candidate from the backlog when new lifecycle work is prioritized.
 
 ## Routing Rules
 
