@@ -1571,22 +1571,160 @@ def resolve_spec_reference(repo_root: Path, value: str | None, docs_root: str | 
     }
 
 
+MCP_AUDIT_TOOL_NAMES = (
+    "scan_specs",
+    "active_spec_preflight",
+    "lifecycle_guide",
+    "bootstrap_plan",
+    "stage_readiness",
+    "validation_plan",
+    "evidence_quality_check",
+    "closure_risk_review",
+    "agent_readiness_packet",
+    "agent_backed_tool",
+    "no_active_spec_context",
+    "spec_summary",
+    "lint_spec_package",
+    "lint_doc",
+    "next_task",
+    "list_tasks",
+    "task_details",
+    "task_state_audit",
+    "set_task_state",
+    "closure_check",
+    "archive_index",
+    "resolve_spec_reference",
+    "mcp_audit",
+    "reconcile_spec",
+    "promotion_plan",
+    "review_packet",
+    "task_context",
+    "traceability_lookup",
+    "prompts_validate",
+)
+MCP_AUDIT_TOOL_RE = "|".join(re.escape(name) for name in MCP_AUDIT_TOOL_NAMES)
 MCP_AUDIT_PATTERNS = {
     "unknown_review_packet_type": re.compile(r"Unknown review packet type: ([^\\\"\\n]+)"),
     "active_spec_not_found": re.compile(r"Active spec not found: ([^\\\"\\n]+)"),
-    "tool_call": re.compile(r"spec-lifecycle-manager[./]([A-Za-z_][A-Za-z0-9_]*)"),
+    "tool_call": re.compile(rf"(?:spec-lifecycle-manager[./]|mcp__spec-lifecycle-manager__|mcp__spec_lifecycle_manager__)({MCP_AUDIT_TOOL_RE})"),
     "resource": re.compile(r"(specs://active|specs://[A-Za-z0-9_.-]+/(?:summary|health)|history://spec-archive-index|templates://spec-package)"),
 }
+MCP_AUDIT_INTERACTION_PATTERNS = {
+    "spec_missing_artifacts": re.compile(
+        r"\b(?:specs?|requirements|design|tasks?|traceability|verification|canonical-context|change-impact)\b"
+        r".{0,120}\b(?:missing|missed|lack(?:s|ing)?|without|needs?|need)\b|"
+        r"\b(?:missing|missed|lack(?:s|ing)?|without|needs?|need)\b.{0,120}"
+        r"\b(?:specs?|requirements|design|tasks?|traceability|verification|canonical-context|change-impact)\b",
+        re.IGNORECASE,
+    ),
+    "spec_incomplete_or_stale": re.compile(
+        r"\b(?:specs?|docs?|documentation)\b.{0,120}"
+        r"\b(?:incomplete|unfinished|stale|outdated|already done|already been done|already implemented|"
+        r"not lining up|not lined up|doesn'?t line up|don'?t line up)\b|"
+        r"\b(?:incomplete|unfinished|stale|outdated|already done|already been done|already implemented|"
+        r"not lining up|not lined up|doesn'?t line up|don'?t line up)\b.{0,120}\b(?:specs?|docs?|documentation)\b",
+        re.IGNORECASE,
+    ),
+    "skill_interaction_confusion": re.compile(
+        r"\b(?:skill|tool|mcp|spec-lifecycle|spec lifecycle|agent)\b.{0,120}"
+        r"\b(?:confus(?:e|ed|ing|ion)|unclear|wrong|inconsistent|not consistent|should use|did not use|didn'?t use)\b|"
+        r"\b(?:confus(?:e|ed|ing|ion)|unclear|wrong|inconsistent|not consistent|should use|did not use|didn'?t use)\b"
+        r".{0,120}\b(?:skill|tool|mcp|spec-lifecycle|spec lifecycle|agent)\b",
+        re.IGNORECASE,
+    ),
+    "agent_correction": re.compile(
+        r"\b(?:you missed|you should|should have|not what|wrong|i think|actually|already been done|"
+        r"doesn'?t line up|don'?t line up)\b.{0,160}\b(?:specs?|skill|tool|docs?|documentation|tasks?)\b",
+        re.IGNORECASE,
+    ),
+    "docs_currentness_comment": re.compile(
+        r"\b(?:docs?|documentation|durable docs?)\b.{0,120}"
+        r"\b(?:current|stale|outdated|cleanup|clean up|missing|wrong|durable|inconsistent)\b",
+        re.IGNORECASE,
+    ),
+    "hook_noise_comment": re.compile(r"\bhooks?\b.{0,120}\b(?:noise|noisy|advisory|PostToolUse|too much)\b", re.IGNORECASE),
+}
+MCP_AUDIT_INTERACTION_ROLES = {"user", "assistant"}
 
 
-def mcp_audit(repo_root: Path, sessions_root: Path, since: str | None = None, limit: int = 200) -> dict[str, Any]:
-    """Summarize lifecycle MCP mentions and explicit errors in Codex JSONL sessions."""
+def _mcp_audit_snippet(text: str, limit: int = 240) -> str:
+    return " ".join(text.split())[:limit]
+
+
+def _mcp_audit_add_example(bucket: dict[str, list[dict[str, Any]]], key: str, item: dict[str, Any], limit: int = 3) -> None:
+    examples = bucket.setdefault(key, [])
+    if len(examples) < limit:
+        examples.append(item)
+
+
+def _mcp_audit_content_texts(value: Any) -> list[str]:
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, list):
+        texts: list[str] = []
+        for item in value:
+            texts.extend(_mcp_audit_content_texts(item))
+        return texts
+    if isinstance(value, dict):
+        texts = []
+        for key in ("text", "input_text", "output_text", "content", "message", "output"):
+            if key in value:
+                texts.extend(_mcp_audit_content_texts(value[key]))
+        return texts
+    return []
+
+
+def _mcp_audit_message_texts(obj: Any) -> list[tuple[str, str]]:
+    """Return conversational texts from common Codex JSONL event shapes."""
+    if not isinstance(obj, dict):
+        return []
+    payload = obj.get("payload")
+    candidates = [payload] if isinstance(payload, dict) else []
+    if isinstance(obj.get("item"), dict):
+        candidates.append(obj["item"])
+    if isinstance(obj.get("message"), dict):
+        candidates.append(obj["message"])
+    if isinstance(obj.get("response_item"), dict):
+        candidates.append(obj["response_item"])
+
+    texts: list[tuple[str, str]] = []
+    for candidate in candidates:
+        role = str(candidate.get("role") or candidate.get("author") or "").lower()
+        content = candidate.get("content")
+        if content is None and "message" in candidate:
+            content = candidate.get("message")
+        for text in _mcp_audit_content_texts(content):
+            if text.strip():
+                texts.append((role, text))
+    return texts
+
+
+def _mcp_audit_is_instruction_dump(text: str) -> bool:
+    stripped = text.lstrip()
+    return stripped.startswith("# AGENTS.md instructions") or "<INSTRUCTIONS>" in stripped[:2000]
+
+
+def mcp_audit(
+    repo_root: Path,
+    sessions_root: Path,
+    since: str | None = None,
+    limit: int = 200,
+    include_sessions: bool = False,
+) -> dict[str, Any]:
+    """Summarize lifecycle MCP mentions, explicit errors, and interaction signals in Codex JSONL sessions."""
     root = repo_root.resolve()
     sessions = sessions_root.expanduser().resolve()
     session_summaries: list[dict[str, Any]] = []
     error_counts: dict[str, int] = {}
     mention_counts: dict[str, int] = {}
+    interaction_counts: dict[str, int] = {}
+    interaction_role_counts: dict[str, dict[str, int]] = {}
+    examples: dict[str, dict[str, list[dict[str, Any]]]] = {"errors": {}, "mentions": {}, "interactions": {}}
     inspected = 0
+    matched_files = 0
+    total_error_count = 0
+    total_mention_count = 0
+    total_interaction_count = 0
     if not sessions.exists():
         return {
             "repo_root": str(root),
@@ -1594,9 +1732,11 @@ def mcp_audit(repo_root: Path, sessions_root: Path, since: str | None = None, li
             "status": "missing_sessions_root",
             "inspected_files": 0,
             "matched_files": 0,
-            "sessions": [],
             "error_counts": {},
             "mention_counts": {},
+            "interaction_counts": {},
+            "interaction_role_counts": {},
+            "examples": examples,
             "summary": {"error": 1, "warn": 0, "info": 0},
         }
 
@@ -1607,55 +1747,97 @@ def mcp_audit(repo_root: Path, sessions_root: Path, since: str | None = None, li
         inspected += 1
         errors: list[dict[str, Any]] = []
         mentions: list[dict[str, Any]] = []
+        interactions: list[dict[str, Any]] = []
         try:
             lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()
         except OSError as exc:
             errors.append({"line": 0, "type": "read_error", "value": str(exc)})
             lines = []
         for line_number, line in enumerate(lines, 1):
-            if "spec-lifecycle-manager" not in line and "specs://" not in line and "Unknown review packet" not in line and "Active spec not found" not in line:
+            if "spec-lifecycle-manager" in line or "specs://" in line or "Unknown review packet" in line or "Active spec not found" in line:
+                for name, pattern in MCP_AUDIT_PATTERNS.items():
+                    for match in pattern.finditer(line):
+                        if name in {"unknown_review_packet_type", "active_spec_not_found"} and (
+                            "MCP_AUDIT_PATTERNS" in line or "re.compile(" in line
+                        ):
+                            continue
+                        value = match.group(1) if match.groups() else match.group(0)
+                        item = {"line": line_number, "type": name, "value": value[:240]}
+                        if name in {"unknown_review_packet_type", "active_spec_not_found"}:
+                            errors.append(item)
+                            error_counts[name] = error_counts.get(name, 0) + 1
+                            _mcp_audit_add_example(examples["errors"], name, {**item, "path": relative_name})
+                        else:
+                            mentions.append(item)
+                            mention_counts[name] = mention_counts.get(name, 0) + 1
+                            _mcp_audit_add_example(examples["mentions"], name, {**item, "path": relative_name})
+            try:
+                event = json.loads(line)
+            except json.JSONDecodeError:
                 continue
-            for name, pattern in MCP_AUDIT_PATTERNS.items():
-                for match in pattern.finditer(line):
-                    value = match.group(1) if match.groups() else match.group(0)
-                    item = {"line": line_number, "type": name, "value": value[:240]}
-                    if name in {"unknown_review_packet_type", "active_spec_not_found"}:
-                        errors.append(item)
-                        error_counts[name] = error_counts.get(name, 0) + 1
-                    else:
-                        mentions.append(item)
-                        mention_counts[name] = mention_counts.get(name, 0) + 1
-        if errors or mentions:
-            session_summaries.append(
-                {
-                    "path": str(path),
-                    "matched": True,
-                    "errors": errors[:limit],
-                    "mentions": mentions[:limit],
-                    "error_count": len(errors),
-                    "mention_count": len(mentions),
-                }
-            )
-        if len(session_summaries) >= limit:
+            for role, text in _mcp_audit_message_texts(event):
+                if role not in MCP_AUDIT_INTERACTION_ROLES:
+                    continue
+                if _mcp_audit_is_instruction_dump(text):
+                    continue
+                for name, pattern in MCP_AUDIT_INTERACTION_PATTERNS.items():
+                    if not pattern.search(text):
+                        continue
+                    item = {"line": line_number, "type": name, "role": role, "text": _mcp_audit_snippet(text)}
+                    interactions.append(item)
+                    interaction_counts[name] = interaction_counts.get(name, 0) + 1
+                    role_counts = interaction_role_counts.setdefault(name, {})
+                    role_counts[role] = role_counts.get(role, 0) + 1
+                    _mcp_audit_add_example(examples["interactions"], name, {**item, "path": relative_name})
+        if errors or mentions or interactions:
+            matched_files += 1
+            total_error_count += len(errors)
+            total_mention_count += len(mentions)
+            total_interaction_count += len(interactions)
+            if include_sessions and len(session_summaries) < limit:
+                session_summaries.append(
+                    {
+                        "path": str(path),
+                        "matched": True,
+                        "errors": errors[:limit],
+                        "mentions": mentions[:limit],
+                        "interactions": interactions[:limit],
+                        "error_count": len(errors),
+                        "mention_count": len(mentions),
+                        "interaction_count": len(interactions),
+                    }
+                )
+        if include_sessions and len(session_summaries) >= limit:
             break
 
     summary = {
-        "error": sum(item["error_count"] for item in session_summaries),
-        "warn": 0,
-        "info": sum(item["mention_count"] for item in session_summaries),
+        "error": 0,
+        "warn": total_error_count + total_interaction_count,
+        "info": total_mention_count,
     }
-    return {
+    payload = {
         "repo_root": str(root),
         "sessions_root": str(sessions),
         "status": "ok",
         "since": since,
         "inspected_files": inspected,
-        "matched_files": len(session_summaries),
-        "sessions": session_summaries,
+        "matched_files": matched_files,
         "error_counts": error_counts,
         "mention_counts": mention_counts,
+        "interaction_counts": interaction_counts,
+        "interaction_role_counts": interaction_role_counts,
+        "examples": examples,
+        "totals": {
+            "explicit_errors": total_error_count,
+            "mentions": total_mention_count,
+            "interactions": total_interaction_count,
+        },
+        "include_sessions": include_sessions,
         "summary": summary,
     }
+    if include_sessions:
+        payload["sessions"] = session_summaries
+    return payload
 
 
 def sync_guard_file_manifest(root: Path) -> tuple[dict[str, str], list[dict[str, Any]]]:
@@ -5178,11 +5360,12 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     resolve.add_argument("--repo-root", type=Path, default=Path.cwd())
     resolve.add_argument("--docs-root")
 
-    audit = sub.add_parser("mcp-audit", help="Summarize spec lifecycle MCP mentions and explicit errors in Codex session logs.")
+    audit = sub.add_parser("mcp-audit", help="Summarize spec lifecycle MCP mentions, explicit errors, and interaction comments in Codex session logs.")
     audit.add_argument("sessions_root", type=Path)
     audit.add_argument("--repo-root", type=Path, default=Path.cwd())
     audit.add_argument("--since")
     audit.add_argument("--limit", type=int, default=200)
+    audit.add_argument("--include-sessions", action="store_true", help="Include per-session matched items instead of compact aggregates only.")
 
     sync = sub.add_parser("sync-guard", help="Report source, package, install, MCP reload, and commit sync state.")
     sync.add_argument("repo_root", type=Path, nargs="?", default=Path.cwd())
@@ -5292,7 +5475,7 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == "resolve-spec":
         payload = resolve_spec_reference(args.repo_root, args.reference, args.docs_root)
     elif args.command == "mcp-audit":
-        payload = mcp_audit(args.repo_root, args.sessions_root, args.since, args.limit)
+        payload = mcp_audit(args.repo_root, args.sessions_root, args.since, args.limit, args.include_sessions)
     elif args.command == "sync-guard":
         payload = sync_guard(args.repo_root, args.codex_home, args.commits)
     elif args.command == "package-contract":

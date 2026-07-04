@@ -4,7 +4,7 @@ doc_type: spec
 artifact_type: verification
 status: active
 owner: platform
-last_reviewed: 2026-06-11
+last_reviewed: 2026-07-02
 ---
 
 # Verification
@@ -28,7 +28,16 @@ last_reviewed: 2026-06-11
 
 ## Evidence Log
 
-- Pending.
+- 2026-07-02: Reconciliation found existing Spec 028/B026 package evidence:
+  `.github/workflows/cross-platform.yml` runs PR/main/manual cross-platform
+  tests, package-contract, cross-platform smoke, and `npm pack --dry-run`;
+  package docs and manifests state `pack-ready-not-published`; local
+  `package-contract` passed with source, bundled plugin, and Claude plugin
+  parity in sync.
+- 2026-07-02: Release workflow evidence remains pending: no
+  `.github/workflows/release.yml` exists yet, no guarded npm publish path exists
+  yet, and no automated release artifact upload/metadata capture has been
+  recorded.
 
 ## Residual Risks
 

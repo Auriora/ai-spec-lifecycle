@@ -357,12 +357,17 @@ def tool_definitions() -> list[dict[str, Any]]:
         ),
         tool_schema(
             "mcp_audit",
-            "Summarize spec lifecycle MCP mentions and explicit errors in Codex session logs.",
+            "Summarize spec lifecycle MCP mentions, explicit errors, and interaction comments in Codex session logs.",
             {
                 "repo_root": REPO_ROOT_PROPERTY,
                 "sessions_root": "Directory containing Codex session JSONL files.",
                 "since": "Optional lexicographic relative-path cutoff, such as 2026/06/07.",
                 "limit": {"type": ["integer", "string"], "description": "Maximum matched session files and per-file items to return."},
+                "include_sessions": {
+                    "type": ["boolean", "string"],
+                    "description": "Set true to include per-session matched items. Defaults to compact aggregate output.",
+                    "default": False,
+                },
             },
             ["sessions_root"],
         ),
@@ -520,7 +525,13 @@ def call_tool(name: str, arguments: dict[str, Any], default_root: Path) -> tuple
             limit = int(limit_value)
         except (TypeError, ValueError):
             raise ValueError("limit must be an integer")
-        return spec_runtime.mcp_audit(root, Path(str(sessions_root)), arguments.get("since"), limit), root
+        return spec_runtime.mcp_audit(
+            root,
+            Path(str(sessions_root)),
+            arguments.get("since"),
+            limit,
+            bool_arg(arguments, "include_sessions"),
+        ), root
     if name == "reconcile_spec":
         return spec_runtime.reconcile_spec(spec_path_arg(arguments, default_root)), root
     if name == "promotion_plan":

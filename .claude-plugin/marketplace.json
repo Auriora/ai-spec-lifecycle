@@ -16,7 +16,7 @@
       },
       "homepage": "https://github.com/Auriora/ai-spec-lifecycle/tree/main/plugins/spec-lifecycle-manager/claude-plugin",
       "repository": "https://github.com/Auriora/ai-spec-lifecycle",
-      "license": "MIT",
+      "license": "GPL-3.0-or-later",
       "keywords": [
         "mcp",
         "specs",

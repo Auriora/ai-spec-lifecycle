@@ -3,7 +3,8 @@
 ## Project Structure & Module Organization
 
 This repository maintains the `spec-lifecycle-manager` skill and supporting
-documentation. Durable project docs live under `docs/`: `design/`,
+documentation. The root `README.md` is the repository front door; durable
+project docs live under `docs/`: `design/`,
 `governance/`, `reference/`, `history/`, `backlog/`, and `roadmap/`. Active
 implementation specs, when present, live in `docs/specs/`; closed spec history
 is recorded in `docs/history/spec-closure-log.md` and
@@ -63,8 +64,9 @@ follow-up backlog items.
 
 ## Agent-Specific Instructions
 
-Review this file and any deeper `AGENTS.md` before changing files. For lifecycle
-work, use the `spec-lifecycle-manager` skill and do not implement from
+Review this file, the root `README.md`, and any deeper `AGENTS.md` before
+changing files. For lifecycle work, use the `spec-lifecycle-manager` skill and
+do not implement from
 `tasks.md` alone; review relevant requirements, design, traceability,
 verification, and governance first. Use MCP `scan_specs` or
 `active_spec_preflight` before lifecycle work when the MCP server is available;

@@ -726,6 +726,8 @@ class SpecRuntimeTests(unittest.TestCase):
                         json.dumps({"payload": {"role": "user", "content": "spec-lifecycle-manager.review_packet({})"}}),
                         json.dumps({"payload": {"role": "assistant", "content": "Unknown review packet type: implementation-readiness"}}),
                         json.dumps({"payload": {"role": "assistant", "content": "read specs://active"}}),
+                        json.dumps({"payload": {"role": "user", "content": "I think these specs are missing verification and traceability."}}),
+                        json.dumps({"payload": {"role": "assistant", "content": "The spec is incomplete and the agent was confused about the skill tools."}}),
                     ]
                 )
                 + "\n",
@@ -733,12 +735,23 @@ class SpecRuntimeTests(unittest.TestCase):
             )
 
             payload = spec_runtime.mcp_audit(repo, sessions.parent.parent.parent)
+            detailed = spec_runtime.mcp_audit(repo, sessions.parent.parent.parent, include_sessions=True)
 
         self.assertEqual("ok", payload["status"])
         self.assertEqual(1, payload["matched_files"])
         self.assertEqual(1, payload["error_counts"]["unknown_review_packet_type"])
         self.assertGreaterEqual(payload["mention_counts"]["tool_call"], 1)
         self.assertGreaterEqual(payload["mention_counts"]["resource"], 1)
+        self.assertGreaterEqual(payload["interaction_counts"]["spec_missing_artifacts"], 1)
+        self.assertGreaterEqual(payload["interaction_counts"]["spec_incomplete_or_stale"], 1)
+        self.assertGreaterEqual(payload["interaction_counts"]["skill_interaction_confusion"], 1)
+        self.assertEqual(1, payload["interaction_role_counts"]["spec_missing_artifacts"]["user"])
+        self.assertIn("examples", payload)
+        self.assertIn("interactions", payload["examples"])
+        self.assertNotIn("sessions", payload)
+        self.assertEqual(0, payload["summary"]["error"])
+        self.assertIn("sessions", detailed)
+        self.assertGreaterEqual(detailed["sessions"][0]["interaction_count"], 3)
 
     def test_scan_discovers_current_and_old_format_specs(self):
         with tempfile.TemporaryDirectory() as tmp:

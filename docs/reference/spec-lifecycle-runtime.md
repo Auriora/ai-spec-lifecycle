@@ -62,7 +62,7 @@ not available.
 | `hook` | Run lifecycle hook checks over changed files, selected specs, selected task IDs, or review-result files. |
 | `archive-index` | Validate `docs/history/spec-archive-index.md` entries, retained/removed package state, closure-log consistency, commit evidence fields, and durable destination references. |
 | `resolve-spec` | Resolve an active, archived, missing, or ambiguous spec reference without requiring callers to parse path lookup exceptions. |
-| `mcp-audit` | Summarize spec lifecycle MCP mentions and explicit errors in Codex session JSONL logs. |
+| `mcp-audit` | Summarize spec lifecycle MCP mentions, explicit errors, and interaction comments in Codex session JSONL logs. |
 | `sync-guard` | Report read-only source skill, bundled plugin, installed cache, MCP reload, and recent commit sync state. |
 | `package-contract` | Validate the Spec Lifecycle Manager npm package distribution contract, required package files, source/bundle parity, and provenance. |
 
@@ -375,10 +375,15 @@ and generic fallback behavior. Unknown non-empty selector values map to
 metadata.
 
 `mcp_audit` scans local Codex session JSONL files for spec lifecycle MCP
-mentions and explicit errors such as unknown review packet types or active spec
-lookup failures. The command is read-only and intended for maintainer triage;
-session logs can include copied prompts or user-pasted errors, so audit output
-is evidence to inspect rather than proof that a tool executed.
+mentions, explicit errors such as unknown review packet types or active spec
+lookup failures, and conversational interaction signals. Interaction signals
+count user and assistant comments about missing spec artifacts, incomplete or
+stale specs, documentation currentness, hook noise, and skill/tool confusion.
+The command is read-only and intended for maintainer triage; session logs can
+include copied prompts or user-pasted errors, so audit output is evidence to
+inspect rather than proof that a tool executed. Compact aggregate output is the
+default. Use `--include-sessions` or the MCP tool's `include_sessions` argument
+when per-session matched items are needed for a focused investigation.
 
 ### MCP Resources
 

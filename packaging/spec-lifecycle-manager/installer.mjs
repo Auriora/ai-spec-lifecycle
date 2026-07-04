@@ -1,3 +1,7 @@
+// Copyright 2026 Auriora
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 "use strict";
 
 // Spec 028: cross-platform Node port of

@@ -4,7 +4,7 @@ doc_type: spec
 artifact_type: requirements
 status: active
 owner: platform
-last_reviewed: 2026-06-11
+last_reviewed: 2026-07-02
 ---
 
 # Requirements
@@ -12,14 +12,28 @@ last_reviewed: 2026-06-11
 ## Durable Source Baseline
 
 - B026 delivered a pack-ready npm package named `@auriora/ai-spec-lifecycle`.
-- Install docs say npm publishing, registry authentication, and release
-  automation remain future work.
-- Package validation already includes `package-contract` and `npm pack
-  --dry-run --json`.
+- Spec 028 delivered cross-platform package installation, Node-based installer
+  plumbing, GitHub release tarball distribution docs, `.github/workflows/cross-platform.yml`,
+  `package-contract`, and `npm pack --dry-run` validation.
+- Install/runtime docs and package manifests still state npm registry status as
+  `pack-ready-not-published`; registry authentication, guarded publish, and
+  automated release artifact publication remain future work.
+- Current package validation already includes `package-contract`, source/bundle
+  parity, Claude plugin parity, cross-platform smoke coverage, and `npm pack
+  --dry-run`.
+
+## Reconciliation Notes
+
+- 2026-07-02: Treat package metadata, installer behavior, cross-platform install
+  smoke coverage, package contract validation, and tarball readiness as existing
+  durable baseline from B026 and Spec 028.
+- 2026-07-02: Remaining Spec 022 work is the release workflow layer: complete CI
+  command coverage, release artifact generation/upload, guarded npm publish,
+  release documentation, and post-publish or skipped-publish verification.
 
 ## Goals
 
-- Add GitHub Actions CI/CD for validation, packaging, release artifacts, and
+- Add or extend GitHub Actions CI/CD for validation, release artifacts, and
   guarded npm publish.
 - Support manual and tag-based release triggers.
 - Keep publish credentials scoped to repository secrets or trusted publish
@@ -101,6 +115,6 @@ conditions, so that accidental registry mutation is avoided.
 
 ## Success Criteria
 
-- `.github/workflows/` contains CI and release workflows.
+- `.github/workflows/` contains CI coverage and a release workflow.
 - Runtime/install docs describe release and publish behavior.
 - Tests or validation checks cover workflow files where feasible.

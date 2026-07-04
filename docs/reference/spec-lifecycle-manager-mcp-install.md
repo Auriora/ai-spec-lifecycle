@@ -4,6 +4,8 @@ doc_type: reference
 status: active
 owner: platform
 last_reviewed: 2026-06-11
+copyright: Copyright 2026 Auriora
+license: GPL-3.0-or-later
 ---
 
 # Spec Lifecycle Manager Plugin Install

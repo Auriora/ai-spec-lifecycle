@@ -136,7 +136,7 @@ class SpecPluginPackageTests(unittest.TestCase):
         frontmatter = text.split("---", 2)[1]
         self.assertIn("name: spec-lifecycle-manager", frontmatter)
         self.assertIn("description:", frontmatter)
-        self.assertIn("license: MIT", frontmatter)
+        self.assertIn("license: GPL-3.0-or-later", frontmatter)
         self.assertIn("compatibility:", frontmatter)
         self.assertIn("metadata:", frontmatter)
 

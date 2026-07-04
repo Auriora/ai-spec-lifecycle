@@ -9,7 +9,7 @@
   },
   "homepage": "https://github.com/Auriora/ai-spec-lifecycle/tree/main/plugins/spec-lifecycle-manager",
   "repository": "https://github.com/Auriora/ai-spec-lifecycle",
-  "license": "MIT",
+  "license": "GPL-3.0-or-later",
   "keywords": [
     "agents",
     "codex",
@@ -29,8 +29,8 @@
       "Interactive"
     ],
     "websiteURL": "https://github.com/Auriora/ai-spec-lifecycle/tree/main/plugins/spec-lifecycle-manager",
-    "privacyPolicyURL": "https://opensource.org/licenses/MIT",
-    "termsOfServiceURL": "https://opensource.org/licenses/MIT",
+    "privacyPolicyURL": "https://www.gnu.org/licenses/gpl-3.0.en.html",
+    "termsOfServiceURL": "https://www.gnu.org/licenses/gpl-3.0.en.html",
     "defaultPrompt": [
       "Scan active lifecycle specs.",
       "Get task context before coding.",

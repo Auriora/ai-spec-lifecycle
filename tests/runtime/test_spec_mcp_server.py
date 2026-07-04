@@ -342,6 +342,7 @@ class SpecMcpServerTests(unittest.TestCase):
                         json.dumps({"payload": {"role": "user", "content": "spec-lifecycle-manager.review_packet({})"}}),
                         json.dumps({"payload": {"role": "assistant", "content": "Unknown review packet type: implementation"}}),
                         json.dumps({"payload": {"role": "assistant", "content": "specs://active"}}),
+                        json.dumps({"payload": {"role": "user", "content": "The specs are incomplete and missing verification."}}),
                     ]
                 )
                 + "\n",
@@ -363,6 +364,9 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertEqual("ok", payload["status"])
         self.assertEqual(1, payload["matched_files"])
         self.assertEqual(1, payload["error_counts"]["unknown_review_packet_type"])
+        self.assertGreaterEqual(payload["interaction_counts"]["spec_incomplete_or_stale"], 1)
+        self.assertGreaterEqual(payload["interaction_counts"]["spec_missing_artifacts"], 1)
+        self.assertNotIn("sessions", payload)
 
     def test_agent_backed_tool_returns_unavailable_through_mcp(self):
         with tempfile.TemporaryDirectory() as tmp:
