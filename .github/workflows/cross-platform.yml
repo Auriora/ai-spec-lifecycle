@@ -52,11 +52,26 @@ jobs:
       - name: Runtime + hook parity tests (Python)
         run: python -m unittest discover -s tests -p 'test_*.py'
 
+      - name: Lifecycle spec scan
+        run: python skills/spec-lifecycle-manager/scripts/spec_runtime.py scan .
+
+      - name: Archive index validation
+        run: python skills/spec-lifecycle-manager/scripts/spec_runtime.py archive-index .
+
+      - name: Prompt definition validation
+        run: python skills/spec-lifecycle-manager/scripts/spec_runtime.py prompts
+
       - name: Package contract
         run: python skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .
+
+      - name: Source and bundle sync guard
+        run: python skills/spec-lifecycle-manager/scripts/spec_runtime.py sync-guard .
 
       - name: Cross-platform install + MCP launch + hook smoke
         run: node tests/runtime/smoke_cross_platform.mjs
 
       - name: Package payload (npm pack dry-run)
-        run: npm pack --dry-run
+        run: npm pack --dry-run --json
+
+      - name: Whitespace check
+        run: git diff --check

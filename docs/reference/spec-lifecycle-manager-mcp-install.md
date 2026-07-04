@@ -190,8 +190,9 @@ packaging/spec-lifecycle-manager/resolve-python.mjs
 The package name is `@auriora/ai-spec-lifecycle`. It packages the plugin
 bundle, package metadata, and the cross-platform Node installer. It is
 **marketplace-ready but not published** to the npm registry; the package is
-distributed as the `npm pack` tarball attached to **GitHub releases**. Install
-from a downloaded/unpacked tarball with its bin:
+distributed as the `npm pack` tarball attached to **GitHub releases** until a
+guarded npm publish is explicitly run. Install from a downloaded/unpacked
+tarball with its bin:
 
 ```bash
 npx @auriora/ai-spec-lifecycle install
@@ -203,6 +204,41 @@ spawned `.sh`) with `--source <package-root>`. A `prepack` step strips any
 Python bytecode caches so the tarball is clean. Local marketplace install
 remains supported for checkout-based development. Docker/GHCR image distribution
 is not the supported package path.
+
+### Release and npm publish workflow
+
+GitHub Actions owns release artifact generation:
+
+- `.github/workflows/cross-platform.yml` runs on pull requests, `main`, and
+  manual dispatch. It validates Python tests, Node tests, lifecycle scan,
+  archive-index, prompt definitions, package-contract, sync-guard, the
+  cross-platform install smoke test, `npm pack --dry-run --json`, and
+  `git diff --check`.
+- `.github/workflows/release.yml` runs on `v*` tags and manual dispatch. It
+  validates the package candidate, runs `npm pack`, captures `npm-pack.json`
+  and `release-summary.md`, and uploads the tarball plus metadata as workflow
+  artifacts.
+
+Publishing to npm is disabled by default. The release workflow only runs
+`npm publish --access public` when all of these are true:
+
+- the workflow was started with `workflow_dispatch`;
+- the `publish` input is `true`;
+- the repository secret `NPM_TOKEN` is configured; and
+- `npm view @auriora/ai-spec-lifecycle@<version>` does not already find the
+  version.
+
+If any publish gate is absent, the workflow stops after artifact generation and
+prints a skipped-publish status. Tag pushes therefore produce reproducible
+release artifacts without mutating npm. The workflow verifies npm metadata with
+`npm view` only after a publish step actually runs.
+
+Rollback for an npm release is a new patch release or npm deprecation guidance;
+do not rely on unpublish as the normal rollback path. If a workflow reaches the
+artifact stage but skips publish, fix the missing gate or credential and rerun
+the manual workflow with the same checked-out version. If a version already
+exists on npm, bump `package.json` and release a new version rather than
+overwriting.
 
 ## Claude Code Plugin
 

@@ -1,0 +1,99 @@
+name: release
+
+# Spec 022: build reproducible npm release artifacts and publish only when an
+# explicit trusted gate and npm credentials are both present.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish to npm after artifact generation"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: Build release artifact
+    runs-on: ubuntu-latest
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+      HAS_NPM_TOKEN: ${{ secrets.NPM_TOKEN != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate package candidate
+        run: |
+          python -m unittest discover -s tests -p 'test_*.py'
+          node --test tests/runtime/*.test.mjs
+          python skills/spec-lifecycle-manager/scripts/spec_runtime.py scan .
+          python skills/spec-lifecycle-manager/scripts/spec_runtime.py archive-index .
+          python skills/spec-lifecycle-manager/scripts/spec_runtime.py prompts
+          python skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .
+          python skills/spec-lifecycle-manager/scripts/spec_runtime.py sync-guard .
+          git diff --check
+
+      - name: Build npm tarball
+        run: npm pack --json > npm-pack.json
+
+      - name: Capture release metadata
+        run: |
+          node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('npm-pack.json','utf8'))[0]; const pkg=JSON.parse(fs.readFileSync('package.json','utf8')); const lines=['# Release Artifact Summary','',`- Package: ${pkg.name}`,`- Version: ${pkg.version}`,`- Tarball: ${p.filename}`,`- Integrity: ${p.integrity}`,`- Shasum: ${p.shasum}`,`- Source commit: ${process.env.GITHUB_SHA}`,`- Publish requested: ${process.env.PUBLISH_REQUESTED}`,`- NPM token configured: ${process.env.HAS_NPM_TOKEN}`]; fs.writeFileSync('release-summary.md', lines.join('\n') + '\n');"
+        env:
+          PUBLISH_REQUESTED: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.publish == 'true' }}
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-spec-lifecycle-${{ github.sha }}
+          path: |
+            auriora-ai-spec-lifecycle-*.tgz
+            npm-pack.json
+            release-summary.md
+          if-no-files-found: error
+
+      - name: Report skipped publish
+        if: github.event_name != 'workflow_dispatch' || github.event.inputs.publish != 'true' || env.HAS_NPM_TOKEN != 'true'
+        run: |
+          echo "Publish skipped."
+          echo "Publish requires workflow_dispatch input publish=true and repository secret NPM_TOKEN."
+
+      - name: Guard against existing npm version
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.publish == 'true' && env.HAS_NPM_TOKEN == 'true'
+        run: |
+          PACKAGE_NAME="$(node -p "require('./package.json').name")"
+          PACKAGE_VERSION="$(node -p "require('./package.json').version")"
+          if npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" version >/dev/null 2>&1; then
+            echo "${PACKAGE_NAME}@${PACKAGE_VERSION} already exists on npm; refusing to overwrite."
+            exit 1
+          fi
+
+      - name: Publish to npm
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.publish == 'true' && env.HAS_NPM_TOKEN == 'true'
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Verify published metadata
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.publish == 'true' && env.HAS_NPM_TOKEN == 'true'
+        run: |
+          PACKAGE_NAME="$(node -p "require('./package.json').name")"
+          PACKAGE_VERSION="$(node -p "require('./package.json').version")"
+          npm view "${PACKAGE_NAME}@${PACKAGE_VERSION}" name version dist.integrity

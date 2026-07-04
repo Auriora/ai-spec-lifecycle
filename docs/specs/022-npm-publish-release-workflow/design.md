@@ -4,7 +4,7 @@ doc_type: spec
 artifact_type: design
 status: active
 owner: platform
-last_reviewed: 2026-07-02
+last_reviewed: 2026-07-04
 ---
 
 # Design
@@ -27,6 +27,9 @@ contract, and install/runtime docs rather than recreating packaging.
 - CI runs the same validation commands used locally.
 - Release builds the tarball, captures metadata, optionally publishes to npm,
   and uploads evidence.
+- Decision: keep CI validation in `.github/workflows/cross-platform.yml` so the
+  existing OS/Python matrix proves the complete validation family instead of
+  splitting a second PR workflow.
 
 ## Low-Level Design
 
@@ -36,9 +39,10 @@ contract, and install/runtime docs rather than recreating packaging.
 - Use `npm ci` only if dependencies are introduced; current package has no
   dependency lock requirement.
 - Publish gate inputs:
-  - tag pattern or manual workflow dispatch;
-  - `NPM_TOKEN` or npm trusted publishing configuration;
-  - optional `publish: true` input for manual dispatch.
+  - manual workflow dispatch;
+  - `publish: true` input for manual dispatch;
+  - repository secret `NPM_TOKEN`;
+  - existing-version check with `npm view` before registry mutation.
 - Artifact evidence:
   - package filename;
   - package version;
@@ -56,7 +60,9 @@ contract, and install/runtime docs rather than recreating packaging.
 
 ## Open Questions
 
-- OD-001: Decide whether to use npm trusted publishing or `NPM_TOKEN` first
-  based on repository and npm organization readiness during implementation.
-- OD-002: Decide whether CI coverage should remain in `cross-platform.yml` or
-  split into a narrower `ci.yml` plus the existing cross-platform matrix.
+- OD-001: Resolved 2026-07-04. Use `NPM_TOKEN` first because it is compatible
+  with the current repository setup and keeps publishing explicitly gated.
+  Trusted publishing can be evaluated later without changing artifact
+  generation.
+- OD-002: Resolved 2026-07-04. Keep CI coverage in `cross-platform.yml` so
+  PR/main validation and cross-platform installer smoke coverage stay together.

@@ -4,7 +4,7 @@ doc_type: spec
 artifact_type: traceability
 status: active
 owner: platform
-last_reviewed: 2026-07-02
+last_reviewed: 2026-07-04
 ---
 
 # Traceability Matrix
@@ -14,15 +14,15 @@ last_reviewed: 2026-07-02
 | Task ID | Requirements | Acceptance Criteria | Design Sections | Change Impact | Verification | Durable Targets | Open Decisions |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | T001 | Requirement 1-4 | All | Overview | Planning docs | Docs review | Backlog and roadmap | none |
-| T002 | Requirement 1 | All | High-Level Design | CI workflow | Workflow validation | `.github/workflows/cross-platform.yml` or `.github/workflows/ci.yml` | OD-002 |
+| T002 | Requirement 1 | All | High-Level Design | CI workflow | Workflow validation | `.github/workflows/cross-platform.yml` | OD-002 resolved 2026-07-04 |
 | T003 | Requirement 2 | All | Low-Level Design | Release artifacts | Artifact dry run | `.github/workflows/release.yml` | none |
-| T004 | Requirement 3 | All | Low-Level Design | Publish gate | Workflow review | Release workflow and install docs | OD-001 |
+| T004 | Requirement 3 | All | Low-Level Design | Publish gate | Workflow review | Release workflow and install docs | OD-001 resolved 2026-07-04 |
 | T005 | Requirement 4 | All | Operational Considerations | Release docs | Docs review | Install/runtime docs | none |
-| T006 | Requirement 1-4 | All | Operational Considerations | Validation | Full validation | Workflows and tests | OD-001, OD-002 |
+| T006 | Requirement 1-4 | All | Operational Considerations | Validation | Full validation | Workflows and tests | OD-001 resolved 2026-07-04, OD-002 resolved 2026-07-04 |
 | T006.1 | Requirement 1 | AC 2 | Operational Considerations | Package baseline | Package contract validation | `packaging/spec-lifecycle-manager/`, `package.json` | none |
 | T006.2 | Requirement 1-4 | All | Operational Considerations | Full validation | Local validation plan | Workflows, docs, tests | OD-001, OD-002 |
-| T006.3 | Requirement 1-3 | All | High-Level Design, Low-Level Design | Workflow syntax | Workflow syntax validation | `.github/workflows/` | OD-002 |
-| T006.4 | Requirement 2-4 | All | Low-Level Design, Operational Considerations | Release evidence | Artifact and publish-gate evidence | `.github/workflows/release.yml`, `verification.md` | OD-001 |
+| T006.3 | Requirement 1-3 | All | High-Level Design, Low-Level Design | Workflow syntax | Workflow syntax validation | `.github/workflows/` | OD-002 resolved 2026-07-04 |
+| T006.4 | Requirement 2-4 | All | Low-Level Design, Operational Considerations | Release evidence | Artifact and publish-gate evidence | `.github/workflows/release.yml`, `verification.md` | OD-001 resolved 2026-07-04 |
 
 ## Requirement To Delivery Matrix
 
@@ -45,5 +45,5 @@ last_reviewed: 2026-07-02
 
 | Decision ID | Blocks | Affected Requirements | Affected Tasks | Resolution Needed |
 | --- | --- | --- | --- | --- |
-| OD-001 | publish implementation detail | Requirement 3 | T004, T006 | Choose npm trusted publishing or `NPM_TOKEN` based on organization readiness. |
-| OD-002 | CI workflow shape | Requirement 1 | T002, T006 | Decide whether to extend `cross-platform.yml` or add a separate `ci.yml` for non-matrix validation coverage. |
+| OD-001 | resolved | Requirement 3 | T004, T006 | Resolved 2026-07-04: use `NPM_TOKEN` first; trusted publishing remains a future migration option. |
+| OD-002 | resolved | Requirement 1 | T002, T006 | Resolved 2026-07-04: extend `cross-platform.yml`; no separate `ci.yml` needed for this slice. |

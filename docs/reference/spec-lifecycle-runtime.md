@@ -544,14 +544,22 @@ The command checks:
   sync.
 - Git HEAD provenance is reported when available.
 
-The current npm status is `pack-ready-not-published`. Validate the tarball
-contents before publishing with:
+The current npm status is `pack-ready-not-published`. CI validates the
+candidate package with the same command family exposed by `npm run validate`:
+Python tests, Node tests, lifecycle scan, archive-index validation, prompt
+validation, package-contract, sync-guard, `npm pack --dry-run --json`, and
+`git diff --check`. Validate the tarball contents before publishing with:
 
 ```bash
 npm pack --dry-run --json
 ```
 
-After publish, the intended user install command is:
+The release workflow builds the real tarball with `npm pack`, uploads the
+tarball plus `npm-pack.json` and `release-summary.md` as GitHub Actions
+artifacts, and publishes to npm only when manually dispatched with
+`publish=true` and `NPM_TOKEN` configured. When publish is skipped, the artifact
+metadata is still the release evidence. After publish, the intended user
+install command is:
 
 ```bash
 npx @auriora/ai-spec-lifecycle install
