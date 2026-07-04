@@ -942,8 +942,8 @@ class SpecRuntimeTests(unittest.TestCase):
 
         self.assertEqual(0, payload["summary"]["error"])
         self.assertEqual(0, payload["summary"]["warn"])
-        self.assertEqual(28, payload["summary"]["total"])
-        self.assertEqual(28, payload["summary"]["removed"])
+        self.assertEqual(29, payload["summary"]["total"])
+        self.assertEqual(29, payload["summary"]["removed"])
         self.assertEqual(0, payload["summary"]["retained"])
         self.assertEqual(0, payload["summary"]["superseded"])
         self.assertEqual(0, payload["summary"]["legacy_gaps"])
@@ -971,6 +971,7 @@ class SpecRuntimeTests(unittest.TestCase):
             "021-closure-risk-review",
             "022-npm-publish-release-workflow",
             "025-dev-cli-workflow-tools",
+            "026-guided-documentation-wizard",
             "024-staged-developer-onboarding",
             "027-spec-local-canonical-context",
             "023-task-state-management-tools",

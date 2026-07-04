@@ -14,6 +14,36 @@ requires visible archived docs.
 
 ## Entries
 
+### 2026-07-04 - 026-guided-documentation-wizard
+
+- **Spec:** `docs/specs/026-guided-documentation-wizard/`
+- **Title:** Guided documentation wizard
+- **Final spec commit:** `de3aa4f`
+- **Closure cleanup commit:** `481def5`
+- **Closure action:** removed
+- **Closed by:** platform
+- **Durable docs updated:**
+  - `docs/design/spec-lifecycle-management.md`
+  - `docs/reference/spec-lifecycle-runtime.md`
+  - `docs/backlog/README.md`
+  - `docs/roadmap/README.md`
+  - `skills/spec-lifecycle-manager/SKILL.md`
+  - `skills/spec-lifecycle-manager/prompts/`
+  - `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/`
+  - `plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/`
+  - `tests/runtime/test_spec_runtime.py`
+- **Verification summary:** Focused prompt regression tests passed with 3
+  tests. Full `npm run validate` passed with 168 Python tests, 17 Node tests,
+  active scan, archive-index validation, prompt validation, package-contract
+  validation, sync-guard, npm pack dry-run, and `git diff --check`. Spec 026
+  lint, task-state audit, evidence-quality, and closure-check passed before
+  removal.
+- **Residual risks:** Prompt-only wizard behavior depends on agent compliance
+  and should be dogfooded for conversational quality. Already-running Codex or
+  Claude sessions need package install/reload before installed plugin caches
+  expose the new prompt.
+- **Follow-up:** none
+
 ### 2026-07-04 - 022-npm-publish-release-workflow
 
 - **Spec:** `docs/specs/022-npm-publish-release-workflow/`
