@@ -109,7 +109,13 @@ def rpc(request_id, method, params=None):
 
 
 class SpecMcpServerTests(unittest.TestCase):
-    def send(self, *messages, root: Path | None = ROOT, env: dict[str, str] | None = None):
+    def send(
+        self,
+        *messages,
+        root: Path | None = ROOT,
+        env: dict[str, str] | None = None,
+        process_cwd: Path | None = None,
+    ):
         process_env = None
         if env is not None:
             process_env = {**os.environ, **env}
@@ -123,6 +129,7 @@ class SpecMcpServerTests(unittest.TestCase):
             capture_output=True,
             text=True,
             env=process_env,
+            cwd=process_cwd,
         )
         return [json.loads(line) for line in completed.stdout.splitlines() if line.strip()]
 
@@ -639,6 +646,29 @@ class SpecMcpServerTests(unittest.TestCase):
                 rpc(1, "resources/read", {"uri": "specs://active"}),
                 root=None,
                 env={"SPEC_LIFECYCLE_REPO_ROOT": str(repo)},
+            )
+
+        content = response["result"]["contents"][0]
+        payload = json.loads(content["text"])
+        self.assertEqual(".", payload["repo_root"])
+        self.assertEqual("docs/specs/001-current", payload["specs"][0]["path"])
+        self.assertEqual(".", payload["resource_binding"]["repo_root"])
+        self.assertNotIn(str(repo), content["text"])
+
+    def test_resources_use_pwd_when_launched_from_plugin_directory(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            repo = base / "target"
+            plugin = base / "plugin"
+            repo.mkdir()
+            plugin.mkdir()
+            (repo / ".git").mkdir()
+            write_current_spec(repo)
+            [response] = self.send(
+                rpc(1, "resources/read", {"uri": "specs://active"}),
+                root=None,
+                env={"PWD": str(repo)},
+                process_cwd=plugin,
             )
 
         content = response["result"]["contents"][0]
