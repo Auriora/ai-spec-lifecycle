@@ -184,6 +184,28 @@ Use staged artifact progression for new or resumed specs:
 10. `close`: preserve closure breadcrumbs and remove or archive temporary spec
     scaffolding according to repository policy.
 
+For user-facing guided documentation work, use the `documentation-wizard`
+prompt when available. The wizard is prompt-only in v1: it composes existing
+read-only tools and asks one bounded stage-specific question at a time by
+default. Use checklist mode only when the user asks for a compact or fast pass.
+It must preserve stage order unless an explicit exception is requested and
+recorded, and it must not report implementation readiness while blocking open
+questions, missing downstream review, or stale artifact dependencies remain.
+
+When reporting open questions, include why the question matters, affected
+stage, expected answer shape, blocking status, likely artifact destination, and
+whether the answer blocks implementation readiness. When handling feedback,
+classify each item with exactly one primary disposition: accept, revise, defer,
+reject, or human decision required. Accepted feedback should identify affected
+artifact sections and validation impact; deferred feedback should identify one
+destination and residual risk; rejected feedback should preserve rationale
+without becoming a requirement.
+
+Before editing files during guided documentation, provide a preview edit plan
+with repo-relative path, target section, change type, and rationale. The wizard
+does not add a write-capable MCP tool; approved edits still use ordinary file
+edits under the repository's normal lifecycle and permission rules.
+
 Default to requirements before design and design before tasks. If the user
 explicitly chooses a design-first flow, record partial requirements, label the
 exception, and require a later requirements-completion step before

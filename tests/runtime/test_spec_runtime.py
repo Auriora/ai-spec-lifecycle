@@ -1972,8 +1972,27 @@ class SpecRuntimeTests(unittest.TestCase):
         payload = spec_runtime.load_prompt_definitions(ROOT)
 
         names = {prompt["name"] for prompt in payload["prompts"]}
-        self.assertTrue({"reconcile-spec", "choose-next-task", "task-context", "lint-spec", "developer-start"} <= names)
+        self.assertTrue({"reconcile-spec", "choose-next-task", "task-context", "lint-spec", "developer-start", "documentation-wizard"} <= names)
         self.assertEqual({"error": 0, "warn": 0, "info": 0}, payload["summary"])
+
+    def test_documentation_wizard_prompt_covers_guided_workflow_contract(self):
+        payload = spec_runtime.load_prompt_definitions(ROOT)
+        prompts = {prompt["name"]: prompt for prompt in payload["prompts"]}
+        wizard = prompts["documentation-wizard"]
+        text = "\n".join(wizard["instructions"] + wizard["return_format"])
+
+        for expected in (
+            "one bounded stage-specific question",
+            "discover, bootstrap, requirements, design, tasks, agent_ready, implement, verify, promote, close",
+            "why it matters, affected stage, candidate answer format, blocking status, likely artifact destination",
+            "accept, revise, defer, reject, or human decision required",
+            "repo-relative path, target section, change type, and rationale",
+            "removed packages as historical evidence only",
+            "Never report ready to implement while blocking open questions",
+            "durable destinations, unresolved spec-only content, validation evidence, closure blockers",
+        ):
+            with self.subTest(expected=expected):
+                self.assertIn(expected, text)
 
     def test_spec_authoring_context_recommends_next_artifact(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -2421,7 +2440,7 @@ class SpecRuntimeTests(unittest.TestCase):
         )
 
         payload = json.loads(completed.stdout)
-        self.assertEqual(9, len(payload["prompts"]))
+        self.assertEqual(10, len(payload["prompts"]))
 
     def test_cli_spec_close_hook_exits_nonzero_when_blocking(self):
         with tempfile.TemporaryDirectory() as tmp:

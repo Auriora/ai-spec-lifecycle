@@ -1,0 +1,84 @@
+{
+  "name": "documentation-wizard",
+  "description": "Guide step-by-step spec and durable documentation authoring with stage-aware questions, feedback dispositions, open-question handling, and preview-first edit plans.",
+  "arguments": [
+    {
+      "name": "repo_root",
+      "required": false,
+      "description": "Repository root. Defaults to the current workspace when omitted."
+    },
+    {
+      "name": "spec_id",
+      "required": false,
+      "description": "Optional active spec package ID or path. Required when multiple active specs exist unless the user is starting a new spec."
+    },
+    {
+      "name": "stage",
+      "required": false,
+      "description": "Optional lifecycle stage: discover, bootstrap, requirements, design, tasks, agent_ready, implement, verify, promote, or close."
+    },
+    {
+      "name": "feedback",
+      "required": false,
+      "description": "Optional user or review feedback to classify before proposing edits."
+    },
+    {
+      "name": "mode",
+      "required": false,
+      "description": "Optional pacing mode. Defaults to one-question; use checklist only when the user explicitly asks for a compact checklist."
+    }
+  ],
+  "resources": [
+    "specs://active",
+    "specs://{spec_id}/summary",
+    "history://spec-archive-index",
+    "templates://spec-package"
+  ],
+  "tools": [
+    "scan_specs",
+    "lifecycle_guide",
+    "active_spec_preflight",
+    "no_active_spec_context",
+    "stage_readiness",
+    "task_context",
+    "traceability_lookup",
+    "closure_check",
+    "promotion_plan",
+    "prompts_validate"
+  ],
+  "instructions": [
+    "Use the spec-lifecycle-manager skill as the authoritative workflow guide.",
+    "Gather lifecycle context with existing read-only tools before asking or editing: scan_specs, lifecycle_guide, active_spec_preflight, no_active_spec_context, and stage_readiness when a spec is selected.",
+    "Do not implement an independent spec parser, autonomous loop, or write-capable wizard tool.",
+    "If multiple active specs exist and spec_id is omitted, ask the user to select a spec instead of guessing.",
+    "If no active specs exist, use durable docs, backlog, roadmap, closure log, and archive index; treat removed packages as historical evidence only, not current implementation targets.",
+    "If the repository is blank or near blank, use preview-only bootstrap guidance and require a user-confirmed project purpose before proposing durable structure.",
+    "Preserve stage order unless the user explicitly requests and records a design-first or task-first exception: discover, bootstrap, requirements, design, tasks, agent_ready, implement, verify, promote, close.",
+    "Ask one bounded stage-specific question by default. Use checklist mode only when the user asks for a compact checklist or fast pass.",
+    "In requirements mode, ask for problem, goals, non-goals, user stories, EARS acceptance criteria, durable baseline, durable impact, correctness properties, and open questions.",
+    "In design mode, summarize accepted requirements first, then ask for architecture, data/control flow, interfaces, error handling, operational behavior, and unresolved decisions.",
+    "In tasks mode, ask for task slices, dependencies, validation checkpoints, durable promotion targets, evidence expectations, and human review points.",
+    "For each open question, include why it matters, affected stage, candidate answer format, blocking status, likely artifact destination, and whether it blocks implementation readiness.",
+    "When the user answers an open question, recommend the exact artifact and section to update before applying edits.",
+    "Classify feedback with exactly one primary disposition: accept, revise, defer, reject, or human decision required.",
+    "For accepted feedback, identify affected artifact sections and validation impact. For deferred feedback, identify one primary destination and residual risk. For rejected feedback, preserve rationale without turning it into a requirement.",
+    "Before any file write, produce a preview edit plan listing repo-relative path, target section, change type, and rationale.",
+    "Never report ready to implement while blocking open questions, missing downstream review, or stale artifact dependencies remain.",
+    "At promotion or closure stages, report durable destinations, unresolved spec-only content, validation evidence, closure blockers, and equivalent CLI recovery commands.",
+    "Use repo-relative paths in user-facing output."
+  ],
+  "return_format": [
+    "current_stage",
+    "selected_spec_or_selection_need",
+    "next_bounded_question",
+    "expected_answer_shape",
+    "open_questions",
+    "feedback_dispositions",
+    "preview_edit_plan",
+    "readiness_signal",
+    "durable_destinations",
+    "validation_or_recovery_commands",
+    "residual_risk"
+  ],
+  "client_support_recovery": "If MCP tools are unavailable, run spec_runtime.py scan, active-spec-preflight, no-active-spec-context, stage-readiness, promotion-plan, closure-check, and prompts from the repository root as applicable."
+}

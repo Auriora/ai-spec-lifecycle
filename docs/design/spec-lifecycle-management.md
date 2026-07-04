@@ -277,6 +277,34 @@ disabled agent-backed tool execution, and hook checks. These outputs are
 advisory runtime surfaces; they do not replace the skill, repository
 governance, or durable documentation.
 
+The guided documentation wizard is a prompt-based workflow layered over those
+runtime surfaces. It is exposed as the `documentation-wizard` prompt rather
+than as a new parser, autonomous loop, or write-capable MCP tool. The prompt
+guides requirements, design, tasks, agent-readiness, verification, promotion,
+and closure one bounded question at a time by default. Checklist mode is an
+explicit user-requested exception.
+
+The wizard must gather lifecycle context with existing read-only surfaces such
+as lifecycle guide, active preflight, no-active-spec context, stage readiness,
+task context, traceability lookup, promotion plan, and closure check. It reports
+the current stage, selected spec or selection need, next bounded question,
+expected answer shape, open questions, feedback dispositions, preview edit
+plan, readiness signal, durable destinations, recovery commands, and residual
+risk.
+
+Open questions reported by the wizard include why the question matters,
+affected stage, candidate answer format, blocking status, and artifact
+destination. Feedback is routed through one primary disposition: accept,
+revise, defer, reject, or human decision required. The wizard must not report a
+spec ready to implement while blocking questions, missing downstream review, or
+stale artifact dependencies remain.
+
+All proposed changes remain preview-first. A preview edit plan must identify
+repo-relative path, target section, change type, and rationale before ordinary
+file edits are made. Removed packages remain historical evidence through the
+closure log and archive index; the wizard must not present them as active
+implementation targets.
+
 Agent-backed tool execution starts with a disabled runner interface. The runtime
 builds bounded packets and returns structured `unavailable` output until an
 explicit runner adapter is configured. A local Codex CLI adapter is the first

@@ -4,7 +4,7 @@ doc_type: spec
 artifact_type: change-impact
 status: active
 owner: platform
-last_reviewed: 2026-06-14
+last_reviewed: 2026-07-04
 ---
 
 # Change Impact
@@ -47,11 +47,11 @@ behavior, runtime/prompt surface, and documentation workflow.
 
 | Spec content | Durable destination | Promotion status | Notes |
 |--------------|---------------------|------------------|-------|
-| Wizard stage model and stage order | `docs/design/spec-lifecycle-management.md` | pending | Promote after implementation details are accepted. |
-| Runtime/MCP/prompt surface | `docs/reference/spec-lifecycle-runtime.md` | pending | Include CLI/MCP command names and read-only boundary. |
-| Open-question and feedback guidance | `skills/spec-lifecycle-manager/SKILL.md` | pending | Keep concise; route detail to durable docs. |
-| Prompt/tool contract | `skills/spec-lifecycle-manager/prompts/` and tests | pending | Validate through `prompts_validate`. |
-| Backlog overlap | `docs/backlog/README.md` | pending | Mark covered portions or add follow-up item if v1 is narrower. |
+| Wizard stage model and stage order | `docs/design/spec-lifecycle-management.md` | promoted | Prompt-only wizard behavior documented 2026-07-04. |
+| Runtime/MCP/prompt surface | `docs/reference/spec-lifecycle-runtime.md` | promoted | `documentation-wizard` prompt documented 2026-07-04. |
+| Open-question and feedback guidance | `skills/spec-lifecycle-manager/SKILL.md` | promoted | Open-question, feedback-disposition, and preview-plan guidance added 2026-07-04. |
+| Prompt/tool contract | `skills/spec-lifecycle-manager/prompts/` and tests | promoted | Prompt and focused tests added 2026-07-04; `prompts` validation passed. |
+| Backlog overlap | `docs/backlog/README.md` | promoted | B049 clarified as prompt-only v1 while active package remains open. |
 
 ## Unchanged Durable Areas
 

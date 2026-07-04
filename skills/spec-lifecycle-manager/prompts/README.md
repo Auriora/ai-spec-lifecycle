@@ -20,6 +20,7 @@ Implemented prompt definitions:
 
 - `choose-next-task`
 - `developer-start`
+- `documentation-wizard`
 - `lifecycle-complete`
 - `lifecycle-status`
 - `lifecycle-triage`

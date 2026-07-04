@@ -587,6 +587,7 @@ Implemented definitions:
 - `choose-next-task`
 - `task-context`
 - `lint-spec`
+- `documentation-wizard`
 - `lifecycle-status`
 - `lifecycle-validate`
 - `lifecycle-complete`
@@ -599,6 +600,11 @@ guidance. The stdio MCP server exposes these definitions through
 
 Lifecycle prompts are convenience aliases:
 
+- `documentation-wizard` guides stage-aware documentation authoring over the
+  existing read-only lifecycle tools. It asks one bounded question at a time by
+  default, classifies open questions and feedback, keeps edit application
+  preview-first, reports durable promotion and closure blockers, and treats
+  removed spec packages as historical evidence only.
 - `lifecycle-status` routes "what next" and status requests to active preflight
   or no-active-spec context.
 - `lifecycle-validate` routes validation requests to scan, lint, prompts,
