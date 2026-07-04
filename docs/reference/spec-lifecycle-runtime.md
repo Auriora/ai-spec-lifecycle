@@ -48,7 +48,7 @@ slc check
 slc spec scan
 slc spec archive-index
 slc spec prompts
-slc spec lint docs/specs/025-dev-cli-workflow-tools
+slc spec lint docs/specs/NNN-active-spec
 slc sync guard
 slc package check
 slc release preflight --allow-dirty
