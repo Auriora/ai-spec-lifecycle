@@ -3,7 +3,7 @@ title: Agent development lifecycle roadmap
 doc_type: roadmap
 status: active
 owner: platform
-last_reviewed: 2026-06-13
+last_reviewed: 2026-07-04
 ---
 
 # Roadmap
@@ -32,7 +32,7 @@ for active implementation specs.
 | R006 | delivered | done | Validation plan builder | B023, archive index entry `019-validation-plan-builder` | Runtime and MCP can return a focused read-only validation plan from changed files, task context, risk level, and durable-doc impact. | platform | `docs/history/spec-archive-index.md`, `docs/history/spec-closure-log.md` |
 | R007 | delivered | done | Evidence quality check | B012, R006, archive index entry `020-evidence-quality-check` | Completed task and verification evidence can be classified as concrete, vague, missing, waived, deferred, not-applicable, not-run, or weak with deterministic references. | platform | `docs/history/spec-archive-index.md`, `docs/history/spec-closure-log.md` |
 | R008 | delivered | done | Closure risk review | B008, R006, R007, archive index entry `021-closure-risk-review` | Closure readiness incorporates validation-plan, evidence-quality, live-doc risk, and recovery signals before a package is removed. | platform | `docs/history/spec-archive-index.md`, `docs/history/spec-closure-log.md` |
-| R009 | next | active | npm publish and release workflow | B044, B026, active spec `022-npm-publish-release-workflow` | GitHub Actions validates, packages, and gates npm publish/release artifacts with documented rollback and install verification. | platform | `docs/specs/022-npm-publish-release-workflow/` |
+| R009 | delivered | done | npm publish and release workflow | B044, B026, archive index entry `022-npm-publish-release-workflow` | GitHub Actions validates, packages, and gates npm publish/release artifacts with documented rollback and install verification. | platform | `docs/history/spec-archive-index.md`, `docs/history/spec-closure-log.md` |
 | R010 | delivered | done | Task state and implementation-readiness tools | B037, B038, archive index entry `023-task-state-management-tools` | Runtime and MCP can identify stale-open tasks, plan-only completion, blocked-output completion, broad-task splits, and required task context before implementation. | platform | `docs/history/spec-archive-index.md`, `docs/history/spec-closure-log.md` |
 
 ## Decision History
@@ -45,7 +45,7 @@ for active implementation specs.
 | 2026-06-06 | Adopt selected coding-agent operating-model rules into governance. | R003 is complete; flexible workflow mechanics remain design guidance. | `docs/governance/constitution.md`, `docs/design/coding-agent-operating-model.md` |
 | 2026-06-06 | Keep lifecycle hooks advisory-only. | R002 is complete as a no-promotion decision; future blocking hooks require a new focused spec and explicit approval. | `docs/reference/spec-lifecycle-dogfood-evaluation.md` |
 | 2026-06-06 | Make commit sync guard the next lifecycle hardening horizon. | B007, B017, and B018 are delivered by the runtime/MCP surface; B016 is the highest-priority open friction item. | `docs/backlog/README.md`, R005 |
-| 2026-06-11 | Promote validation and release-readiness work after specs 017 and 018 closed. | R006-R009 sequence validation planning, evidence quality, closure risk, and npm publish/release workflow specs. | `docs/backlog/README.md`, archive entries for 019, 020, 021, and 023, active spec 022 |
+| 2026-06-11 | Promote validation and release-readiness work after specs 017 and 018 closed. | R006-R009 sequence validation planning, evidence quality, closure risk, and npm publish/release workflow specs. | `docs/backlog/README.md`, archive entries for 019, 020, 021, 022, and 023 |
 | 2026-06-13 | Prioritize runtime packets that reduce implementation loops before conversation-history mining. | Validation planning, task-state audit, evidence quality, closure risk, and staged preflight address observed agent inefficiency more directly than another history scan. | `docs/backlog/README.md`, archive entries for 019, 020, 021, and 023, active specs 022 and 024 |
 | 2026-06-13 | Treat misleading live documentation as higher risk than Git-history recoverability. | Closure risk must prefer removing or marking misleading live documents before cleanup. Git history and archive indexes provide recovery for removed package detail. | Archive index entry `021-closure-risk-review` |
 
@@ -54,9 +54,8 @@ for active implementation specs.
 1. **Staged developer onboarding (`024`):** add `lifecycle_guide`,
    `bootstrap_plan`, and stage readiness once validation and task-state signals
    are available to feed it.
-2. **npm publish/release workflow (`022`, R009):** keep release automation
-   active, but do not let it displace the lifecycle runtime surfaces that
-   reduce day-to-day implementation mistakes.
+2. **Guided documentation wizard (`026`, B049):** continue the active
+   prompt-first wizard slice now that release automation is delivered.
 
 ## Routing Rules
 
