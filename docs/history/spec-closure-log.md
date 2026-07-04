@@ -14,6 +14,35 @@ requires visible archived docs.
 
 ## Entries
 
+### 2026-07-04 - 022-npm-publish-release-workflow
+
+- **Spec:** `docs/specs/022-npm-publish-release-workflow/`
+- **Title:** npm publish and release workflow
+- **Final spec commit:** `cae3a10`
+- **Closure cleanup commit:** `f048239`
+- **Closure action:** removed
+- **Closed by:** platform
+- **Durable docs updated:**
+  - `.github/workflows/cross-platform.yml`
+  - `.github/workflows/release.yml`
+  - `docs/reference/spec-lifecycle-manager-mcp-install.md`
+  - `docs/reference/spec-lifecycle-runtime.md`
+  - `docs/backlog/README.md`
+  - `docs/roadmap/README.md`
+  - `package.json`
+  - `tests/runtime/test_github_workflows.py`
+- **Verification summary:** Focused workflow regression tests passed with 2
+  tests. Full `npm run validate` passed with 167 Python tests, 2 Node tests,
+  lifecycle scan, archive-index validation, prompt validation,
+  package-contract validation, sync-guard, npm pack dry-run, and whitespace
+  checks. Spec 022 lint, task-state audit, evidence-quality, closure-check, and
+  closure-risk review passed; closure-risk reported low risk with no findings.
+- **Residual risks:** Local `actionlint` was unavailable, so dedicated workflow
+  parser validation is deferred to GitHub Actions on push. Actual npm publish
+  and remote `npx @auriora/ai-spec-lifecycle install` verification require
+  configured npm access and the manual `publish=true` plus `NPM_TOKEN` gate.
+- **Follow-up:** none
+
 ### 2026-07-04 - 025-dev-cli-workflow-tools
 
 - **Spec:** `docs/specs/025-dev-cli-workflow-tools/`
