@@ -4,7 +4,7 @@ doc_type: spec
 artifact_type: design
 status: active
 owner: platform
-last_reviewed: 2026-06-14
+last_reviewed: 2026-07-04
 ---
 
 # Technical Design
@@ -12,7 +12,7 @@ last_reviewed: 2026-06-14
 ## Overview
 
 The developer CLI should be a Python Typer package under `tools/devcli` with a
-project-specific `adl` entry point. It should orchestrate existing repository
+project-specific `slc` entry point. It should orchestrate existing repository
 commands for validation, package checks, local install, bundle sync, spec
 lifecycle checks, and release preflight.
 
@@ -24,16 +24,16 @@ discoverability, sequencing, dry-run behavior, and failure reporting.
 
 | Requirement | Acceptance Criteria | Design Coverage | Validation Approach |
 |-------------|---------------------|-----------------|---------------------|
-| R1 CLI identity | AC1-AC4 | Package identity and command groups | CLI help and metadata tests |
-| R2 runner | AC1-AC4 | Shared runner | Runner unit tests |
-| R3 validation | AC1-AC4 | `adl check` | Command plan tests |
-| R4 sync | AC1-AC4 | `adl sync` | Copy-plan and sync-guard tests |
-| R5 package/install | AC1-AC4 | `adl package` | Package command tests |
-| R6 status/doctor | AC1-AC4 | `adl plugin`, `adl doctor` | Mocked Codex/tool tests |
-| R7 spec wrappers | AC1-AC5 | `adl spec` | Spec command tests |
-| R8 release preflight | AC1-AC4 | `adl release preflight` | Preflight tests |
-| R9 docs | AC1-AC3 | Operational docs | Documentation review |
-| R10 tests | AC1-AC4 | Test strategy | CLI test command |
+| Requirement 1 CLI identity | AC1-AC4 | Package identity and command groups | CLI help and metadata tests |
+| Requirement 2 runner | AC1-AC4 | Shared runner | Runner unit tests |
+| Requirement 3 validation | AC1-AC4 | `slc check` | Command plan tests |
+| Requirement 4 sync | AC1-AC4 | `slc sync` | Copy-plan and sync-guard tests |
+| Requirement 5 package/install | AC1-AC4 | `slc package` | Package command tests |
+| Requirement 6 status/doctor | AC1-AC4 | `slc plugin`, `slc doctor` | Mocked Codex/tool tests |
+| Requirement 7 spec wrappers | AC1-AC5 | `slc spec` | Spec command tests |
+| Requirement 8 release preflight | AC1-AC4 | `slc release preflight` | Preflight tests |
+| Requirement 9 docs | AC1-AC3 | Operational docs | Documentation review |
+| Requirement 10 tests | AC1-AC4 | Test strategy | CLI test command |
 
 ## Correctness Property Coverage
 
@@ -70,7 +70,7 @@ tools/devcli/
 ### Command Groups
 
 ```text
-adl
+slc
   check
   doctor
   package
@@ -96,7 +96,7 @@ adl
 
 - `tools/devcli/pyproject.toml`
   - Rename package metadata from template names to repository-specific names.
-  - Change primary entry point from `proj` to `adl`.
+  - Change primary entry point from `proj` to `slc`.
 - `runner.py`
   - Provide shared command execution, dry-run rendering, mutation labels,
     elapsed time, and failure propagation.
@@ -135,16 +135,16 @@ CLI args
 
 ### Package Identity
 
-**Resolved 2026-06-17:** primary command is `adl`; package metadata uses
-`agent-dev-lifecycle-devcli`; no temporary `proj` alias is retained.
+**Resolved 2026-07-04:** primary command is `slc`; package metadata uses
+`slc-devcli`; no temporary `proj` alias is retained.
 
 ```toml
 [project]
-name = "agent-dev-lifecycle-devcli"
-description = "Developer CLI for agent-dev-lifecycle maintenance workflows"
+name = "slc-devcli"
+description = "Stable developer CLI for the spec lifecycle tooling"
 
 [project.scripts]
-adl = "auriora_dev.cli:app"
+slc = "auriora_dev.cli:app"
 ```
 
 `proj` is removed, not aliased, per the non-goal against retaining
@@ -182,7 +182,7 @@ Root discovery should:
   or `.git`;
 - fail clearly when no repository root is found.
 
-### `adl check`
+### `slc check`
 
 Default command plan:
 
@@ -198,9 +198,9 @@ git diff --check
 
 Focused flags can disable stages, but output must say the scope is reduced.
 
-### `adl sync`
+### `slc sync`
 
-`adl sync bundles` should sync source skill files into:
+`slc sync bundles` should sync source skill files into:
 
 ```text
 plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/
@@ -214,15 +214,15 @@ allowlist. After copying, it should run:
 PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .
 ```
 
-`adl sync guard` should run:
+`slc sync guard` should run:
 
 ```text
 PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py sync-guard .
 ```
 
-### `adl package`
+### `slc package`
 
-`adl package check` plan:
+`slc package check` plan:
 
 ```text
 PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .
@@ -230,10 +230,10 @@ npm_config_cache=/tmp/spec-lifecycle-npm-cache npm pack --dry-run --json
 PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py sync-guard .
 ```
 
-`adl package pack` can initially wrap npm dry-run only; producing a real tarball
+`slc package pack` can initially wrap npm dry-run only; producing a real tarball
 should require `--write` or an explicit non-dry-run flag.
 
-`adl package install-local` should invoke:
+`slc package install-local` should invoke:
 
 ```text
 scripts/install-spec-lifecycle-manager-package.sh [supported options]
@@ -242,7 +242,7 @@ scripts/install-spec-lifecycle-manager-package.sh [supported options]
 Supported pass-through options should match the installer, including
 `--source`, `--marketplace-name`, `--codex-home`, and `--dry-run` when present.
 
-### `adl plugin status`
+### `slc plugin status`
 
 Read-only command:
 
@@ -251,9 +251,9 @@ codex plugin list
 ```
 
 The command should tolerate missing Codex CLI and report degraded status.
-Detailed installed-cache parity belongs to `adl sync guard`.
+Detailed installed-cache parity belongs to `slc sync guard`.
 
-### `adl spec`
+### `slc spec`
 
 Spec wrappers should invoke:
 
@@ -267,12 +267,12 @@ skills/spec-lifecycle-manager/scripts/spec_runtime.py lint <path>
 
 No wrapper should parse spec files directly.
 
-### `adl release preflight`
+### `slc release preflight`
 
 Initial release preflight is local and non-mutating:
 
 - check working tree status;
-- run `adl package check`;
+- run `slc package check`;
 - inspect `package.json` version and package metadata;
 - report active spec state, especially `022-npm-publish-release-workflow`;
 - report whether publish/release commands are intentionally out of scope.
@@ -303,7 +303,7 @@ first implementation.
 
 - The placeholder `proj` CLI is template scaffolding and can be removed.
 - Existing scripts remain supported and documented as authoritative.
-- CLI docs should present `adl` as a convenience wrapper, not the only path.
+- CLI docs should present `slc` as a convenience wrapper, not the only path.
 - Active spec `022` remains the owner of actual release automation and npm
   publish behavior.
 
@@ -333,9 +333,9 @@ first implementation.
 
 ## Open Questions
 
-- Should `adl package pack` ever create a real tarball, or should it remain
+- Should `slc package pack` ever create a real tarball, or should it remain
   dry-run-only until release workflow `022` lands?
-- Should `adl sync bundles` copy the full skill tree or a narrower allowlist?
+- Should `slc sync bundles` copy the full skill tree or a narrower allowlist?
 - Should CLI tests use pytest, Typer's testing helper, or standard-library
   unittest with direct function tests?
 

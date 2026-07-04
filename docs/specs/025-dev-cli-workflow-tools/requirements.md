@@ -4,7 +4,7 @@ doc_type: spec
 artifact_type: requirements
 status: active
 owner: platform
-last_reviewed: 2026-06-14
+last_reviewed: 2026-07-04
 ---
 
 # Requirements
@@ -103,7 +103,7 @@ help text, so that CLI commands clearly belong to `agent-dev-lifecycle`.
 #### Acceptance Criteria
 
 1. GIVEN the CLI package, WHEN it is installed editable from `tools/devcli`,
-   THEN it SHALL expose a primary project-specific command such as `adl`.
+   THEN it SHALL expose a primary project-specific command such as `slc`.
 2. WHEN a user runs the CLI with no arguments or `--help`, THEN it SHALL show
    lifecycle, package, sync, install, and release-preflight command groups.
 3. WHEN package metadata is inspected, THEN it SHALL use repository-specific
@@ -136,7 +136,7 @@ runtime and package command.
 
 #### Acceptance Criteria
 
-1. GIVEN `adl check`, WHEN it runs, THEN it SHALL run the full unit suite,
+1. GIVEN `slc check`, WHEN it runs, THEN it SHALL run the full unit suite,
    lifecycle scan, archive-index validation, prompt validation,
    package-contract validation, npm package dry-run, and `git diff --check` by
    default.
@@ -153,7 +153,7 @@ so that source, bundled Codex plugin, and Claude plugin copies stay aligned.
 
 #### Acceptance Criteria
 
-1. GIVEN `adl sync bundles`, WHEN it runs, THEN it SHALL copy supported source
+1. GIVEN `slc sync bundles`, WHEN it runs, THEN it SHALL copy supported source
    skill files into bundled Codex and Claude plugin locations or report the
    planned copy operations in dry-run mode.
 2. WHEN sync completes, THEN it SHALL run or recommend `sync-guard` to confirm
@@ -169,15 +169,15 @@ that I can refresh the local plugin install predictably.
 
 #### Acceptance Criteria
 
-1. GIVEN `adl package check`, WHEN it runs, THEN it SHALL run
+1. GIVEN `slc package check`, WHEN it runs, THEN it SHALL run
    `package-contract`, npm pack dry-run, and `sync-guard`.
-2. GIVEN `adl package install-local`, WHEN it runs, THEN it SHALL invoke
+2. GIVEN `slc package install-local`, WHEN it runs, THEN it SHALL invoke
    `scripts/install-spec-lifecycle-manager-package.sh` with supported
    pass-through options.
 3. WHEN users pass `--dry-run` to install-local, THEN the CLI SHALL use the
    installer dry-run rather than simulating installer behavior in Python.
 4. WHEN install succeeds, THEN the CLI SHALL print the next verification
-   command, such as `adl sync guard` or `adl plugin status`.
+   command, such as `slc sync guard` or `slc plugin status`.
 
 ### Requirement 6: Plugin Status And Doctor
 
@@ -186,12 +186,12 @@ can tell whether the installed plugin and local toolchain are usable.
 
 #### Acceptance Criteria
 
-1. GIVEN `adl plugin status`, WHEN it runs, THEN it SHALL inspect
+1. GIVEN `slc plugin status`, WHEN it runs, THEN it SHALL inspect
    `codex plugin list` when available and report whether
    `spec-lifecycle-manager` appears installed.
 2. IF Codex CLI is unavailable, THEN the command SHALL report a degraded status
    instead of pretending plugin state is known.
-3. GIVEN `adl doctor`, WHEN it runs, THEN it SHALL report Python, Node, npm,
+3. GIVEN `slc doctor`, WHEN it runs, THEN it SHALL report Python, Node, npm,
    Codex CLI availability, package metadata presence, and editable CLI install
    guidance.
 4. Doctor SHALL be read-only by default.
@@ -204,13 +204,13 @@ layout without remembering helper paths.
 
 #### Acceptance Criteria
 
-1. GIVEN `adl spec scan`, WHEN it runs, THEN it SHALL invoke
+1. GIVEN `slc spec scan`, WHEN it runs, THEN it SHALL invoke
    `spec_runtime.py scan .`.
-2. GIVEN `adl spec archive-index`, WHEN it runs, THEN it SHALL invoke
+2. GIVEN `slc spec archive-index`, WHEN it runs, THEN it SHALL invoke
    `spec_runtime.py archive-index .`.
-3. GIVEN `adl spec prompts`, WHEN it runs, THEN it SHALL invoke
+3. GIVEN `slc spec prompts`, WHEN it runs, THEN it SHALL invoke
    `spec_runtime.py prompts`.
-4. GIVEN `adl spec lint <path>` or `adl spec summary <path>`, WHEN it runs,
+4. GIVEN `slc spec lint <path>` or `slc spec summary <path>`, WHEN it runs,
    THEN it SHALL invoke the matching `spec_runtime.py` command.
 5. The CLI SHALL NOT implement a second spec parser.
 
@@ -222,7 +222,7 @@ before any external release action.
 
 #### Acceptance Criteria
 
-1. GIVEN `adl release preflight`, WHEN it runs, THEN it SHALL check working
+1. GIVEN `slc release preflight`, WHEN it runs, THEN it SHALL check working
    tree status, package metadata, package validation, npm dry-run, and current
    active spec state.
 2. IF the working tree is dirty, THEN the command SHALL report the dirty state
@@ -291,11 +291,11 @@ sessions.
 
 ## Success Criteria
 
-- **SC-001:** `adl --help` exposes project-specific command groups and no
+- **SC-001:** `slc --help` exposes project-specific command groups and no
   template placeholder commands.
-- **SC-002:** `adl check`, `adl package check`, `adl package install-local`,
-  `adl sync guard`, `adl plugin status`, `adl spec scan`, and
-  `adl release preflight` are implemented or explicitly staged.
+- **SC-002:** `slc check`, `slc package check`, `slc package install-local`,
+  `slc sync guard`, `slc plugin status`, `slc spec scan`, and
+  `slc release preflight` are implemented or explicitly staged.
 - **SC-003:** CLI tests cover command composition and no-mutation dry-run
   behavior.
 - **SC-004:** Durable docs describe command usage, mutation boundaries, and

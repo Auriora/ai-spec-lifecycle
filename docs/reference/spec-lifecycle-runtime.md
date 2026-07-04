@@ -30,6 +30,37 @@ preferred agent-facing interface. Shell out to the scripts only for CI,
 repository validation, MCP debugging, or explicit recovery when MCP tools are
 not available.
 
+## Developer CLI Convenience Wrapper
+
+This repository also ships a maintainer convenience CLI under `tools/devcli/`.
+Install it from the checkout with:
+
+```bash
+pip install --no-build-isolation -e tools/devcli
+```
+
+The `slc` command is a thin wrapper over the authoritative runtime scripts,
+npm commands, installer, and Git checks. It does not parse spec packages
+itself. Use it to repeat common local workflows:
+
+```bash
+slc check
+slc spec scan
+slc spec archive-index
+slc spec prompts
+slc spec lint docs/specs/025-dev-cli-workflow-tools
+slc sync guard
+slc package check
+slc release preflight --allow-dirty
+```
+
+`slc check` runs the same local validation family documented below: Python
+unit tests, lifecycle scan, archive-index validation, prompt validation,
+package-contract validation, npm pack dry-run, and whitespace checks.
+Mutating helpers such as `slc sync bundles` and `slc package install-local`
+must make mutation boundaries explicit and support dry-run behavior where the
+underlying workflow supports it.
+
 ## Runtime Commands
 
 | Command | Purpose |

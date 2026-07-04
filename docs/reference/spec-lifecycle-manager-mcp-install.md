@@ -153,6 +153,28 @@ The installer:
 The plugin has no third-party runtime dependencies. It requires Python 3.10 or
 newer and otherwise uses the Python standard library.
 
+### Developer CLI wrapper
+
+For checkout-based development, `tools/devcli/` provides the `slc` convenience
+CLI. It wraps the installer and package validation commands without replacing
+them:
+
+```bash
+pip install --no-build-isolation -e tools/devcli
+slc package check
+slc package pack
+slc package install-local --dry-run
+slc sync guard
+slc plugin status
+```
+
+`slc package install-local` invokes
+`scripts/install-spec-lifecycle-manager-package.sh` and passes supported
+installer options through. Use `--dry-run` first when checking local install
+behavior. The authoritative install logic remains
+`packaging/spec-lifecycle-manager/installer.mjs`; `slc` is only a repeatable
+developer interface around that flow.
+
 ## npm Distribution Package
 
 The repository defines an npm package contract:

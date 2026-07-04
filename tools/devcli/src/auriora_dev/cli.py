@@ -1,240 +1,216 @@
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
 import typer
 
+from auriora_dev.commands.check import build_check_plan
+from auriora_dev.commands.common import print_or_run
+from auriora_dev.commands.doctor import collect_doctor_status
+from auriora_dev.commands.package import (
+    build_install_local_plan,
+    build_package_check_plan,
+    build_package_pack_plan,
+)
+from auriora_dev.commands.plugin import build_plugin_status_plan
+from auriora_dev.commands.release import build_release_preflight_plan
+from auriora_dev.commands.spec import build_spec_plan
+from auriora_dev.commands.sync import build_bundles_plan, build_guard_plan
+from auriora_dev.repo import resolve_repo_root
+
 
 app = typer.Typer(
     no_args_is_help=True,
-    help="Stable developer CLI for the lite project template.",
+    help="Developer CLI for Spec Lifecycle Manager maintenance.",
 )
-spec_app = typer.Typer(help="Work with visible repo spec files.")
+package_app = typer.Typer(help="Package and local install helpers.")
+plugin_app = typer.Typer(help="Read-only plugin status helpers.")
+release_app = typer.Typer(help="Release preflight helpers.")
+spec_app = typer.Typer(help="Spec lifecycle runtime wrappers.")
+sync_app = typer.Typer(help="Source-to-bundle sync helpers.")
+
+app.add_typer(package_app, name="package")
+app.add_typer(plugin_app, name="plugin")
+app.add_typer(release_app, name="release")
 app.add_typer(spec_app, name="spec")
+app.add_typer(sync_app, name="sync")
 
 
-def _repo_root() -> Path:
-    return Path(__file__).resolve().parents[4]
+RepoRootOption = typer.Option(
+    None,
+    "--repo-root",
+    help="Repository root. Defaults to upward discovery from the current directory.",
+)
+DryRunOption = typer.Option(False, "--dry-run", help="Print the command plan without running it.")
 
 
-def _spec_paths() -> dict[str, Path]:
-    root = _repo_root()
-    return {
-        "requirements": root / "docs" / "spec" / "requirements.md",
-        "design": root / "docs" / "spec" / "design.md",
-        "tasks": root / "docs" / "spec" / "tasks.md",
-    }
-
-
-def _spec_dir_paths() -> dict[str, Path]:
-    root = _repo_root()
-    return {
-        "requirements_dir": root / "docs" / "spec" / "requirements",
-        "design_dir": root / "docs" / "spec" / "design",
-        "tasks_dir": root / "docs" / "spec" / "tasks",
-    }
-
-
-def _placeholder(name: str, detail: str) -> None:
-    typer.secho("Template Placeholder", fg=typer.colors.CYAN, bold=True)
-    typer.echo(f"{name}: {detail}")
-
-
-def _slugify(value: str) -> str:
-    slug = re.sub(r"[^a-z0-9]+", "-", value.strip().lower())
-    slug = slug.strip("-")
-    if not slug:
-        raise typer.BadParameter("Could not derive a usable slug from the input.")
-    return slug
-
-
-def _write_if_missing(path: Path, content: str) -> None:
-    if path.exists():
-        raise typer.BadParameter(f"{path.relative_to(_repo_root())} already exists.")
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(content, encoding="utf-8")
+def _root(repo_root: Path | None) -> Path:
+    return resolve_repo_root(repo_root)
 
 
 @app.command()
-def setup() -> None:
-    """Install or verify local development prerequisites."""
-    _placeholder(
-        "setup",
-        "Replace this command with project-specific environment setup steps.",
-    )
-
-
-@app.command()
-def dev() -> None:
-    """Run the project locally."""
-    _placeholder(
-        "dev",
-        "Replace this command with the local run workflow for the project.",
-    )
-
-
-@app.command()
-def lint() -> None:
-    """Run formatting and lint checks."""
-    _placeholder(
-        "lint",
-        "Replace this command with project-specific lint and formatting checks.",
-    )
-
-
-@app.command()
-def test() -> None:
-    """Run automated tests."""
-    _placeholder(
-        "test",
-        "Replace this command with project-specific automated tests.",
-    )
-
-
-@spec_app.command("show")
-def spec_show() -> None:
-    """Show the visible spec files used by the template."""
-    paths = _spec_paths()
-    typer.secho("Visible spec files", bold=True)
-    for name, path in paths.items():
-        exists = "present" if path.exists() else "missing"
-        typer.echo(f"- {name}: {path.relative_to(_repo_root())} [{exists}]")
-
-    dir_paths = _spec_dir_paths()
-    typer.echo("")
-    typer.secho("Optional split spec directories", bold=True)
-    for name, path in dir_paths.items():
-        exists = "present" if path.exists() else "not in use"
-        typer.echo(f"- {name}: {path.relative_to(_repo_root())} [{exists}]")
-
-
-@spec_app.command("check")
-def spec_check() -> None:
-    """Fail if any of the default spec files are missing."""
-    missing = [path for path in _spec_paths().values() if not path.exists()]
-    if missing:
-        for path in missing:
-            typer.secho(
-                f"Missing {path.relative_to(_repo_root())}",
-                fg=typer.colors.RED,
-            )
-        raise typer.Exit(code=1)
-
-    typer.secho("All default spec files are present.", fg=typer.colors.GREEN)
-    typer.echo(
-        "Keep requirements, design, tasks, and code consistent as work evolves."
-    )
-
-
-@spec_app.command("scaffold-split")
-def spec_scaffold_split(
-    kind: str = typer.Argument(..., help="One of: requirements, design"),
-) -> None:
-    """Create a split requirements or design directory with an index template."""
-    root = _repo_root()
-    normalized = kind.strip().lower()
-    if normalized not in {"requirements", "design"}:
-        raise typer.BadParameter("kind must be 'requirements' or 'design'.")
-
-    split_dir = root / "docs" / "spec" / normalized
-    index_path = split_dir / "README.md"
-
-    title = "Requirements" if normalized == "requirements" else "Design"
-    content = f"""# {title}
-
-Use this directory when one `{normalized}.md` file is no longer enough.
-
-## Suggested organization
-
-- one file per feature, domain, or subsystem
-- one overview or index entry in this file
-- keep names short and obvious
-
-## Files
-
-- [{title} overview](../{normalized}.md)
-
-Add focused files here as the project grows.
-"""
-
-    if index_path.exists():
-        typer.secho(
-            f"{index_path.relative_to(root)} already exists.",
-            fg=typer.colors.YELLOW,
-        )
-        raise typer.Exit(code=0)
-
-    _write_if_missing(index_path, content)
-    typer.secho(
-        f"Created {index_path.relative_to(root)}",
-        fg=typer.colors.GREEN,
-    )
-
-
-@spec_app.command("new-task")
-def spec_new_task(
-    title: str = typer.Argument(..., help="Short title for the task file"),
-    slug: str | None = typer.Option(
-        None,
-        "--slug",
-        help="Optional slug override for the filename.",
+def check(
+    repo_root: Path | None = RepoRootOption,
+    dry_run: bool = DryRunOption,
+    skip_package: bool = typer.Option(
+        False,
+        "--skip-package",
+        help="Run a reduced validation plan without package-contract and npm pack.",
     ),
 ) -> None:
-    """Create a new short-lived checklist task file under docs/spec/tasks/."""
-    root = _repo_root()
-    task_slug = slug or _slugify(title)
-    task_path = root / "docs" / "spec" / "tasks" / f"{task_slug}.md"
+    """Run the local validation plan."""
+    root = _root(repo_root)
+    if skip_package:
+        typer.secho("Reduced scope: package validation stages are skipped.", fg=typer.colors.YELLOW)
+    print_or_run(build_check_plan(root, include_package=not skip_package), repo_root=root, dry_run=dry_run)
 
-    content = f"""# {title}
 
-Status: Active
+@app.command()
+def doctor(repo_root: Path | None = RepoRootOption) -> None:
+    """Report local toolchain and repository metadata status."""
+    root = _root(repo_root)
+    for name, state in collect_doctor_status(root):
+        typer.echo(f"{name}: {state}")
 
-Use this file for a short-lived implementation effort.
-Task markers:
 
-- [ ] not started
-- [-] in progress
-- [x] done
+@sync_app.command("bundles")
+def sync_bundles(
+    repo_root: Path | None = RepoRootOption,
+    dry_run: bool = DryRunOption,
+) -> None:
+    """Copy source skill files into bundled plugin copies."""
+    root = _root(repo_root)
+    print_or_run(build_bundles_plan(root), repo_root=root, dry_run=dry_run)
 
-## Scope
 
-- describe the feature, refactor, bug fix, or migration
+@sync_app.command("guard")
+def sync_guard(
+    repo_root: Path | None = RepoRootOption,
+    dry_run: bool = DryRunOption,
+) -> None:
+    """Run the lifecycle sync guard."""
+    root = _root(repo_root)
+    print_or_run(build_guard_plan(root), repo_root=root, dry_run=dry_run)
 
-## Phase 1: Scope and alignment
 
-- [x] 1. Confirm the problem and scope
-- [-] 1.1 Align requirements and design
-  - Document the required behavior
-  - Confirm the design still matches the code
-  - _Requirements: 1.1, 1.2_
-- [ ] 1.2 Identify verification needs
+@package_app.command("check")
+def package_check(
+    repo_root: Path | None = RepoRootOption,
+    dry_run: bool = DryRunOption,
+) -> None:
+    """Run package contract, npm dry-run, and sync guard."""
+    root = _root(repo_root)
+    print_or_run(build_package_check_plan(root), repo_root=root, dry_run=dry_run)
 
-## Phase 2: Implementation
 
-- [ ] 2. Update the code
-- [ ] 2.1 Add or update tests
-- [ ] 2.2 Verify the behavior end to end
+@package_app.command("pack")
+def package_pack(
+    repo_root: Path | None = RepoRootOption,
+    dry_run: bool = typer.Option(True, "--dry-run/--write", help="Dry-run by default; use --write to create a tarball."),
+) -> None:
+    """Run npm pack in dry-run mode unless --write is explicit."""
+    root = _root(repo_root)
+    print_or_run(build_package_pack_plan(root, write=not dry_run), repo_root=root, dry_run=False)
 
-## Phase 3: Close out
 
-- [ ] 3. Update requirements if needed
-- [ ] 3.1 Update design if needed
-- [ ] 3.2 Mark all completed items accurately
-
-## Notes
-
-- update requirements and design if this task changes them
-- keep code, requirements, and design consistent before closing this file
-"""
-
-    _write_if_missing(task_path, content)
-    typer.secho(
-        f"Created {task_path.relative_to(root)}",
-        fg=typer.colors.GREEN,
+@package_app.command("install-local")
+def package_install_local(
+    repo_root: Path | None = RepoRootOption,
+    source: str | None = typer.Option(None, "--source", help="Package source root."),
+    codex_home: str | None = typer.Option(None, "--codex-home", help="Codex home override."),
+    marketplace_root: str | None = typer.Option(None, "--marketplace-root", help="Local marketplace root."),
+    installer_repo_root: str | None = typer.Option(None, "--installer-repo-root", help="Repository root passed through to the installer as --repo-root."),
+    skip_marketplace: bool = typer.Option(False, "--skip-marketplace", help="Do not update the local marketplace."),
+    skip_plugin_add: bool = typer.Option(False, "--skip-plugin-add", help="Do not run codex plugin add."),
+    dry_run: bool = DryRunOption,
+) -> None:
+    """Invoke the authoritative local installer."""
+    root = _root(repo_root)
+    print_or_run(
+        build_install_local_plan(
+            root,
+            source=source,
+            codex_home=codex_home,
+            marketplace_root=marketplace_root,
+            repo_root_option=installer_repo_root,
+            skip_marketplace=skip_marketplace,
+            skip_plugin_add=skip_plugin_add,
+            dry_run=dry_run,
+        ),
+        repo_root=root,
+        dry_run=False,
     )
-    typer.echo("Use docs/spec/tasks.md for the current default workflow, or use")
-    typer.echo("docs/spec/tasks/ when you want short-lived task history.")
+    if not dry_run:
+        typer.echo("Next verification: slc sync guard")
+
+
+@plugin_app.command("status")
+def plugin_status(
+    repo_root: Path | None = RepoRootOption,
+    dry_run: bool = DryRunOption,
+) -> None:
+    """Run read-only Codex plugin status."""
+    root = _root(repo_root)
+    print_or_run(build_plugin_status_plan(root), repo_root=root, dry_run=dry_run)
+
+
+@spec_app.command("scan")
+def spec_scan(repo_root: Path | None = RepoRootOption, dry_run: bool = DryRunOption) -> None:
+    """Run spec_runtime.py scan."""
+    root = _root(repo_root)
+    print_or_run(build_spec_plan(root, "scan"), repo_root=root, dry_run=dry_run)
+
+
+@spec_app.command("archive-index")
+def spec_archive_index(repo_root: Path | None = RepoRootOption, dry_run: bool = DryRunOption) -> None:
+    """Run spec_runtime.py archive-index."""
+    root = _root(repo_root)
+    print_or_run(build_spec_plan(root, "archive-index"), repo_root=root, dry_run=dry_run)
+
+
+@spec_app.command("prompts")
+def spec_prompts(repo_root: Path | None = RepoRootOption, dry_run: bool = DryRunOption) -> None:
+    """Run spec_runtime.py prompts."""
+    root = _root(repo_root)
+    print_or_run(build_spec_plan(root, "prompts"), repo_root=root, dry_run=dry_run)
+
+
+@spec_app.command("summary")
+def spec_summary(
+    target: str = typer.Argument(..., help="Spec package path or ID."),
+    repo_root: Path | None = RepoRootOption,
+    dry_run: bool = DryRunOption,
+) -> None:
+    """Run spec_runtime.py summary."""
+    root = _root(repo_root)
+    print_or_run(build_spec_plan(root, "summary", target), repo_root=root, dry_run=dry_run)
+
+
+@spec_app.command("lint")
+def spec_lint(
+    target: str = typer.Argument(..., help="Spec package path or ID."),
+    repo_root: Path | None = RepoRootOption,
+    dry_run: bool = DryRunOption,
+) -> None:
+    """Run spec_runtime.py lint."""
+    root = _root(repo_root)
+    print_or_run(build_spec_plan(root, "lint", target), repo_root=root, dry_run=dry_run)
+
+
+@release_app.command("preflight")
+def release_preflight(
+    repo_root: Path | None = RepoRootOption,
+    dry_run: bool = DryRunOption,
+    allow_dirty: bool = typer.Option(
+        False,
+        "--allow-dirty",
+        help="Continue after reporting dirty working-tree state.",
+    ),
+) -> None:
+    """Run local release preflight without push, tag, publish, or GitHub release mutation."""
+    root = _root(repo_root)
+    typer.echo("Release mutation is out of scope: no push, tag, npm publish, or GitHub release command is run.")
+    print_or_run(build_release_preflight_plan(root, allow_dirty=allow_dirty), repo_root=root, dry_run=dry_run)
 
 
 def main() -> None:
