@@ -3,7 +3,7 @@ title: Agent development lifecycle backlog
 doc_type: backlog
 status: active
 owner: platform
-last_reviewed: 2026-06-19
+last_reviewed: 2026-07-04
 ---
 
 # Backlog
@@ -70,6 +70,7 @@ spec or that should not block the active spec currently being delivered.
 | B053 | candidate | Repo validation command discovery | External agent feedback in `docs/reviews/agent-feedback.md`; B023 | Prefer validation commands discovered from repository docs, AGENTS guidance, package metadata, and common test entrypoints before returning generic lifecycle script suggestions. Keep command discovery read-only and report confidence. |
 | B054 | candidate | Security-sensitive task review gate | External agent feedback in `docs/reviews/agent-feedback.md`; B037, B039 | Warn when tasks or changed files touch auth, invitations, roles, audit logging, permissions, secrets, or similar sensitive surfaces, and require explicit review evidence or accepted residual risk before completion or closure. |
 | B055 | candidate | Consolidate spec-lifecycle-manager on JS/TS | User discussion about a planned new JS/TS MCP for agent-dev-lifecycle; cross-platform packaging spec `028-cross-platform-packaging`; `../agent-workbench` Node/TS reference | Evaluate rewriting the Python lifecycle runtime, MCP server, and hook (`spec_runtime.py`, `spec_mcp_server.py`, `codex_spec_lifecycle_hook.py`, plus `tests/runtime/`) in JS/TS to converge on one toolchain alongside the planned new MCP. Converging removes the `python3`/`py`/`python` interpreter-resolution problem entirely (Node is one cross-platform command), so this would supersede spec `028`'s Requirement 2 if it lands. Treat as a language-migration decision distinct from `028`'s surgical packaging fix; promote into a focused spec only when the new MCP's scope, shared-scaffolding plan, and test-port strategy are agreed. Decide whether to drop the Python runtime entirely or run both during transition. |
+| B056 | candidate | Spec closure helper | User request during closure of spec `025-dev-cli-workflow-tools`; B003, B008, B012, B023, B050 | Add a structured helper for the `make durable, cleanup, remove` closure workflow: confirm durable promotion targets, require the final spec commit, remove or archive the package, update closure log and archive index entries, route follow-up work, and return validation commands. Keep it orchestration-oriented and do not let it replace human closure review. |
 
 ## External Agent Feedback Candidates
 

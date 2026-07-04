@@ -942,8 +942,8 @@ class SpecRuntimeTests(unittest.TestCase):
 
         self.assertEqual(0, payload["summary"]["error"])
         self.assertEqual(0, payload["summary"]["warn"])
-        self.assertEqual(26, payload["summary"]["total"])
-        self.assertEqual(26, payload["summary"]["removed"])
+        self.assertEqual(27, payload["summary"]["total"])
+        self.assertEqual(27, payload["summary"]["removed"])
         self.assertEqual(0, payload["summary"]["retained"])
         self.assertEqual(0, payload["summary"]["superseded"])
         self.assertEqual(0, payload["summary"]["legacy_gaps"])
@@ -969,6 +969,7 @@ class SpecRuntimeTests(unittest.TestCase):
             "019-validation-plan-builder",
             "020-evidence-quality-check",
             "021-closure-risk-review",
+            "025-dev-cli-workflow-tools",
             "024-staged-developer-onboarding",
             "027-spec-local-canonical-context",
             "023-task-state-management-tools",

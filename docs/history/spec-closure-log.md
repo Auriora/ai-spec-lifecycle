@@ -3,7 +3,7 @@ title: Spec closure log
 doc_type: history
 status: active
 owner: platform
-last_reviewed: 2026-06-13
+last_reviewed: 2026-07-04
 ---
 
 # Spec Closure Log
@@ -13,6 +13,41 @@ package history is preserved by Git unless a repository-specific archive policy
 requires visible archived docs.
 
 ## Entries
+
+### 2026-07-04 - 025-dev-cli-workflow-tools
+
+- **Spec:** `docs/specs/025-dev-cli-workflow-tools/`
+- **Title:** Developer CLI workflow tools
+- **Final spec commit:** `fe5aaaa`
+- **Closure cleanup commit:** `9b03e1a`
+- **Closure action:** removed
+- **Closed by:** platform
+- **Durable docs updated:**
+  - `docs/reference/spec-lifecycle-manager-mcp-install.md`
+  - `docs/reference/spec-lifecycle-runtime.md`
+  - `docs/backlog/README.md`
+  - `package.json`
+  - `tools/README.md`
+  - `tools/devcli/README.md`
+  - `tools/devcli/pyproject.toml`
+  - `tools/devcli/src/auriora_dev/`
+  - `tests/runtime/test_devcli_cli.py`
+  - `tests/runtime/test_devcli_runner.py`
+- **Verification summary:** Focused dev CLI tests passed with 13 tests.
+  Full Python unit discovery passed with 165 tests. Dev CLI dry-runs passed
+  for `slc check`, `slc release preflight --allow-dirty`, and
+  `slc package install-local --dry-run --skip-plugin-add` with
+  `SPEC_LIFECYCLE_PYTHON=python3`. Package-contract validation, npm pack
+  dry-run, MCP active-spec preflight, MCP closure-check, MCP closure-risk
+  review, spec lint, lifecycle scan, archive-index validation, prompt
+  validation, and `git diff --check` passed before removal.
+- **Residual risks:** `slc package install-local` and `slc sync bundles` were
+  validated in dry-run mode only; live install or bundle sync should still be
+  performed deliberately. `sync-guard` reported source and bundle parity, with
+  expected installed-cache drift until the packaged plugin is installed and
+  already-running sessions reload.
+- **Follow-up:** `B056` proposes a dedicated closure helper for final commit,
+  durable promotion, package removal, and closure/archive metadata sequencing.
 
 ### 2026-07-02 - 027-spec-local-canonical-context
 
