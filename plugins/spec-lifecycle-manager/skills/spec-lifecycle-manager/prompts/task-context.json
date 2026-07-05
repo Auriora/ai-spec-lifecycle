@@ -37,5 +37,5 @@
     "open_decisions",
     "gaps"
   ],
-  "client_support_recovery": "If MCP tools are unavailable, run traceability_lookup.py with --task."
+  "client_support_recovery": "If MCP tools are unavailable, use spec_runtime.py task context and read traceability.md directly; do not call a traceability_lookup.py script."
 }

@@ -11,6 +11,8 @@ TRACEABILITY_CODEX_BUNDLE = "plugins/spec-lifecycle-manager/skills/spec-lifecycl
 TRACEABILITY_CLAUDE_BUNDLE = (
     "plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/scripts/traceability_lookup.py"
 )
+TRACEABILITY_CODEX_CACHE = "skills/spec-lifecycle-manager/scripts/traceability_lookup.py"
+TRACEABILITY_CLAUDE_CACHE = "claude-plugin/skills/spec-lifecycle-manager/scripts/traceability_lookup.py"
 
 
 def default_script_inventory() -> list[dict[str, Any]]:
@@ -67,6 +69,7 @@ def traceability_replacement_contract() -> dict[str, Any]:
         "tests_to_port": ["tests/traceability/test_traceability_lookup.py", "tests/runtime/test_spec_mcp_server.py"],
         "source_removal_paths": [TRACEABILITY_SOURCE],
         "bundle_removal_paths": [TRACEABILITY_CODEX_BUNDLE, TRACEABILITY_CLAUDE_BUNDLE],
+        "installed_cache_removal_paths": [TRACEABILITY_CODEX_CACHE, TRACEABILITY_CLAUDE_CACHE],
         "installed_cache_validation": "install refresh followed by sync-guard .",
     }
 
@@ -83,7 +86,11 @@ def script_migration_inventory(repo_root: Path) -> dict[str, Any]:
     }
 
 
-def migrated_script_closure_check(repo_root: Path, inventory: dict[str, Any] | None = None) -> list[dict[str, str]]:
+def migrated_script_closure_check(
+    repo_root: Path,
+    inventory: dict[str, Any] | None = None,
+    installed_cache_roots: list[Path] | None = None,
+) -> list[dict[str, str]]:
     root = repo_root.resolve()
     rows = (inventory or {"scripts": default_script_inventory()}).get("scripts", [])
     blockers: list[dict[str, str]] = []
@@ -110,6 +117,18 @@ def migrated_script_closure_check(repo_root: Path, inventory: dict[str, Any] | N
                             "script": str(row.get("script", "")),
                             "path": relative,
                             "message": f"Migrated script path still exists: {relative}",
+                        }
+                    )
+        for cache_root in installed_cache_roots or []:
+            for relative in contract.get("installed_cache_removal_paths", []):
+                if (cache_root / relative).exists():
+                    blockers.append(
+                        {
+                            "severity": "error",
+                            "code": "MIGRATED_SCRIPT_STILL_PRESENT",
+                            "script": str(row.get("script", "")),
+                            "path": str(cache_root / relative),
+                            "message": f"Migrated script path still exists in installed cache: {cache_root / relative}",
                         }
                     )
     return blockers

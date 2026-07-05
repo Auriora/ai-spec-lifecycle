@@ -23,7 +23,8 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
-import traceability_lookup
+from lifecycle import traceability
+from lifecycle.migration import migrated_script_closure_check
 from spec_agent_schemas import (
     agent_unavailable_result_schema,
     review_packet_output_schema,
@@ -3342,7 +3343,7 @@ def validation_commands_for_spec(spec_path: Path, task_id: str | None = None) ->
         "git diff --check",
     ]
     if task_id:
-        commands.insert(1, f"PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/traceability_lookup.py {rel} --task {task_id} --format text")
+        commands.insert(1, "MCP tool: traceability_lookup")
     return commands
 
 
@@ -4115,7 +4116,7 @@ def traceability_context(spec_path: Path, task_id: str) -> dict[str, Any]:
                 }
             ]
         }
-    return traceability_lookup.task_lookup(spec_path.resolve(), task_id)
+    return traceability.task_lookup(spec_path.resolve(), task_id)
 
 
 def task_payload(task: Task) -> dict[str, Any]:
@@ -4437,6 +4438,17 @@ def closure_check(spec_path: Path) -> dict[str, Any]:
         if item["severity"] == "error":
             blockers.append({"code": item["code"], "message": item["message"], "path": item["path"]})
     blockers.extend(canonical_context_closure_blockers(spec_path))
+    if spec_path.name == "030-mcp-first-runtime-migration":
+        codex_home = Path(os.environ.get("CODEX_HOME", "~/.codex")).expanduser()
+        installed_cache_roots = discover_plugin_cache_candidates(codex_home)
+        for blocker in migrated_script_closure_check(repo_root_for(spec_path), installed_cache_roots=installed_cache_roots):
+            blockers.append(
+                {
+                    "code": blocker["code"],
+                    "message": blocker["message"],
+                    "path": blocker.get("path"),
+                }
+            )
     return {
         "spec_path": str(spec_path.resolve()),
         "ready": not blockers,
@@ -5142,7 +5154,7 @@ def reconcile_spec(spec_path: Path) -> dict[str, Any]:
         if not path_ref:
             blind_spots.append({"reason": "durable source reference was not a parseable markdown path", "reference": ref})
             continue
-        target = traceability_lookup.resolve_reference(spec_path, path_ref)
+        target = traceability.resolve_reference(spec_path, path_ref)
         if not target.exists():
             findings.append(
                 reconciliation_finding(

@@ -19,8 +19,8 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 import spec_runtime
-import traceability_lookup
 import spec_agent_schemas
+from lifecycle import traceability
 from lifecycle.actions import lifecycle_next_actions
 from lifecycle.capabilities import lifecycle_capabilities
 from lifecycle.migration import script_migration_inventory
@@ -588,15 +588,15 @@ def call_tool(name: str, arguments: dict[str, Any], default_root: Path) -> tuple
         task_id = arguments.get("task_id")
         if not task_id:
             raise ValueError("task_id is required")
-        return traceability_lookup.task_lookup(spec_path_arg(arguments, default_root), str(task_id)), root
+        return traceability.task_lookup(spec_path_arg(arguments, default_root), str(task_id)), root
     if name == "traceability_lookup":
         spec_path = spec_path_arg(arguments, default_root)
         if arguments.get("task_id"):
-            return traceability_lookup.task_lookup(spec_path, str(arguments["task_id"])), root
+            return traceability.task_lookup(spec_path, str(arguments["task_id"])), root
         if arguments.get("requirement"):
-            return traceability_lookup.reverse_lookup(spec_path, "requirement", str(arguments["requirement"])), root
+            return traceability.reverse_lookup(spec_path, "requirement", str(arguments["requirement"])), root
         if arguments.get("design"):
-            return traceability_lookup.reverse_lookup(spec_path, "design", str(arguments["design"])), root
+            return traceability.reverse_lookup(spec_path, "design", str(arguments["design"])), root
         raise ValueError("task_id, requirement, or design is required")
     if name == "prompts_validate":
         return spec_runtime.load_prompt_definitions(root), root

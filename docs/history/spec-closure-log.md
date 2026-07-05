@@ -296,7 +296,7 @@ requires visible archived docs.
   - `skills/spec-lifecycle-manager/references/spec-package/`
   - `skills/spec-lifecycle-manager/scripts/spec_runtime.py`
   - `skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`
-  - `skills/spec-lifecycle-manager/scripts/traceability_lookup.py`
+  - `skills/spec-lifecycle-manager/scripts/lifecycle/traceability.py`
   - `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/`
   - `plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/`
   - `tests/runtime/test_spec_runtime.py`

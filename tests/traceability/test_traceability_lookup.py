@@ -1,5 +1,4 @@
 import json
-import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -7,10 +6,10 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
-SCRIPT = ROOT / "skills/spec-lifecycle-manager/scripts/traceability_lookup.py"
-sys.path.insert(0, str(SCRIPT.parent))
+SCRIPT_DIR = ROOT / "skills/spec-lifecycle-manager/scripts"
+sys.path.insert(0, str(SCRIPT_DIR))
 
-import traceability_lookup
+from lifecycle import traceability
 
 
 def write_traceability_spec(repo: Path) -> Path:
@@ -88,7 +87,7 @@ class TraceabilityLookupTests(unittest.TestCase):
         self.tmp.cleanup()
 
     def test_task_lookup_returns_full_context(self):
-        payload = traceability_lookup.task_lookup(self.spec, "T012")
+        payload = traceability.task_lookup(self.spec, "T012")
 
         self.assertEqual(payload["lookup"], {"type": "task", "value": "T012"})
         self.assertEqual(payload["traceability_row"]["Requirements"], "Requirement 6A")
@@ -103,7 +102,7 @@ class TraceabilityLookupTests(unittest.TestCase):
             encoding="utf-8",
         )
 
-        payload = traceability_lookup.task_lookup(self.spec, "T012")
+        payload = traceability.task_lookup(self.spec, "T012")
 
         self.assertIn("- [?] T012 Add MCP context.", payload["task"]["source"])
         self.assertEqual([], [gap for gap in payload["gaps"] if gap["severity"] == "error"])
@@ -131,7 +130,7 @@ class TraceabilityLookupTests(unittest.TestCase):
         )
         (self.spec / "tasks.md").write_text("# Tasks\n\n- [ ] T010 Verify no-fallback serving.\n", encoding="utf-8")
 
-        payload = traceability_lookup.task_lookup(self.spec, "T010")
+        payload = traceability.task_lookup(self.spec, "T010")
 
         self.assertEqual("Requirement 6A", payload["traceability_row"]["Requirements"])
         self.assertEqual("T010", payload["traceability_row"]["Task"])
@@ -156,28 +155,28 @@ class TraceabilityLookupTests(unittest.TestCase):
         )
         (self.spec / "tasks.md").write_text("# Tasks\n\n- [ ] T011 Close spec.\n", encoding="utf-8")
 
-        payload = traceability_lookup.task_lookup(self.spec, "T011")
+        payload = traceability.task_lookup(self.spec, "T011")
 
         self.assertEqual(["Requirement 6A"], [item["id"] for item in payload["requirements"]])
         codes = {gap["code"] for gap in payload["gaps"]}
         self.assertNotIn("REQUIREMENT_CONTEXT_NOT_FOUND", codes)
 
     def test_reverse_requirement_lookup(self):
-        payload = traceability_lookup.reverse_lookup(self.spec, "requirement", "Requirement 6A")
+        payload = traceability.reverse_lookup(self.spec, "requirement", "Requirement 6A")
 
         self.assertEqual(payload["traceability_row"]["Tasks"], "T012")
         self.assertIn("design.md#mcp-resources", payload["traceability_row"]["Design Sections"])
         self.assertEqual([], [gap for gap in payload["gaps"] if gap["severity"] == "error"])
 
     def test_reverse_design_lookup(self):
-        payload = traceability_lookup.reverse_lookup(self.spec, "design", "design.md#mcp-tools")
+        payload = traceability.reverse_lookup(self.spec, "design", "design.md#mcp-tools")
 
         self.assertEqual(payload["traceability_row"]["Requirements"], "Requirement 6A")
         self.assertEqual(payload["traceability_row"]["Tasks"], "T012")
         self.assertEqual([], [gap for gap in payload["gaps"] if gap["severity"] == "error"])
 
     def test_missing_task_reports_gap(self):
-        payload = traceability_lookup.task_lookup(self.spec, "T999")
+        payload = traceability.task_lookup(self.spec, "T999")
 
         codes = {gap["code"] for gap in payload["gaps"]}
         self.assertIn("TRACEABILITY_TASK_ROW_MISSING", codes)
@@ -200,21 +199,16 @@ class TraceabilityLookupTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            payload = traceability_lookup.task_lookup(spec, "T001")
+            payload = traceability.task_lookup(spec, "T001")
 
         codes = {gap["code"] for gap in payload["gaps"]}
         self.assertIn("TRACEABILITY_REFERENCE_MISSING", codes)
         self.assertIn("TRACEABILITY_UNRESOLVED_VALUE", codes)
 
-    def test_cli_json_output(self):
-        completed = subprocess.run(
-            [sys.executable, str(SCRIPT), str(self.spec), "--task", "T012"],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
+    def test_payload_is_json_serializable_for_mcp_structured_content(self):
+        payload = traceability.task_lookup(self.spec, "T012")
 
-        payload = json.loads(completed.stdout)
+        payload = json.loads(json.dumps(payload))
         self.assertEqual(payload["lookup"]["value"], "T012")
 
 

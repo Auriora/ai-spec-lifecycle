@@ -140,29 +140,29 @@ T013 -> T014
 
 **Purpose**: Remove the selected duplicate executable while preserving the MCP-owned tool.
 
-- [ ] T010 Move traceability lookup logic behind shared internals and MCP.
+- [x] T010 Move traceability lookup logic behind shared internals and MCP.
   - Depends on: T009
   - Requirement: Requirement 5, Requirement 6, Requirement 8, Requirement 9
   - Files: `skills/spec-lifecycle-manager/scripts/traceability_lookup.py`, `skills/spec-lifecycle-manager/scripts/lifecycle/traceability.py`, `skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`, tests
   - Acceptance: The MCP `traceability_lookup` tool uses shared traceability logic; tests no longer depend on `traceability_lookup.py` as an executable public tool; no replacement CLI command exposes the same agent-facing lookup.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Completed 2026-07-05. Moved traceability lookup implementation into `lifecycle/traceability.py`, rewired MCP `task_context` and `traceability_lookup` to use it, and ported traceability tests away from the deleted public executable. Focused traceability and MCP tests passed.
 
-- [ ] T011 Add script migration closure checks to retained validation surfaces.
+- [x] T011 Add script migration closure checks to retained validation surfaces.
   - Depends on: T010
   - Requirement: Requirement 5, Requirement 6, Requirement 9
   - Files: `skills/spec-lifecycle-manager/scripts/lifecycle/migration.py`, `skills/spec-lifecycle-manager/scripts/spec_runtime.py`, tests
   - Acceptance: Retained validation or closure-check surfaces call shared migration logic and report a closure blocker if selected migrated source, bundle, or installed-cache paths still exist; the validation surface remains recovery/admin only and does not become the public agent-facing inventory tool.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Completed 2026-07-05. Extended `migrated_script_closure_check` and `closure_check` so spec 030 reports `MIGRATED_SCRIPT_STILL_PRESENT` for retained source, bundle, or known installed-cache migrated paths. Runtime regression tests cover source and installed-cache blockers.
 
-- [ ] T012 Remove migrated traceability executable from source and bundles.
+- [x] T012 Remove migrated traceability executable from source and bundles.
   - Depends on: T011
   - Requirement: Requirement 5, Requirement 6, Requirement 8
   - Files: `skills/spec-lifecycle-manager/scripts/traceability_lookup.py`, `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/traceability_lookup.py`, `plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/scripts/traceability_lookup.py`
   - Acceptance: The migrated executable is absent from source and bundled plugin paths, MCP traceability tests pass, and package parity checks account for the removal.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Completed 2026-07-05. Removed source, Codex bundle, and Claude bundle `traceability_lookup.py` files; updated package required paths and archive metadata; `package-contract .` reports source, Codex bundle, and Claude bundle parity with 56 files each.
 
 ## Phase 5: Durable Docs, Package Parity, And Closure Readiness
 

@@ -529,19 +529,13 @@ directly as implementation, CI, validation, and recovery interfaces only: MCP
 unavailable, installed-runtime validation, MCP adapter debugging, or a
 repository validation checklist that explicitly requires the CLI command.
 
-If MCP tools are unavailable and this skill's `scripts/traceability_lookup.py`
-helper is available, use it for the first lookup:
-
-```bash
-skills/spec-lifecycle-manager/scripts/traceability_lookup.py docs/specs/013-example-active-spec --task T012 --format text
-```
-
-Run it from the repository root or pass an absolute spec package path. The
-helper returns the task row, linked requirements, acceptance criteria, design
-sections, change impact, verification expectations, durable targets, open
-decisions, and any gaps such as missing matrix rows, unresolved `TBD` values,
-missing referenced artifacts, or missing heading anchors. Treat reported gaps
-as reconciliation inputs before implementing the task.
+If MCP tools are unavailable, use `spec_runtime.py` for retained validation and
+recovery checks, then read `traceability.md` and linked source artifacts
+directly for task context. Do not call a separate traceability lookup script;
+the public agent-facing lookup surface is the MCP `traceability_lookup` tool.
+Treat missing matrix rows, unresolved `TBD` values, missing referenced
+artifacts, or missing heading anchors as reconciliation inputs before
+implementing the task.
 
 When MCP tools are unavailable or CLI validation is explicitly required, the
 repo-local `skills/spec-lifecycle-manager/scripts/spec_runtime.py` helper

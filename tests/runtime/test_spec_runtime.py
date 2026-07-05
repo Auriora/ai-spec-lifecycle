@@ -1088,7 +1088,7 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertIn("docs/reference/current.md", payload["required_review"]["durable_targets"])
         self.assertEqual("mcp", payload["agent_interface"]["preferred"])
         self.assertIn("task_context", payload["agent_interface"]["mcp_tools"])
-        self.assertTrue(any("traceability_lookup.py" in command for command in payload["validation_commands"]))
+        self.assertIn("MCP tool: traceability_lookup", payload["validation_commands"])
         self.assertEqual(payload["script_validation_commands"], payload["validation_commands"])
 
     def test_active_spec_preflight_selects_single_active_spec(self):
@@ -1954,6 +1954,49 @@ class SpecRuntimeTests(unittest.TestCase):
 
         self.assertTrue(payload["ready"])
         self.assertEqual([], payload["blockers"])
+
+    def test_closure_check_blocks_phase_030_when_migrated_script_remains(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            spec = write_complete_spec(repo)
+            phase_spec = repo / "docs/specs/030-mcp-first-runtime-migration"
+            spec.rename(phase_spec)
+            retained = repo / "skills/spec-lifecycle-manager/scripts/traceability_lookup.py"
+            retained.parent.mkdir(parents=True, exist_ok=True)
+            retained.write_text("print('legacy')\n", encoding="utf-8")
+
+            payload = spec_runtime.closure_check(phase_spec)
+
+        self.assertFalse(payload["ready"])
+        self.assertIn("MIGRATED_SCRIPT_STILL_PRESENT", {item["code"] for item in payload["blockers"]})
+
+    def test_closure_check_blocks_phase_030_when_installed_cache_script_remains(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            codex_home = Path(tmp) / "codex-home"
+            repo.mkdir()
+            spec = write_complete_spec(repo)
+            phase_spec = repo / "docs/specs/030-mcp-first-runtime-migration"
+            spec.rename(phase_spec)
+            cache = codex_home / "plugins/cache/auriora-local/spec-lifecycle-manager/0.1.0+test"
+            (cache / ".codex-plugin").mkdir(parents=True)
+            (cache / ".codex-plugin/plugin.json").write_text('{"name": "spec-lifecycle-manager"}\n', encoding="utf-8")
+            retained = cache / "skills/spec-lifecycle-manager/scripts/traceability_lookup.py"
+            retained.parent.mkdir(parents=True, exist_ok=True)
+            retained.write_text("print('legacy')\n", encoding="utf-8")
+            previous = os.environ.get("CODEX_HOME")
+            os.environ["CODEX_HOME"] = str(codex_home)
+            try:
+                payload = spec_runtime.closure_check(phase_spec)
+            finally:
+                if previous is None:
+                    os.environ.pop("CODEX_HOME", None)
+                else:
+                    os.environ["CODEX_HOME"] = previous
+
+        self.assertFalse(payload["ready"])
+        blockers = [item for item in payload["blockers"] if item["code"] == "MIGRATED_SCRIPT_STILL_PRESENT"]
+        self.assertTrue(any("installed cache" in item["message"] for item in blockers))
 
     def test_cli_scan_outputs_json(self):
         completed = subprocess.run(

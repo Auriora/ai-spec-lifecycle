@@ -28,7 +28,6 @@ const REQUIRED_PATHS = [
   "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/spec_runtime.py",
   "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py",
   "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py",
-  "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/traceability_lookup.py",
   "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/prompts",
   "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/references",
   "plugins/spec-lifecycle-manager/.mcp.json",
@@ -40,7 +39,6 @@ const EXECUTABLE_SCRIPTS = [
   "skills/spec-lifecycle-manager/scripts/spec_runtime.py",
   "skills/spec-lifecycle-manager/scripts/spec_mcp_server.py",
   "skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py",
-  "skills/spec-lifecycle-manager/scripts/traceability_lookup.py",
 ];
 
 const USAGE = `Usage: install-spec-lifecycle-manager-package.sh [options]
