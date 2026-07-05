@@ -14,6 +14,42 @@ requires visible archived docs.
 
 ## Entries
 
+### 2026-07-05 - 030-mcp-first-runtime-migration
+
+- **Spec:** `docs/specs/030-mcp-first-runtime-migration/`
+- **Title:** MCP-first runtime migration
+- **Final spec commit:** `3e4b472`
+- **Closure cleanup commit:** `pending`
+- **Closure action:** removed
+- **Closed by:** platform
+- **Durable docs updated:**
+  - `docs/backlog/README.md`
+  - `docs/reference/spec-lifecycle-runtime.md`
+  - `skills/spec-lifecycle-manager/SKILL.md`
+  - `skills/spec-lifecycle-manager/prompts/documentation-wizard.json`
+  - `skills/spec-lifecycle-manager/references/spec-package/`
+  - `skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`
+  - `skills/spec-lifecycle-manager/scripts/spec_runtime.py`
+  - `skills/spec-lifecycle-manager/scripts/lifecycle/core.py`
+  - `skills/spec-lifecycle-manager/scripts/lifecycle/runtime_adapter.py`
+  - `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/`
+  - `plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/`
+  - `tests/runtime/test_spec_mcp_server.py`
+  - `tests/runtime/test_spec_runtime.py`
+- **Verification summary:** Focused runtime and MCP regression tests passed
+  with 137 tests. Full `npm run validate` passed, including lifecycle scan,
+  archive-index validation, prompt validation, package-contract validation,
+  sync-guard, npm pack dry-run, and `git diff --check`. Spec 030 lint and
+  closure-check passed before removal; closure-check reported ready with no
+  blockers.
+- **Residual risks:** Already-running Codex or Claude sessions may need plugin
+  reinstall/reload to use the refreshed installed MCP server, skill guidance,
+  prompts, templates, and runtime adapter. Dynamic MCP tool-list refresh remains
+  intentionally deferred; v1 uses a stable tool surface with
+  `available_next_actions`.
+- **Follow-up:** `B057` remains open for requirement priority labels and `B058`
+  remains open for canonical-context warning wording.
+
 ### 2026-07-04 - 026-guided-documentation-wizard
 
 - **Spec:** `docs/specs/026-guided-documentation-wizard/`
