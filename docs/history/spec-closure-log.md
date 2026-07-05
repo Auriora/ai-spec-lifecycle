@@ -14,6 +14,34 @@ requires visible archived docs.
 
 ## Entries
 
+### 2026-07-05 - 029-spec-closure-helper
+
+- **Spec:** `docs/specs/029-spec-closure-helper/`
+- **Title:** Spec closure helper
+- **Final spec commit:** `1f718aa`
+- **Closure cleanup commit:** `pending-cleanup-commit`
+- **Closure action:** removed
+- **Durable docs updated:**
+  - `docs/backlog/README.md`
+  - `docs/reference/spec-lifecycle-runtime.md`
+  - `skills/spec-lifecycle-manager/SKILL.md`
+  - `docs/design/spec-lifecycle-management.md`
+  - `skills/spec-lifecycle-manager/scripts/lifecycle/closure.py`
+  - `skills/spec-lifecycle-manager/scripts/lifecycle/runtime_adapter.py`
+  - `skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`
+  - `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/`
+  - `plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/`
+  - `tests/runtime/test_spec_runtime.py`
+  - `tests/runtime/test_spec_mcp_server.py`
+- **Verification summary:** Spec closure helper review completed with
+  `closure-check` ready, `promotion-plan` reporting 0 missing targets, and
+  `closure-risk-review` reporting low risk with 0 findings. Cleanup validation
+  removed active specs from scan output; archive-index validation awaits cleanup
+  hash resolution after the cleanup commit exists.
+- **Residual risks:**
+  - none
+- **Follow-up:** none
+
 ### 2026-07-05 - 030-mcp-first-runtime-migration
 
 - **Spec:** `docs/specs/030-mcp-first-runtime-migration/`
