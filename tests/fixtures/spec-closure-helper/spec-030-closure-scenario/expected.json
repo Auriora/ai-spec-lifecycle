@@ -1,0 +1,21 @@
+{
+  "spec_id": "030-mcp-first-runtime-migration",
+  "title": "MCP-first runtime migration",
+  "package_path": "docs/specs/030-mcp-first-runtime-migration",
+  "final_spec_commit": "de3aa4f",
+  "pending_cleanup_commit": "pending-cleanup-commit",
+  "resolved_cleanup_commit": "520d37d",
+  "closure_action": "removed",
+  "durable_destinations": [
+    "docs/reference/spec-lifecycle-runtime.md",
+    "skills/spec-lifecycle-manager/SKILL.md"
+  ],
+  "active_reference_paths": [
+    "docs/backlog/README.md",
+    "docs/specs/030-mcp-first-runtime-migration"
+  ],
+  "historical_reference_paths": [
+    "docs/history/spec-closure-log.md",
+    "docs/history/spec-archive-index.md"
+  ]
+}

@@ -25,6 +25,20 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 from lifecycle import traceability
+from lifecycle.closure import (
+    build_validation_plan as closure_validation_plan,
+    classify_spec_references as closure_classify_spec_references,
+    closure_apply,
+    closure_plan,
+    closure_resolve,
+    discover_final_spec_commits as closure_discover_final_spec_commits,
+    parse_closure_metadata,
+    parse_closure_plan,
+    render_archive_index_row as closure_render_archive_index_row,
+    render_closure_log_entry as closure_render_closure_log_entry,
+    validate_closure_metadata,
+    validate_owned_closure_records as closure_validate_owned_closure_records,
+)
 from lifecycle.migration import migrated_script_closure_check
 from spec_agent_schemas import (
     agent_unavailable_result_schema,

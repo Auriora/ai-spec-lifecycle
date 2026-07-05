@@ -11,9 +11,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT_DIR = ROOT / "skills/spec-lifecycle-manager/scripts"
 SCRIPT = SCRIPT_DIR / "spec_runtime.py"
+FIXTURE_DIR = ROOT / "tests/fixtures"
 sys.path.insert(0, str(SCRIPT_DIR))
 
 import spec_runtime
+from lifecycle import closure as closure_core
 
 
 GIT_ENV = {
@@ -452,6 +454,287 @@ def write_archive_recovery_entry(repo: Path, spec: Path) -> None:
 
 
 class SpecRuntimeTests(unittest.TestCase):
+    def test_spec_030_closure_fixture_contains_required_closure_sequence(self):
+        fixture = FIXTURE_DIR / "spec-closure-helper/spec-030-closure-scenario"
+        expected = json.loads((fixture / "expected.json").read_text(encoding="utf-8"))
+
+        before = fixture / "before-cleanup"
+        pending = fixture / "after-cleanup-pending"
+        resolved = fixture / "after-cleanup-resolved"
+
+        self.assertTrue((before / expected["package_path"] / "requirements.md").is_file())
+        self.assertTrue((before / expected["package_path"] / "tasks.md").is_file())
+        self.assertFalse((pending / expected["package_path"]).exists())
+        self.assertFalse((resolved / expected["package_path"]).exists())
+
+        before_backlog = (before / "docs/backlog/README.md").read_text(encoding="utf-8")
+        pending_backlog = (pending / "docs/backlog/README.md").read_text(encoding="utf-8")
+        self.assertIn("| B002 | MCP lifecycle tools | active |", before_backlog)
+        self.assertIn(expected["package_path"], before_backlog)
+        self.assertIn("| B002 | MCP lifecycle tools | done |", pending_backlog)
+
+    def test_spec_030_closure_fixture_separates_pending_and_resolved_cleanup_metadata(self):
+        fixture = FIXTURE_DIR / "spec-closure-helper/spec-030-closure-scenario"
+        expected = json.loads((fixture / "expected.json").read_text(encoding="utf-8"))
+
+        pending_log = (fixture / "after-cleanup-pending/docs/history/spec-closure-log.md").read_text(encoding="utf-8")
+        pending_index = (fixture / "after-cleanup-pending/docs/history/spec-archive-index.md").read_text(encoding="utf-8")
+        resolved_log = (fixture / "after-cleanup-resolved/docs/history/spec-closure-log.md").read_text(encoding="utf-8")
+        resolved_index = (fixture / "after-cleanup-resolved/docs/history/spec-archive-index.md").read_text(encoding="utf-8")
+
+        self.assertIn(expected["final_spec_commit"], pending_log)
+        self.assertIn(expected["final_spec_commit"], pending_index)
+        self.assertIn(expected["pending_cleanup_commit"], pending_log)
+        self.assertIn(expected["pending_cleanup_commit"], pending_index)
+        self.assertNotIn(expected["resolved_cleanup_commit"], pending_log)
+
+        self.assertIn(expected["resolved_cleanup_commit"], resolved_log)
+        self.assertIn(expected["resolved_cleanup_commit"], resolved_index)
+        self.assertNotIn(expected["pending_cleanup_commit"], resolved_log)
+        self.assertNotIn(expected["pending_cleanup_commit"], resolved_index)
+
+        for target in expected["durable_destinations"]:
+            self.assertIn(target, pending_log)
+            self.assertIn(target, resolved_index)
+
+    def test_closure_metadata_parses_and_rejects_invalid_status_action_mapping(self):
+        metadata = closure_core.parse_closure_metadata(
+            {
+                "spec_id": "030-mcp-first-runtime-migration",
+                "title": "MCP-first runtime migration",
+                "package_path": "docs/specs/030-mcp-first-runtime-migration",
+                "status": "retained_as_history",
+                "closure_action": "retained-as-history",
+                "final_spec_commit": "de3aa4f",
+                "cleanup_commit": "520d37d",
+                "verification_summary": "Tests passed.",
+            }
+        )
+
+        self.assertEqual("retained_as_history", metadata.status)
+        with self.assertRaises(ValueError):
+            closure_core.parse_closure_metadata(
+                {
+                    "spec_id": "030-mcp-first-runtime-migration",
+                    "title": "MCP-first runtime migration",
+                    "package_path": "docs/specs/030-mcp-first-runtime-migration",
+                    "status": "removed",
+                    "closure_action": "retained-as-history",
+                    "final_spec_commit": "de3aa4f",
+                    "cleanup_commit": "520d37d",
+                    "verification_summary": "Tests passed.",
+                }
+            )
+
+    def test_closure_plan_composes_preview_records_and_validation_without_mutation(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            source = FIXTURE_DIR / "spec-closure-helper/spec-030-closure-scenario/before-cleanup"
+            shutil.copytree(source, repo, dirs_exist_ok=True)
+            spec = repo / "docs/specs/030-mcp-first-runtime-migration"
+
+            payload = spec_runtime.closure_plan(spec, repo_root=repo, final_spec_commit="de3aa4f")
+            package_still_exists = (repo / "docs/specs/030-mcp-first-runtime-migration").exists()
+
+        self.assertFalse(payload["mutates_files"])
+        self.assertEqual("030-mcp-first-runtime-migration", payload["metadata"]["spec_id"])
+        self.assertEqual("pending-cleanup-commit", payload["metadata"]["cleanup_commit"])
+        self.assertIn("render_records", {item["action_id"] for item in payload["actions"]})
+        self.assertIn("cleanup_package", {item["action_id"] for item in payload["actions"]})
+        self.assertIn("docs/history/spec-closure-log.md", {item["path"] for item in payload["planned_edits"]})
+        self.assertIn("docs/history/spec-archive-index.md", {item["path"] for item in payload["planned_edits"]})
+        commands = [item["command"] for item in payload["validation_commands"]]
+        self.assertIn("mcp__spec_lifecycle_manager.scan_specs", commands)
+        self.assertIn("PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py archive-index .", commands)
+        self.assertTrue(package_still_exists)
+
+    def test_closure_plan_blocks_missing_durable_promotion(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            source = FIXTURE_DIR / "spec-closure-helper/spec-030-closure-scenario/before-cleanup"
+            shutil.copytree(source, repo, dirs_exist_ok=True)
+            spec = repo / "docs/specs/030-mcp-first-runtime-migration"
+            (spec / "requirements.md").write_text("# Requirements\n", encoding="utf-8")
+
+            payload = spec_runtime.closure_plan(spec, repo_root=repo, final_spec_commit="de3aa4f")
+
+        self.assertIn("CLOSURE_PROMOTION_TARGET_MISSING", {item["code"] for item in payload["diagnostics"]})
+        durable_step = next(item for item in payload["steps"] if item["id"] == "durable_promotion")
+        self.assertEqual("blocked", durable_step["status"])
+
+    def test_closure_reference_classifier_distinguishes_active_and_historical_references(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            source = FIXTURE_DIR / "spec-closure-helper/spec-030-closure-scenario/before-cleanup"
+            shutil.copytree(source, repo, dirs_exist_ok=True)
+
+            refs = spec_runtime.closure_classify_spec_references(
+                repo,
+                "030-mcp-first-runtime-migration",
+                "docs/specs/030-mcp-first-runtime-migration",
+            )
+
+        self.assertTrue(any(item["path"] == "docs/backlog/README.md" for item in refs["active_stale"]))
+        self.assertTrue(any(item["path"] == "docs/history/spec-closure-log.md" for item in refs["historical"]))
+        self.assertFalse(any(item["path"] == "docs/history/spec-closure-log.md" for item in refs["active_stale"]))
+
+    def test_closure_record_rendering_and_drift_detection_use_one_payload(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / "docs/history").mkdir(parents=True)
+            metadata = closure_core.parse_closure_metadata(
+                {
+                    "spec_id": "030-mcp-first-runtime-migration",
+                    "title": "MCP-first runtime migration",
+                    "package_path": "docs/specs/030-mcp-first-runtime-migration",
+                    "status": "removed",
+                    "closure_action": "removed",
+                    "final_spec_commit": "de3aa4f",
+                    "cleanup_commit": "pending-cleanup-commit",
+                    "durable_destinations": ["docs/reference/spec-lifecycle-runtime.md"],
+                    "verification_summary": "Validation passed.",
+                    "residual_risks": ["Reload required."],
+                }
+            )
+            (repo / "docs/history/spec-closure-log.md").write_text(closure_core.render_closure_log_entry(metadata), encoding="utf-8")
+            (repo / "docs/history/spec-archive-index.md").write_text(closure_core.render_archive_index_row(metadata), encoding="utf-8")
+
+            diagnostics = closure_core.validate_owned_closure_records(repo, metadata)
+
+        self.assertIn("030-mcp-first-runtime-migration", closure_core.render_closure_log_entry(metadata))
+        self.assertIn("docs/reference/spec-lifecycle-runtime.md", closure_core.render_archive_index_row(metadata))
+        self.assertEqual(["CLOSURE_RECORD_CLEANUP_COMMIT_PENDING"], [item.code for item in diagnostics])
+
+    def test_closure_apply_requires_write_intent_and_rejects_stale_plan(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            source = FIXTURE_DIR / "spec-closure-helper/spec-030-closure-scenario/before-cleanup"
+            shutil.copytree(source, repo, dirs_exist_ok=True)
+            spec = repo / "docs/specs/030-mcp-first-runtime-migration"
+            plan = spec_runtime.closure_plan(spec, repo_root=repo, final_spec_commit="de3aa4f")
+
+            missing_intent = spec_runtime.closure_apply(
+                spec,
+                repo_root=repo,
+                plan=plan,
+                action_id="render_records",
+                dry_run=False,
+                write_intent=False,
+            )
+            (repo / "docs/history/spec-closure-log.md").write_text("changed\n", encoding="utf-8")
+            stale = spec_runtime.closure_apply(
+                spec,
+                repo_root=repo,
+                plan=plan,
+                action_id="render_records",
+                dry_run=False,
+                write_intent=True,
+            )
+
+        self.assertEqual("rejected", missing_intent["status"])
+        self.assertIn("CLOSURE_WRITE_INTENT_MISSING", {item["code"] for item in missing_intent["diagnostics"]})
+        self.assertEqual("rejected", stale["status"])
+        self.assertIn("CLOSURE_PRECONDITION_HASH_MISMATCH", {item["code"] for item in stale["diagnostics"]})
+
+    def test_closure_apply_writes_bounded_records_and_resolve_replaces_cleanup_hash(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            source = FIXTURE_DIR / "spec-closure-helper/spec-030-closure-scenario/before-cleanup"
+            shutil.copytree(source, repo, dirs_exist_ok=True)
+            spec = repo / "docs/specs/030-mcp-first-runtime-migration"
+            plan = spec_runtime.closure_plan(spec, repo_root=repo, final_spec_commit="de3aa4f")
+
+            applied = spec_runtime.closure_apply(
+                spec,
+                repo_root=repo,
+                plan=plan,
+                action_id="render_records",
+                dry_run=False,
+                write_intent=True,
+            )
+            resolved = spec_runtime.closure_resolve(
+                repo,
+                spec_id="030-mcp-first-runtime-migration",
+                cleanup_commit="520d37d",
+                dry_run=False,
+                write_intent=True,
+            )
+            log_text = (repo / "docs/history/spec-closure-log.md").read_text(encoding="utf-8")
+            index_text = (repo / "docs/history/spec-archive-index.md").read_text(encoding="utf-8")
+
+        self.assertEqual("updated", applied["status"])
+        self.assertEqual("updated", resolved["status"])
+        self.assertIn("520d37d", log_text)
+        self.assertIn("520d37d", index_text)
+        self.assertNotIn("pending-cleanup-commit", log_text)
+        self.assertNotIn("pending-cleanup-commit", index_text)
+
+    def test_closure_apply_rejects_path_traversal_edit(self):
+        metadata = closure_core.parse_closure_metadata(
+            {
+                "spec_id": "030-mcp-first-runtime-migration",
+                "title": "MCP-first runtime migration",
+                "package_path": "docs/specs/030-mcp-first-runtime-migration",
+                "status": "removed",
+                "closure_action": "removed",
+                "final_spec_commit": "de3aa4f",
+                "cleanup_commit": "pending-cleanup-commit",
+                "verification_summary": "Validation passed.",
+            }
+        )
+        plan = closure_core.ClosurePlan(
+            plan_id="test",
+            generated_at="2026-07-05T00:00:00Z",
+            repo_root=".",
+            spec_path=metadata.package_path,
+            metadata=metadata,
+            steps=[],
+            actions=[closure_core.ClosureAction("bad", "render_records", "preview", True, ["bad_edit"])],
+            planned_edits=[
+                closure_core.PlannedEdit(
+                    "bad_edit",
+                    "../outside.md",
+                    "update",
+                    "bad",
+                    "bad",
+                    closure_core.FilePrecondition("../outside.md", False),
+                    "bad",
+                )
+            ],
+            validation_commands=[],
+            preconditions=[],
+        ).to_dict()
+
+        with tempfile.TemporaryDirectory() as tmp:
+            payload = spec_runtime.closure_apply(
+                Path(tmp) / "docs/specs/030-mcp-first-runtime-migration",
+                repo_root=Path(tmp),
+                plan=plan,
+                action_id="bad",
+                dry_run=False,
+                write_intent=True,
+            )
+
+        self.assertEqual("rejected", payload["status"])
+        self.assertIn("CLOSURE_EDIT_PATH_INVALID", {item["code"] for item in payload["diagnostics"]})
+
+    def test_closure_validation_plan_selects_package_runtime_and_history_checks(self):
+        commands = spec_runtime.closure_validation_plan(
+            ROOT,
+            [
+                "skills/spec-lifecycle-manager/scripts/lifecycle/closure.py",
+                "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/SKILL.md",
+                "docs/history/spec-archive-index.md",
+            ],
+            "cleanup",
+        )
+        command_text = [item.command for item in commands]
+
+        self.assertIn("PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py scan .", command_text)
+        self.assertIn("PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .", command_text)
+        self.assertIn("PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py sync-guard . --commits 5", command_text)
+        self.assertIn("git diff --check", command_text)
+
     def test_runtime_script_is_thin_shared_core_adapter(self):
         source = SCRIPT.read_text(encoding="utf-8")
         self.assertIn("from lifecycle.core import *", source)

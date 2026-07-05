@@ -42,7 +42,7 @@ T015 -> T016
 **Purpose**: Freeze the implementation contract and build fixtures before
 changing runtime behavior.
 
-- [ ] T001 Confirm task-stage readiness and implementation baseline.
+- [x] T001 Confirm task-stage readiness and implementation baseline.
   - Depends on: none
   - Requirements: Requirement 1, Requirement 2, Requirement 3, Requirement 4,
     Requirement 5, Requirement 6, Requirement 7, Requirement 8, Requirement 9,
@@ -60,9 +60,9 @@ changing runtime behavior.
   - Validation: `mcp__spec_lifecycle_manager.lint_spec_package`;
     `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py lint docs/specs/029-spec-closure-helper`.
   - Evidence mode: contract
-  - Evidence: Pending.
+  - Evidence: MCP task_context for T001/T002 returned no traceability gaps; mcp__spec_lifecycle_manager.lint_spec_package reported 0 diagnostics; spec_runtime.py lint docs/specs/029-spec-closure-helper reported 0 diagnostics; Agent Readiness Contract for phase 1 recorded in session update before edits.
 
-- [ ] T002 Build spec 030 closure fixtures and expected durable-record samples.
+- [x] T002 Build spec 030 closure fixtures and expected durable-record samples.
   - Depends on: T001
   - Requirements: Requirement 1, Requirement 3, Requirement 6, Requirement 7,
     Requirement 9, Requirement 10
@@ -76,14 +76,14 @@ changing runtime behavior.
   - Validation: Focused fixture/unit tests are present and fail before the
     implementation where practical.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Added tests/fixtures/spec-closure-helper/spec-030-closure-scenario with pre-cleanup, placeholder-cleanup-hash, and resolved-cleanup-hash samples; added focused fixture integrity tests in tests/runtime/test_spec_runtime.py; PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime.SpecRuntimeTests.test_spec_030_closure_fixture_contains_required_closure_sequence tests.runtime.test_spec_runtime.SpecRuntimeTests.test_spec_030_closure_fixture_separates_pending_and_resolved_cleanup_metadata passed.
 
 ## Phase 2: Shared Closure Core
 
 **Purpose**: Put all closure behavior behind one import-only implementation
 path before exposing MCP or runtime entrypoints.
 
-- [ ] T003 Implement closure data models, parsing, validation, and status/action
+- [x] T003 Implement closure data models, parsing, validation, and status/action
   mapping.
   - Depends on: T002
   - Requirements: Requirement 7, Requirement 8, Requirement 10
@@ -100,9 +100,9 @@ path before exposing MCP or runtime entrypoints.
     `retained_as_history` mappings plus invalid combinations and pending
     cleanup metadata.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Added lifecycle/closure.py data models and parsing for ClosureMetadata, ClosurePlan, ClosureAction, PlannedEdit, FilePrecondition, and ValidationCommand; focused metadata mapping test passed; python3 -m py_compile lifecycle/closure.py passed; full Python suite passed 196 tests.
 
-- [ ] T004 Implement closure planning orchestration.
+- [x] T004 Implement closure planning orchestration.
   - Depends on: T003
   - Requirements: Requirement 1, Requirement 2, Requirement 4, Requirement 7,
     Requirement 8
@@ -120,9 +120,9 @@ path before exposing MCP or runtime entrypoints.
     missing follow-up disposition, explicit `none` follow-ups, and dry-run
     default behavior.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Implemented closure_plan orchestration in lifecycle/closure.py with closure check, promotion plan, durable evidence, stable plan and action IDs, planned edits, file preconditions, and validation commands; focused closure_plan tests passed; full Python suite passed 196 tests.
 
-- [ ] T005 Implement final spec commit discovery and active-reference
+- [x] T005 Implement final spec commit discovery and active-reference
   classification.
   - Depends on: T003
   - Requirements: Requirement 3, Requirement 6
@@ -138,9 +138,9 @@ path before exposing MCP or runtime entrypoints.
     style history, multiple candidate commits, missing Git evidence, active
     backlog references, and historical archive references.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Implemented final spec commit candidate discovery and active-reference classification in lifecycle/closure.py; reference classifier tests cover active backlog references and historical closure-log references; full Python suite passed 196 tests.
 
-- [ ] T006 Implement closure-log/archive-index rendering and durable record
+- [x] T006 Implement closure-log/archive-index rendering and durable record
   ownership diagnostics.
   - Depends on: T004, T005
   - Requirements: Requirement 7, Requirement 9, Requirement 10
@@ -156,9 +156,9 @@ path before exposing MCP or runtime entrypoints.
     archive index, drift detection, pending cleanup placeholders, and cleanup
     hash resolution previews.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Implemented closure-log and archive-index rendering from ClosureMetadata plus owned-field drift diagnostics; rendering and cleanup-hash placeholder fixture tests passed; full Python suite passed 196 tests.
 
-- [ ] T007 Implement planned edit application and cleanup hash resolution.
+- [x] T007 Implement planned edit application and cleanup hash resolution.
   - Depends on: T006
   - Requirements: Requirement 3, Requirement 8, Requirement 9
   - Correctness: CP-004, CP-006, CP-007
@@ -174,9 +174,9 @@ path before exposing MCP or runtime entrypoints.
     path-traversal rejection, exact target scoping, pending cleanup hash
     replacement, and selected active-reference update behavior.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Implemented guarded planned edit application and cleanup-hash resolution with write_intent checks, path normalization, file preconditions, stale-plan rejection, bounded record writes, and cleanup-hash replacement; focused write guard tests passed; full Python suite passed 196 tests.
 
-- [ ] T008 Implement closure validation command planning.
+- [x] T008 Implement closure validation command planning.
   - Depends on: T007
   - Requirements: Requirement 5, Requirement 8, Requirement 9
   - Design: Validation Planning; Validation Strategy
@@ -191,7 +191,7 @@ path before exposing MCP or runtime entrypoints.
     lifecycle script changes, plugin bundle changes, and manual-only command
     classification.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Implemented closure validation command planning with MCP-preferred inventory, spec_runtime recovery commands, archive-index validation, git diff check, package-contract, sync-guard, runtime tests, and history fixture checks based on changed files; focused validation-plan test passed; full Python suite passed 196 tests.
 
 ## Phase 3: Public Interfaces
 
