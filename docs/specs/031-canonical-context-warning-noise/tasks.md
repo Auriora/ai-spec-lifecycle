@@ -53,7 +53,7 @@ T031 -> T032
 
 **Purpose**: Define the expected behavior before changing runtime logic.
 
-- [ ] T001 Add advisory metadata test for `CANONICAL_CONTEXT_MISSING`.
+- [x] T001 Add advisory metadata test for `CANONICAL_CONTEXT_MISSING`.
   - Depends on: none
   - Requirement: Requirement 1
   - Properties: CP-001
@@ -61,9 +61,9 @@ T031 -> T032
   - Acceptance: A runtime test asserts the diagnostic is warning-level,
     advisory, and non-blocking.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Added `test_canonical_context_missing_diagnostic_is_advisory_and_non_blocking`.
 
-- [ ] T002 Add import-plan advisory test.
+- [x] T002 Add import-plan advisory test.
   - Depends on: none
   - Requirement: Requirement 1, Requirement 2
   - Properties: CP-001
@@ -71,9 +71,9 @@ T031 -> T032
   - Acceptance: A runtime test asserts `import_plan` is present when useful but
     does not imply mandatory artifact creation.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Added `test_canonical_context_import_plan_remains_advisory`.
 
-- [ ] T003 Add small-spec no-backfill test.
+- [x] T003 Add small-spec no-backfill test.
   - Depends on: none
   - Requirement: Requirement 2
   - Properties: CP-001
@@ -81,9 +81,9 @@ T031 -> T032
   - Acceptance: A runtime test asserts a low-risk spec fixture proceeds without
     a separate `canonical-context.md`.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Added `test_low_risk_spec_does_not_require_canonical_context_backfill`; focused run covers the low-risk no-backfill fixture.
 
-- [ ] T004 Add promotion-only false-positive test.
+- [x] T004 Add promotion-only false-positive test.
   - Depends on: none
   - Requirement: Requirement 3
   - Properties: CP-003
@@ -91,9 +91,9 @@ T031 -> T032
   - Acceptance: A runtime test asserts promotion-only wording does not emit
     `imported-source-risk`.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Added `test_promotion_only_wording_does_not_emit_imported_source_risk`.
 
-- [ ] T005 Add closure/archive false-positive test.
+- [x] T005 Add closure/archive false-positive test.
   - Depends on: none
   - Requirement: Requirement 3
   - Properties: CP-002, CP-003
@@ -101,9 +101,9 @@ T031 -> T032
   - Acceptance: A runtime test asserts historical package reference wording does
     not produce artifact-add guidance.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Added `test_historical_package_reference_does_not_emit_artifact_add_guidance`; focused run covers historical package reference wording.
 
-- [ ] T006 Add imported/adapted source positive test.
+- [x] T006 Add imported/adapted source positive test.
   - Depends on: none
   - Requirement: Requirement 3
   - Properties: CP-004
@@ -111,9 +111,9 @@ T031 -> T032
   - Acceptance: A runtime test asserts copied, adapted, imported, or
     superseded source authority emits `imported-source-risk`.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Added `test_imported_or_adapted_source_authority_emits_imported_source_risk`; focused run covers imported/adapted positive detection.
 
-- [ ] T007 Add stale-doc positive test.
+- [x] T007 Add stale-doc positive test.
   - Depends on: none
   - Requirement: Requirement 3
   - Properties: CP-004
@@ -121,9 +121,9 @@ T031 -> T032
   - Acceptance: A runtime test asserts stale durable-doc authority emits
     `stale-doc-risk`.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Added `test_stale_durable_doc_authority_emits_stale_doc_risk`; focused run covers stale-doc positive detection.
 
-- [ ] T008 Add conflicting-authority positive test.
+- [x] T008 Add conflicting-authority positive test.
   - Depends on: none
   - Requirement: Requirement 3
   - Properties: CP-004
@@ -131,9 +131,9 @@ T031 -> T032
   - Acceptance: A runtime test asserts conflicting source-of-truth wording emits
     a canonical-context risk signal.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Added `test_conflicting_authority_wording_emits_canonical_context_signal`.
 
-- [ ] T009 Add ambiguous-authority review-confidence test.
+- [x] T009 Add ambiguous-authority review-confidence test.
   - Depends on: none
   - Requirement: Requirement 3
   - Properties: CP-001, CP-004
@@ -141,9 +141,9 @@ T031 -> T032
   - Acceptance: A runtime test asserts ambiguous authority wording is returned
     as review-confidence guidance rather than mandatory artifact creation.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Added `test_ambiguous_authority_wording_returns_review_confidence`.
 
-- [ ] T010 Add readiness packet advisory semantics test.
+- [x] T010 Add readiness packet advisory semantics test.
   - Depends on: none
   - Requirement: Requirement 5
   - Properties: CP-005
@@ -151,9 +151,9 @@ T031 -> T032
   - Acceptance: A runtime test asserts `agent_readiness_packet` exposes
     canonical-context diagnostics as advisory readiness guidance.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Added `test_agent_readiness_packet_exposes_canonical_context_as_advisory_guidance`.
 
-- [ ] T011 Add closure non-blocking test for missing optional context.
+- [x] T011 Add closure non-blocking test for missing optional context.
   - Depends on: none
   - Requirement: Requirement 5
   - Properties: CP-001, CP-005
@@ -161,9 +161,9 @@ T031 -> T032
   - Acceptance: A runtime test asserts `closure_check` does not block solely
     because optional `canonical-context.md` is absent.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Added `test_closure_check_does_not_block_on_missing_optional_canonical_context`; focused run covers closure non-blocking behavior.
 
-- [ ] T012 Add MCP diagnostic parity test.
+- [x] T012 Add MCP diagnostic parity test.
   - Depends on: none
   - Requirement: Requirement 5
   - Properties: CP-005
@@ -171,16 +171,16 @@ T031 -> T032
   - Acceptance: An MCP server test asserts `lint_spec_package` returns
     canonical-context diagnostic fields that match shared runtime semantics.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Added `test_lint_spec_package_returns_shared_canonical_context_diagnostic_shape`.
 
-- [ ] T013 Checkpoint - runtime test contract is ready.
+- [x] T013 Checkpoint - runtime test contract is ready.
   - Depends on: T001, T002, T003, T004, T005, T006, T007, T008, T009, T010, T011, T012
   - Files: `tests/runtime/test_spec_runtime.py`,
     `tests/runtime/test_spec_mcp_server.py`
   - Acceptance: Focused tests exist for every correctness property.
   - Validation: Run the focused tests or record current expected failures.
   - Evidence mode: validation
-  - Evidence: Pending.
+  - Evidence: `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime tests.runtime.test_spec_mcp_server` ran 165 tests and exercised the complete Phase 1 contract-test set.
 
 ## Phase 2: Shared Runtime Implementation
 

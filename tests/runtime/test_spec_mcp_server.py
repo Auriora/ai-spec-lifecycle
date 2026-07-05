@@ -102,6 +102,11 @@ def write_current_spec(repo: Path, relative: str = "docs/specs/001-current") -> 
     return spec
 
 
+def append_requirements_text(spec: Path, text: str) -> None:
+    requirements = spec / "requirements.md"
+    requirements.write_text(requirements.read_text(encoding="utf-8") + text, encoding="utf-8")
+
+
 def rpc(request_id, method, params=None):
     message = {"jsonrpc": "2.0", "id": request_id, "method": method}
     if params is not None:
@@ -572,6 +577,34 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertIn("coverage", stage)
         self.assertIn("available_next_actions", stage)
         self.assertIn("Requirement 1", {item["id"] for item in readiness["required_review"]["requirements"]})
+
+    def test_lint_spec_package_returns_shared_canonical_context_diagnostic_shape(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / ".git").mkdir()
+            spec = write_current_spec(repo)
+            append_requirements_text(
+                spec,
+                "\n\n## Stale Doc Risk\n\nLegacy docs may be non-canonical background sources.\n",
+            )
+            [response] = self.send(
+                rpc(
+                    1,
+                    "tools/call",
+                    {
+                        "name": "lint_spec_package",
+                        "arguments": {"repo_root": str(repo), "spec_path": "001-current"},
+                    },
+                ),
+                root=repo,
+            )
+
+        payload = response["result"]["structuredContent"]
+        diagnostic = next(item for item in payload["diagnostics"] if item["code"] == "CANONICAL_CONTEXT_MISSING")
+        self.assertEqual("warn", diagnostic["severity"])
+        self.assertTrue(diagnostic["advisory"])
+        self.assertFalse(diagnostic["blocking"])
+        self.assertIn("stale-doc-risk", diagnostic["signals"])
 
     def test_task_query_tools_return_structured_output(self):
         with tempfile.TemporaryDirectory() as tmp:

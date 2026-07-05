@@ -312,6 +312,11 @@ def write_complete_spec(repo: Path, status: str = "draft") -> Path:
     return spec
 
 
+def append_requirements_text(spec: Path, text: str) -> None:
+    requirements = spec / "requirements.md"
+    requirements.write_text(requirements.read_text(encoding="utf-8") + text, encoding="utf-8")
+
+
 def write_evidence_quality_spec(repo: Path) -> Path:
     spec = repo / "docs/specs/020-evidence-quality"
     spec.mkdir(parents=True)
@@ -1844,6 +1849,167 @@ class SpecRuntimeTests(unittest.TestCase):
         diagnostic = next(item for item in diagnostics if item["code"] == "CANONICAL_CONTEXT_MISSING")
         self.assertEqual("warn", diagnostic["severity"])
         self.assertTrue(diagnostic["import_plan"])
+
+    def test_canonical_context_missing_diagnostic_is_advisory_and_non_blocking(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+            append_requirements_text(
+                spec,
+                "\n\n## Stale Doc Risk\n\nLegacy docs may be non-canonical background sources.\n",
+            )
+
+            payload = spec_runtime.lint_spec_package(spec)
+
+        diagnostic = next(item for item in payload["diagnostics"] if item["code"] == "CANONICAL_CONTEXT_MISSING")
+        self.assertEqual("warn", diagnostic["severity"])
+        self.assertTrue(diagnostic["advisory"])
+        self.assertFalse(diagnostic["blocking"])
+
+    def test_canonical_context_import_plan_remains_advisory(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+            append_requirements_text(
+                spec,
+                "\n\n## Stale Doc Risk\n\nLegacy docs may be non-canonical background sources.\n",
+            )
+
+            payload = spec_runtime.lint_spec_package(spec)
+
+        diagnostic = next(item for item in payload["diagnostics"] if item["code"] == "CANONICAL_CONTEXT_MISSING")
+        self.assertTrue(diagnostic["import_plan"])
+        self.assertIn("recommendation", diagnostic)
+        self.assertIn("inspect", diagnostic["recommendation"].lower())
+        self.assertFalse(diagnostic["blocking"])
+
+    def test_low_risk_spec_does_not_require_canonical_context_backfill(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+
+            payload = spec_runtime.lint_spec_package(spec)
+
+        self.assertNotIn("CANONICAL_CONTEXT_MISSING", {item["code"] for item in payload["diagnostics"]})
+
+    def test_promotion_only_wording_does_not_emit_imported_source_risk(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+            append_requirements_text(
+                spec,
+                "\n\n## Promotion Notes\n\n"
+                "Durable documentation promotion target: `docs/reference/current.md`.\n"
+                "Closure should update the archive index and closure log.\n",
+            )
+
+            payload = spec_runtime.lint_spec_package(spec)
+
+        diagnostics = [item for item in payload["diagnostics"] if item["code"] == "CANONICAL_CONTEXT_MISSING"]
+        self.assertFalse(
+            any("imported-source-risk" in item.get("signals", []) for item in diagnostics),
+            diagnostics,
+        )
+
+    def test_historical_package_reference_does_not_emit_artifact_add_guidance(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+            append_requirements_text(
+                spec,
+                "\n\n## Historical References\n\n"
+                "Closed spec `docs/specs/027-spec-local-canonical-context/` was removed after closure.\n"
+                "Use the closure log and archive index as historical evidence only.\n",
+            )
+
+            payload = spec_runtime.lint_spec_package(spec)
+
+        diagnostics = [item for item in payload["diagnostics"] if item["code"] == "CANONICAL_CONTEXT_MISSING"]
+        self.assertFalse(any("canonical-context.md" in item.get("message", "") for item in diagnostics), diagnostics)
+
+    def test_imported_or_adapted_source_authority_emits_imported_source_risk(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+            append_requirements_text(
+                spec,
+                "\n\n## Imported Source\n\n"
+                "This spec adapts durable source `docs/reference/current.md` as implementation authority.\n",
+            )
+
+            payload = spec_runtime.lint_spec_package(spec)
+
+        diagnostic = next(item for item in payload["diagnostics"] if item["code"] == "CANONICAL_CONTEXT_MISSING")
+        self.assertIn("imported-source-risk", diagnostic["signals"])
+
+    def test_stale_durable_doc_authority_emits_stale_doc_risk(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+            append_requirements_text(
+                spec,
+                "\n\n## Stale Doc Risk\n\nLegacy docs may be outdated source-of-truth material.\n",
+            )
+
+            payload = spec_runtime.lint_spec_package(spec)
+
+        diagnostic = next(item for item in payload["diagnostics"] if item["code"] == "CANONICAL_CONTEXT_MISSING")
+        self.assertIn("stale-doc-risk", diagnostic["signals"])
+
+    def test_conflicting_authority_wording_emits_canonical_context_signal(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+            append_requirements_text(
+                spec,
+                "\n\n## Authority Conflict\n\n"
+                "`docs/reference/current.md` and `docs/reference/legacy.md` make conflicting source-of-truth claims.\n",
+            )
+
+            payload = spec_runtime.lint_spec_package(spec)
+
+        diagnostic = next(item for item in payload["diagnostics"] if item["code"] == "CANONICAL_CONTEXT_MISSING")
+        self.assertTrue({"stale-doc-risk", "authority-conflict-risk", "authority-review"} & set(diagnostic["signals"]))
+
+    def test_ambiguous_authority_wording_returns_review_confidence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+            append_requirements_text(
+                spec,
+                "\n\n## Authority Notes\n\n"
+                "Several documents may be authoritative, but the source path is not yet confirmed.\n",
+            )
+
+            payload = spec_runtime.lint_spec_package(spec)
+
+        diagnostic = next(item for item in payload["diagnostics"] if item["code"] == "CANONICAL_CONTEXT_MISSING")
+        self.assertEqual("review", diagnostic["confidence"])
+        self.assertIn("authority-review", diagnostic["signals"])
+        self.assertFalse(diagnostic["blocking"])
+
+    def test_agent_readiness_packet_exposes_canonical_context_as_advisory_guidance(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+            append_requirements_text(
+                spec,
+                "\n\n## Stale Doc Risk\n\nLegacy docs may be non-canonical background sources.\n",
+            )
+
+            payload = spec_runtime.agent_readiness_packet(spec, "T001")
+
+        diagnostic = next(
+            item
+            for item in payload["canonical_context"]["diagnostics"]
+            if item["code"] == "CANONICAL_CONTEXT_MISSING"
+        )
+        self.assertEqual("ready", payload["status"])
+        self.assertTrue(diagnostic["advisory"])
+        self.assertFalse(diagnostic["blocking"])
+
+    def test_closure_check_does_not_block_on_missing_optional_canonical_context(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+            append_requirements_text(
+                spec,
+                "\n\n## Stale Doc Risk\n\nLegacy docs may be non-canonical background sources.\n",
+            )
+
+            payload = spec_runtime.closure_check(spec)
+
+        self.assertTrue(payload["ready"])
+        self.assertNotIn("CANONICAL_CONTEXT_MISSING", {item["code"] for item in payload["blockers"]})
 
     def test_stage_readiness_returns_canonical_context_import_plan_for_stale_doc_risk(self):
         with tempfile.TemporaryDirectory() as tmp:
