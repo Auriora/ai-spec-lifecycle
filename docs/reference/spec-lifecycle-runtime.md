@@ -3,7 +3,7 @@ title: Spec lifecycle runtime
 doc_type: reference
 status: active
 owner: platform
-last_reviewed: 2026-06-13
+last_reviewed: 2026-07-05
 ---
 
 # Spec Lifecycle Runtime
@@ -17,18 +17,21 @@ Current implementation:
 
 ```text
 skills/spec-lifecycle-manager/scripts/spec_runtime.py
-skills/spec-lifecycle-manager/scripts/traceability_lookup.py
 skills/spec-lifecycle-manager/scripts/spec_mcp_server.py
 skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py
 skills/spec-lifecycle-manager/scripts/spec_agent_schemas.py
+skills/spec-lifecycle-manager/scripts/lifecycle/
 skills/spec-lifecycle-manager/prompts/
 ```
 
-The Python scripts are the tested implementation and CLI validation surface.
-For Codex sessions with the MCP server configured, the MCP tools are the
-preferred agent-facing interface. Shell out to the scripts only for CI,
-repository validation, MCP debugging, or explicit recovery when MCP tools are
-not available.
+The retained Python scripts are the tested implementation, validation, package,
+hook, and recovery surface. Shared lifecycle logic lives under
+`skills/spec-lifecycle-manager/scripts/lifecycle/`; it is imported by MCP and
+retained runtime adapters but is not a competing public command surface. For
+Codex sessions with the MCP server configured, MCP tools are the preferred
+agent-facing interface. Shell out to scripts only for CI, repository
+validation, MCP debugging, install/package checks, hook execution, or explicit
+recovery when MCP tools are not available.
 
 ## Developer CLI Convenience Wrapper
 
@@ -124,11 +127,11 @@ only as validation, CI, runtime debugging, or no-MCP recovery surfaces.
 
 ### MCP Tools
 
-The server exposes tools that delegate to the existing runtime. Most tools are
-read-only. `set_task_state` is the only write-capable task tool and is
-preview-first: it defaults to dry-run, requires explicit `write_intent` when
-`dry_run` is false, and is limited to the selected active spec package
-`tasks.md` task block.
+The server exposes read-only lifecycle tools backed by shared runtime
+internals. Most tools are read-only. `set_task_state` is the only write-capable
+task tool and is preview-first: it defaults to dry-run, requires explicit
+`write_intent` when `dry_run` is false, and is limited to the selected active
+spec package `tasks.md` task block.
 
 - `scan_specs`
 - `active_spec_preflight`
@@ -571,15 +574,41 @@ npx @auriora/ai-spec-lifecycle install
 
 ## Traceability Lookup
 
-`traceability_lookup.py` resolves a task, requirement, or design section through
-`traceability.md` and verifies referenced artifacts where possible. It is the
-first deterministic guardrail against implementing from `tasks.md` alone.
+The MCP `traceability_lookup` tool resolves a task, requirement, or design
+section through `traceability.md` and verifies referenced artifacts where
+possible. It is the first deterministic guardrail against implementing from
+`tasks.md` alone.
 
-Example:
+The public tool owner is MCP. The implementation lives in
+`skills/spec-lifecycle-manager/scripts/lifecycle/traceability.py` and is used
+by MCP tool handlers and retained validation/recovery code. There is no
+replacement public CLI command for the retired traceability executable.
 
-```bash
-skills/spec-lifecycle-manager/scripts/traceability_lookup.py docs/specs/013-example-active-spec --task T010 --format text
-```
+Inputs:
+
+- `repo_root`: optional repository root.
+- `spec_path`: active spec package ID or path.
+- one of `task_id`, `requirement`, or `design`.
+
+Output:
+
+- `spec_path`
+- `lookup`
+- `traceability_row`
+- `task`, when looking up a task
+- `requirements`, when referenced requirements are found
+- `acceptance_criteria`
+- `design_sections`
+- `change_impact`
+- `verification`
+- `durable_targets`
+- `open_decisions`
+- `gaps`
+
+If MCP is unavailable, run retained `spec_runtime.py` validation commands such
+as `lint`, `next-task`, and `closure-check`, then read `traceability.md` and
+linked source artifacts directly. Do not call a separate traceability lookup
+script.
 
 ## Prompt Definitions
 

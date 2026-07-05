@@ -3,7 +3,7 @@ title: Spec lifecycle manager plugin install
 doc_type: reference
 status: active
 owner: platform
-last_reviewed: 2026-06-11
+last_reviewed: 2026-07-05
 copyright: Copyright 2026 Auriora
 license: GPL-3.0-or-later
 ---
@@ -416,6 +416,7 @@ Use this checklist in this repository after install, sync, or reload:
 | Prompt definitions validate | `prompts_validate` returns no diagnostics. |
 | Package tools resolve live specs | `closure_check`, `task_context`, or `traceability_lookup` work when an active spec exists. |
 | Sync guard is reviewed | In this repository, `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py sync-guard .` reports source/bundle parity, installed cache state, reload advisory, and recent commit evidence. |
+| Retired migrated scripts are absent | `sync-guard` and `closure_check` report no migrated-script drift for source, bundled plugin copies, or installed cache. |
 | Package contract validates | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .` returns no diagnostics for npm contract metadata, required package files, source/bundle parity, and provenance. |
 | npm tarball contains payload | `npm pack --dry-run --json` includes `package.json`, the npm installer bin, npm package contract, existing installer script, and plugin bundle. |
 | Claude plugin validates | Package tests confirm the Claude manifest, MCP config, hook config, skill, and runtime script are bundled under `plugins/spec-lifecycle-manager/claude-plugin/`. |

@@ -168,22 +168,22 @@ T013 -> T014
 
 **Purpose**: Promote accepted behavior and prove source/bundle/cache consistency.
 
-- [ ] T013 Update durable docs and skill guidance.
+- [x] T013 Update durable docs and skill guidance.
   - Depends on: T012
   - Requirement: Requirement 1, Requirement 5, Requirement 6, Requirement 8, Requirement 9
   - Files: `docs/reference/spec-lifecycle-runtime.md`, `docs/reference/spec-lifecycle-manager-mcp-install.md`, `skills/spec-lifecycle-manager/SKILL.md`, bundled plugin copies
   - Acceptance: Durable docs present MCP as the public lifecycle tool interface, document retained runtime/CLI boundaries, remove references to `traceability_lookup.py` as a public executable helper, and explain validation/recovery surfaces without duplicate tool ownership.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Completed 2026-07-05. Updated `docs/reference/spec-lifecycle-runtime.md` to document MCP as the public traceability owner, shared `lifecycle/traceability.py` as the internal implementation, and retained scripts as validation/package/hook/recovery surfaces only. Updated install validation guidance to require migrated-script absence after install refresh; skill guidance already directs agents away from a separate traceability lookup script.
 
-- [ ] T014 Checkpoint - validation, install refresh, and closure evidence.
+- [x] T014 Checkpoint - validation, install refresh, and closure evidence.
   - Depends on: T013
   - Requirement: Requirement 6, Requirement 7, Requirement 8
   - Files: `docs/specs/030-mcp-first-runtime-migration/verification.md`, package and bundle paths
   - Acceptance: Focused tests, full unit tests, package contract, install refresh, sync guard, scan, archive index, and whitespace checks pass or have recorded residual risk; verification evidence records compatibility matrix outcome, migrated-script removal, retained recovery boundaries, and package parity.
   - Validation: `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'`; `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .`; `scripts/install-spec-lifecycle-manager-package.sh`; `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py sync-guard .`; `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py scan .`; `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py archive-index .`; `git diff --check`
   - Evidence mode: validation
-  - Evidence: Pending.
+  - Evidence: Completed 2026-07-05. Full unit tests, package contract, archive index, whitespace check, install refresh, sync guard, and explicit installed-cache absence checks passed. `sync-guard .` reports source, Codex bundle, Claude bundle, and installed cache parity with no findings.
 
 ## Execution Rules
 

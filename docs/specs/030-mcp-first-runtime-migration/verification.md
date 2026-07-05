@@ -150,6 +150,8 @@ spec.
 | T010 | complete | Moved traceability lookup implementation into `lifecycle/traceability.py`; MCP `task_context` and `traceability_lookup` now use the shared internal module; traceability tests no longer execute `traceability_lookup.py`. | Durable runtime docs are updated in T013. |
 | T011 | complete | Added migrated-script closure blockers for source, bundle, and known installed-cache paths through shared migration internals and `closure_check`; regression tests cover source and installed-cache blockers. | Installed-cache cleanup still requires install refresh and `sync-guard` in T014. |
 | T012 | complete | Removed the migrated executable from source, Codex bundle, and Claude bundle paths; package required paths no longer require it; package contract reports 56 files per source/bundle skill copy. | Installed cache may remain stale until T014. |
+| T013 | complete | Updated durable runtime and install docs so MCP is the public traceability owner, retained scripts are validation/package/hook/recovery surfaces, and migrated-script absence is part of install validation. | Live MCP process reload still requires a new agent/session after install refresh. |
+| T014 | complete | Ran full validation, package contract, install refresh, sync guard, archive index, scan, closure check, and whitespace checks; installed cache is in sync and the retired executable is absent. | None for this spec's acceptance criteria. |
 
 ## Evidence Log
 
@@ -182,6 +184,20 @@ spec.
 | 2026-07-05 | `git diff --check` | pass | No whitespace errors after trimming moved traceability module EOF. |
 | 2026-07-05 | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py closure-check docs/specs/030-mcp-first-runtime-migration` | blocked as expected | T013 and T014 remain incomplete; installed cache still contains the deleted script until install refresh. |
 | 2026-07-05 | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py sync-guard .` | warn as expected | Source skill, Codex bundle, and Claude bundle are in sync; installed cache drift remains for T014 install refresh. |
+| 2026-07-05 | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py lint docs/specs/030-mcp-first-runtime-migration` | pass | Spec package lint has zero diagnostics before T013/T014 closure evidence. |
+| 2026-07-05 | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py next-task docs/specs/030-mcp-first-runtime-migration` | pass | T013 was selected with no traceability gaps after fixing the verification anchor. |
+| 2026-07-05 | `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'` | pass | 182 Python tests passed during T014 validation. |
+| 2026-07-05 | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .` | pass | Package contract passes with source skill, Codex bundle, and Claude bundle parity at 56 files each. |
+| 2026-07-05 | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py archive-index .` | pass | Archive index has zero diagnostics. |
+| 2026-07-05 | `git diff --check` | pass | No whitespace errors during T014 validation. |
+| 2026-07-05 | `scripts/install-spec-lifecycle-manager-package.sh` | pass | Installed plugin root refreshed at `/home/bcherrington/.codex/plugins/cache/auriora-local/spec-lifecycle-manager/0.2.1`. |
+| 2026-07-05 | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py sync-guard .` | pass | Source skill, bundled plugin, Claude plugin copy, and installed cache are in sync; no findings. |
+| 2026-07-05 | Installed-cache absence check for retired traceability executable paths | pass | Neither Codex nor Claude installed-cache `traceability_lookup.py` path exists after install refresh. |
+| 2026-07-05 | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py scan .` | pass | 2 active specs, both pass after T013/T014 evidence updates. |
+| 2026-07-05 | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py closure-check docs/specs/030-mcp-first-runtime-migration` | pass | Closure readiness is true with zero blockers. |
+| 2026-07-05 | MCP `closure_check` for `030-mcp-first-runtime-migration` | pass | MCP reports ready with zero blockers after install refresh and task evidence updates. |
+| 2026-07-05 | MCP `active_spec_preflight` for `030-mcp-first-runtime-migration` | pass | MCP reports 23 complete and verified tasks, no runnable incomplete task, and no deleted traceability script recovery command. |
+| 2026-07-05 | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .` | pass | Package contract remains clean after durable-doc updates. |
 
 ## Manual Or External Verification
 
@@ -197,37 +213,36 @@ records stronger observed client evidence.
 - Live Claude MCP refresh behavior was not observed in this Codex run.
 - Live client refresh behavior for `notifications/tools/list_changed` was not
   observable from the current session.
-- Runtime docs still contain public script references until T013.
-- Installed plugin cache may still contain the deleted script until T014 runs
-  the install refresh and `sync-guard`.
+- A currently running MCP server process may still need a session reload to use
+  the refreshed installed cache, even though `sync-guard` reports clean parity.
 
 ## Durable Promotion And Cleanup
 
 | Spec content | Durable destination or deferral | Status | Evidence |
 |--------------|---------------------------------|--------|----------|
-| MCP-first public tool ownership | `docs/reference/spec-lifecycle-runtime.md`; MCP install docs if needed | deferred | T013 |
-| Compatibility matrix and stable fallback decision | `docs/reference/spec-lifecycle-runtime.md` or durable MCP behavior docs | deferred | T013 |
-| Script migration inventory and replacement contract | Runtime docs and closure evidence | deferred | T013-T014 |
-| Traceability executable removal | Source, bundle, installed cache, closure evidence | partial | Source and bundle removal complete in T010-T012; installed-cache validation deferred to T014 |
-| Shared lifecycle module architecture | Source skill, bundled plugin copies, tests, runtime docs | partial | T004-T005 complete; durable docs deferred to T013 |
-| MCP tool contracts and stable next actions | MCP server, schema helper, tests, runtime docs | partial | T006-T009 complete; durable docs deferred to T013 |
+| MCP-first public tool ownership | `docs/reference/spec-lifecycle-runtime.md`; `docs/reference/spec-lifecycle-manager-mcp-install.md`; skill guidance | complete | T013 |
+| Compatibility matrix and stable fallback decision | Spec-local compatibility matrix; runtime docs describe MCP-first with stable direct recovery surfaces | complete | T002; T013 |
+| Script migration inventory and replacement contract | Runtime docs and closure evidence | complete | T003; T010-T014 |
+| Traceability executable removal | Source, bundle, installed cache, closure evidence | complete | T010-T014 |
+| Shared lifecycle module architecture | Source skill, bundled plugin copies, tests, runtime docs | complete | T004-T005; T013 |
+| MCP tool contracts and stable next actions | MCP server, schema helper, tests, runtime docs | complete | T006-T009; T013-T014 |
 
 ### Spec Cleanup Decision
 
-- **Cleanup action:** keep active
-- **Reason:** Phase 1 planning contracts, Phase 2 shared modules, Phase 3 MCP contracts, and Phase 4 source/bundle script migration are complete; durable docs, install refresh, and closure readiness remain.
+- **Cleanup action:** ready to close
+- **Reason:** Planning contracts, shared modules, MCP contracts, source/bundle script migration, durable docs, install refresh, and closure validation are complete.
 - **Final spec commit:** pending
 - **Closure log path:** `docs/history/spec-closure-log.md`
 - **Closure log entry updated:** no
 - **Closure cleanup commit:** pending
 - **Active indexes updated:** no
 - **Durable docs linked back to evidence where useful:** no
-- **Residual spec-only content:** compatibility and migration planning evidence
-  remains spec-local until T013 promotion.
+- **Residual spec-only content:** none blocking; compatibility and migration
+  planning evidence remains historical spec-local evidence.
 
 ## Ship Or Closure Risk
 
-- **Risk level:** medium
+- **Risk level:** low
 - **Breaking change:** yes, once `traceability_lookup.py` is removed
 - **Blast radius checked:** partial
 - **Rollback path:** not required for Phase 1; implementation rollback to be
