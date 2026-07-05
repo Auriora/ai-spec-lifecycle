@@ -652,12 +652,15 @@ python3 plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/spe
 ```
 
 The MCP server exposes shared lifecycle internals as resources, tools, and
-prompts. Most tools are read-only. `set_task_state` is the narrow write-capable
-exception: it is preview-first, limited to one selected task block in an active
-spec package `tasks.md`, and requires explicit write intent for mutation. Do
-not expect the MCP server to create specs, edit durable docs, archive packages,
-remove files, or commit. Use the Skill for lifecycle judgment and the MCP
-server, when visible, for structured context and deterministic checks.
+prompts. Most tools are read-only. Write-capable tools are narrow,
+preview-first exceptions: `set_task_state` is limited to one selected task block
+in an active spec package `tasks.md`, while `closure_apply` and
+`closure_resolve` are limited to previewed closure-record, package-cleanup, and
+cleanup-hash resolution actions. These tools default to dry-run and require
+explicit write intent for mutation. Do not expect the MCP server to create
+specs, approve durable promotion, accept residual risk, make final closure
+decisions, or commit. Use the Skill for lifecycle judgment and the MCP server,
+when visible, for structured context and deterministic checks.
 
 When this skill's `scripts/codex_spec_lifecycle_hook.py` helper is installed
 as a Codex `PostToolUse` hook, it provides advisory checks for changed spec

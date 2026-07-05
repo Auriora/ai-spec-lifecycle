@@ -253,7 +253,7 @@ recovery second, without duplicating closure logic.
 **Purpose**: Keep agent-facing instructions, runtime reference docs, and plugin
 copies consistent with the new write-capable MCP closure exception.
 
-- [ ] T012 Update durable MCP/write-boundary documentation.
+- [x] T012 Update durable MCP/write-boundary documentation.
   - Depends on: T011
   - Requirements: Requirement 5, Requirement 8, Requirement 10
   - Design: Components and Changes; Migration and Compatibility; Operational
@@ -269,9 +269,9 @@ copies consistent with the new write-capable MCP closure exception.
   - Validation: `rg` confirms stale "only write-capable" and "MCP never edits
     durable docs/removes files" wording is updated or qualified.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Updated SKILL.md, spec-lifecycle-runtime.md, and spec-lifecycle-management.md to document closure_apply and closure_resolve as narrow preview-first write-capable exceptions; lifecycle judgment, durable-promotion approval, final closure approval, residual-risk acceptance, and commits remain outside MCP automation; stale wording rg check returned no matches.
 
-- [ ] T013 Sync plugin bundles and package surfaces.
+- [x] T013 Sync plugin bundles and package surfaces.
   - Depends on: T014
   - Requirements: Requirement 5, Requirement 8, Requirement 10
   - Design: Components and Changes; Operational Considerations
@@ -284,14 +284,14 @@ copies consistent with the new write-capable MCP closure exception.
   - Validation: `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py sync-guard . --commits 5`;
     `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .`.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Synced updated SKILL.md into Codex and Claude plugin skill copies; package-contract passed with source bundle and source Claude parity in_sync; sync-guard confirmed source-to-bundle parity and reported only installed cache refresh advisory outside source package surfaces.
 
 ## Phase 5: End-To-End Validation And Review
 
 **Purpose**: Prove the helper reduces closure toil without weakening closure
 judgment, durable promotion, or recovery evidence.
 
-- [ ] T014 Add end-to-end dry-run coverage using the spec 030 closure scenario.
+- [x] T014 Add end-to-end dry-run coverage using the spec 030 closure scenario.
   - Depends on: T012
   - Requirements: Requirement 1, Requirement 3, Requirement 4, Requirement 6,
     Requirement 7, Requirement 9, Requirement 10
@@ -306,7 +306,7 @@ judgment, durable promotion, or recovery evidence.
     mutating real repository history.
   - Validation: Focused end-to-end runtime/MCP tests pass.
   - Evidence mode: validation
-  - Evidence: Pending.
+  - Evidence: Focused end-to-end runtime/MCP closure tests passed: plan preview, cleanup preview, cleanup placeholder metadata, active-reference classification, cleanup-hash resolution, and validation command planning for the spec 030 closure fixture.
 
 - [ ] T015 Run full package validation and record evidence.
   - Depends on: T013
