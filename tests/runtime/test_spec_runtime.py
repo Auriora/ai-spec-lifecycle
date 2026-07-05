@@ -117,6 +117,9 @@ def write_sync_guard_repo(repo: Path, codex_home: Path, include_cache: bool = Tr
     (bundled / ".mcp.json").write_text('{"mcpServers": {}}\n', encoding="utf-8")
     (bundled / "hooks").mkdir()
     (bundled / "hooks/hooks.json").write_text('{"hooks": {}}\n', encoding="utf-8")
+    (bundled / "claude-plugin/.mcp.json").write_text('{"mcpServers": {}}\n', encoding="utf-8")
+    (bundled / "claude-plugin/hooks").mkdir()
+    (bundled / "claude-plugin/hooks/hooks.json").write_text('{"hooks": {}}\n', encoding="utf-8")
     if include_cache:
         cache = codex_home / "plugins/cache/auriora-local/spec-lifecycle-manager/0.1.0+test"
         shutil.copytree(bundled, cache, dirs_exist_ok=True)
@@ -610,6 +613,31 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertEqual("in_sync", payload["bundle_cache_parity"]["status"])
         self.assertEqual("ok", payload["commit_evidence"]["status"])
         self.assertEqual(0, payload["summary"]["error"])
+
+    def test_sync_guard_allows_installer_normalized_cache_config(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            codex_home = Path(tmp) / "codex"
+            repo.mkdir()
+            write_sync_guard_repo(repo, codex_home)
+            cache = codex_home / "plugins/cache/auriora-local/spec-lifecycle-manager/0.1.0+test"
+            for relative in spec_runtime.INSTALLER_NORMALIZED_CACHE_PATHS:
+                path = cache / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text('{"installed": true}\n', encoding="utf-8")
+            run_git(repo, "init")
+            commit_all(repo, "initial package")
+
+            payload = spec_runtime.sync_guard(repo, codex_home, commit_count=1)
+
+        self.assertEqual("in_sync", payload["bundle_cache_parity"]["status"])
+        self.assertEqual([], payload["bundle_cache_parity"]["content_differences"])
+        self.assertEqual(
+            sorted(spec_runtime.INSTALLER_NORMALIZED_CACHE_PATHS),
+            payload["bundle_cache_parity"]["allowed_content_differences"],
+        )
+        self.assertFalse(any(item["code"] == "BUNDLE_CACHE_DRIFT" for item in payload["findings"]))
+        self.assertEqual("not_required_by_guard", payload["reload_advisory"]["status"])
 
     def test_sync_guard_is_not_applicable_outside_package_repo(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1991,9 +2019,101 @@ class SpecRuntimeTests(unittest.TestCase):
             "removed packages as historical evidence only",
             "Never report ready to implement while blocking open questions",
             "durable destinations, unresolved spec-only content, validation evidence, closure blockers",
+            "Wizard mode is the default",
+            "scaffold all artifacts",
+            "tasks.md with traceability.md",
+            "open-decisions.md is optional",
         ):
             with self.subTest(expected=expected):
                 self.assertIn(expected, text)
+
+    def test_lint_spec_package_defaults_to_wizard_stage_for_partial_requirements(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            spec = repo / "docs/specs/001-wizard"
+            spec.mkdir(parents=True)
+            (spec / "requirements.md").write_text(
+                "\n".join(
+                    [
+                        "---",
+                        "title: Wizard requirements",
+                        "doc_type: spec",
+                        "artifact_type: requirements",
+                        "status: draft",
+                        "owner: platform",
+                        "last_reviewed: 2026-07-05",
+                        "---",
+                        "",
+                        "# Requirements",
+                        "",
+                        "## Durable Source Baseline",
+                        "",
+                        "- `docs/backlog/README.md`",
+                        "",
+                        "## Goals",
+                        "",
+                        "- Guide one stage at a time.",
+                        "",
+                        "## Non-Goals",
+                        "",
+                        "- Full-package scaffolding unless requested.",
+                        "",
+                        "## Requirements",
+                        "",
+                        "### Requirement 1: Staged Authoring",
+                        "",
+                        "**User Story:** As an agent, I want staged artifact creation, so that the user can review each step.",
+                        "",
+                        "#### Acceptance Criteria",
+                        "",
+                        "1. GIVEN a partial requirements-stage package, WHEN lint runs, THEN THE SYSTEM SHALL not require downstream design or task artifacts.",
+                        "",
+                        "## Correctness Properties",
+                        "",
+                        "- CP-001: Wizard-stage lint does not demand downstream artifacts.",
+                        "",
+                        "## Success Criteria",
+                        "",
+                        "- Requirements-stage lint passes without full-package missing-artifact errors.",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            wizard_payload = spec_runtime.lint_spec_package(spec)
+            full_payload = spec_runtime.lint_spec_package(spec, mode="full")
+
+        wizard_codes = {item["code"] for item in wizard_payload["diagnostics"]}
+        full_missing = {
+            Path(item["path"]).name
+            for item in full_payload["diagnostics"]
+            if item["code"] == "CORE_ARTIFACT_MISSING"
+        }
+        self.assertEqual("wizard", wizard_payload["authoring_mode"])
+        self.assertEqual("requirements", wizard_payload["lifecycle_stage"])
+        self.assertNotIn("CORE_ARTIFACT_MISSING", wizard_codes)
+        self.assertNotIn("WIZARD_STAGE_ARTIFACT_MISSING", wizard_codes)
+        self.assertIn("design.md", full_missing)
+        self.assertIn("tasks.md", full_missing)
+
+    def test_lint_spec_package_requires_traceability_for_tasks_stage(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            spec = write_complete_spec(repo)
+            (spec / "traceability.md").unlink()
+            (spec / "verification.md").unlink()
+
+            payload = spec_runtime.lint_spec_package(spec)
+
+        missing = {
+            Path(item["path"]).name
+            for item in payload["diagnostics"]
+            if item["code"] == "WIZARD_STAGE_ARTIFACT_MISSING"
+        }
+        self.assertEqual("wizard", payload["authoring_mode"])
+        self.assertEqual("tasks", payload["lifecycle_stage"])
+        self.assertIn("traceability.md", missing)
+        self.assertNotIn("verification.md", missing)
 
     def test_spec_authoring_context_recommends_next_artifact(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -2014,6 +2134,40 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertEqual(["requirements.md"], context["changed_artifacts"])
         self.assertEqual("design.md", context["next_authoring_step"]["artifact"])
         self.assertEqual([], context["downstream_review"])
+
+    def test_spec_authoring_context_warns_on_wizard_batch_artifacts(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / ".git").mkdir()
+            spec = repo / "docs/specs/001-new"
+            spec.mkdir(parents=True)
+            for artifact in ["requirements.md", "design.md", "tasks.md", "traceability.md"]:
+                (spec / artifact).write_text(f"# {artifact}\n", encoding="utf-8")
+
+            batch_payload = spec_runtime.spec_authoring_context(
+                repo,
+                [
+                    "docs/specs/001-new/requirements.md",
+                    "docs/specs/001-new/design.md",
+                    "docs/specs/001-new/tasks.md",
+                ],
+                "spec-file-changed",
+            )
+            pair_payload = spec_runtime.spec_authoring_context(
+                repo,
+                [
+                    "docs/specs/001-new/tasks.md",
+                    "docs/specs/001-new/traceability.md",
+                ],
+                "spec-file-changed",
+            )
+
+        batch_codes = {item["code"] for item in batch_payload["diagnostics"]}
+        pair_codes = {item["code"] for item in pair_payload["diagnostics"]}
+        warning = next(item for item in batch_payload["diagnostics"] if item["code"] == "WIZARD_BATCH_ARTIFACT_CREATION")
+        self.assertIn("WIZARD_BATCH_ARTIFACT_CREATION", batch_codes)
+        self.assertEqual(["requirements", "design", "tasks"], warning["stages"])
+        self.assertNotIn("WIZARD_BATCH_ARTIFACT_CREATION", pair_codes)
 
     def test_spec_authoring_context_reports_downstream_review_for_revision(self):
         with tempfile.TemporaryDirectory() as tmp:

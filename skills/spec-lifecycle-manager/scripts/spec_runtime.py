@@ -57,6 +57,42 @@ AUTHORING_PREREQUISITES = {
     "traceability.md": ["requirements.md", "design.md", "tasks.md"],
     "verification.md": ["requirements.md", "design.md", "tasks.md"],
 }
+WIZARD_STAGE_ORDER = [
+    "discover",
+    "bootstrap",
+    "requirements",
+    "design",
+    "tasks",
+    "agent_ready",
+    "implement",
+    "verify",
+    "promote",
+    "close",
+]
+WIZARD_STAGE_REQUIRED_ARTIFACTS = {
+    "discover": [],
+    "bootstrap": [],
+    "requirements": ["requirements.md"],
+    "design": ["requirements.md", "design.md"],
+    "tasks": ["requirements.md", "design.md", "tasks.md", "traceability.md"],
+    "agent_ready": ["requirements.md", "design.md", "tasks.md", "traceability.md", "verification.md"],
+    "implement": ["requirements.md", "design.md", "tasks.md", "traceability.md", "verification.md"],
+    "verify": ["requirements.md", "design.md", "tasks.md", "traceability.md", "verification.md"],
+    "promote": ["requirements.md", "design.md", "tasks.md", "traceability.md", "verification.md"],
+    "close": ["requirements.md", "design.md", "tasks.md", "traceability.md", "verification.md"],
+}
+WIZARD_STAGE_OPTIONAL_ARTIFACTS = {
+    "discover": ["canonical-context.md", "research.md"],
+    "bootstrap": ["canonical-context.md"],
+    "requirements": ["change-impact.md", "canonical-context.md", "research.md"],
+    "design": ["change-impact.md", "canonical-context.md", "open-decisions.md", "research.md"],
+    "tasks": ["change-impact.md", "canonical-context.md", "open-decisions.md"],
+    "agent_ready": ["change-impact.md", "canonical-context.md", "open-decisions.md", "verification.md"],
+    "implement": ["change-impact.md", "canonical-context.md", "open-decisions.md", "verification.md", "quickstart.md"],
+    "verify": ["change-impact.md", "canonical-context.md", "open-decisions.md", "verification.md", "quickstart.md"],
+    "promote": ["change-impact.md", "canonical-context.md", "open-decisions.md", "verification.md", "quickstart.md"],
+    "close": ["change-impact.md", "canonical-context.md", "open-decisions.md", "verification.md", "quickstart.md"],
+}
 ARCHIVED_STATUSES = {"archived", "closed", "superseded"}
 REQUIRED_PROMPTS = ["reconcile-spec", "choose-next-task", "task-context", "lint-spec", "developer-start"]
 REVIEW_PACKET_TYPES = {
@@ -252,6 +288,45 @@ def parse_frontmatter(text: str) -> dict[str, str]:
         key, value = line.split(":", 1)
         data[key.strip()] = value.strip().strip('"').strip("'")
     return data
+
+
+def spec_frontmatter_values(spec_path: Path) -> dict[str, str]:
+    values: dict[str, str] = {}
+    for artifact in SPEC_ARTIFACTS:
+        path = spec_path / artifact
+        if not path.exists():
+            continue
+        for key, value in parse_frontmatter(read_text(path)).items():
+            if key not in values and value:
+                values[key] = value
+    return values
+
+
+def infer_wizard_stage(inventory: dict[str, str], frontmatter: dict[str, str]) -> str:
+    explicit = (frontmatter.get("lifecycle_stage") or frontmatter.get("wizard_stage") or "").strip().lower().replace("-", "_")
+    if explicit in WIZARD_STAGE_REQUIRED_ARTIFACTS:
+        return explicit
+    if inventory.get("verification.md") == "present":
+        return "verify"
+    if inventory.get("tasks.md") == "present" or inventory.get("traceability.md") == "present":
+        return "tasks"
+    if inventory.get("design.md") == "present":
+        return "design"
+    if inventory.get("requirements.md") == "present" or inventory.get("change-impact.md") == "present":
+        return "requirements"
+    if inventory.get("canonical-context.md") == "present" or inventory.get("research.md") == "present":
+        return "discover"
+    return "requirements"
+
+
+def lint_authoring_mode(spec_path: Path, inventory: dict[str, str], requested_mode: str | None) -> tuple[str, str, list[str]]:
+    frontmatter = spec_frontmatter_values(spec_path)
+    mode = (requested_mode or frontmatter.get("authoring_mode") or "wizard").strip().lower()
+    if mode in {"full", "scaffold", "batch", "full_package"}:
+        return "full", "full", CORE_ARTIFACTS
+    stage = infer_wizard_stage(inventory, frontmatter)
+    required = WIZARD_STAGE_REQUIRED_ARTIFACTS.get(stage, ["requirements.md"])
+    return "wizard", stage, required
 
 
 def headings(text: str) -> set[str]:
@@ -1171,24 +1246,45 @@ def lint_tasks_doc(path: Path, text: str) -> list[dict[str, Any]]:
     return diagnostics
 
 
-def lint_spec_package(spec_path: Path, include_summary: bool = True) -> list[dict[str, Any]] | dict[str, Any]:
+def lint_spec_package(spec_path: Path, include_summary: bool = True, mode: str | None = None) -> list[dict[str, Any]] | dict[str, Any]:
     diagnostics: list[dict[str, Any]] = []
     inventory = artifact_inventory(spec_path)
-    for artifact in CORE_ARTIFACTS:
+    authoring_mode, lifecycle_stage, required_artifacts = lint_authoring_mode(spec_path, inventory, mode)
+    for artifact in required_artifacts:
         path = spec_path / artifact
         if not path.exists():
+            if authoring_mode == "wizard":
+                code = "WIZARD_STAGE_ARTIFACT_MISSING"
+                message = (
+                    f"Missing artifact for wizard {lifecycle_stage} stage: {artifact}. "
+                    "Downstream full-package artifacts are not required until their stage."
+                )
+            else:
+                code = "CORE_ARTIFACT_MISSING"
+                message = f"Missing core artifact for full-package validation: {artifact}"
             diagnostics.append(
-                diagnostic("error", "CORE_ARTIFACT_MISSING", path, f"Missing core artifact: {artifact}", waivable=False)
+                diagnostic("error", code, path, message, waivable=False)
             )
         else:
             diagnostics.extend(lint_doc(path, artifact.removesuffix(".md")))
-    for artifact in OPTIONAL_ARTIFACTS:
+    if authoring_mode == "full":
+        optional_to_lint = OPTIONAL_ARTIFACTS
+    else:
+        optional_to_lint = sorted(
+            set(WIZARD_STAGE_OPTIONAL_ARTIFACTS.get(lifecycle_stage, []))
+            | {artifact for artifact, state in inventory.items() if state == "present"}
+        )
+        optional_to_lint = [artifact for artifact in optional_to_lint if artifact not in required_artifacts]
+    for artifact in optional_to_lint:
         if inventory[artifact] == "present":
             diagnostics.extend(lint_doc(spec_path / artifact, artifact.removesuffix(".md")))
     diagnostics.extend(canonical_context_diagnostics(spec_path))
     if include_summary:
         return {
             "spec_path": str(spec_path.resolve()),
+            "authoring_mode": authoring_mode,
+            "lifecycle_stage": lifecycle_stage,
+            "required_artifacts": required_artifacts,
             "diagnostics": diagnostics,
             "summary": diagnostic_summary(diagnostics),
         }
@@ -1863,7 +1959,22 @@ def sync_guard_file_manifest(root: Path) -> tuple[dict[str, str], list[dict[str,
     return manifest, diagnostics
 
 
-def compare_sync_trees(left: Path, right: Path, left_label: str, right_label: str) -> dict[str, Any]:
+INSTALLER_NORMALIZED_CACHE_PATHS = {
+    ".mcp.json",
+    "claude-plugin/.mcp.json",
+    "hooks/hooks.json",
+    "claude-plugin/hooks/hooks.json",
+}
+
+
+def compare_sync_trees(
+    left: Path,
+    right: Path,
+    left_label: str,
+    right_label: str,
+    *,
+    allowed_content_differences: set[str] | None = None,
+) -> dict[str, Any]:
     left_manifest, left_diagnostics = sync_guard_file_manifest(left)
     right_manifest, right_diagnostics = sync_guard_file_manifest(right)
     diagnostics = left_diagnostics + right_diagnostics
@@ -1876,13 +1987,17 @@ def compare_sync_trees(left: Path, right: Path, left_label: str, right_label: st
             "missing_from_right": [],
             "missing_from_left": [],
             "content_differences": [],
+            "allowed_content_differences": [],
             "diagnostics": diagnostics,
         }
 
     left_files = set(left_manifest)
     right_files = set(right_manifest)
     shared = left_files & right_files
-    content_differences = sorted(path for path in shared if left_manifest[path] != right_manifest[path])
+    all_content_differences = sorted(path for path in shared if left_manifest[path] != right_manifest[path])
+    allowed = allowed_content_differences or set()
+    allowed_content_differences_found = sorted(path for path in all_content_differences if path in allowed)
+    content_differences = [path for path in all_content_differences if path not in allowed]
     missing_from_right = sorted(left_files - right_files)
     missing_from_left = sorted(right_files - left_files)
     in_sync = not missing_from_right and not missing_from_left and not content_differences
@@ -1894,6 +2009,7 @@ def compare_sync_trees(left: Path, right: Path, left_label: str, right_label: st
         "missing_from_right": missing_from_right,
         "missing_from_left": missing_from_left,
         "content_differences": content_differences,
+        "allowed_content_differences": allowed_content_differences_found,
         "diagnostics": [],
     }
 
@@ -2037,7 +2153,13 @@ def sync_guard(repo_root: Path, codex_home: Path | None = None, commit_count: in
     source_bundle = compare_sync_trees(source_skill, bundled_skill, "source_skill", "bundled_plugin_skill")
     source_claude = compare_sync_trees(source_skill, claude_skill, "source_skill", "claude_plugin_skill")
     if selected_cache:
-        bundle_cache = compare_sync_trees(bundled_plugin, selected_cache, "bundled_plugin", "installed_cache")
+        bundle_cache = compare_sync_trees(
+            bundled_plugin,
+            selected_cache,
+            "bundled_plugin",
+            "installed_cache",
+            allowed_content_differences=INSTALLER_NORMALIZED_CACHE_PATHS,
+        )
     else:
         bundle_cache = {
             "status": "missing",
@@ -2047,6 +2169,7 @@ def sync_guard(repo_root: Path, codex_home: Path | None = None, commit_count: in
             "missing_from_right": [],
             "missing_from_left": [],
             "content_differences": [],
+            "allowed_content_differences": [],
             "diagnostics": [
                 {
                     "severity": "warn",
@@ -4282,7 +4405,7 @@ def task_verified(task: Task, by_id: dict[str, Task] | None = None) -> bool:
 
 
 def closure_check(spec_path: Path) -> dict[str, Any]:
-    lint_result = lint_spec_package(spec_path)
+    lint_result = lint_spec_package(spec_path, mode="full")
     assert isinstance(lint_result, dict)
     tasks = parse_tasks(spec_path / "tasks.md")
     by_id = {task.task_id: task for task in tasks}
@@ -4468,6 +4591,39 @@ def next_authoring_step(inventory: dict[str, str], changed_artifacts: list[str],
     }
 
 
+def wizard_batch_creation_warning(changed_artifacts: list[str]) -> dict[str, Any] | None:
+    stage_for_artifact = {
+        "canonical-context.md": "discover",
+        "research.md": "discover",
+        "requirements.md": "requirements",
+        "change-impact.md": "requirements",
+        "design.md": "design",
+        "open-decisions.md": "design",
+        "tasks.md": "tasks",
+        "traceability.md": "tasks",
+        "verification.md": "verify",
+        "quickstart.md": "verify",
+    }
+    stages = {
+        stage_for_artifact[artifact]
+        for artifact in changed_artifacts
+        if artifact in stage_for_artifact
+    }
+    if not stages:
+        return None
+    ordered = [stage for stage in WIZARD_STAGE_ORDER if stage in stages]
+    stage_count = len(ordered)
+    if stage_count <= 1:
+        return None
+    # requirements + discover context is a normal first-stage pair.
+    if set(ordered) <= {"discover", "requirements"}:
+        return None
+    return {
+        "stages": ordered,
+        "artifacts": changed_artifacts,
+    }
+
+
 def spec_authoring_context(repo_root: Path, changed_files: list[str], hook_name: str) -> dict[str, Any]:
     root = repo_root.resolve()
     changed_files = normalize_changed_files(root, changed_files)
@@ -4545,6 +4701,19 @@ def spec_authoring_context(repo_root: Path, changed_files: list[str], hook_name:
                     lifecycle_gate="authoring",
                 )
             )
+        batch_warning = wizard_batch_creation_warning(changed_artifacts)
+        if batch_warning:
+            context_diagnostics.append(
+                diagnostic(
+                    "warn",
+                    "WIZARD_BATCH_ARTIFACT_CREATION",
+                    spec_path,
+                    "Wizard mode is the default for spec authoring. Create one stage at a time unless the user explicitly asked to scaffold all spec artifacts.",
+                    lifecycle_gate="authoring",
+                )
+            )
+            context_diagnostics[-1]["stages"] = batch_warning["stages"]
+            context_diagnostics[-1]["artifacts"] = batch_warning["artifacts"]
         context_diagnostics = relativize_diagnostic_paths(context_diagnostics, root)
         diagnostics.extend(context_diagnostics)
 
@@ -5254,6 +5423,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     lint = sub.add_parser("lint", help="Lint a spec package or document.")
     lint.add_argument("path", type=Path)
     lint.add_argument("--artifact-type")
+    lint.add_argument("--mode", choices=["wizard", "full"], default="wizard", help="Package lint mode. Wizard mode validates only the current staged authoring slice.")
 
     next_cmd = sub.add_parser("next-task", help="Return the next runnable task with context.")
     next_cmd.add_argument("spec_path", type=Path)
@@ -5411,7 +5581,7 @@ def main(argv: list[str] | None = None) -> int:
         payload = spec_summary(args.spec_path.resolve())
     elif args.command == "lint":
         if args.path.is_dir():
-            payload = lint_spec_package(args.path.resolve())
+            payload = lint_spec_package(args.path.resolve(), mode=args.mode)
         else:
             diagnostics = lint_doc(args.path.resolve(), args.artifact_type)
             payload = {"path": str(args.path.resolve()), "diagnostics": diagnostics, "summary": diagnostic_summary(diagnostics)}

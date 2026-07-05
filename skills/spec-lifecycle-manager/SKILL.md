@@ -191,6 +191,27 @@ default. Use checklist mode only when the user asks for a compact or fast pass.
 It must preserve stage order unless an explicit exception is requested and
 recorded, and it must not report implementation readiness while blocking open
 questions, missing downstream review, or stale artifact dependencies remain.
+Wizard mode is the default for creating or continuing specs, including
+backlog-to-spec work. Disable wizard mode only when the user explicitly asks to
+scaffold all artifacts, create the full package, or batch-generate
+requirements, design, and tasks.
+
+In wizard mode, do not create downstream artifacts before the current stage is
+accepted. Some artifacts may be created together when they belong to the same
+stage:
+
+- `canonical-context.md` during discover when durable-doc drift, imported
+  sources, confusing history, or multiple authorities exist.
+- `requirements.md` plus `change-impact.md` when durable behavior or durable
+  documentation is affected.
+- `tasks.md` plus `traceability.md`; tasks without traceability are too easy to
+  implement from checklist text alone.
+- `verification.md` plus `quickstart.md` only when temporary validation, demo,
+  or operator steps need a runnable guide.
+
+`open-decisions.md` is optional. Create it only when decisions are numerous,
+cross-cutting, owned by different people, or block multiple downstream tasks.
+For small specs, keep open questions in `requirements.md` or `design.md`.
 
 When reporting open questions, include why the question matters, affected
 stage, expected answer shape, blocking status, likely artifact destination, and

@@ -506,7 +506,11 @@ The command returns JSON with:
   `plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/`.
 - `bundle_cache_parity`: compares `plugins/spec-lifecycle-manager/` with the
   newest installed cache candidate under
-  `$CODEX_HOME/plugins/cache/*/spec-lifecycle-manager/*/`.
+  `$CODEX_HOME/plugins/cache/*/spec-lifecycle-manager/*/`. Installer-managed
+  local config files such as `.mcp.json` and `hooks/hooks.json` may differ
+  after install because the installer resolves host-specific command details;
+  those paths are reported as `allowed_content_differences` and do not by
+  themselves create a cache-drift finding.
 - `reload_advisory`: reports whether parity state suggests Codex should be
   reloaded after sync and install.
 - `commit_evidence`: reviews recent commits touching
@@ -604,7 +608,13 @@ Lifecycle prompts are convenience aliases:
   existing read-only lifecycle tools. It asks one bounded question at a time by
   default, classifies open questions and feedback, keeps edit application
   preview-first, reports durable promotion and closure blockers, and treats
-  removed spec packages as historical evidence only.
+  removed spec packages as historical evidence only. Wizard mode is the default
+  for backlog-to-spec and new-spec creation; full-package scaffolding is used
+  only when the user explicitly asks for all artifacts at once. Same-stage
+  artifact pairs are allowed for `requirements.md` plus `change-impact.md`,
+  `tasks.md` plus `traceability.md`, and `verification.md` plus `quickstart.md`
+  when those paired artifacts are relevant. `open-decisions.md` remains
+  optional and is used only for numerous or cross-cutting decisions.
 - `lifecycle-status` routes "what next" and status requests to active preflight
   or no-active-spec context.
 - `lifecycle-validate` routes validation requests to scan, lint, prompts,
@@ -715,6 +725,24 @@ tree and reports:
 - the next useful authoring step when there is one;
 - relevant helper surfaces such as `templates://spec-package`, `scan_specs`,
   `active_spec_preflight`, `task_context`, or `traceability_lookup`.
+
+Wizard authoring lint is also staged by default. Direct package lint validates
+the current wizard stage instead of requiring all downstream artifacts:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py lint docs/specs/123-example
+```
+
+Use full-package validation only when explicitly needed for closure, recovery,
+or a requested full scaffold:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py lint docs/specs/123-example --mode full
+```
+
+If one write creates artifacts from multiple wizard stages, the hook reports
+`WIZARD_BATCH_ARTIFACT_CREATION` to ask the agent to confirm the user requested
+full scaffolding before continuing.
 
 When an upstream artifact such as `requirements.md` or `design.md` is revised
 after downstream artifacts already exist, the hook reports those downstream
