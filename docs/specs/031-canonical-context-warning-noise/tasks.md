@@ -356,7 +356,7 @@ semantics.
 **Purpose**: Preserve evidence and prepare for implementation review and
 closure workflow.
 
-- [ ] T030 Create verification artifact.
+- [x] T030 Create verification artifact.
   - Depends on: T029
   - Requirement: all
   - Properties: CP-001, CP-002, CP-003, CP-004, CP-005
@@ -364,9 +364,9 @@ closure workflow.
   - Acceptance: `verification.md` records focused tests, package checks, full
     validation, residual risk, and reload/install notes.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Created `verification.md` with task evidence, durable promotion map, validation plan, reload/install notes, and residual risk dispositions.
 
-- [ ] T031 Run final validation bundle.
+- [x] T031 Run final validation bundle.
   - Depends on: T030
   - Requirement: all
   - Properties: CP-001, CP-002, CP-003, CP-004, CP-005
@@ -374,9 +374,9 @@ closure workflow.
   - Acceptance: The final validation commands pass.
   - Validation: `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'`; `npm run validate`; `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py lint docs/specs/031-canonical-context-warning-noise`; `git diff --check`
   - Evidence mode: validation
-  - Evidence: Pending.
+  - Evidence: `npm run validate` passed, including Python tests, Node tests, lifecycle scan, archive-index, prompt validation, package-contract, sync-guard, npm pack dry-run, and `git diff --check`.
 
-- [ ] T032 Prepare implementation review and closure handoff.
+- [x] T032 Prepare implementation review and closure handoff.
   - Depends on: T031
   - Requirement: all
   - Properties: CP-001, CP-002, CP-003, CP-004, CP-005
@@ -385,7 +385,7 @@ closure workflow.
     recorded before closure starts.
   - Validation: `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py closure-check docs/specs/031-canonical-context-warning-noise`
   - Evidence mode: validation
-  - Evidence: Pending.
+  - Evidence: MCP `review_packet` produced the completed implementation packet; spec lint reports zero diagnostics; `verification.md` records closure handoff and durable promotion disposition.
 
 ## Execution Rules
 
