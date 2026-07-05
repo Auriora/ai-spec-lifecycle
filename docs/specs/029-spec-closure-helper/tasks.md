@@ -308,7 +308,7 @@ judgment, durable promotion, or recovery evidence.
   - Evidence mode: validation
   - Evidence: Focused end-to-end runtime/MCP closure tests passed: plan preview, cleanup preview, cleanup placeholder metadata, active-reference classification, cleanup-hash resolution, and validation command planning for the spec 030 closure fixture.
 
-- [ ] T015 Run full package validation and record evidence.
+- [x] T015 Run full package validation and record evidence.
   - Depends on: T013
   - Requirements: Requirement 1, Requirement 2, Requirement 3, Requirement 4,
     Requirement 5, Requirement 6, Requirement 7, Requirement 8, Requirement 9,
@@ -329,7 +329,7 @@ judgment, durable promotion, or recovery evidence.
     `npm run validate`;
     `git diff --check`.
   - Evidence mode: validation
-  - Evidence: Pending.
+  - Evidence: Created verification.md with full validation evidence; Python unittest suite passed 201 tests; scan, archive-index, prompts, package-contract, npm run validate, and git diff --check passed; sync-guard confirmed source/bundle parity with installed cache refresh advisory recorded as residual adoption risk.
 
 - [ ] T016 Implementation review, promotion, and closure readiness checkpoint.
   - Depends on: T015
