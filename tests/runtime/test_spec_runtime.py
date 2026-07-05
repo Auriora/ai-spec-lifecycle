@@ -1368,14 +1368,6 @@ class SpecRuntimeTests(unittest.TestCase):
 
     def test_archive_index_validates_current_index(self):
         payload = spec_runtime.archive_index(ROOT)
-
-        self.assertEqual(0, payload["summary"]["error"])
-        self.assertEqual(0, payload["summary"]["warn"])
-        self.assertEqual(31, payload["summary"]["total"])
-        self.assertEqual(31, payload["summary"]["removed"])
-        self.assertEqual(0, payload["summary"]["retained"])
-        self.assertEqual(0, payload["summary"]["superseded"])
-        self.assertEqual(0, payload["summary"]["legacy_gaps"])
         expected = {
             "001-spec-lifecycle-manager-skill",
             "013-agent-backed-lifecycle-tools",
@@ -1408,7 +1400,16 @@ class SpecRuntimeTests(unittest.TestCase):
             "028-cross-platform-packaging",
             "029-spec-closure-helper",
             "030-mcp-first-runtime-migration",
+            "031-canonical-context-warning-noise",
         }
+
+        self.assertEqual(0, payload["summary"]["error"])
+        self.assertEqual(0, payload["summary"]["warn"])
+        self.assertEqual(len(expected), payload["summary"]["total"])
+        self.assertEqual(len(expected), payload["summary"]["removed"])
+        self.assertEqual(0, payload["summary"]["retained"])
+        self.assertEqual(0, payload["summary"]["superseded"])
+        self.assertEqual(0, payload["summary"]["legacy_gaps"])
         entries = {entry["spec_id"]: entry for entry in payload["entries"]}
         self.assertEqual(expected, set(entries))
         self.assertTrue(all(entry["status"] == "removed" for entry in entries.values()))

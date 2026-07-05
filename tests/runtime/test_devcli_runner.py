@@ -32,7 +32,9 @@ class DevCliRepoTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             outside = Path(tmpdir) / "outside.txt"
             outside.write_text("x", encoding="utf-8")
-            self.assertEqual(repo_relative(outside, REPO_ROOT), str(outside))
+            rendered = repo_relative(outside, REPO_ROOT)
+            self.assertTrue(Path(rendered).is_absolute())
+            self.assertTrue(Path(rendered).samefile(outside))
 
 
 class DevCliRunnerTests(unittest.TestCase):
