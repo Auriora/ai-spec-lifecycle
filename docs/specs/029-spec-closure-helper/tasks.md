@@ -331,7 +331,7 @@ judgment, durable promotion, or recovery evidence.
   - Evidence mode: validation
   - Evidence: Created verification.md with full validation evidence; Python unittest suite passed 201 tests; scan, archive-index, prompts, package-contract, npm run validate, and git diff --check passed; sync-guard confirmed source/bundle parity with installed cache refresh advisory recorded as residual adoption risk.
 
-- [ ] T016 Implementation review, promotion, and closure readiness checkpoint.
+- [x] T016 Implementation review, promotion, and closure readiness checkpoint.
   - Depends on: T015
   - Requirements: Requirement 1, Requirement 2, Requirement 3, Requirement 4,
     Requirement 5, Requirement 6, Requirement 7, Requirement 8, Requirement 9,
@@ -352,7 +352,7 @@ judgment, durable promotion, or recovery evidence.
     `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py closure-check docs/specs/029-spec-closure-helper`;
     `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py promotion-plan docs/specs/029-spec-closure-helper`.
   - Evidence mode: validation
-  - Evidence: Pending.
+  - Evidence: Updated verification.md with implementation findings, closure dispositions for all requirements and design targets, promotion-plan evidence, closure command evidence, and adoption notes; lint_spec_package passed.
 
 ## Execution Rules
 
