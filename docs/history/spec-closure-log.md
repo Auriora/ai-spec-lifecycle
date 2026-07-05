@@ -14,6 +14,38 @@ requires visible archived docs.
 
 ## Entries
 
+### 2026-07-05 - 031-canonical-context-warning-noise
+
+- **Spec:** `docs/specs/031-canonical-context-warning-noise/`
+- **Title:** Canonical context warning noise requirements
+- **Final spec commit:** `2bf6348`
+- **Closure cleanup commit:** `pending-cleanup-commit`
+- **Closure action:** removed
+- **Closed by:** platform
+- **Durable docs updated:**
+  - `skills/spec-lifecycle-manager/SKILL.md`
+  - `skills/spec-lifecycle-manager/prompts/`
+  - `skills/spec-lifecycle-manager/references/spec-package/`
+  - `docs/design/spec-lifecycle-management.md`
+  - `docs/reference/spec-lifecycle-runtime.md`
+  - `docs/backlog/README.md`
+  - `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/`
+  - `plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/`
+  - `tests/runtime/test_spec_runtime.py`
+  - `tests/runtime/test_spec_mcp_server.py`
+- **Verification summary:** Full `npm run validate` passed, including Python
+  unit discovery, Node tests, lifecycle scan, archive-index validation, prompt
+  validation, package-contract validation, sync-guard, npm pack dry-run, and
+  `git diff --check`. Spec 031 lint and task-state audit reported zero
+  diagnostics. MCP `closure_check` reported ready with no blockers before
+  removal.
+- **Residual risks:** The released user-level npm package at version `0.2.1`
+  is stale relative to this source and still contains the retired
+  `traceability_lookup.py` payload; package refresh/release belongs to the
+  package workflow after closure. Future dogfooding may still find novel
+  authority wording that should be routed to backlog.
+- **Follow-up:** none
+
 ### 2026-07-05 - 029-spec-closure-helper
 
 - **Spec:** `docs/specs/029-spec-closure-helper/`
