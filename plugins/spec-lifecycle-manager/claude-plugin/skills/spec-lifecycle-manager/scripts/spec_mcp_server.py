@@ -361,6 +361,45 @@ def tool_definitions() -> list[dict[str, Any]]:
             ["spec_path", "task_id", "state", "evidence"],
         ),
         tool_schema("closure_check", "Check closure readiness and blockers.", SPEC_PATH_PROPERTIES, ["spec_path"]),
+        tool_schema(
+            "closure_plan",
+            "Preview closure metadata, blockers, planned edits, scriptable actions, and validation commands.",
+            {
+                **SPEC_PATH_PROPERTIES,
+                "final_spec_commit": "Optional final spec commit hash.",
+                "closure_action": "Closure action. Defaults to removed.",
+                "include_reference_scan": {
+                    "type": ["boolean", "string"],
+                    "description": "Set false to skip active-reference scanning. Defaults to true.",
+                    "default": True,
+                },
+            },
+            ["spec_path"],
+        ),
+        tool_schema(
+            "closure_apply",
+            "Preview or apply one closure planned action. Defaults to dry-run and requires write_intent for writes.",
+            {
+                **SPEC_PATH_PROPERTIES,
+                "plan": {"type": "object", "description": "Closure plan payload returned by closure_plan."},
+                "action_id": "Planned action ID to apply.",
+                "dry_run": {"type": ["boolean", "string"], "description": "Preview without writing. Defaults to true.", "default": True},
+                "write_intent": {"type": ["boolean", "string"], "description": "Required true when dry_run is false.", "default": False},
+            },
+            ["spec_path", "plan", "action_id"],
+        ),
+        tool_schema(
+            "closure_resolve",
+            "Preview or apply cleanup-hash resolution in closure records.",
+            {
+                "repo_root": REPO_ROOT_PROPERTY,
+                "spec_id": "Spec ID whose pending cleanup metadata should be resolved.",
+                "cleanup_commit": "Optional cleanup commit hash. Defaults to repository HEAD when omitted.",
+                "dry_run": {"type": ["boolean", "string"], "description": "Preview without writing. Defaults to true.", "default": True},
+                "write_intent": {"type": ["boolean", "string"], "description": "Required true when dry_run is false.", "default": False},
+            },
+            ["spec_id"],
+        ),
         tool_schema("archive_index", "Validate spec archive index and closure-log consistency.", {"repo_root": REPO_ROOT_PROPERTY}),
         tool_schema(
             "resolve_spec_reference",
@@ -551,6 +590,47 @@ def call_tool(name: str, arguments: dict[str, Any], default_root: Path) -> tuple
         ), root
     if name == "closure_check":
         return lifecycle_core.closure_check(spec_path_arg(arguments, default_root)), root
+    if name == "closure_plan":
+        include_reference_scan = True
+        if "include_reference_scan" in arguments:
+            include_reference_scan = bool_arg(arguments, "include_reference_scan")
+        return lifecycle_core.closure_plan(
+            spec_path_arg(arguments, default_root),
+            repo_root=root,
+            final_spec_commit=arguments.get("final_spec_commit"),
+            closure_action=arguments.get("closure_action") or "removed",
+            include_reference_scan=include_reference_scan,
+        ), root
+    if name == "closure_apply":
+        plan = arguments.get("plan")
+        action_id = arguments.get("action_id")
+        if not isinstance(plan, dict):
+            raise ValueError("plan must be an object")
+        if not action_id:
+            raise ValueError("action_id is required")
+        dry_run_value = arguments.get("dry_run")
+        dry_run = True if dry_run_value is None else bool_arg(arguments, "dry_run")
+        return lifecycle_core.closure_apply(
+            spec_path_arg(arguments, default_root),
+            repo_root=root,
+            plan=plan,
+            action_id=str(action_id),
+            dry_run=dry_run,
+            write_intent=bool_arg(arguments, "write_intent"),
+        ), root
+    if name == "closure_resolve":
+        spec_id = arguments.get("spec_id")
+        if not spec_id:
+            raise ValueError("spec_id is required")
+        dry_run_value = arguments.get("dry_run")
+        dry_run = True if dry_run_value is None else bool_arg(arguments, "dry_run")
+        return lifecycle_core.closure_resolve(
+            root,
+            spec_id=str(spec_id),
+            cleanup_commit=arguments.get("cleanup_commit"),
+            dry_run=dry_run,
+            write_intent=bool_arg(arguments, "write_intent"),
+        ), root
     if name == "archive_index":
         return lifecycle_core.archive_index(root), root
     if name == "resolve_spec_reference":

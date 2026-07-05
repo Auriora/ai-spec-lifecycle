@@ -735,6 +735,88 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertIn("PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py sync-guard . --commits 5", command_text)
         self.assertIn("git diff --check", command_text)
 
+    def test_closure_runtime_recovery_commands_emit_deterministic_json_and_default_dry_run(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            source = FIXTURE_DIR / "spec-closure-helper/spec-030-closure-scenario/before-cleanup"
+            shutil.copytree(source, repo, dirs_exist_ok=True)
+            spec = repo / "docs/specs/030-mcp-first-runtime-migration"
+
+            plan_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPT),
+                    "closure-plan",
+                    str(spec),
+                    "--repo-root",
+                    str(repo),
+                    "--final-spec-commit",
+                    "de3aa4f",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            plan = json.loads(plan_result.stdout)
+            plan_file = repo / "closure-plan.json"
+            plan_file.write_text(json.dumps(plan), encoding="utf-8")
+            apply_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPT),
+                    "closure-apply",
+                    str(spec),
+                    "--repo-root",
+                    str(repo),
+                    "--plan-file",
+                    str(plan_file),
+                    "--action-id",
+                    "render_records",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            apply_payload = json.loads(apply_result.stdout)
+
+        self.assertEqual("030-mcp-first-runtime-migration", plan["metadata"]["spec_id"])
+        self.assertEqual("preview", apply_payload["status"])
+        self.assertTrue(apply_payload["dry_run"])
+        self.assertFalse(apply_payload["mutates_files"])
+
+    def test_closure_runtime_recovery_commands_require_write_intent(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            source = FIXTURE_DIR / "spec-closure-helper/spec-030-closure-scenario/before-cleanup"
+            shutil.copytree(source, repo, dirs_exist_ok=True)
+            spec = repo / "docs/specs/030-mcp-first-runtime-migration"
+            plan = spec_runtime.closure_plan(spec, repo_root=repo, final_spec_commit="de3aa4f")
+            plan_file = repo / "closure-plan.json"
+            plan_file.write_text(json.dumps(plan), encoding="utf-8")
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPT),
+                    "closure-apply",
+                    str(spec),
+                    "--repo-root",
+                    str(repo),
+                    "--plan-file",
+                    str(plan_file),
+                    "--action-id",
+                    "render_records",
+                    "--write",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            payload = json.loads(result.stdout)
+
+        self.assertEqual("rejected", payload["status"])
+        self.assertIn("CLOSURE_WRITE_INTENT_MISSING", {item["code"] for item in payload["diagnostics"]})
+
     def test_runtime_script_is_thin_shared_core_adapter(self):
         source = SCRIPT.read_text(encoding="utf-8")
         self.assertIn("from lifecycle.core import *", source)

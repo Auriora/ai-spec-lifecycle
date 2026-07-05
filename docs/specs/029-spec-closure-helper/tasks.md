@@ -198,7 +198,7 @@ path before exposing MCP or runtime entrypoints.
 **Purpose**: Expose the shared helper through MCP first and retained runtime
 recovery second, without duplicating closure logic.
 
-- [ ] T009 Add retained runtime recovery commands.
+- [x] T009 Add retained runtime recovery commands.
   - Depends on: T008
   - Requirements: Requirement 5, Requirement 8, Requirement 9
   - Design: Function Signatures and Interfaces; Migration and Compatibility
@@ -212,9 +212,9 @@ recovery second, without duplicating closure logic.
   - Validation: Runtime tests cover command parsing, JSON shape, dry-run
     defaults, write-intent errors, and no-MCP recovery usage.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Added closure-plan, closure-apply, and closure-resolve runtime recovery commands in lifecycle/runtime_adapter.py; commands call shared closure functions, default to dry-run, require write_intent for writes, emit JSON, and focused runtime CLI tests plus runtime/MCP modules passed.
 
-- [ ] T010 Add MCP closure tools over the shared helper.
+- [x] T010 Add MCP closure tools over the shared helper.
   - Depends on: T008
   - Requirements: Requirement 5, Requirement 8, Requirement 9
   - Correctness: CP-006
@@ -229,9 +229,9 @@ recovery second, without duplicating closure logic.
   - Validation: MCP tests cover tool list/schema, dry-run responses,
     write-intent guards, structured error payloads, and shared-core call path.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Added MCP closure_plan, closure_apply, and closure_resolve tools in spec_mcp_server.py with preview-first schemas and write_intent guard; handlers call lifecycle_core shared closure functions directly; focused MCP tool tests plus runtime/MCP modules passed.
 
-- [ ] T011 Checkpoint - interface parity and no duplicate closure logic.
+- [x] T011 Checkpoint - interface parity and no duplicate closure logic.
   - Depends on: T009, T010
   - Requirements: Requirement 8, Requirement 9, Requirement 10
   - Design: System Architecture; Migration and Compatibility
@@ -246,7 +246,7 @@ recovery second, without duplicating closure logic.
   - Validation: Focused runtime and MCP tests pass; static inspection confirms
     MCP handlers do not call `spec_runtime.py`.
   - Evidence mode: validation
-  - Evidence: Pending.
+  - Evidence: Confirmed runtime and MCP surfaces share lifecycle/closure.py through lifecycle_core exports; MCP handler inspection test confirms no spec_runtime.py or subprocess call in closure handlers; source, Codex plugin, and Claude plugin skill copies synced; package-contract passed.
 
 ## Phase 4: Durable Guidance, Bundles, And Packaging
 

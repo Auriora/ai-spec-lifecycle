@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -170,6 +171,9 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertIn("agent_backed_tool", tools)
         self.assertIn("no_active_spec_context", tools)
         self.assertIn("closure_check", tools)
+        self.assertIn("closure_plan", tools)
+        self.assertIn("closure_apply", tools)
+        self.assertIn("closure_resolve", tools)
         self.assertIn("archive_index", tools)
         self.assertIn("resolve_spec_reference", tools)
         self.assertIn("mcp_audit", tools)
@@ -288,6 +292,8 @@ class SpecMcpServerTests(unittest.TestCase):
             "evidence_quality_check",
             "closure_risk_review",
             "closure_check",
+            "closure_plan",
+            "closure_apply",
             "reconcile_spec",
             "promotion_plan",
             "review_packet",
@@ -299,6 +305,90 @@ class SpecMcpServerTests(unittest.TestCase):
                 self.assertIn("repo_root", schema["properties"])
                 self.assertIn("spec_path", schema["properties"])
                 self.assertIn("spec_path", schema["required"])
+
+    def test_closure_mcp_tools_preview_and_reject_missing_write_intent(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / ".git").mkdir()
+            source = ROOT / "tests/fixtures/spec-closure-helper/spec-030-closure-scenario/before-cleanup"
+            shutil.copytree(source, repo, dirs_exist_ok=True)
+            responses = self.send(
+                rpc(
+                    1,
+                    "tools/call",
+                    {
+                        "name": "closure_plan",
+                        "arguments": {
+                            "repo_root": str(repo),
+                            "spec_path": "030-mcp-first-runtime-migration",
+                            "final_spec_commit": "de3aa4f",
+                        },
+                    },
+                ),
+                root=repo,
+            )
+            plan = responses[0]["result"]["structuredContent"]
+            [apply_response] = self.send(
+                rpc(
+                    2,
+                    "tools/call",
+                    {
+                        "name": "closure_apply",
+                        "arguments": {
+                            "repo_root": str(repo),
+                            "spec_path": "030-mcp-first-runtime-migration",
+                            "plan": plan,
+                            "action_id": "render_records",
+                            "dry_run": False,
+                        },
+                    },
+                ),
+                root=repo,
+            )
+
+        apply_payload = apply_response["result"]["structuredContent"]
+        self.assertEqual("030-mcp-first-runtime-migration", plan["metadata"]["spec_id"])
+        self.assertFalse(plan["mutates_files"])
+        self.assertEqual("rejected", apply_payload["status"])
+        self.assertIn("CLOSURE_WRITE_INTENT_MISSING", {item["code"] for item in apply_payload["diagnostics"]})
+
+    def test_closure_mcp_resolve_previews_without_writing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / ".git").mkdir()
+            source = ROOT / "tests/fixtures/spec-closure-helper/spec-030-closure-scenario/after-cleanup-pending"
+            shutil.copytree(source, repo, dirs_exist_ok=True)
+            [response] = self.send(
+                rpc(
+                    1,
+                    "tools/call",
+                    {
+                        "name": "closure_resolve",
+                        "arguments": {
+                            "repo_root": str(repo),
+                            "spec_id": "030-mcp-first-runtime-migration",
+                            "cleanup_commit": "520d37d",
+                        },
+                    },
+                ),
+                root=repo,
+            )
+            log_text = (repo / "docs/history/spec-closure-log.md").read_text(encoding="utf-8")
+
+        payload = response["result"]["structuredContent"]
+        self.assertEqual("preview", payload["status"])
+        self.assertIn("docs/history/spec-closure-log.md", payload["planned_files"])
+        self.assertIn("pending-cleanup-commit", log_text)
+
+    def test_mcp_closure_handlers_do_not_call_runtime_script(self):
+        source = (ROOT / "skills/spec-lifecycle-manager/scripts/spec_mcp_server.py").read_text(encoding="utf-8")
+        closure_handler = source[source.index('if name == "closure_plan"'):source.index('if name == "archive_index"')]
+
+        self.assertIn("lifecycle_core.closure_plan", closure_handler)
+        self.assertIn("lifecycle_core.closure_apply", closure_handler)
+        self.assertIn("lifecycle_core.closure_resolve", closure_handler)
+        self.assertNotIn("spec_runtime.py", closure_handler)
+        self.assertNotIn("subprocess", closure_handler)
 
     def test_review_packet_schema_publishes_type_mapping(self):
         [response] = self.send(rpc(1, "tools/list"))

@@ -95,6 +95,28 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     closure = sub.add_parser("closure-check", help="Check spec closure readiness.")
     closure.add_argument("spec_path", type=Path)
 
+    closure_plan_cmd = sub.add_parser("closure-plan", help="Preview closure metadata, edits, blockers, and validation commands.")
+    closure_plan_cmd.add_argument("spec_path", type=Path)
+    closure_plan_cmd.add_argument("--repo-root", type=Path)
+    closure_plan_cmd.add_argument("--final-spec-commit")
+    closure_plan_cmd.add_argument("--closure-action", default="removed")
+    closure_plan_cmd.add_argument("--no-reference-scan", action="store_true")
+
+    closure_apply_cmd = sub.add_parser("closure-apply", help="Preview or apply a closure planned action from a plan file.")
+    closure_apply_cmd.add_argument("spec_path", type=Path)
+    closure_apply_cmd.add_argument("--repo-root", type=Path)
+    closure_apply_cmd.add_argument("--plan-file", type=Path, required=True)
+    closure_apply_cmd.add_argument("--action-id", required=True)
+    closure_apply_cmd.add_argument("--write", action="store_true")
+    closure_apply_cmd.add_argument("--write-intent", action="store_true")
+
+    closure_resolve_cmd = sub.add_parser("closure-resolve", help="Preview or apply cleanup-hash resolution in closure records.")
+    closure_resolve_cmd.add_argument("repo_root", type=Path, nargs="?", default=Path.cwd())
+    closure_resolve_cmd.add_argument("--spec-id", required=True)
+    closure_resolve_cmd.add_argument("--cleanup-commit")
+    closure_resolve_cmd.add_argument("--write", action="store_true")
+    closure_resolve_cmd.add_argument("--write-intent", action="store_true")
+
     closure_risk = sub.add_parser("closure-risk-review", help="Review closure risk signals without mutating files.")
     closure_risk.add_argument("spec_path", type=Path)
 
@@ -225,6 +247,32 @@ def main(argv: list[str] | None = None) -> int:
         payload = no_active_spec_context(args.repo_root)
     elif args.command == "closure-check":
         payload = closure_check(args.spec_path.resolve())
+    elif args.command == "closure-plan":
+        payload = closure_plan(
+            args.spec_path.resolve(),
+            repo_root=args.repo_root.resolve() if args.repo_root else None,
+            final_spec_commit=args.final_spec_commit,
+            closure_action=args.closure_action,
+            include_reference_scan=not args.no_reference_scan,
+        )
+    elif args.command == "closure-apply":
+        plan = json.loads(args.plan_file.read_text(encoding="utf-8"))
+        payload = closure_apply(
+            args.spec_path.resolve(),
+            repo_root=args.repo_root.resolve() if args.repo_root else None,
+            plan=plan,
+            action_id=args.action_id,
+            dry_run=not args.write,
+            write_intent=args.write_intent,
+        )
+    elif args.command == "closure-resolve":
+        payload = closure_resolve(
+            args.repo_root.resolve(),
+            spec_id=args.spec_id,
+            cleanup_commit=args.cleanup_commit,
+            dry_run=not args.write,
+            write_intent=args.write_intent,
+        )
     elif args.command == "closure-risk-review":
         payload = closure_risk_review(args.spec_path.resolve())
     elif args.command == "reconcile":
@@ -273,4 +321,3 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "closure-check" and not payload["ready"]:
         return 1
     return 0
-
