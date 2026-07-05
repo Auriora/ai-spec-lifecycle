@@ -1094,19 +1094,32 @@ def has_canonical_context(spec_path: Path) -> bool:
     return False
 
 
-def canonical_context_risk_signals(spec_path: Path) -> list[str]:
+def canonical_context_signal_context(spec_path: Path) -> dict[str, Any]:
     texts = canonical_context_texts(spec_path)
     combined = "\n".join(texts.values()).lower()
     signals: list[str] = []
+    confidence = "clear"
     if re.search(r"\b(stale[- ]?doc|stale doc|legacy docs?|obsolete|outdated|non-canonical|background source)\b", combined):
         signals.append("stale-doc-risk")
-    if re.search(r"\b(imported sources?|copied or adapted|copy or adapt|adapted durable|supersedes|source revision|promotion target)\b", combined):
+    if re.search(r"\b(conflicting source[- ]of[- ]truth|source[- ]of[- ]truth claims?|conflicting authorit(?:y|ies)|authority conflict)\b", combined):
+        signals.append("authority-conflict-risk")
+    if re.search(r"\b(imported sources?|imported source material|copied or adapted|copy or adapt|adapted durable|adapts durable|supersedes|source revision)\b", combined):
         signals.append("imported-source-risk")
     if re.search(r"\b(broad durable|durable-doc-impacting)\b", combined):
         signals.append("durable-doc-impact")
     if "canonical context" in combined or "spec-local canonical" in combined:
         signals.append("canonical-context-intent")
-    return list(dict.fromkeys(signals))
+    if re.search(r"\b(authoritative|authority)\b", combined) and not signals:
+        signals.append("authority-review")
+        confidence = "review"
+    return {
+        "signals": list(dict.fromkeys(signals)),
+        "confidence": confidence,
+    }
+
+
+def canonical_context_risk_signals(spec_path: Path) -> list[str]:
+    return list(canonical_context_signal_context(spec_path)["signals"])
 
 
 def canonical_context_import_plan(spec_path: Path) -> list[dict[str, str]]:
@@ -1156,19 +1169,28 @@ def canonical_context_closure_blockers(spec_path: Path) -> list[dict[str, Any]]:
 
 def canonical_context_diagnostics(spec_path: Path) -> list[dict[str, Any]]:
     diagnostics: list[dict[str, Any]] = []
-    signals = canonical_context_risk_signals(spec_path)
+    signal_context = canonical_context_signal_context(spec_path)
+    signals = list(signal_context["signals"])
+    confidence = str(signal_context.get("confidence", "clear"))
     if signals and not has_canonical_context(spec_path):
         diagnostics.append(
             diagnostic(
                 "warn",
                 "CANONICAL_CONTEXT_MISSING",
                 spec_path,
-                "Spec declares durable-doc impact, stale-doc risk, imported sources, or canonical-context intent without canonical-context.md or embedded Canonical Context sections.",
+                "Advisory: inspect the concrete canonical-context risk before creating canonical-context.md.",
                 lifecycle_gate="agent_ready",
                 artifact_type="canonical-context",
             )
         )
         diagnostics[-1]["signals"] = signals
+        diagnostics[-1]["confidence"] = confidence
+        diagnostics[-1]["advisory"] = True
+        diagnostics[-1]["blocking"] = False
+        if confidence == "review":
+            diagnostics[-1]["recommendation"] = "Review authority wording; do not create canonical-context.md unless concrete source risk is confirmed."
+        else:
+            diagnostics[-1]["recommendation"] = "Inspect the concrete context risk before creating canonical-context.md; this diagnostic is not a closure blocker by itself."
         plan = canonical_context_import_plan(spec_path)
         if plan:
             diagnostics[-1]["import_plan"] = plan

@@ -187,7 +187,7 @@ T031 -> T032
 **Purpose**: Implement one normalized diagnostic path and consume it from the
 existing lifecycle surfaces.
 
-- [ ] T014 Add normalized signal-context helper.
+- [x] T014 Add normalized signal-context helper.
   - Depends on: T013
   - Requirement: Requirement 2, Requirement 3
   - Properties: CP-004
@@ -195,9 +195,9 @@ existing lifecycle surfaces.
   - Acceptance: A shared helper returns canonical-context signals plus clear or
     review confidence.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Added `canonical_context_signal_context` in `core.py`; focused runtime tests pass.
 
-- [ ] T015 Keep `canonical_context_risk_signals` compatible.
+- [x] T015 Keep `canonical_context_risk_signals` compatible.
   - Depends on: T014
   - Requirement: Requirement 5
   - Properties: CP-005
@@ -205,9 +205,9 @@ existing lifecycle surfaces.
   - Acceptance: Existing callers that expect a signal list continue to receive
     a stable list.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: `canonical_context_risk_signals` remains a signal-list compatibility wrapper over normalized signal context.
 
-- [ ] T016 Refine imported-source false-positive filtering.
+- [x] T016 Refine imported-source false-positive filtering.
   - Depends on: T015
   - Requirement: Requirement 3
   - Properties: CP-003
@@ -215,9 +215,9 @@ existing lifecycle surfaces.
   - Acceptance: Promotion-only wording is not classified as imported-source
     authority by itself.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Imported-source detection excludes promotion-target-only wording; `test_promotion_only_wording_does_not_emit_imported_source_risk` passes.
 
-- [ ] T017 Add historical-reference filtering.
+- [x] T017 Add historical-reference filtering.
   - Depends on: T016
   - Requirement: Requirement 1, Requirement 3
   - Properties: CP-002
@@ -225,9 +225,9 @@ existing lifecycle surfaces.
   - Acceptance: Closed, archived, removed, and historical package references do
     not produce active artifact-add guidance.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Historical package reference wording no longer produces artifact-add guidance; `test_historical_package_reference_does_not_emit_artifact_add_guidance` passes.
 
-- [ ] T018 Add ambiguous-authority review confidence.
+- [x] T018 Add ambiguous-authority review confidence.
   - Depends on: T017
   - Requirement: Requirement 3
   - Properties: CP-004
@@ -235,9 +235,9 @@ existing lifecycle surfaces.
   - Acceptance: Weak authority wording without concrete source risk returns
     review confidence instead of mandatory artifact guidance.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Added uncertain authority signal handling and validated it with the focused runtime suite.
 
-- [ ] T019 Update diagnostic payload and wording.
+- [x] T019 Update diagnostic payload and wording.
   - Depends on: T018
   - Requirement: Requirement 1, Requirement 2
   - Properties: CP-001
@@ -245,9 +245,9 @@ existing lifecycle surfaces.
   - Acceptance: `CANONICAL_CONTEXT_MISSING` returns the normalized diagnostic
     payload defined in `design.md#data-models`.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: `CANONICAL_CONTEXT_MISSING` now carries advisory, blocking, confidence, recommendation, signals, and import-plan metadata; focused diagnostics tests pass.
 
-- [ ] T020 Align readiness packet consumption.
+- [x] T020 Align readiness packet consumption.
   - Depends on: T019
   - Requirement: Requirement 5
   - Properties: CP-005
@@ -255,9 +255,9 @@ existing lifecycle surfaces.
   - Acceptance: `agent_readiness_packet` consumes normalized diagnostics
     without changing advisory diagnostics into implementation blockers.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: `agent_readiness_packet` consumes normalized diagnostics as advisory guidance; readiness focused test passes.
 
-- [ ] T021 Confirm closure blocker separation.
+- [x] T021 Confirm closure blocker separation.
   - Depends on: T020
   - Requirement: Requirement 5
   - Properties: CP-001, CP-005
@@ -265,7 +265,7 @@ existing lifecycle surfaces.
   - Acceptance: `closure_check` preserves the blocker model defined in
     `design.md#algorithms-and-logic`.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: `closure_check` remains separated from warning-level missing optional context; closure focused test passes.
 
 ## Phase 3: Agent Guidance, Durable Docs, and Bundles
 
