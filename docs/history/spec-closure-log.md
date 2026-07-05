@@ -19,7 +19,7 @@ requires visible archived docs.
 - **Spec:** `docs/specs/030-mcp-first-runtime-migration/`
 - **Title:** MCP-first runtime migration
 - **Final spec commit:** `3e4b472`
-- **Closure cleanup commit:** `pending`
+- **Closure cleanup commit:** `bba369b`
 - **Closure action:** removed
 - **Closed by:** platform
 - **Durable docs updated:**

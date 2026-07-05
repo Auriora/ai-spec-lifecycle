@@ -1001,8 +1001,8 @@ class SpecRuntimeTests(unittest.TestCase):
 
         self.assertEqual(0, payload["summary"]["error"])
         self.assertEqual(0, payload["summary"]["warn"])
-        self.assertEqual(29, payload["summary"]["total"])
-        self.assertEqual(29, payload["summary"]["removed"])
+        self.assertEqual(30, payload["summary"]["total"])
+        self.assertEqual(30, payload["summary"]["removed"])
         self.assertEqual(0, payload["summary"]["retained"])
         self.assertEqual(0, payload["summary"]["superseded"])
         self.assertEqual(0, payload["summary"]["legacy_gaps"])
@@ -1036,6 +1036,7 @@ class SpecRuntimeTests(unittest.TestCase):
             "023-task-state-management-tools",
             "023-hierarchical-spec-authoring-hooks",
             "028-cross-platform-packaging",
+            "030-mcp-first-runtime-migration",
         }
         entries = {entry["spec_id"]: entry for entry in payload["entries"]}
         self.assertEqual(expected, set(entries))
