@@ -457,12 +457,17 @@ docs, or updating templates:
 Do not force migration for archived specs, mid-task collaboration, or small changes where migration would create more risk than value. Do not migrate repository templates wholesale just because this skill prefers a richer package shape. Template migration must be selective: identify the specific document classes affected, the existing docs that would be impacted, required field additions, compatibility risks, and whether old packages should remain untouched.
 
 When broad durable-doc impact, stale-doc risk, imported durable sources, or
-resumed-spec drift are present and no canonical context exists, create
+resumed-spec drift are present and no canonical context exists, treat missing
+canonical context as advisory unless repository policy explicitly says
+otherwise. Inspect the concrete context risk before adding artifacts. Create
 `canonical-context.md`, embed `## Canonical Context` sections in the active
-package, or return an explicit import plan. The import plan should name the
-source path, target spec-local path, import mode, canonical scope, and promotion
-target. If the package uses repository templates, follow their documented
-canonical-context location.
+package, or return an explicit import plan only when the risk affects current
+implementation authority. The import plan should name the source path, target
+spec-local path, import mode, canonical scope, and promotion target. If the
+package uses repository templates, follow their documented canonical-context
+location. Do not recreate, modernize, or add artifacts to closed, archived,
+removed, or otherwise historical spec packages because of canonical-context
+diagnostics.
 
 Archived, closed, or superseded specs are historical delivery records. Default
 runtime scans keep them visible in inventory but exclude them from active

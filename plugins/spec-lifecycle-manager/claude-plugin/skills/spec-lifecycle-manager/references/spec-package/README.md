@@ -58,6 +58,9 @@ Use the artifacts as a progressive chain:
 10. `canonical-context.md`: optional working-context map for specs that import
     or adapt durable docs, have broad durable-doc impact, name stale-doc risk,
     or resume work where older docs could be mistaken for current authority.
+    Add it when those conditions create concrete current-slice authority risk;
+    otherwise embed durable-source baseline and promotion notes in the core
+    artifacts instead of creating a separate file for ceremony.
 
 Small, low-risk work can use a smaller package. Create only the files that help
 coordinate implementation, validation, or future promotion.

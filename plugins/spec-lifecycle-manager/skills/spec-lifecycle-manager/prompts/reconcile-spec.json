@@ -25,7 +25,7 @@
     "Use the spec-lifecycle-manager skill as the authoritative workflow guide.",
     "Read the listed resources or equivalent CLI outputs before making a recommendation.",
     "Separate observed facts, inferred diagnosis, and recommended action.",
-    "If resumed work has durable-doc drift, stale-doc risk, imported sources, or conflicting background docs, recommend adding or updating canonical-context.md before implementation readiness.",
+    "If resumed work has durable-doc drift, stale-doc risk, imported sources, or conflicting background docs, report the concrete authority risk and recommend adding or updating canonical-context.md only when it helps current implementation readiness.",
     "Report unresolved decisions, stale evidence, missing durable docs, and old-format migration needs."
   ],
   "return_format": [

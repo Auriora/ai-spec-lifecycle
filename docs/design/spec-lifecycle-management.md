@@ -70,7 +70,9 @@ Current fallback package files:
 - `canonical-context.md`: optional working-context map for broad or
   durable-doc-impacting specs, imported durable sources, stale-doc risk, or
   resumed specs where older docs may otherwise be mistaken for implementation
-  authority.
+  authority. Missing canonical context is advisory unless a repository policy
+  makes it blocking; small packages can embed equivalent durable-source and
+  promotion context in core artifacts.
 
 The core package files are required because their intent is required, not
 because every concern deserves its own file. A small package should embed
@@ -82,7 +84,8 @@ would add ceremony without reducing risk.
 Separate supporting artifacts are justified when they reduce ambiguity:
 
 - create `canonical-context.md` when the active package imports, adapts,
-  supersedes, or classifies durable docs for the implementation slice;
+  supersedes, or classifies durable docs for the implementation slice and that
+  context materially reduces current implementation ambiguity;
 - create `change-impact.md` when existing durable behavior changes across
   several documents, contracts, or migration paths;
 - create `verification.md` when validation has multiple gates, environments,

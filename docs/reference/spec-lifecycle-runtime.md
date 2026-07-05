@@ -238,9 +238,12 @@ proof at closure.
 When a package declares broad durable-doc impact, stale-doc risk, imported
 sources, or canonical-context intent, lint and readiness surfaces also check for
 `canonical-context.md` or embedded `## Canonical Context` sections. Missing
-context is warning-level during authoring/readiness and may include an import
-plan derived from durable-source references. `canonical-context.md` is optional
-for small packages that do not need it.
+context is warning-level and advisory during authoring/readiness, includes
+`advisory: true` and `blocking: false`, and may include an import plan derived
+from durable-source references. `canonical-context.md` is optional for small
+packages that do not need it. Promotion-only, closure-log, archive-index, or
+historical package wording should not be treated as imported-source authority
+by itself.
 
 `active_spec_preflight`, `agent_readiness_packet`, and
 `no_active_spec_context` are deterministic workflow tools. They compose scan,
@@ -731,6 +734,9 @@ or non-canonical docs, imported or adapted durable sources, supersession,
 durable source mapping, broad durable-doc impact, or canonical-context intent
 without providing `canonical-context.md` or embedded `## Canonical Context`
 sections.
+
+Agents should inspect the concrete risk before creating `canonical-context.md`;
+the missing-context diagnostic is not a closure blocker by itself.
 
 The canonical-context template uses these stable sections:
 

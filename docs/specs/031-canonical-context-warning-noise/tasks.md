@@ -272,7 +272,7 @@ existing lifecycle surfaces.
 **Purpose**: Align every user-facing surface with the accepted runtime
 semantics.
 
-- [ ] T022 Update source skill guidance.
+- [x] T022 Update source skill guidance.
   - Depends on: T021
   - Requirement: Requirement 4
   - Properties: CP-001, CP-002
@@ -280,9 +280,9 @@ semantics.
   - Acceptance: Skill guidance says `canonical-context.md` is optional,
     advisory, stage-aware, and triggered by concrete context risk.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Updated source `SKILL.md` to state missing canonical context is advisory, risk-triggered, and not a reason to edit historical packages.
 
-- [ ] T023 Update canonical-context prompt wording.
+- [x] T023 Update canonical-context prompt wording.
   - Depends on: T022
   - Requirement: Requirement 4
   - Properties: CP-001, CP-005
@@ -290,9 +290,9 @@ semantics.
   - Acceptance: Every prompt that mentions canonical context preserves advisory
     wording and stage order.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Updated all source prompt JSON files that mention canonical context with advisory, stage-aware wording.
 
-- [ ] T024 Update fallback spec-package template wording.
+- [x] T024 Update fallback spec-package template wording.
   - Depends on: T023
   - Requirement: Requirement 4
   - Properties: CP-001
@@ -300,9 +300,9 @@ semantics.
   - Acceptance: Templates distinguish embedded durable-source baseline from a
     separate optional `canonical-context.md` artifact.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Updated fallback spec-package README to distinguish embedded durable-source context from separate optional `canonical-context.md`.
 
-- [ ] T025 Update durable lifecycle documentation.
+- [x] T025 Update durable lifecycle documentation.
   - Depends on: T024
   - Requirement: Requirement 4
   - Properties: CP-001, CP-005
@@ -310,9 +310,9 @@ semantics.
     `docs/reference/spec-lifecycle-runtime.md`
   - Acceptance: Durable docs describe the accepted advisory runtime semantics.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Updated lifecycle design and runtime reference docs with advisory/non-blocking canonical-context diagnostic semantics.
 
-- [ ] T026 Update B058 backlog state.
+- [x] T026 Update B058 backlog state.
   - Depends on: T025
   - Requirement: Requirement 4
   - Properties: CP-005
@@ -320,9 +320,9 @@ semantics.
   - Acceptance: B058 records the implemented outcome or closure-ready status
     according to repository backlog conventions.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Updated B058 to record implemented runtime diagnostic behavior and in-progress guidance/bundle alignment before final verification and closure.
 
-- [ ] T027 Sync Codex plugin bundle.
+- [x] T027 Sync Codex plugin bundle.
   - Depends on: T026
   - Requirement: Requirement 4
   - Properties: CP-005
@@ -330,9 +330,9 @@ semantics.
   - Acceptance: The bundled Codex skill copy matches source changes required by
     this spec.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Synced source skill into `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/`.
 
-- [ ] T028 Sync Claude plugin bundle.
+- [x] T028 Sync Claude plugin bundle.
   - Depends on: T027
   - Requirement: Requirement 4
   - Properties: CP-005
@@ -340,16 +340,16 @@ semantics.
   - Acceptance: The bundled Claude skill copy matches source changes required
     by this spec.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Synced source skill into `plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/`.
 
-- [ ] T029 Checkpoint - prompt and bundle validation.
+- [x] T029 Checkpoint - prompt and bundle validation.
   - Depends on: T028
   - Files: `skills/spec-lifecycle-manager/prompts/`,
     `plugins/spec-lifecycle-manager/`
   - Acceptance: Prompt and bundle parity checks pass.
   - Validation: `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py prompts`; `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .`; `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py sync-guard .`
   - Evidence mode: validation
-  - Evidence: Pending.
+  - Evidence: Prompt validation, package contract, and sync guard pass after source and bundle alignment.
 
 ## Phase 4: Verification and Closure Readiness
 

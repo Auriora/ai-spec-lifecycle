@@ -58,7 +58,7 @@
     "Ask one bounded stage-specific question by default. Use checklist mode only when the user asks for a compact checklist or fast pass.",
     "Do not create downstream artifacts before the current stage is accepted. Requirements must be accepted before design, and design must be accepted before tasks.",
     "Allowed same-stage artifact pairs are: requirements.md with change-impact.md when durable behavior is affected; tasks.md with traceability.md; verification.md with quickstart.md only when temporary validation or operator steps are needed.",
-    "canonical-context.md may be created during discover before requirements when durable-doc drift, imported sources, confusing history, or multiple authorities exist.",
+    "canonical-context.md may be created during discover before requirements when durable-doc drift, imported sources, confusing history, or multiple authorities create concrete current-slice authority risk; otherwise keep canonical-context guidance advisory and continue stage order.",
     "open-decisions.md is optional. Create it only when decisions are numerous, cross-cutting, owned by different people, or block multiple downstream tasks; otherwise keep open questions in requirements.md or design.md.",
     "In requirements mode, ask for problem, goals, non-goals, user stories, EARS acceptance criteria, durable baseline, durable impact, correctness properties, and open questions.",
     "In design mode, summarize accepted requirements first, then ask for architecture, data/control flow, interfaces, error handling, operational behavior, and unresolved decisions.",
