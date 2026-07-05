@@ -19,7 +19,7 @@ requires visible archived docs.
 - **Spec:** `docs/specs/031-canonical-context-warning-noise/`
 - **Title:** Canonical context warning noise requirements
 - **Final spec commit:** `2bf6348`
-- **Closure cleanup commit:** `pending-cleanup-commit`
+- **Closure cleanup commit:** `f0b1dc5`
 - **Closure action:** removed
 - **Closed by:** platform
 - **Durable docs updated:**
