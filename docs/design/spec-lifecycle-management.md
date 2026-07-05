@@ -266,16 +266,19 @@ deterministic lifecycle checks:
 
 ```text
 skills/spec-lifecycle-manager/scripts/spec_runtime.py
-skills/spec-lifecycle-manager/scripts/traceability_lookup.py
 ```
 
 The runtime provides JSON outputs for spec scanning, summary resources, linting,
-next-task selection, lifecycle guidance, bootstrap planning, stage readiness,
-closure checks, prompt-definition validation, reconciliation, promotion
-planning, review-packet generation, review-result disposition validation,
-disabled agent-backed tool execution, and hook checks. These outputs are
-advisory runtime surfaces; they do not replace the skill, repository
-governance, or durable documentation.
+next-task selection, task context, traceability lookup, lifecycle guidance,
+bootstrap planning, stage readiness, closure checks, prompt-definition
+validation, reconciliation, promotion planning, review-packet generation,
+review-result disposition validation, disabled agent-backed tool execution, and
+hook checks. These outputs are advisory runtime surfaces; they do not replace
+the skill, repository governance, or durable documentation. The old standalone
+`traceability_lookup.py` script has been migrated into MCP and shared runtime
+internals; agents should use the MCP `traceability_lookup` tool or
+`spec_runtime.py` task-context/next-task outputs instead of calling a separate
+script.
 
 Closure-helper write surfaces are explicit exceptions to the read-mostly MCP
 model. MCP remains the preferred agent-facing interface for `closure_plan`,
