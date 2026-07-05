@@ -651,8 +651,8 @@ python3 skills/spec-lifecycle-manager/scripts/spec_mcp_server.py /path/to/repo
 python3 plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py /path/to/repo
 ```
 
-The MCP server exposes the existing runtime as resources, tools, and prompts.
-Most tools are read-only. `set_task_state` is the narrow write-capable
+The MCP server exposes shared lifecycle internals as resources, tools, and
+prompts. Most tools are read-only. `set_task_state` is the narrow write-capable
 exception: it is preview-first, limited to one selected task block in an active
 spec package `tasks.md`, and requires explicit write intent for mutation. Do
 not expect the MCP server to create specs, edit durable docs, archive packages,

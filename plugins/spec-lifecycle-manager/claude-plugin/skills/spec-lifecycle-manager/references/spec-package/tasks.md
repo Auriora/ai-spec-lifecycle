@@ -55,6 +55,7 @@ T007 -> T008
 T008 -> T009
 T009 -> T010
 T010 -> T011
+T011 -> T012
 ```
 
 ## Phase 1: Setup
@@ -207,6 +208,18 @@ T010 -> T011
     document each skipped command with a reason and residual risk.
   - Evidence: Pending.
 
+- [ ] T012 Address review findings and semantic coverage before closure.
+  - Depends on: T011
+  - Files: `docs/specs/[###-feature-name]/verification.md`, durable follow-up
+    destinations as needed
+  - Acceptance: Implementation review findings are fixed, rejected with
+    rationale, or routed to one explicit destination with residual risk; broad
+    Must requirements, architectural targets, migrations, public interfaces,
+    and cross-module behavior have closure dispositions in `verification.md`;
+    `partial-blocking` and `not-covered` rows are resolved before closure.
+  - Evidence mode: validation
+  - Evidence: Pending.
+
 ## Execution Rules
 
 - Do not implement from `tasks.md` alone. Treat this file as the execution
@@ -247,6 +260,12 @@ T010 -> T011
   its acceptance criteria are met.
 - A task is complete only when evidence is recorded. Evidence can be a command,
   test result, review note, screenshot, log, commit, or manual verification.
+- Before closure, compare broad Must requirements and architectural targets
+  against actual task evidence. Do not treat narrow task completion as proof
+  that broader migration, public-interface, or cross-module design targets are
+  complete. Record coverage as `complete`, `partial-routed`,
+  `partial-blocking`, `not-covered`, or `out-of-scope` with one destination
+  or rejection rationale in `verification.md`.
 - `planner`, `contract`, `dry_run`, `routing`, `no_op`, and `blocked_output`
   evidence modes do not complete ordinary implementation tasks unless the task
   acceptance explicitly says that mode is sufficient.

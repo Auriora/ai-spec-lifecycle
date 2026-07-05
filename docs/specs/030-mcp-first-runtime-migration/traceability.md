@@ -36,6 +36,9 @@ requirement, design, and validation context.
 | T012 | Requirement 5; Requirement 6; Requirement 8 | R5 AC2; R6 AC1-AC4; R8 AC3 | `design.md#script-migration-flow`; `design.md#migration-and-compatibility` | none | `verification.md#package-parity-validation` | package source, bundle, installed cache | none |
 | T013 | Requirement 1; Requirement 5; Requirement 6; Requirement 8; Requirement 9 | R1 AC1-AC2; R5 AC3-AC4; R6 AC3; R8 AC2; R9 AC3 | `design.md#operational-considerations`; `design.md#migration-and-compatibility` | none | `verification.md#durable-promotion-and-cleanup` | `docs/reference/spec-lifecycle-runtime.md`; `docs/reference/spec-lifecycle-manager-mcp-install.md`; `skills/spec-lifecycle-manager/SKILL.md` | none |
 | T014 | Requirement 6; Requirement 7; Requirement 8 | R6 AC1-AC4; R7 AC1-AC3; R8 AC1-AC3 | `design.md#validation-strategy`; `design.md#downstream-task-guidance` | none | `verification.md#quality-gates`; `verification.md#evidence-log` | closure log and archive index after completion | none |
+| T015 | Requirement 1; Requirement 8; Requirement 9 | R1 AC1-AC2; R8 AC2; R9 AC1-AC5 | `design.md#overview`; `design.md#resolved-design-decisions`; `design.md#operational-considerations` | none | `verification.md#implementation-review-remediation`; `verification.md#residual-risks`; `verification.md#durable-promotion-and-cleanup` | `docs/backlog/README.md` B059; spec closure evidence | none |
+| T016 | Requirement 9; B060 | R9 AC1-AC5; B060 candidate acceptance | `design.md#overview`; `design.md#resolved-design-decisions`; `design.md#operational-considerations` | none | `verification.md#implementation-review-remediation`; `verification.md#residual-risks`; `verification.md#durable-promotion-and-cleanup` | spec-package templates; `documentation-wizard` prompt; bundled plugin copies; `docs/backlog/README.md` B060 | none |
+| T017 | Requirement 9; B059 | R9 AC1-AC5; B059 candidate acceptance | `design.md#overview`; `design.md#system-architecture`; `design.md#components-and-changes`; `design.md#retained-non-mcp-flow` | none | `verification.md#implementation-review-remediation`; `verification.md#residual-risks`; `verification.md#durable-promotion-and-cleanup` | shared lifecycle modules; MCP server; retained runtime/recovery docs; `docs/backlog/README.md` B059 | none |
 
 ## Requirement To Delivery Matrix
 
@@ -49,7 +52,7 @@ requirement, design, and validation context.
 | Requirement 6 | AC1-AC4 | `design.md#migration-closure-check`; `design.md#script-migration-flow` | T003, T008, T011, T012, T013, T014 | closure blocker tests; sync-guard | closure docs after completion |
 | Requirement 7 | AC1-AC3 | `design.md#mcp-tools`; `design.md#error-handling` | T005, T006, T007, T008, T009, T014 | MCP schema and structuredContent tests | runtime docs |
 | Requirement 8 | AC1-AC3 | `design.md#validation-strategy`; `design.md#retained-non-mcp-flow` | T005, T010, T012, T013, T014 | unit tests; package-contract; sync-guard | verification evidence |
-| Requirement 9 | AC1-AC5 | `design.md#system-architecture`; `design.md#components-and-changes`; `design.md#retained-non-mcp-flow` | T001, T003, T004, T005, T008, T010, T011, T013 | public tool ownership review; shared-module tests | runtime docs; package docs |
+| Requirement 9 | AC1-AC5 | `design.md#system-architecture`; `design.md#components-and-changes`; `design.md#retained-non-mcp-flow` | T001, T003, T004, T005, T008, T010, T011, T013, T015, T016, T017 | public tool ownership review; shared-module tests; shared-core extraction tests; prompt/template guard | runtime docs; package docs; templates/prompts |
 
 ## Correctness Property Coverage
 
@@ -61,7 +64,7 @@ requirement, design, and validation context.
 | CP-004 | Requirement 8 | `design.md#retained-non-mcp-flow`; `design.md#validation-strategy` | T013, T014 | full test suite; package-contract; sync-guard | Emergency recovery docs must stay clear. |
 | CP-005 | Requirement 2; Requirement 3 | `design.md#mcp-session-state`; `design.md#security-trust-and-access` | T002, T006 | tests assert `unknown` instead of guessed fields | Client behavior may change; evidence must be dated. |
 | CP-006 | Requirement 5; Requirement 6 | `design.md#script-migration-inventory-row`; `design.md#migration-closure-check` | T003, T008, T010, T011, T012 | replacement contract tests/review | none if closure blocks deletion-only migration. |
-| CP-007 | Requirement 9 | `design.md#system-architecture`; `design.md#retained-non-mcp-flow` | T001, T003, T004, T005, T011, T013 | public tool ownership review; command inventory review | Some recovery commands may look similar and need docs. |
+| CP-007 | Requirement 9 | `design.md#system-architecture`; `design.md#retained-non-mcp-flow` | T001, T003, T004, T005, T011, T013, T015, T016, T017 | public tool ownership review; command inventory review; shared-core extraction tests; prompt/template guard | none after T016/T017 validation. |
 
 ## Design To Implementation Matrix
 
@@ -75,6 +78,9 @@ requirement, design, and validation context.
 | `design.md#mcp-session-state` | Requirement 2 | T006 | `spec_mcp_server.py`, `lifecycle/capabilities.py` | initialize/session tests |
 | `design.md#mcp-tools` | Requirement 7 | T006, T008, T009 | MCP tool definitions, schema helpers | schema validation tests |
 | `design.md#retained-non-mcp-flow` | Requirement 8, Requirement 9 | T011, T013, T014 | `spec_runtime.py`, hook scripts, docs | command inventory review; validation suite |
+| `design.md#overview` retained recovery debt | Requirement 9 | T015, T017 | `docs/backlog/README.md` B059; `lifecycle/core.py`; `lifecycle/runtime_adapter.py`; `spec_runtime.py`; `spec_mcp_server.py` | implementation review remediation; shared-core extraction tests |
+| `design.md#overview` closure semantic coverage | Requirement 9 | T016 | spec-package templates, `documentation-wizard` prompt | prompt/template validation |
+| `design.md#system-architecture` shared-core extraction | Requirement 9 | T017 | `spec_mcp_server.py`, `spec_runtime.py`, `lifecycle/core.py`, `lifecycle/runtime_adapter.py` | MCP/runtime shared-core tests; non-executable shared-core regression |
 
 ## Open Decision Impact
 

@@ -69,7 +69,10 @@
     "For accepted feedback, identify affected artifact sections and validation impact. For deferred feedback, identify one primary destination and residual risk. For rejected feedback, preserve rationale without turning it into a requirement.",
     "Before any file write, produce a preview edit plan listing repo-relative path, target section, change type, and rationale.",
     "Never report ready to implement while blocking open questions, missing downstream review, or stale artifact dependencies remain.",
-    "At promotion or closure stages, report durable destinations, unresolved spec-only content, validation evidence, closure blockers, and equivalent CLI recovery commands.",
+    "At promotion or closure stages, compare broad Must requirements, architectural design targets, migrations, public interfaces, cross-module behavior, and implementation review findings against actual task evidence before reporting readiness.",
+    "For each broad requirement/design target/review finding that is not fully implemented, record exactly one disposition: partial-routed, partial-blocking, not-covered, out-of-scope, or rejected with rationale. Record one destination for routed work.",
+    "Do not report ready for closure while any partial-blocking or not-covered item lacks a fix, rejection rationale, or explicit routed destination.",
+    "At promotion or closure stages, report durable destinations, unresolved spec-only content, validation evidence, closure blockers, semantic coverage dispositions, and equivalent CLI recovery commands.",
     "Use repo-relative paths in user-facing output."
   ],
   "return_format": [

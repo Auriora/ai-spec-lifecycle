@@ -16,22 +16,28 @@ workflow judgment.
 Current implementation:
 
 ```text
+skills/spec-lifecycle-manager/scripts/lifecycle/core.py
+skills/spec-lifecycle-manager/scripts/lifecycle/runtime_adapter.py
+skills/spec-lifecycle-manager/scripts/lifecycle/
 skills/spec-lifecycle-manager/scripts/spec_runtime.py
 skills/spec-lifecycle-manager/scripts/spec_mcp_server.py
 skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py
 skills/spec-lifecycle-manager/scripts/spec_agent_schemas.py
-skills/spec-lifecycle-manager/scripts/lifecycle/
 skills/spec-lifecycle-manager/prompts/
 ```
 
-The retained Python scripts are the tested implementation, validation, package,
-hook, and recovery surface. Shared lifecycle logic lives under
-`skills/spec-lifecycle-manager/scripts/lifecycle/`; it is imported by MCP and
-retained runtime adapters but is not a competing public command surface. For
-Codex sessions with the MCP server configured, MCP tools are the preferred
-agent-facing interface. Shell out to scripts only for CI, repository
-validation, MCP debugging, install/package checks, hook execution, or explicit
-recovery when MCP tools are not available.
+Shared lifecycle logic lives under
+`skills/spec-lifecycle-manager/scripts/lifecycle/`, with the broad retained
+runtime implementation in import-only `lifecycle/core.py`. MCP handlers import
+shared internals directly. CLI parsing for the retained recovery surface lives
+behind `spec_runtime.py` in `lifecycle/runtime_adapter.py`; `lifecycle/core.py` is not an
+executable command surface. Retained Python scripts are adapters for
+validation, package checks, hooks, MCP server startup, and no-MCP recovery;
+they are not competing public lifecycle tool contracts. For Codex sessions with
+the MCP server configured, MCP tools are the preferred agent-facing interface.
+Shell out to scripts only for CI, repository validation, MCP debugging,
+install/package checks, hook execution, or explicit recovery when MCP tools are
+not available.
 
 ## Developer CLI Convenience Wrapper
 

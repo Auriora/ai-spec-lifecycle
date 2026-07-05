@@ -32,6 +32,9 @@ T010 -> T011
 T011 -> T012
 T012 -> T013
 T013 -> T014
+T014 -> T015
+T015 -> T016
+T015 -> T017
 ```
 
 ## Phase 1: Planning Contracts
@@ -184,6 +187,32 @@ T013 -> T014
   - Validation: `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'`; `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .`; `scripts/install-spec-lifecycle-manager-package.sh`; `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py sync-guard .`; `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py scan .`; `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py archive-index .`; `git diff --check`
   - Evidence mode: validation
   - Evidence: Completed 2026-07-05. Full unit tests, package contract, archive index, whitespace check, install refresh, sync guard, and explicit installed-cache absence checks passed. `sync-guard .` reports source, Codex bundle, Claude bundle, and installed cache parity with no findings.
+
+- [x] T015 Address implementation review findings before closure.
+  - Depends on: T014
+  - Requirement: Requirement 1, Requirement 8, Requirement 9
+  - Files: `docs/specs/030-mcp-first-runtime-migration/design.md`, `docs/specs/030-mcp-first-runtime-migration/tasks.md`, `docs/specs/030-mcp-first-runtime-migration/verification.md`, `docs/specs/030-mcp-first-runtime-migration/traceability.md`, `docs/backlog/README.md`
+  - Acceptance: The implementation-review finding about remaining MCP-to-`spec_runtime.py` coupling is either fixed in this spec or routed to one explicit follow-up destination with residual risk; stale verification readiness text is corrected; closure evidence no longer claims that all shared-core extraction is complete.
+  - Evidence mode: routing
+  - Evidence: Completed 2026-07-05. Routed remaining non-touched MCP shared-core extraction to backlog item B059, updated design/verification/traceability to distinguish completed v1 migrated-script work from deferred shared-core extraction, and corrected stale verification readiness text.
+
+- [x] T016 Implement closure semantic coverage guard for prompts and templates.
+  - Depends on: T015
+  - Requirement: Requirement 9; B060
+  - Files: `skills/spec-lifecycle-manager/references/spec-package/verification.md`, `skills/spec-lifecycle-manager/references/spec-package/tasks.md`, `skills/spec-lifecycle-manager/references/spec-package/traceability.md`, `skills/spec-lifecycle-manager/references/spec-package/design.md`, `skills/spec-lifecycle-manager/prompts/documentation-wizard.json`, bundled plugin copies, tests as needed
+  - Acceptance: Spec-package templates and wizard close/promote guidance require agents to compare broad Must requirements and architectural design targets against actual task evidence before closure; partial coverage must be marked `partial-routed`, `partial-blocking`, `not-covered`, or `out-of-scope` with one destination; review findings must be fixed, rejected with rationale, or routed before closure; validation confirms prompt definitions and package parity.
+  - Validation: `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py prompts .`; `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .`; `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'`; `git diff --check`
+  - Evidence mode: implementation
+  - Evidence: Completed 2026-07-05. Added closure semantic coverage guard to fallback verification, tasks, traceability, and design templates; updated documentation-wizard close/promote guidance; mirrored source skill to Codex and Claude bundles. Validation passed: full unittest discovery 184 tests, prompts validation, package-contract, lint, sync-guard after install refresh, scan, archive-index, and git diff --check.
+
+- [x] T017 Implement MCP shared-core extraction away from `spec_runtime.py`.
+  - Depends on: T015
+  - Requirement: Requirement 9; B059
+  - Files: `skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`, `skills/spec-lifecycle-manager/scripts/spec_runtime.py`, `skills/spec-lifecycle-manager/scripts/lifecycle/`, bundled plugin copies, tests as needed
+  - Acceptance: MCP-owned lifecycle tools no longer depend on `spec_runtime.py` as a monolithic runtime facade for agent-facing behavior; each migrated tool calls shared lifecycle modules or services directly; retained CLI/recovery behavior calls the same shared implementation where applicable; package validation and no-MCP recovery remain explicit; tests prove representative MCP tool paths use shared internals and retained non-MCP entrypoints do not expose duplicate public tool contracts.
+  - Validation: `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'`; `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .`; `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py sync-guard .`; `git diff --check`
+  - Evidence mode: implementation
+  - Evidence: Completed 2026-07-05. Added import-only shared lifecycle core in lifecycle/core.py, moved retained runtime parser/dispatch to private lifecycle/runtime_adapter.py, rewired spec_mcp_server.py to import lifecycle.core directly, retained spec_runtime.py as the only runtime/recovery executable, mirrored bundles, refreshed installed cache, and added MCP/runtime boundary tests proving shared core has no parser, main, __main__, executable bit, or direct command output. Validation passed: focused runtime/MCP tests, full unittest discovery, package-contract, sync-guard, scan, archive-index, lint, and git diff --check.
 
 ## Execution Rules
 

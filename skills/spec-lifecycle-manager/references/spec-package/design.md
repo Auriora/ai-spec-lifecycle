@@ -90,6 +90,17 @@ untrusted input boundaries.
 Describe schema migrations, data migrations, rollout sequencing, backward
 compatibility, feature flags, deprecation behavior, or compatibility risks.
 
+### Slice Boundary And Residual Architecture
+
+Use this table when the design includes Must requirements, architectural
+targets, migrations, public interfaces, cross-module behavior, or retained
+legacy surfaces. It should be updated before closure if implementation proves
+the accepted slice is narrower than the design target.
+
+| Design target | In this slice | Out of this slice | Follow-up destination | Blocks closure? |
+|---------------|---------------|-------------------|-----------------------|-----------------|
+| Architecture, migration, public interface, or cross-module target | Concrete files, tasks, tests, or docs | Deferred or rejected work | backlog, roadmap, issue, follow-up spec, owner, or none | yes/no |
+
 ## Validation Strategy
 
 Describe how the implementation will be verified. Map validation to

@@ -109,6 +109,12 @@ def rpc(request_id, method, params=None):
 
 
 class SpecMcpServerTests(unittest.TestCase):
+    def test_mcp_server_uses_shared_core_not_runtime_adapter(self):
+        source = SERVER.read_text(encoding="utf-8")
+        self.assertIn("from lifecycle import core as lifecycle_core", source)
+        self.assertNotIn("import spec_runtime", source)
+        self.assertNotIn("spec_runtime.", source)
+
     def send(
         self,
         *messages,

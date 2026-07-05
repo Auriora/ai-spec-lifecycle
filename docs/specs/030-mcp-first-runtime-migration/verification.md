@@ -13,10 +13,15 @@ last_reviewed: 2026-07-05
 
 ## Scope
 
-This verification record currently covers Phase 1 planning contracts, Phase 2
-shared internal modules, and Phase 3 MCP tool contracts for
-`docs/specs/030-mcp-first-runtime-migration/`: T001-T009. Implementation tasks
-T010-T014 remain pending.
+This verification record covers the v1 MCP-first runtime migration
+slice for `docs/specs/030-mcp-first-runtime-migration/`: T001-T017. The
+completed slice migrates the selected `traceability_lookup.py` executable into
+MCP-owned shared internals, keeps dynamic tool-list behavior deferred, refreshes
+local install parity, adds the prompt/template closure semantic coverage guard,
+and extracts reusable lifecycle implementation into import-only
+`lifecycle/core.py` so MCP-owned agent-facing behavior no longer depends on
+`spec_runtime.py` as a monolithic runtime facade. CLI parsing for retained
+recovery commands lives behind `spec_runtime.py` in private `lifecycle/runtime_adapter.py`.
 
 ## Quality Gates
 
@@ -27,10 +32,10 @@ T010-T014 remain pending.
 | Automated tests pass or alternate verification recorded | yes | pass | Structural validation commands in Evidence Log pass. |
 | Compatibility matrix recorded | yes | pass | Compatibility Matrix section below. |
 | Migration inventory and replacement contract accepted | yes | pass | Script Migration Inventory and Replacement Contract sections below. |
-| Implementation readiness | yes | partial | Phase 1, Phase 2, and Phase 3 are complete; T010-T014 remain pending before closure or release. |
+| Implementation readiness | yes | pass | T001-T017 are complete for the accepted migrated-script slice, prompt/template guard, and shared-core extraction. |
 | Durable documentation updates identified | yes | pass | Durable targets listed in `canonical-context.md` and task T013. |
-| Durable documentation promoted or explicitly deferred | yes | pending | Promotion is deferred to T013. |
-| Spec cleanup decision recorded | yes | pending | Closure decision is deferred to T014 and final closure workflow. |
+| Durable documentation promoted or explicitly deferred | yes | pass | Durable docs were updated in T013 and refreshed for T017 shared-core extraction. B059 and B060 are marked done in backlog. |
+| Spec cleanup decision recorded | yes | pending | Closure cleanup still requires final spec commit and closure-log/archive-index updates. |
 
 ## Compatibility Matrix
 
@@ -113,9 +118,9 @@ spec.
 | Requirement 2 | AC1-AC5 | Compatibility matrix records known server capability data and unknown/unavailable client observations. | Client refresh observations are unavailable in this Codex run. |
 | Requirement 3 | AC1-AC7 | Matrix lists Codex and Claude environments, manual checker steps, dated evidence, and stable fallback decision. | Future dynamic tools need fresh evidence. |
 | Requirement 4 | AC2-AC4 | V1 accepts stable tools plus `available_next_actions`; dynamic tool-list behavior is not enabled. | Future dynamic behavior still needs fresh evidence. |
-| Requirement 5 | AC1, AC4-AC5 | Script inventory and replacement contract recorded; MCP inventory tool implemented. | Traceability implementation migration and removal remain pending. |
-| Requirement 6 | AC1, AC4 | Closure blocker expectation recorded for migrated script paths. | Closure-check implementation remains pending. |
-| Requirement 9 | AC1-AC5 | Public ownership, retained recovery boundaries, shared-module direction, and MCP-owned inventory/capability surfaces are implemented for completed phases. | Traceability implementation migration and retained runtime closure checks remain pending. |
+| Requirement 5 | AC1, AC4-AC5 | Script inventory and replacement contract recorded; MCP inventory tool implemented; selected traceability executable removed from source, bundle, and installed cache. | None for selected v1 migrated scripts. |
+| Requirement 6 | AC1, AC4 | Closure blocker expectation recorded and implemented for migrated script paths. | None for selected v1 migrated scripts. |
+| Requirement 9 | AC1-AC5 | Public ownership, retained recovery boundaries, shared-module direction, MCP-owned inventory/capability/traceability surfaces, prompt/template closure guard, and shared-core extraction are implemented. MCP imports import-only `lifecycle/core.py`; `spec_runtime.py` is the retained executable using private `lifecycle/runtime_adapter.py`. | None for this spec. |
 | Requirement 2 | AC1-AC5 | MCP `lifecycle_capabilities` reports known server fields, unknown client fields where unavailable, `tools.listChanged: False`, and stable-tool decision. | Live client refresh observation remains unavailable. |
 | Requirement 4 | AC2-AC4 | Selected MCP outputs include `available_next_actions`; dynamic tool-list behavior remains disabled. | Future dynamic behavior still needs fresh evidence. |
 | Requirement 7 | AC1-AC3 | MCP tools advertise output schemas for `lifecycle_capabilities`, `script_migration_inventory`, and `traceability_lookup`; tests verify representative `structuredContent`. | Full schema validator dependency not added. |
@@ -125,14 +130,23 @@ spec.
 | Property | Covered by | Evidence | Residual risk |
 |----------|------------|----------|---------------|
 | CP-001 | T002 | Stable-tool decision accepted because dynamic refresh behavior was not observed. | Future dynamic tools require new evidence. |
-| CP-002 | T003 | Migrated script source and bundle paths are listed as closure blockers. | Enforcement remains pending in T011-T012. |
+| CP-002 | T003, T011-T014 | Migrated script source, bundle, and installed-cache paths are closure blockers and validated absent. | None for selected v1 migrated scripts. |
 | CP-005 | T002 | Unknown/unavailable client capability data is recorded without guessed runtime gating. | Client behavior may change. |
-| CP-006 | T003 | Replacement contract is recorded before implementation. | Satisfaction remains pending. |
-| CP-007 | T001 and T003 | MCP owns agent-facing lifecycle tools; retained scripts are internal/recovery only. | Command inventory review remains pending. |
-| CP-007 | T004-T005 | Shared modules are importable internals and tested without becoming public tool surfaces. | Entrypoints are wired in later phases. |
+| CP-006 | T003, T010-T014 | Replacement contract is recorded and satisfied for `traceability_lookup.py`. | None for selected v1 migrated scripts. |
+| CP-007 | T001, T003, T015-T017 | MCP owns agent-facing lifecycle tools; retained scripts are internal/recovery only; MCP imports `lifecycle/core.py` directly; `spec_runtime.py` remains the only retained runtime executable and uses private `lifecycle/runtime_adapter.py`. | None for this spec. |
+| CP-007 | T004-T005, T017 | Shared modules are importable internals and tested without becoming public tool surfaces. | None for this spec. |
 | CP-001 | T007 | Stable MCP outputs expose next actions without dynamic tool-list changes. | Future dynamic tools require new evidence. |
 | CP-003 | T006-T009 | MCP tools return structured payloads and advertise output schemas for Phase 3 tools. | Schema conformance is representative, not exhaustive. |
 | CP-005 | T006 | Unknown client capability fields are preserved instead of guessed. | Client behavior may change. |
+
+## Scope Reconciliation Before Closure
+
+| Broad requirement, design target, or review finding | Implemented in this spec | Coverage state | Deferred or rejected work | Destination | Blocks closure? | Evidence |
+|-----------------------------------------------------|--------------------------|----------------|---------------------------|-------------|-----------------|----------|
+| Requirement 9 single public tool ownership and thin entrypoints | T001, T003-T017; MCP-owned tools; retained recovery boundaries; shared lifecycle modules | complete | none | none | no | `spec_mcp_server.py` imports `lifecycle.core`; `lifecycle/core.py` has no CLI parser, `main`, `__main__`, or executable bit; boundary tests pass. |
+| B059 MCP shared-core extraction | T017 | complete | none | none | no | Added import-only `lifecycle/core.py`, rewired MCP to shared core, retained runtime recovery through `spec_runtime.py` and private `lifecycle/runtime_adapter.py`, and added tests. |
+| B060 closure semantic coverage guard | T016 | complete | none | none | no | Updated fallback templates and `documentation-wizard` close/promote instructions. |
+| Implementation review finding: broad Requirement 9 residual hidden by narrow task completion | T015-T017 | complete | none | none | no | T015 reopened work; T016 added future guard; T017 completed shared-core extraction. |
 
 ## Task Evidence
 
@@ -152,6 +166,9 @@ spec.
 | T012 | complete | Removed the migrated executable from source, Codex bundle, and Claude bundle paths; package required paths no longer require it; package contract reports 56 files per source/bundle skill copy. | Installed cache may remain stale until T014. |
 | T013 | complete | Updated durable runtime and install docs so MCP is the public traceability owner, retained scripts are validation/package/hook/recovery surfaces, and migrated-script absence is part of install validation. | Live MCP process reload still requires a new agent/session after install refresh. |
 | T014 | complete | Ran full validation, package contract, install refresh, sync guard, archive index, scan, closure check, and whitespace checks; installed cache is in sync and the retired executable is absent. | None for this spec's acceptance criteria. |
+| T015 | complete | Addressed implementation review findings by routing remaining non-touched MCP shared-core extraction to B059 and correcting stale readiness text. | B059 is a follow-up and does not block this selected migrated-script slice. |
+| T016 | complete | Added `Scope Reconciliation Before Closure` to verification template, final review/semantic coverage task pattern to tasks template, coverage-state columns to traceability template, slice-boundary table to design template, and wizard close/promote instructions requiring broad Must requirement/design-target dispositions before closure. | Final validation passed. |
+| T017 | complete | Added import-only `lifecycle/core.py`, made `spec_runtime.py` the retained runtime/recovery executable through private `lifecycle/runtime_adapter.py`, rewired `spec_mcp_server.py` to import `lifecycle.core` directly, and added boundary tests proving MCP no longer imports `spec_runtime.py` and shared core is not a CLI surface. | Final validation passed. |
 
 ## Evidence Log
 
@@ -198,6 +215,40 @@ spec.
 | 2026-07-05 | MCP `closure_check` for `030-mcp-first-runtime-migration` | pass | MCP reports ready with zero blockers after install refresh and task evidence updates. |
 | 2026-07-05 | MCP `active_spec_preflight` for `030-mcp-first-runtime-migration` | pass | MCP reports 23 complete and verified tasks, no runnable incomplete task, and no deleted traceability script recovery command. |
 | 2026-07-05 | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .` | pass | Package contract remains clean after durable-doc updates. |
+| 2026-07-05 | Implementation review remediation | pass | Remaining non-touched MCP shared-core extraction is routed to B059; stale verification readiness text corrected. |
+| 2026-07-05 | MCP `lint_spec_package` and `active_spec_preflight` after T015 | pass | Spec lint has zero diagnostics; MCP reports 24 complete and verified tasks with no runnable incomplete task. |
+| 2026-07-05 | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py lint docs/specs/030-mcp-first-runtime-migration` | pass | Direct runtime lint has zero diagnostics after review remediation edits. |
+| 2026-07-05 | Prompt/template improvement routing | pass | Added B060 to capture prompt, template, and possible lint/readiness improvements that prevent broad requirement residuals from being hidden by narrow task completion. |
+| 2026-07-05 | Reopened prompt/template guard as T016 | pending | Added open T016 so spec 030 visibly carries the prompt/template fix instead of hiding it only in backlog. |
+| 2026-07-05 | Reopened MCP shared-core extraction as T017 | pending | Added open T017 so the actual B059 MCP-to-shared-core implementation work is visible in spec 030 instead of only in backlog. |
+| 2026-07-05 | `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_mcp_server tests.runtime.test_spec_runtime` | pass | 136 focused runtime/MCP tests passed, including shared-core boundary tests for T017 and prompt contract coverage for T016. |
+| 2026-07-05 | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py prompts .` | pass | Prompt definitions validate after documentation-wizard semantic coverage guard updates. |
+| 2026-07-05 | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .` | pass | Source skill, Codex bundle, and Claude bundle are in sync with 57 files each after adding `lifecycle/core.py` and mirroring T016/T017 changes. |
+| 2026-07-05 | `scripts/install-spec-lifecycle-manager-package.sh` | pass | Installed plugin cache refreshed at `/home/bcherrington/.codex/plugins/cache/auriora-local/spec-lifecycle-manager/0.2.1`. |
+| 2026-07-05 | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py sync-guard .` | pass | Source skill, bundled plugin, Claude plugin copy, and installed cache are in sync with no findings. |
+| 2026-07-05 | Direct and MCP closure checks for `030-mcp-first-runtime-migration` | pass | Direct runtime and MCP `closure_check` report ready with zero blockers after T016/T017 evidence updates. |
+| 2026-07-05 | `npm run validate` | pass | Full repository validation passed: 184 Python tests, 17 Node tests, scan, archive-index, prompts, package-contract, sync-guard, npm pack dry-run, and `git diff --check`. |
+| 2026-07-05 | Implementation review finding fix | pass | Moved retained runtime parser/dispatch from `lifecycle/core.py` into private `lifecycle/runtime_adapter.py`, removed executable mode from `lifecycle/core.py`, updated `spec_runtime.py`, and added regression coverage for the non-executable shared-core boundary. |
+| 2026-07-05 | `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime tests.runtime.test_spec_mcp_server` | pass | 137 focused runtime/MCP tests passed after addressing the review finding and residual risk. |
+
+## Implementation Review Remediation
+
+The implementation review found that the spec could be read as claiming all
+MCP tools had been extracted away from `spec_runtime.py`, while the accepted v1
+implementation only extracted behavior touched by this slice: capabilities,
+available next actions, migration inventory, and traceability lookup. The
+remaining MCP-to-`spec_runtime.py` coupling is now explicitly routed to B059
+instead of being hidden in closure evidence.
+
+This happened because task acceptance criteria were narrower than the broad
+architectural wording in Requirement 9. The lifecycle checks verified the task
+contract and selected migrated script removal, but they did not independently
+detect that the broader design target still needed a follow-up route. Future
+similar specs should include a review task that compares broad architectural
+requirements against the implemented slice and records one destination for any
+remaining extraction or migration work before closure. The prompt/template
+improvement needed to make that more systematic is implemented by T016. The
+actual MCP shared-core extraction is implemented by T017.
 
 ## Manual Or External Verification
 
@@ -215,6 +266,8 @@ records stronger observed client evidence.
   observable from the current session.
 - A currently running MCP server process may still need a session reload to use
   the refreshed installed cache, even though `sync-guard` reports clean parity.
+- None for Requirement 9 shared-core extraction or prompt/template semantic
+  coverage after T016/T017 validation.
 
 ## Durable Promotion And Cleanup
 
@@ -226,19 +279,21 @@ records stronger observed client evidence.
 | Traceability executable removal | Source, bundle, installed cache, closure evidence | complete | T010-T014 |
 | Shared lifecycle module architecture | Source skill, bundled plugin copies, tests, runtime docs | complete | T004-T005; T013 |
 | MCP tool contracts and stable next actions | MCP server, schema helper, tests, runtime docs | complete | T006-T009; T013-T014 |
+| Remaining MCP shared-core extraction beyond touched behavior | import-only `lifecycle/core.py`, private `lifecycle/runtime_adapter.py`, MCP server, retained runtime executable, tests, backlog B059 | complete | T017 |
+| Prompt/template closure semantic coverage guard | Spec-package templates, `documentation-wizard` prompt, bundled plugin copies, backlog B060 | complete | T016 |
 
 ### Spec Cleanup Decision
 
-- **Cleanup action:** ready to close
-- **Reason:** Planning contracts, shared modules, MCP contracts, source/bundle script migration, durable docs, install refresh, and closure validation are complete.
+- **Cleanup action:** not ready to close
+- **Reason:** Planning contracts, shared modules, MCP contracts, source/bundle script migration, durable docs, prompt/template semantic coverage, shared-core extraction, and install refresh are complete. Final closure still needs a final spec commit and closure-log/archive-index cleanup.
 - **Final spec commit:** pending
 - **Closure log path:** `docs/history/spec-closure-log.md`
 - **Closure log entry updated:** no
 - **Closure cleanup commit:** pending
 - **Active indexes updated:** no
 - **Durable docs linked back to evidence where useful:** no
-- **Residual spec-only content:** none blocking; compatibility and migration
-  planning evidence remains historical spec-local evidence.
+- **Residual spec-only content:** final closure record and active-package
+  removal/archival decision remain after commit.
 
 ## Ship Or Closure Risk
 
@@ -249,21 +304,25 @@ records stronger observed client evidence.
   defined during T010-T014 if needed
 - **Requires human review:** yes
 - **Release notes needed:** likely, if public script removal is released
-- **Follow-up issue or spec needed:** no for Phase 3
+- **Follow-up issue or spec needed:** no for B059/B060 after T016/T017
+  completion.
 
 ### Risk Rationale
 
-Phase 3 adds read-only MCP tools and output schemas, plus stable next-action
-metadata on selected MCP outputs. The overall spec remains medium risk because
-later phases will remove an executable script and complete MCP-only ownership
-for migrated traceability lookup behavior.
+The completed v1 slice removes the selected traceability executable and keeps
+MCP-only public ownership for that migrated behavior. T017 removes the
+remaining MCP-to-`spec_runtime.py` implementation-facade coupling by moving
+shared lifecycle behavior into `lifecycle/core.py` and retaining
+`spec_runtime.py` as the recovery executable through private `lifecycle/runtime_adapter.py`.
+T016 adds the prompt/template guard so future agents compare broad requirements
+and design targets against task evidence before closure.
 
 ## Readiness Decision
 
-- **Ready for Phase 4 implementation:** yes, for T010 only
-- **Ready for promotion:** no
-- **Ready for release:** no
-- **Ready for closure:** no
+- **Ready for implementation:** yes, implementation tasks T001-T017 are complete
+- **Ready for promotion:** yes
+- **Ready for release:** pending review and release decision
+- **Ready for closure:** pending final spec commit and closure cleanup
 
 ## Related Artifacts
 

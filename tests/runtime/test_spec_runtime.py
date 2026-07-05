@@ -1,6 +1,7 @@
 import json
 import os
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -451,6 +452,36 @@ def write_archive_recovery_entry(repo: Path, spec: Path) -> None:
 
 
 class SpecRuntimeTests(unittest.TestCase):
+    def test_runtime_script_is_thin_shared_core_adapter(self):
+        source = SCRIPT.read_text(encoding="utf-8")
+        self.assertIn("from lifecycle.core import *", source)
+        self.assertIn("from lifecycle.runtime_adapter import main", source)
+        self.assertLess(len(source.splitlines()), 30)
+        from lifecycle import core as lifecycle_core
+        from lifecycle import runtime_adapter
+
+        self.assertIs(spec_runtime.scan_specs, lifecycle_core.scan_specs)
+        self.assertIs(spec_runtime.main, runtime_adapter.main)
+        self.assertFalse(hasattr(lifecycle_core, "main"))
+
+    def test_shared_core_is_not_a_cli_surface(self):
+        core_path = SCRIPT_DIR / "lifecycle/core.py"
+        source = core_path.read_text(encoding="utf-8")
+
+        self.assertNotIn("def parse_args(", source)
+        self.assertNotIn("def main(", source)
+        self.assertNotIn("__name__ == \"__main__\"", source)
+        self.assertFalse(core_path.stat().st_mode & stat.S_IXUSR)
+
+        completed = subprocess.run(
+            [sys.executable, str(core_path), "scan", "."],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual("", completed.stdout)
+
     def test_closure_risk_review_reports_low_risk_for_ready_spec(self):
         with tempfile.TemporaryDirectory() as tmp:
             spec = write_closure_risk_ready_spec(Path(tmp))

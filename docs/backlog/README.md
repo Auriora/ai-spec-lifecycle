@@ -73,6 +73,8 @@ spec or that should not block the active spec currently being delivered.
 | B056 | active     | Spec closure helper                                      | User request during closure of spec `025-dev-cli-workflow-tools`; B003, B008, B012, B023, B050                                                                              | Promoted to `docs/specs/029-spec-closure-helper/` in wizard requirements mode. Add a structured helper for the `make durable, cleanup, remove` closure workflow: confirm durable promotion targets, require the final spec commit, remove or archive the package, update closure log and archive index entries, route follow-up work, and return validation commands. Keep it orchestration-oriented and do not let it replace human closure review.                                                                                                                                                                                                                                                                                   |
 | B057 | candidate  | Requirement priority labels                              | User request during spec `030-mcp-first-runtime-migration`; requirements authoring friction                                                                                 | Add a standard priority field or notation for requirements, such as must/should/could or equivalent, so agents can distinguish mandatory closure gates from lower-priority enhancements during design, task planning, validation, and scope negotiation. Decide whether priority belongs in headings, frontmatter, requirement metadata, traceability rows, or lint output. |
 | B058 | candidate  | Canonical context warning noise                          | User discussion of Claude-agent interpretation of `CANONICAL_CONTEXT_MISSING`; B047, spec-local canonical context work                                                       | Clarify that `CANONICAL_CONTEXT_MISSING` is advisory and should not cause agents to add retroactive `canonical-context.md` files by default. Tighten diagnostic wording, readiness guidance, and risk-signal detection so heuristic matches such as `imported-source-risk` distinguish real imported or stale durable-source authority from ordinary promotion or closure wording. |
+| B059 | done       | MCP shared-core extraction                               | Spec `030-mcp-first-runtime-migration` implementation review finding; Requirement 9 thin-entrypoint architecture                                                            | Completed in spec 030 task T017. Added `lifecycle/core.py`, rewired `spec_mcp_server.py` to call shared lifecycle internals directly, retained `spec_runtime.py` as the validation/recovery adapter, and added regression tests for the MCP/runtime boundary. |
+| B060 | done       | Closure semantic coverage guard                          | Spec `030-mcp-first-runtime-migration` implementation review remediation; prompt/template gap found while routing B059                                                       | Completed in spec 030 task T016. Updated spec-package fallback templates and `documentation-wizard` close/promote guidance so broad Must requirements, architectural targets, migrations, public interfaces, cross-module behavior, and review findings require closure dispositions before readiness is reported. |
 
 ## External Agent Feedback Candidates
 
@@ -87,6 +89,40 @@ whether the intended surface is an MCP tool, prompt workflow, template update,
 lint rule, or advisory hook. Phase helpers must keep proof separate from status
 mutation: batch task updates should reference concrete commands, reviews, and
 durable-doc changes rather than replacing them.
+
+## Spec Closure Semantic Coverage Candidate Details
+
+### B060 Closure Semantic Coverage Guard
+
+This completed item prevents a completed task list from masking broad
+requirement or design residuals. The triggering example was spec 030: the
+implemented slice correctly migrated `traceability_lookup.py`, but Requirement 9
+and the design could be read as a broader thin-entrypoint architecture promise
+until remaining MCP-to-`spec_runtime.py` extraction was surfaced and completed
+through T017.
+
+Completed documentation and template changes:
+
+- Add a `Scope Reconciliation Before Closure` section to the `verification.md`
+  fallback template with columns for broad requirement or design target,
+  implemented in this spec, deferred or routed work, destination, and whether it
+  blocks closure.
+- Add a default final review-remediation task pattern to the `tasks.md` fallback
+  template. The task should require review findings to be fixed, rejected with
+  rationale, or routed to one explicit destination with residual risk before
+  closure.
+- Add coverage-state fields to `traceability.md`, especially for Requirement To
+  Delivery rows. Suggested states: `complete`, `partial-routed`,
+  `partial-blocking`, `not-covered`, and `out-of-scope`.
+- Add a `Slice Boundary And Residual Architecture` section to the `design.md`
+  fallback template for specs that touch architecture, migration, public
+  interfaces, cross-module behavior, or runtime/tool ownership.
+- Update `documentation-wizard` promote/close guidance so it asks agents to
+  compare each Must requirement and architectural design target against actual
+  task evidence before reporting closure readiness.
+- Lint or readiness support that warns when a Must requirement or correctness
+  property maps only to planner/routing evidence remains a possible future
+  enhancement if template/prompt guidance proves insufficient.
 
 ## Canonical Context Diagnostic Candidate Details
 
@@ -408,6 +444,8 @@ dogfooding, not on factual claims from conversation content.
 | P1       | B008       | Delivered closure quality improvements by separating historical recoverability from live-document guidance risk.                                                                                                             |
 | P2       | B057       | Adds requirement priority semantics so agents can separate must-have gates from should/could enhancements during spec planning and closure.                                                                                  |
 | P2       | B058       | Reduces agent busywork from advisory canonical-context heuristics and keeps optional artifacts from becoming retroactive closure ceremony.                                                                                   |
+| P2       | B059       | Prevents MCP-first work from stopping at wrapper-level migration by giving the remaining `spec_runtime.py` extraction its own scoped follow-up.                                                                              |
+| P1       | B060       | Reduces false closure confidence by forcing broad requirements, architecture targets, and residual implementation scope to be reconciled before spec cleanup.                                                               |
 | P2       | B029       | Makes workflow level explicit before agents choose whether to patch directly, open a spec, or stop for governance review.                                                                                                    |
 | P2       | B031       | Turns lifecycle phase transitions into deterministic checks that can prevent stale requirements, incomplete design, or premature implementation.                                                                             |
 | P2       | B033       | Gives agents a portable steering context without adopting Kiro-specific `.kiro/steering/` paths.                                                                                                                             |

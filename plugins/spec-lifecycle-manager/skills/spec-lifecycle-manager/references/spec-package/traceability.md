@@ -32,9 +32,16 @@ traceability lookup script.
 
 ## Requirement To Delivery Matrix
 
-| Requirement | Acceptance Criteria | Design Sections | Tasks | Verification | Durable Targets |
-|-------------|---------------------|-----------------|-------|--------------|-----------------|
-| Requirement 1 | AC1, AC2 | `design.md#section` | T001, T002 | `verification.md#gate` | `docs/path.md` |
+Use coverage state to reconcile broad requirements before closure, especially
+Must requirements, architectural targets, migrations, public interfaces, and
+cross-module behavior. Valid values are `complete`, `partial-routed`,
+`partial-blocking`, `not-covered`, and `out-of-scope`. Every partial,
+not-covered, or out-of-scope row needs one destination or a rejection rationale
+before closure.
+
+| Requirement | Acceptance Criteria | Design Sections | Tasks | Verification | Durable Targets | Coverage State | Residual Destination |
+|-------------|---------------------|-----------------|-------|--------------|-----------------|----------------|----------------------|
+| Requirement 1 | AC1, AC2 | `design.md#section` | T001, T002 | `verification.md#gate` | `docs/path.md` | complete | none |
 
 ## Correctness Property Coverage
 
@@ -44,9 +51,9 @@ traceability lookup script.
 
 ## Design To Implementation Matrix
 
-| Design Section | Requirements | Tasks | Interfaces Or Files | Verification |
-|----------------|--------------|-------|---------------------|--------------|
-| `design.md#section` | Requirement 1 | T001 | `src/path`, `tests/path` | Test, command, or review |
+| Design Section | Requirements | Tasks | Interfaces Or Files | Verification | Coverage State | Residual Destination |
+|----------------|--------------|-------|---------------------|--------------|----------------|----------------------|
+| `design.md#section` | Requirement 1 | T001 | `src/path`, `tests/path` | Test, command, or review | complete | none |
 
 ## Open Decision Impact
 
@@ -65,3 +72,7 @@ traceability lookup script.
 - Treat uncovered correctness properties or acceptance criteria as readiness
   gaps until they are mapped to tasks, tests, verification, or a recorded manual
   method.
+- Before closure, use the coverage-state columns to compare broad requirement
+  and design wording against actual task evidence. Do not rely on task checkbox
+  completion alone when the requirement or design target is broader than the
+  selected implementation slice.

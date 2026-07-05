@@ -30,16 +30,18 @@ script surfaces from reusable implementation modules:
 
 The target architecture is not "MCP calls `spec_runtime.py`." The target is
 "each lifecycle tool has one public owner, with MCP owning agent-facing tools."
-Existing entrypoint coupling may remain temporarily only when explicitly
-classified as retained recovery debt with a follow-up extraction path.
+The implementation now moves the broad deterministic lifecycle implementation
+into import-only `lifecycle/core.py`. MCP imports that shared core directly, and
+`spec_runtime.py` remains as the retained runtime/recovery executable. Runtime argument parsing and dispatch live in `lifecycle/runtime_adapter.py`, a private adapter used by
+`spec_runtime.py`, so shared core modules do not become parallel public command
+surfaces.
 
 For this first slice, `traceability_lookup.py` is the only executable script
 selected for migration and removal. It already has an MCP-facing replacement
 through the `traceability_lookup` tool and is small enough to retire safely by
 moving reusable parsing logic behind the MCP/runtime implementation. Larger
-runtime surfaces, especially `spec_runtime.py`, remain retained recovery paths
-until the design has a concrete replacement for package validation and no-MCP
-debugging.
+runtime surfaces, especially `spec_runtime.py`, remain retained recovery
+entrypoints but no longer own reusable lifecycle implementation for MCP tools.
 
 ## Requirement Coverage
 
@@ -53,7 +55,7 @@ debugging.
 | Requirement 6 | AC1-AC4             | Add closure blocker logic or closure evidence checks that fail selected migrated scripts if they remain in source/bundle/cache paths.                                                                | Closure-check/runtime tests and package parity validation.                                          |
 | Requirement 7 | AC1-AC3             | MCP tool results use stable structured fields; unsupported/degraded modes are explicit.                                                                                                              | MCP response schema tests and representative structuredContent checks.                              |
 | Requirement 8 | AC1-AC3             | Port migrated script tests to MCP/runtime tests, retain `spec_runtime.py` for CI/no-MCP recovery, and require package sync validation after install.                                                 | Python unit tests, MCP server tests, package-contract, sync-guard.                                  |
-| Requirement 9 | AC1-AC5             | Extract touched behavior into shared modules while preserving a single public owner for each agent-facing lifecycle tool.                                                                            | MCP-owned tool tests plus checks that retained non-MCP entrypoints do not duplicate tool contracts. |
+| Requirement 9 | AC1-AC5             | Extract lifecycle implementation into import-only shared modules, wire MCP to `lifecycle/core.py` instead of `spec_runtime.py`, keep `spec_runtime.py` as the retained runtime/recovery executable through `lifecycle/runtime_adapter.py`, and preserve a single public owner for each agent-facing lifecycle tool. | MCP-owned tool tests, retained-entrypoint review, shared-core non-executable tests, and package/sync validation. |
 
 ## Correctness Property Coverage
 
@@ -65,7 +67,7 @@ debugging.
 | CP-004   | `spec_runtime.py` remains the retained recovery runner.                                 | `npm run validate`, package-contract, sync-guard.                | This is deliberate retention, not migration.             |
 | CP-005   | Capability reporting uses explicit `unknown` where unavailable.                         | Tests assert no guessed client capability fields.                | No private agent internals.                              |
 | CP-006   | Replacement contracts must be complete before removal is accepted.                      | Closure evidence table and tests.                                | Prevents deletion-only migration.                        |
-| CP-007   | Each agent-facing lifecycle tool has one public owner.                                  | MCP tool contract tests and runtime command inventory review.    | Avoids parallel MCP and CLI tool surfaces.               |
+| CP-007   | Each agent-facing lifecycle tool has one public owner.                                  | MCP tool contract tests, runtime command inventory review, and shared-core extraction tests. | Avoids parallel MCP and CLI tool surfaces while keeping retained recovery explicit. |
 
 ## High-Level Design
 
@@ -82,6 +84,8 @@ MCP entrypoint
   | direct Python calls
   v
 Shared lifecycle modules
+  |-- lifecycle/core.py import-only shared deterministic implementation
+  |-- lifecycle/runtime_adapter.py private runtime adapter used by spec_runtime.py
   |-- lifecycle actions and state
   |-- capability report construction
   |-- traceability lookup logic
@@ -96,7 +100,7 @@ Hook / CLI / CI
   v
 Retained non-MCP entrypoints
   |-- codex_spec_lifecycle_hook.py advisory hook adapter
-  |-- spec_runtime.py              validation/recovery adapter
+  |-- spec_runtime.py              validation/recovery executable over lifecycle/runtime_adapter.py
 ```
 
 The MCP server remains the primary agent-facing boundary, but it is an adapter,
@@ -557,7 +561,7 @@ package validation needs.
 | OQ-003 | Retained no-MCP recovery path?                                     | `spec_runtime.py` remains retained recovery.                                                                          | no, if accepted        |
 | OQ-004 | Which clients to test for dynamic tools?                           | Codex and Claude plugin environments first; dynamic tools deferred.                                                   | no for v1 stable tools |
 | OQ-005 | Is dynamic tool-list behavior worth v1?                            | No. Use stable tools and `available_next_actions` for v1.                                                             | no, if accepted        |
-| OQ-006 | Which `spec_runtime.py` logic should be extracted?                 | Extract only behavior touched by this spec: capabilities, next actions, migration inventory, and traceability lookup. | no, if accepted        |
+| OQ-006 | Which `spec_runtime.py` logic should be extracted?                 | Extract reusable lifecycle implementation into import-only `lifecycle/core.py`; keep runtime argument parsing in private `lifecycle/runtime_adapter.py`; keep `spec_runtime.py` as the retained runtime/recovery executable. | no, if accepted        |
 | OQ-007 | Which retained runtime commands are not duplicate lifecycle tools? | Retain validation, packaging, install, hook, and emergency recovery commands only.                                    | no, if accepted        |
 
 ## Related Artifacts

@@ -44,6 +44,30 @@ record covers.
 |----------|------------|----------|---------------|
 | CP-001 | Task, test, command, review, or manual method | | |
 
+## Scope Reconciliation Before Closure
+
+Use this section before promotion or closure for Must requirements,
+architectural targets, migrations, public interfaces, cross-module behavior, or
+review findings whose wording is broader than one implementation task. Compare
+the requirement/design target against actual task evidence, not only checkbox
+state.
+
+Coverage states:
+
+- `complete`: implemented and verified in this spec.
+- `partial-routed`: accepted partial coverage with remaining work routed to one
+  explicit destination that does not block closure.
+- `partial-blocking`: partial coverage that blocks closure until completed,
+  rejected with rationale, or routed.
+- `not-covered`: no evidence of implementation; blocks closure unless rejected
+  with rationale or routed to one destination.
+- `out-of-scope`: intentionally outside this spec, with rationale and one
+  durable destination when follow-up work remains.
+
+| Broad requirement, design target, or review finding | Implemented in this spec | Coverage state | Deferred or rejected work | Destination | Blocks closure? | Evidence |
+|-----------------------------------------------------|--------------------------|----------------|---------------------------|-------------|-----------------|----------|
+| Requirement/design/review item | Task IDs, code, docs, tests, or none | complete \| partial-routed \| partial-blocking \| not-covered \| out-of-scope | Remaining work or rejection rationale | backlog, roadmap, issue, follow-up spec, owner, or none | yes/no | command, review, task evidence, or artifact |
+
 ## Agent Readiness Evidence
 
 | Field | Evidence | Residual risk |
@@ -82,6 +106,11 @@ what performed it, the date, evidence, and residual risk.
 Use this section before closure. A spec is not ready to close while accepted
 behavior, decisions, operations, contracts, validation procedures, or follow-up
 ownership exist only inside the spec package.
+
+Before marking closure ready, confirm every `partial-routed`,
+`partial-blocking`, `not-covered`, or `out-of-scope` row above has exactly one
+destination or a rejected-with-rationale disposition. `partial-blocking` and
+`not-covered` rows block closure unless their disposition is updated.
 
 | Spec content | Durable destination or deferral | Status | Evidence |
 |--------------|---------------------------------|--------|----------|

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Minimal stdio MCP adapter for the spec lifecycle runtime.
+"""Minimal stdio MCP adapter for shared lifecycle internals.
 
-The adapter is dependency-free. It exposes the tested spec runtime helpers as
+The adapter is dependency-free. It exposes shared lifecycle internals as
 MCP resources, tools, and prompts without duplicating lifecycle policy or
 parsing logic. Write-capable tools are preview-first and scoped by the runtime.
 """
@@ -18,7 +18,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
-import spec_runtime
+from lifecycle import core as lifecycle_core
 import spec_agent_schemas
 from lifecycle import traceability
 from lifecycle.actions import lifecycle_next_actions
@@ -42,7 +42,7 @@ SPEC_PATH_PROPERTIES = {
     "repo_root": REPO_ROOT_PROPERTY,
     "spec_path": "Spec package path or ID.",
 }
-REVIEW_PACKET_TYPE_CONTRACT = spec_runtime.review_packet_type_contract()
+REVIEW_PACKET_TYPE_CONTRACT = lifecycle_core.review_packet_type_contract()
 REVIEW_TYPE_PROPERTY = {
     "type": "string",
     "description": (
@@ -166,7 +166,7 @@ def resolve_spec_path(repo_root: Path, value: str) -> Path:
         if candidate.exists():
             return candidate.resolve()
 
-    matches = [spec for spec in spec_runtime.discover_spec_paths(root) if spec.name == value]
+    matches = [spec for spec in lifecycle_core.discover_spec_paths(root) if spec.name == value]
     if len(matches) == 1:
         return matches[0].resolve()
     if len(matches) > 1:
@@ -451,21 +451,21 @@ def call_tool(name: str, arguments: dict[str, Any], default_root: Path) -> tuple
     if name == "lifecycle_capabilities":
         return lifecycle_capabilities(root, server_name=SERVER_NAME, server_version=SERVER_VERSION, protocol_version=PROTOCOL_VERSION), root
     if name == "scan_specs":
-        return spec_runtime.scan_specs(
+        return lifecycle_core.scan_specs(
             root,
             arguments.get("docs_root"),
             include_archived_lint=bool_arg(arguments, "include_archived_lint"),
         ), root
     if name == "active_spec_preflight":
         spec_path = spec_path_arg(arguments, default_root) if arguments.get("spec_path") or arguments.get("spec_id") else None
-        payload = spec_runtime.active_spec_preflight(root, spec_path, arguments.get("task_id"), arguments.get("docs_root"))
+        payload = lifecycle_core.active_spec_preflight(root, spec_path, arguments.get("task_id"), arguments.get("docs_root"))
         selected = payload.get("selected_spec") if isinstance(payload, dict) else None
         selected_path = root / selected["path"] if isinstance(selected, dict) and selected.get("path") else spec_path
         return with_available_next_actions(payload, root, selected_path), root
     if name == "lifecycle_guide":
-        return with_available_next_actions(spec_runtime.lifecycle_guide(root, arguments.get("docs_root"), arguments.get("mode") or "auto"), root), root
+        return with_available_next_actions(lifecycle_core.lifecycle_guide(root, arguments.get("docs_root"), arguments.get("mode") or "auto"), root), root
     if name == "bootstrap_plan":
-        return spec_runtime.bootstrap_plan(
+        return lifecycle_core.bootstrap_plan(
             root,
             arguments.get("docs_root") or "docs",
             arguments.get("project_summary"),
@@ -474,13 +474,13 @@ def call_tool(name: str, arguments: dict[str, Any], default_root: Path) -> tuple
         ), root
     if name == "stage_readiness":
         spec_path = spec_path_arg(arguments, default_root)
-        return with_available_next_actions(spec_runtime.stage_readiness(spec_path), root, spec_path), root
+        return with_available_next_actions(lifecycle_core.stage_readiness(spec_path), root, spec_path), root
     if name == "validation_plan":
         spec_path = spec_path_arg(arguments, default_root) if arguments.get("spec_path") or arguments.get("spec_id") else None
         changed_files = arguments.get("changed_files") or []
         if not isinstance(changed_files, list):
             raise ValueError("changed_files must be an array")
-        return spec_runtime.validation_plan(
+        return lifecycle_core.validation_plan(
             root,
             [str(item) for item in changed_files],
             spec_path,
@@ -488,47 +488,47 @@ def call_tool(name: str, arguments: dict[str, Any], default_root: Path) -> tuple
             arguments.get("risk_level"),
         ), root
     if name == "evidence_quality_check":
-        return spec_runtime.evidence_quality_check(spec_path_arg(arguments, default_root)), root
+        return lifecycle_core.evidence_quality_check(spec_path_arg(arguments, default_root)), root
     if name == "closure_risk_review":
-        return spec_runtime.closure_risk_review(spec_path_arg(arguments, default_root)), root
+        return lifecycle_core.closure_risk_review(spec_path_arg(arguments, default_root)), root
     if name == "agent_readiness_packet":
         task_id = arguments.get("task_id")
         if not task_id:
             raise ValueError("task_id is required")
-        return spec_runtime.agent_readiness_packet(spec_path_arg(arguments, default_root), str(task_id)), root
+        return lifecycle_core.agent_readiness_packet(spec_path_arg(arguments, default_root), str(task_id)), root
     if name == "agent_backed_tool":
         tool_name = arguments.get("tool_name")
         if not tool_name:
             raise ValueError("tool_name is required")
-        return spec_runtime.agent_backed_tool(spec_path_arg(arguments, default_root), str(tool_name), arguments.get("model_class")), root
+        return lifecycle_core.agent_backed_tool(spec_path_arg(arguments, default_root), str(tool_name), arguments.get("model_class")), root
     if name == "no_active_spec_context":
-        return with_available_next_actions(spec_runtime.no_active_spec_context(root), root), root
+        return with_available_next_actions(lifecycle_core.no_active_spec_context(root), root), root
     if name == "script_migration_inventory":
         return script_migration_inventory(root), root
     if name == "spec_summary":
-        return spec_runtime.spec_summary(spec_path_arg(arguments, default_root)), root
+        return lifecycle_core.spec_summary(spec_path_arg(arguments, default_root)), root
     if name == "lint_spec_package":
-        payload = spec_runtime.lint_spec_package(spec_path_arg(arguments, default_root))
+        payload = lifecycle_core.lint_spec_package(spec_path_arg(arguments, default_root))
         assert isinstance(payload, dict)
         return payload, root
     if name == "lint_doc":
         path = path_arg(arguments, "path", default_root)
-        diagnostics = spec_runtime.lint_doc(path, arguments.get("artifact_type"))
-        return {"path": str(path), "diagnostics": diagnostics, "summary": spec_runtime.diagnostic_summary(diagnostics)}, root
+        diagnostics = lifecycle_core.lint_doc(path, arguments.get("artifact_type"))
+        return {"path": str(path), "diagnostics": diagnostics, "summary": lifecycle_core.diagnostic_summary(diagnostics)}, root
     if name == "next_task":
-        return spec_runtime.next_task(spec_path_arg(arguments, default_root)), root
+        return lifecycle_core.next_task(spec_path_arg(arguments, default_root)), root
     if name == "list_tasks":
         include_subtasks = arguments.get("include_subtasks")
         include = True if include_subtasks is None else bool_arg(arguments, "include_subtasks")
-        return spec_runtime.task_list(spec_path_arg(arguments, default_root), include_subtasks=include, status=arguments.get("status")), root
+        return lifecycle_core.task_list(spec_path_arg(arguments, default_root), include_subtasks=include, status=arguments.get("status")), root
     if name == "task_details":
         task_id = arguments.get("task_id")
         if not task_id:
             raise ValueError("task_id is required")
-        return spec_runtime.task_details(spec_path_arg(arguments, default_root), str(task_id)), root
+        return lifecycle_core.task_details(spec_path_arg(arguments, default_root), str(task_id)), root
     if name == "task_state_audit":
         task_id = arguments.get("task_id")
-        return spec_runtime.task_state_audit(spec_path_arg(arguments, default_root), str(task_id) if task_id else None), root
+        return lifecycle_core.task_state_audit(spec_path_arg(arguments, default_root), str(task_id) if task_id else None), root
     if name == "set_task_state":
         task_id = arguments.get("task_id")
         state = arguments.get("state")
@@ -537,7 +537,7 @@ def call_tool(name: str, arguments: dict[str, Any], default_root: Path) -> tuple
             raise ValueError("task_id, state, and evidence are required")
         dry_run_value = arguments.get("dry_run")
         dry_run = True if dry_run_value is None else bool_arg(arguments, "dry_run")
-        return spec_runtime.set_task_state(
+        return lifecycle_core.set_task_state(
             spec_path_arg(arguments, default_root),
             str(task_id),
             str(state),
@@ -550,14 +550,14 @@ def call_tool(name: str, arguments: dict[str, Any], default_root: Path) -> tuple
             decision_owner=arguments.get("decision_owner"),
         ), root
     if name == "closure_check":
-        return spec_runtime.closure_check(spec_path_arg(arguments, default_root)), root
+        return lifecycle_core.closure_check(spec_path_arg(arguments, default_root)), root
     if name == "archive_index":
-        return spec_runtime.archive_index(root), root
+        return lifecycle_core.archive_index(root), root
     if name == "resolve_spec_reference":
         reference = arguments.get("reference")
         if not reference:
             raise ValueError("reference is required")
-        return spec_runtime.resolve_spec_reference(root, str(reference), arguments.get("docs_root")), root
+        return lifecycle_core.resolve_spec_reference(root, str(reference), arguments.get("docs_root")), root
     if name == "mcp_audit":
         sessions_root = arguments.get("sessions_root")
         if not sessions_root:
@@ -567,7 +567,7 @@ def call_tool(name: str, arguments: dict[str, Any], default_root: Path) -> tuple
             limit = int(limit_value)
         except (TypeError, ValueError):
             raise ValueError("limit must be an integer")
-        return spec_runtime.mcp_audit(
+        return lifecycle_core.mcp_audit(
             root,
             Path(str(sessions_root)),
             arguments.get("since"),
@@ -575,11 +575,11 @@ def call_tool(name: str, arguments: dict[str, Any], default_root: Path) -> tuple
             bool_arg(arguments, "include_sessions"),
         ), root
     if name == "reconcile_spec":
-        return spec_runtime.reconcile_spec(spec_path_arg(arguments, default_root)), root
+        return lifecycle_core.reconcile_spec(spec_path_arg(arguments, default_root)), root
     if name == "promotion_plan":
-        return spec_runtime.promotion_plan(spec_path_arg(arguments, default_root)), root
+        return lifecycle_core.promotion_plan(spec_path_arg(arguments, default_root)), root
     if name == "review_packet":
-        return spec_runtime.generate_review_packet(
+        return lifecycle_core.generate_review_packet(
             spec_path_arg(arguments, default_root),
             arguments.get("review_type") or "design_requirements_trace",
             arguments.get("model_class"),
@@ -599,7 +599,7 @@ def call_tool(name: str, arguments: dict[str, Any], default_root: Path) -> tuple
             return traceability.reverse_lookup(spec_path, "design", str(arguments["design"])), root
         raise ValueError("task_id, requirement, or design is required")
     if name == "prompts_validate":
-        return spec_runtime.load_prompt_definitions(root), root
+        return lifecycle_core.load_prompt_definitions(root), root
     raise ValueError(f"Unknown tool: {name}")
 
 
@@ -630,7 +630,7 @@ def list_resources(repo_root: Path) -> list[dict[str, str]]:
             "mimeType": "application/json",
         },
     ]
-    for spec in spec_runtime.discover_spec_paths(repo_root):
+    for spec in lifecycle_core.discover_spec_paths(repo_root):
         spec_id = spec.name
         resources.extend(
             [
@@ -653,7 +653,7 @@ def list_resources(repo_root: Path) -> list[dict[str, str]]:
 
 def read_resource(uri: str, repo_root: Path) -> dict[str, Any]:
     if uri == "specs://active":
-        payload = spec_runtime.scan_specs(repo_root)
+        payload = lifecycle_core.scan_specs(repo_root)
         payload["resource_binding"] = resource_binding(uri, repo_root)
         return resource_payload(uri, "application/json", json_text(normalize_mcp_payload(payload, repo_root)))
     if uri == "governance://constitution":
@@ -661,14 +661,14 @@ def read_resource(uri: str, repo_root: Path) -> dict[str, Any]:
         text = path.read_text(encoding="utf-8") if path.exists() else ""
         return resource_payload(uri, "text/markdown", text)
     if uri == "history://spec-archive-index":
-        payload = spec_runtime.archive_index(repo_root)
+        payload = lifecycle_core.archive_index(repo_root)
         payload["resource_binding"] = resource_binding(uri, repo_root)
         return resource_payload(uri, "application/json", json_text(normalize_mcp_payload(payload, repo_root)))
     if uri == "templates://spec-package":
-        template_dir = spec_runtime.spec_package_template_dir(repo_root)
+        template_dir = lifecycle_core.spec_package_template_dir(repo_root)
         payload = {
             "path": str(template_dir) if template_dir else None,
-            "template_authority": spec_runtime.template_authority(repo_root),
+            "template_authority": lifecycle_core.template_authority(repo_root),
             "templates": sorted(path.name for path in template_dir.glob("*.md")) if template_dir and template_dir.exists() else [],
         }
         payload["resource_binding"] = resource_binding(uri, repo_root)
@@ -679,11 +679,11 @@ def read_resource(uri: str, repo_root: Path) -> dict[str, Any]:
         spec_id, suffix = spec_match.split("/", 1)
         spec_path = resolve_spec_path(repo_root, spec_id)
         if suffix == "summary":
-            payload = spec_runtime.spec_summary(spec_path)
+            payload = lifecycle_core.spec_summary(spec_path)
             payload["resource_binding"] = resource_binding(uri, repo_root)
             return resource_payload(uri, "application/json", json_text(normalize_mcp_payload(payload, repo_root)))
         if suffix == "health":
-            payload = spec_runtime.lint_spec_package(spec_path)
+            payload = lifecycle_core.lint_spec_package(spec_path)
             assert isinstance(payload, dict)
             payload["resource_binding"] = resource_binding(uri, repo_root)
             return resource_payload(uri, "application/json", json_text(normalize_mcp_payload(payload, repo_root)))
@@ -703,7 +703,7 @@ def resource_payload(uri: str, mime_type: str, text: str) -> dict[str, Any]:
 
 
 def list_prompts(repo_root: Path) -> list[dict[str, Any]]:
-    payload = spec_runtime.load_prompt_definitions(repo_root)
+    payload = lifecycle_core.load_prompt_definitions(repo_root)
     prompts = []
     for prompt in payload.get("prompts", []):
         prompts.append(
@@ -724,7 +724,7 @@ def list_prompts(repo_root: Path) -> list[dict[str, Any]]:
 
 
 def get_prompt(name: str, arguments: dict[str, Any], repo_root: Path) -> dict[str, Any]:
-    payload = spec_runtime.load_prompt_definitions(repo_root)
+    payload = lifecycle_core.load_prompt_definitions(repo_root)
     prompts = {prompt["name"]: prompt for prompt in payload.get("prompts", [])}
     prompt = prompts.get(name)
     if not prompt:
