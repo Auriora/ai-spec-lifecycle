@@ -3,7 +3,7 @@ title: Spec closure log
 doc_type: history
 status: active
 owner: platform
-last_reviewed: 2026-07-04
+last_reviewed: 2026-07-05
 ---
 
 # Spec Closure Log
@@ -19,7 +19,7 @@ requires visible archived docs.
 - **Spec:** `docs/specs/029-spec-closure-helper/`
 - **Title:** Spec closure helper
 - **Final spec commit:** `1f718aa`
-- **Closure cleanup commit:** `pending-cleanup-commit`
+- **Closure cleanup commit:** `36e5524`
 - **Closure action:** removed
 - **Durable docs updated:**
   - `docs/backlog/README.md`
@@ -36,8 +36,8 @@ requires visible archived docs.
 - **Verification summary:** Spec closure helper review completed with
   `closure-check` ready, `promotion-plan` reporting 0 missing targets, and
   `closure-risk-review` reporting low risk with 0 findings. Cleanup validation
-  removed active specs from scan output; archive-index validation awaits cleanup
-  hash resolution after the cleanup commit exists.
+  removed active specs from scan output; archive-index validation passed after
+  cleanup hash resolution; full `npm run validate` passed.
 - **Residual risks:**
   - none
 - **Follow-up:** none
