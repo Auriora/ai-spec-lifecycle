@@ -104,37 +104,37 @@ T013 -> T014
 
 **Purpose**: Make MCP the public interface for touched lifecycle tools.
 
-- [ ] T006 Add `lifecycle_capabilities` MCP tool.
+- [x] T006 Add `lifecycle_capabilities` MCP tool.
   - Depends on: T005
   - Requirement: Requirement 2, Requirement 3, Requirement 7
   - Files: `skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`, `skills/spec-lifecycle-manager/scripts/lifecycle/capabilities.py`, bundled plugin copies, tests
   - Acceptance: The MCP tool reports known server fields, documented initialize session fields when available, `unknown` for unavailable client fields, `tools.listChanged: False`, and `dynamic_tools.decision: stable_tool_surface`.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Completed 2026-07-05. Added MCP `lifecycle_capabilities` tool backed by `lifecycle/capabilities.py`, with output schema advertised in `tools/list`; MCP tests verify unknown client fields, `tools.listChanged: False`, and `dynamic_tools.decision: stable_tool_surface`.
 
-- [ ] T007 Add `available_next_actions` to selected MCP results.
+- [x] T007 Add `available_next_actions` to selected MCP results.
   - Depends on: T006
   - Requirement: Requirement 1, Requirement 4, Requirement 7
   - Files: `skills/spec-lifecycle-manager/scripts/lifecycle/actions.py`, `skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`, tests
   - Acceptance: `active_spec_preflight`, `stage_readiness`, `lifecycle_guide`, and `no_active_spec_context` MCP outputs include deterministic `available_next_actions`; no dynamic tool-list behavior is enabled in v1.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Completed 2026-07-05. `active_spec_preflight`, `stage_readiness`, `lifecycle_guide`, and `no_active_spec_context` MCP outputs are enriched through `lifecycle/actions.py`; tests cover selected active-spec and no-active-spec outputs. Dynamic tool-list behavior remains disabled.
 
-- [ ] T008 Add `script_migration_inventory` MCP tool.
+- [x] T008 Add `script_migration_inventory` MCP tool.
   - Depends on: T007
   - Requirement: Requirement 5, Requirement 6, Requirement 7, Requirement 9
   - Files: `skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`, `skills/spec-lifecycle-manager/scripts/lifecycle/migration.py`, bundled plugin copies, tests
   - Acceptance: The MCP `script_migration_inventory` tool returns script classifications, replacement contracts, source and bundle removal paths, installed-cache validation expectations, and closure-blocker status without exposing a duplicate runtime/CLI agent-facing inventory command.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Completed 2026-07-05. Added MCP `script_migration_inventory` tool backed by `lifecycle/migration.py`, returning retained and migrated script classifications, replacement contracts, removal paths, installed-cache validation expectation, and closure blockers without adding a duplicate runtime CLI command.
 
-- [ ] T009 Add MCP output schemas and schema validation tests.
+- [x] T009 Add MCP output schemas and schema validation tests.
   - Depends on: T008
   - Requirement: Requirement 7
   - Files: `skills/spec-lifecycle-manager/scripts/spec_agent_schemas.py` or shared schema module, `tests/runtime/test_spec_mcp_server.py`
   - Acceptance: `lifecycle_capabilities`, `script_migration_inventory`, and `traceability_lookup` have representative structured output schemas or schema helpers, and tests validate representative `structuredContent`.
   - Evidence mode: validation
-  - Evidence: Pending.
+  - Evidence: Completed 2026-07-05. Added output schema helpers for `lifecycle_capabilities`, `script_migration_inventory`, and `traceability_lookup`; MCP tests verify schemas are advertised and representative `structuredContent` payloads are returned.
 
 ## Phase 4: Script Migration And Single Public Tool Ownership
 

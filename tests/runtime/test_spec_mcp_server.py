@@ -184,6 +184,55 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertEqual("array", validation_schema["inputSchema"]["properties"]["changed_files"]["type"])
         bootstrap_schema = next(tool for tool in responses[0]["result"]["tools"] if tool["name"] == "bootstrap_plan")
         self.assertIn("boolean", bootstrap_schema["inputSchema"]["properties"]["create_spec"]["type"])
+        capabilities_schema = next(tool for tool in responses[0]["result"]["tools"] if tool["name"] == "lifecycle_capabilities")
+        inventory_schema = next(tool for tool in responses[0]["result"]["tools"] if tool["name"] == "script_migration_inventory")
+        traceability_schema = next(tool for tool in responses[0]["result"]["tools"] if tool["name"] == "traceability_lookup")
+        self.assertIn("outputSchema", capabilities_schema)
+        self.assertIn("outputSchema", inventory_schema)
+        self.assertIn("outputSchema", traceability_schema)
+        self.assertIn("available_next_actions", capabilities_schema["outputSchema"]["required"])
+
+    def test_lifecycle_capabilities_tool_returns_stable_surface_decision(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / ".git").mkdir()
+            [response] = self.send(
+                rpc(1, "tools/call", {"name": "lifecycle_capabilities", "arguments": {"repo_root": str(repo)}}),
+                root=repo,
+            )
+
+        payload = response["result"]["structuredContent"]
+        self.assertEqual("partial", payload["status"])
+        self.assertEqual("spec-lifecycle-manager", payload["server"]["name"])
+        self.assertFalse(payload["server"]["capabilities"]["tools"]["listChanged"])
+        self.assertEqual("unknown", payload["client"]["name"])
+        self.assertEqual("stable_tool_surface", payload["dynamic_tools"]["decision"])
+        self.assertIn("available_next_actions", payload)
+
+    def test_script_migration_inventory_tool_returns_contracts(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / ".git").mkdir()
+            for relative in [
+                "skills/spec-lifecycle-manager/scripts/traceability_lookup.py",
+                "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/traceability_lookup.py",
+                "plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/scripts/traceability_lookup.py",
+            ]:
+                path = repo / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("print('legacy')\n", encoding="utf-8")
+            [response] = self.send(
+                rpc(1, "tools/call", {"name": "script_migration_inventory", "arguments": {"repo_root": str(repo)}}),
+                root=repo,
+            )
+
+        payload = response["result"]["structuredContent"]
+        self.assertEqual("ok", payload["status"])
+        migrated = payload["migrated_scripts"]
+        self.assertEqual(["traceability_lookup.py"], [item["script"] for item in migrated])
+        self.assertEqual("traceability_lookup", migrated[0]["replacement_contract"]["replacement_mcp_tool"])
+        self.assertEqual(3, len(payload["closure_blockers"]))
+        self.assertTrue(all(item["code"] == "MIGRATED_SCRIPT_STILL_PRESENT" for item in payload["closure_blockers"]))
 
     def test_lifecycle_guide_and_bootstrap_plan_tools_are_read_only(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -420,9 +469,12 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertEqual("ready", preflight["status"])
         self.assertEqual("001-current", preflight["selected_spec"]["spec_id"])
         self.assertEqual("docs/specs/001-current", preflight["selected_spec"]["path"])
+        self.assertIn("available_next_actions", preflight)
+        self.assertTrue(any(item["id"] == "create_verification" for item in preflight["available_next_actions"]))
         self.assertEqual("T001", readiness["task_id"])
         self.assertEqual("001-current", stage["spec_id"])
         self.assertIn("coverage", stage)
+        self.assertIn("available_next_actions", stage)
         self.assertIn("Requirement 1", {item["id"] for item in readiness["required_review"]["requirements"]})
 
     def test_task_query_tools_return_structured_output(self):
@@ -606,6 +658,8 @@ class SpecMcpServerTests(unittest.TestCase):
         payload = response["result"]["structuredContent"]
         self.assertEqual("no_active_spec", payload["status"])
         self.assertIn("archive_index_summary", payload)
+        self.assertIn("available_next_actions", payload)
+        self.assertTrue(any(item["id"] == "review_backlog" for item in payload["available_next_actions"]))
 
     def test_scan_specs_can_include_archived_lint_audit(self):
         with tempfile.TemporaryDirectory() as tmp:

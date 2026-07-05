@@ -13,9 +13,10 @@ last_reviewed: 2026-07-05
 
 ## Scope
 
-This verification record currently covers Phase 1 planning contracts and Phase
-2 shared internal modules for `docs/specs/030-mcp-first-runtime-migration/`:
-T001-T005. Implementation tasks T006-T014 remain pending.
+This verification record currently covers Phase 1 planning contracts, Phase 2
+shared internal modules, and Phase 3 MCP tool contracts for
+`docs/specs/030-mcp-first-runtime-migration/`: T001-T009. Implementation tasks
+T010-T014 remain pending.
 
 ## Quality Gates
 
@@ -26,7 +27,7 @@ T001-T005. Implementation tasks T006-T014 remain pending.
 | Automated tests pass or alternate verification recorded | yes | pass | Structural validation commands in Evidence Log pass. |
 | Compatibility matrix recorded | yes | pass | Compatibility Matrix section below. |
 | Migration inventory and replacement contract accepted | yes | pass | Script Migration Inventory and Replacement Contract sections below. |
-| Implementation readiness | yes | partial | Phase 1 and Phase 2 are complete; T006-T014 remain pending before closure or release. |
+| Implementation readiness | yes | partial | Phase 1, Phase 2, and Phase 3 are complete; T010-T014 remain pending before closure or release. |
 | Durable documentation updates identified | yes | pass | Durable targets listed in `canonical-context.md` and task T013. |
 | Durable documentation promoted or explicitly deferred | yes | pending | Promotion is deferred to T013. |
 | Spec cleanup decision recorded | yes | pending | Closure decision is deferred to T014 and final closure workflow. |
@@ -111,10 +112,13 @@ spec.
 | Requirement 1 | AC1-AC2 | T001 accepted MCP as public owner for agent-facing lifecycle tools and retained scripts as recovery/internal surfaces. | Docs are updated later in T013. |
 | Requirement 2 | AC1-AC5 | Compatibility matrix records known server capability data and unknown/unavailable client observations. | Client refresh observations are unavailable in this Codex run. |
 | Requirement 3 | AC1-AC7 | Matrix lists Codex and Claude environments, manual checker steps, dated evidence, and stable fallback decision. | Future dynamic tools need fresh evidence. |
-| Requirement 4 | AC2-AC4 | V1 accepts stable tools plus `available_next_actions`; dynamic tool-list behavior is not enabled. | Available-next-actions implementation remains pending in T007. |
-| Requirement 5 | AC1, AC4-AC5 | Script inventory and replacement contract recorded. | Implementation and removal remain pending. |
+| Requirement 4 | AC2-AC4 | V1 accepts stable tools plus `available_next_actions`; dynamic tool-list behavior is not enabled. | Future dynamic behavior still needs fresh evidence. |
+| Requirement 5 | AC1, AC4-AC5 | Script inventory and replacement contract recorded; MCP inventory tool implemented. | Traceability implementation migration and removal remain pending. |
 | Requirement 6 | AC1, AC4 | Closure blocker expectation recorded for migrated script paths. | Closure-check implementation remains pending. |
-| Requirement 9 | AC1-AC5 | Public ownership, retained recovery boundaries, and shared-module direction accepted. | Shared module extraction remains pending. |
+| Requirement 9 | AC1-AC5 | Public ownership, retained recovery boundaries, shared-module direction, and MCP-owned inventory/capability surfaces are implemented for completed phases. | Traceability implementation migration and retained runtime closure checks remain pending. |
+| Requirement 2 | AC1-AC5 | MCP `lifecycle_capabilities` reports known server fields, unknown client fields where unavailable, `tools.listChanged: False`, and stable-tool decision. | Live client refresh observation remains unavailable. |
+| Requirement 4 | AC2-AC4 | Selected MCP outputs include `available_next_actions`; dynamic tool-list behavior remains disabled. | Future dynamic behavior still needs fresh evidence. |
+| Requirement 7 | AC1-AC3 | MCP tools advertise output schemas for `lifecycle_capabilities`, `script_migration_inventory`, and `traceability_lookup`; tests verify representative `structuredContent`. | Full schema validator dependency not added. |
 
 ## Correctness Property Coverage
 
@@ -126,16 +130,23 @@ spec.
 | CP-006 | T003 | Replacement contract is recorded before implementation. | Satisfaction remains pending. |
 | CP-007 | T001 and T003 | MCP owns agent-facing lifecycle tools; retained scripts are internal/recovery only. | Command inventory review remains pending. |
 | CP-007 | T004-T005 | Shared modules are importable internals and tested without becoming public tool surfaces. | Entrypoints are wired in later phases. |
+| CP-001 | T007 | Stable MCP outputs expose next actions without dynamic tool-list changes. | Future dynamic tools require new evidence. |
+| CP-003 | T006-T009 | MCP tools return structured payloads and advertise output schemas for Phase 3 tools. | Schema conformance is representative, not exhaustive. |
+| CP-005 | T006 | Unknown client capability fields are preserved instead of guessed. | Client behavior may change. |
 
 ## Task Evidence
 
 | Task ID | Status | Evidence | Notes |
 |---------|--------|----------|-------|
-| T001 | complete | Phase 1 accepted MCP as the public owner for agent-facing lifecycle tools, `traceability_lookup.py` as the only v1 migrated executable, and retained scripts as validation/recovery/internal surfaces. | Implementation still pending. |
+| T001 | complete | Phase 1 accepted MCP as the public owner for agent-facing lifecycle tools, `traceability_lookup.py` as the only v1 migrated executable, and retained scripts as validation/recovery/internal surfaces. | Later script migration/removal tasks remain pending. |
 | T002 | complete | Compatibility matrix and manual checker notes recorded in this file on 2026-07-05. | Dynamic tools are not approved. |
 | T003 | complete | Script migration inventory and `traceability_lookup.py` replacement contract recorded in this file on 2026-07-05. | Removal and closure checks remain pending. |
-| T004 | complete | Added `lifecycle/__init__.py`, `actions.py`, `capabilities.py`, `migration.py`, and `traceability.py` to source skill, Codex bundle, and Claude bundle. | MCP/runtime wiring remains pending. |
+| T004 | complete | Added `lifecycle/__init__.py`, `actions.py`, `capabilities.py`, `migration.py`, and `traceability.py` to source skill, Codex bundle, and Claude bundle. | Traceability migration and retained runtime closure-check wiring remain pending. |
 | T005 | complete | Added `tests/runtime/test_lifecycle_modules.py`; focused and full Python test runs passed. | Does not yet prove MCP transport contracts. |
+| T006 | complete | Added MCP `lifecycle_capabilities` tool and output schema; MCP tests verify stable-surface decision and unknown client fields. | No live client refresh observation. |
+| T007 | complete | Added `available_next_actions` enrichment for `active_spec_preflight`, `stage_readiness`, `lifecycle_guide`, and `no_active_spec_context`. | Does not enable dynamic tool lists. |
+| T008 | complete | Added MCP `script_migration_inventory` tool and output schema backed by shared migration internals. | Retained validation closure checks remain pending. |
+| T009 | complete | Added schema helpers and MCP tests for advertised output schemas and representative structured output. | Exhaustive JSON Schema validation is not added. |
 
 ## Evidence Log
 
@@ -153,6 +164,9 @@ spec.
 | 2026-07-05 | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .` | pass | Source skill, Codex bundle, and Claude bundle are in sync with 57 files each. |
 | 2026-07-05 | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py scan .` | pass | 2 active specs, both pass. |
 | 2026-07-05 | `git diff --check` | pass | No whitespace errors. |
+| 2026-07-05 | `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_mcp_server` | pass | 29 MCP server tests passed with Phase 3 tool/schema coverage. |
+| 2026-07-05 | `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'` | pass | 180 Python tests passed after Phase 3 changes. |
+| 2026-07-05 | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .` | pass | Source skill, Codex bundle, and Claude bundle remain in sync with 57 files each after Phase 3. |
 
 ## Manual Or External Verification
 
@@ -172,8 +186,9 @@ records stronger observed client evidence.
 - Runtime docs still contain public script references until T013.
 - The new `lifecycle.traceability` module delegates to the existing executable
   module until T010 moves the implementation fully behind shared internals.
-- The new shared modules are not wired into MCP or retained runtime entrypoints
-  until T006-T011.
+- Retained runtime closure checks are not wired until T011.
+- The traceability executable still delegates public script behavior until T010
+  and T012 migrate/remove it.
 
 ## Durable Promotion And Cleanup
 
@@ -184,11 +199,12 @@ records stronger observed client evidence.
 | Script migration inventory and replacement contract | Runtime docs and closure evidence | deferred | T013-T014 |
 | Traceability executable removal | Source, bundle, installed cache, closure evidence | pending | T010-T014 |
 | Shared lifecycle module architecture | Source skill, bundled plugin copies, tests, runtime docs | partial | T004-T005 complete; durable docs deferred to T013 |
+| MCP tool contracts and stable next actions | MCP server, schema helper, tests, runtime docs | partial | T006-T009 complete; durable docs deferred to T013 |
 
 ### Spec Cleanup Decision
 
 - **Cleanup action:** keep active
-- **Reason:** Phase 1 planning contracts and Phase 2 shared modules are complete; MCP contract implementation remains.
+- **Reason:** Phase 1 planning contracts, Phase 2 shared modules, and Phase 3 MCP contracts are complete; script migration/removal remains.
 - **Final spec commit:** pending
 - **Closure log path:** `docs/history/spec-closure-log.md`
 - **Closure log entry updated:** no
@@ -207,18 +223,18 @@ records stronger observed client evidence.
   defined during T010-T014 if needed
 - **Requires human review:** yes
 - **Release notes needed:** likely, if public script removal is released
-- **Follow-up issue or spec needed:** no for Phase 1
+- **Follow-up issue or spec needed:** no for Phase 3
 
 ### Risk Rationale
 
-Phase 2 adds internal modules and tests but does not change public MCP or CLI
-behavior. The overall spec remains medium risk because later phases will remove
-an executable script and shift public agent-facing behavior to MCP-only
-ownership.
+Phase 3 adds read-only MCP tools and output schemas, plus stable next-action
+metadata on selected MCP outputs. The overall spec remains medium risk because
+later phases will remove an executable script and complete MCP-only ownership
+for migrated traceability lookup behavior.
 
 ## Readiness Decision
 
-- **Ready for Phase 3 implementation:** yes, for T006 only
+- **Ready for Phase 4 implementation:** yes, for T010 only
 - **Ready for promotion:** no
 - **Ready for release:** no
 - **Ready for closure:** no

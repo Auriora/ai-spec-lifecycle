@@ -20,6 +20,10 @@ if str(SCRIPT_DIR) not in sys.path:
 
 import spec_runtime
 import traceability_lookup
+import spec_agent_schemas
+from lifecycle.actions import lifecycle_next_actions
+from lifecycle.capabilities import lifecycle_capabilities
+from lifecycle.migration import script_migration_inventory
 
 
 PROTOCOL_VERSION = "2025-06-18"
@@ -190,6 +194,12 @@ def path_arg(arguments: dict[str, Any], name: str, default_root: Path) -> Path:
 def tool_definitions() -> list[dict[str, Any]]:
     return [
         tool_schema(
+            "lifecycle_capabilities",
+            "Report MCP server/client capability visibility and the dynamic-tool decision.",
+            {"repo_root": REPO_ROOT_PROPERTY},
+            output_schema=spec_agent_schemas.lifecycle_capabilities_output_schema(),
+        ),
+        tool_schema(
             "scan_specs",
             "Discover spec packages, artifact inventory, health, and template authority.",
             {
@@ -292,6 +302,12 @@ def tool_definitions() -> list[dict[str, Any]]:
             "Return durable docs, backlog, roadmap, closure-log, and archive-index context when no active spec exists.",
             {"repo_root": REPO_ROOT_PROPERTY},
         ),
+        tool_schema(
+            "script_migration_inventory",
+            "Return script migration classifications, replacement contracts, and closure blockers.",
+            {"repo_root": REPO_ROOT_PROPERTY},
+            output_schema=spec_agent_schemas.script_migration_inventory_output_schema(),
+        ),
         tool_schema("spec_summary", "Return a specs://{spec_id}/summary style payload.", SPEC_PATH_PROPERTIES, ["spec_path"]),
         tool_schema("lint_spec_package", "Lint a spec package.", SPEC_PATH_PROPERTIES, ["spec_path"]),
         tool_schema(
@@ -391,17 +407,25 @@ def tool_definitions() -> list[dict[str, Any]]:
             "Lookup task, requirement, or design traceability.",
             {**SPEC_PATH_PROPERTIES, "task_id": "Task ID.", "requirement": "Requirement ID.", "design": "Design section reference."},
             ["spec_path"],
+            output_schema=spec_agent_schemas.traceability_lookup_output_schema(),
         ),
         tool_schema("prompts_validate", "List and validate prompt definitions.", {"repo_root": REPO_ROOT_PROPERTY}),
     ]
 
 
-def tool_schema(name: str, description: str, properties: dict[str, Any], required: list[str] | None = None) -> dict[str, Any]:
+def tool_schema(
+    name: str,
+    description: str,
+    properties: dict[str, Any],
+    required: list[str] | None = None,
+    *,
+    output_schema: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     schema_properties = {
         key: value if isinstance(value, dict) else {"type": "string", "description": value}
         for key, value in properties.items()
     }
-    return {
+    schema = {
         "name": name,
         "description": description,
         "inputSchema": {
@@ -411,10 +435,21 @@ def tool_schema(name: str, description: str, properties: dict[str, Any], require
             "additionalProperties": False,
         },
     }
+    if output_schema is not None:
+        schema["outputSchema"] = output_schema
+    return schema
+
+
+def with_available_next_actions(payload: dict[str, Any], repo_root: Path, spec_path: Path | None = None) -> dict[str, Any]:
+    enriched = dict(payload)
+    enriched["available_next_actions"] = lifecycle_next_actions(repo_root, spec_path)
+    return enriched
 
 
 def call_tool(name: str, arguments: dict[str, Any], default_root: Path) -> tuple[dict[str, Any], Path]:
     root = repo_root_arg(arguments, default_root)
+    if name == "lifecycle_capabilities":
+        return lifecycle_capabilities(root, server_name=SERVER_NAME, server_version=SERVER_VERSION, protocol_version=PROTOCOL_VERSION), root
     if name == "scan_specs":
         return spec_runtime.scan_specs(
             root,
@@ -423,9 +458,12 @@ def call_tool(name: str, arguments: dict[str, Any], default_root: Path) -> tuple
         ), root
     if name == "active_spec_preflight":
         spec_path = spec_path_arg(arguments, default_root) if arguments.get("spec_path") or arguments.get("spec_id") else None
-        return spec_runtime.active_spec_preflight(root, spec_path, arguments.get("task_id"), arguments.get("docs_root")), root
+        payload = spec_runtime.active_spec_preflight(root, spec_path, arguments.get("task_id"), arguments.get("docs_root"))
+        selected = payload.get("selected_spec") if isinstance(payload, dict) else None
+        selected_path = root / selected["path"] if isinstance(selected, dict) and selected.get("path") else spec_path
+        return with_available_next_actions(payload, root, selected_path), root
     if name == "lifecycle_guide":
-        return spec_runtime.lifecycle_guide(root, arguments.get("docs_root"), arguments.get("mode") or "auto"), root
+        return with_available_next_actions(spec_runtime.lifecycle_guide(root, arguments.get("docs_root"), arguments.get("mode") or "auto"), root), root
     if name == "bootstrap_plan":
         return spec_runtime.bootstrap_plan(
             root,
@@ -435,7 +473,8 @@ def call_tool(name: str, arguments: dict[str, Any], default_root: Path) -> tuple
             arguments.get("spec_slug"),
         ), root
     if name == "stage_readiness":
-        return spec_runtime.stage_readiness(spec_path_arg(arguments, default_root)), root
+        spec_path = spec_path_arg(arguments, default_root)
+        return with_available_next_actions(spec_runtime.stage_readiness(spec_path), root, spec_path), root
     if name == "validation_plan":
         spec_path = spec_path_arg(arguments, default_root) if arguments.get("spec_path") or arguments.get("spec_id") else None
         changed_files = arguments.get("changed_files") or []
@@ -463,7 +502,9 @@ def call_tool(name: str, arguments: dict[str, Any], default_root: Path) -> tuple
             raise ValueError("tool_name is required")
         return spec_runtime.agent_backed_tool(spec_path_arg(arguments, default_root), str(tool_name), arguments.get("model_class")), root
     if name == "no_active_spec_context":
-        return spec_runtime.no_active_spec_context(root), root
+        return with_available_next_actions(spec_runtime.no_active_spec_context(root), root), root
+    if name == "script_migration_inventory":
+        return script_migration_inventory(root), root
     if name == "spec_summary":
         return spec_runtime.spec_summary(spec_path_arg(arguments, default_root)), root
     if name == "lint_spec_package":
