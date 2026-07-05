@@ -38,67 +38,67 @@ T013 -> T014
 
 **Purpose**: Lock the migration boundaries before implementation changes.
 
-- [ ] T001 Confirm implementation scope and public tool ownership.
+- [x] T001 Confirm implementation scope and public tool ownership.
   - Depends on: none
   - Requirement: Requirement 1, Requirement 5, Requirement 9
   - Files: `docs/specs/030-mcp-first-runtime-migration/design.md`, `docs/specs/030-mcp-first-runtime-migration/traceability.md`
   - Acceptance: The accepted plan names MCP as the public owner for agent-facing lifecycle tools, confirms `traceability_lookup.py` as the only v1 migrated executable script, and confirms retained runtime commands are validation, packaging, install, hook, or emergency recovery only.
   - Evidence mode: planner
-  - Evidence: Pending.
+  - Evidence: Completed 2026-07-05. `verification.md#task-evidence` records MCP as the public owner for agent-facing lifecycle tools, `traceability_lookup.py` as the only v1 migrated executable script, and retained runtime commands as validation, packaging, install, hook, or emergency recovery surfaces.
 
-- [ ] T002 Finalize compatibility evidence and dynamic-tool decision.
+- [x] T002 Finalize compatibility evidence and dynamic-tool decision.
   - Depends on: T001
   - Requirement: Requirement 2, Requirement 3, Requirement 4
   - Files: `docs/specs/030-mcp-first-runtime-migration/verification.md`, `docs/reference/spec-lifecycle-runtime.md`
   - Acceptance: The compatibility matrix format is accepted, Codex and Claude plugin environments are listed as initial targets, dated Codex and Claude evidence or documented unavailable evidence is recorded, manual checker steps or checker output are captured, and v1 keeps `tools.listChanged: False` with stable MCP tools plus `available_next_actions`.
   - Evidence mode: planner
-  - Evidence: Pending.
-  - [ ] T002.1 Record dated Codex compatibility evidence or an explicit unavailable-evidence note.
-    - Evidence: Pending.
-  - [ ] T002.2 Record dated Claude plugin compatibility evidence or an explicit unavailable-evidence note.
-    - Evidence: Pending.
-  - [ ] T002.3 Record manual checker steps or checker output for protocol visibility, tool-list refresh behavior, structured output handling, and fallback behavior.
-    - Evidence: Pending.
-  - [ ] T002.4 Record the v1 stable-tool decision from the evidence rather than client-name assumptions.
-    - Evidence: Pending.
+  - Evidence: Completed 2026-07-05. `verification.md#compatibility-matrix` records Codex `0.142.5`, Claude Code `2.1.201`, local plugin/config evidence, unavailable client refresh observations, and the accepted `stable_tool_surface` decision.
+  - [x] T002.1 Record dated Codex compatibility evidence or an explicit unavailable-evidence note.
+    - Evidence: Completed 2026-07-05. `verification.md#compatibility-matrix` records `codex-cli 0.142.5`, enabled `spec-lifecycle-manager@auriora-local` plugin evidence, and unavailable client refresh observation.
+  - [x] T002.2 Record dated Claude plugin compatibility evidence or an explicit unavailable-evidence note.
+    - Evidence: Completed 2026-07-05. `verification.md#compatibility-matrix` records `2.1.201 (Claude Code)`, Claude plugin MCP config evidence, and unavailable live Claude refresh observation.
+  - [x] T002.3 Record manual checker steps or checker output for protocol visibility, tool-list refresh behavior, structured output handling, and fallback behavior.
+    - Evidence: Completed 2026-07-05. `verification.md#manual-checker-notes` records local checker steps and observed/unavailable signals.
+  - [x] T002.4 Record the v1 stable-tool decision from the evidence rather than client-name assumptions.
+    - Evidence: Completed 2026-07-05. `verification.md#compatibility-evidence-notes` records stable MCP tools plus `available_next_actions`; dynamic tools are not approved.
 
-- [ ] T003 Accept script migration inventory and replacement contract before implementation.
+- [x] T003 Accept script migration inventory and replacement contract before implementation.
   - Depends on: T002
   - Requirement: Requirement 5, Requirement 6, Requirement 9
   - Files: `docs/specs/030-mcp-first-runtime-migration/design.md`, `docs/specs/030-mcp-first-runtime-migration/verification.md`, `docs/specs/030-mcp-first-runtime-migration/traceability.md`
   - Acceptance: The planning evidence classifies relevant scripts as `migrate_to_mcp`, `retain_internal`, `retain_recovery`, or `out_of_scope`; accepts `traceability_lookup.py` as the only v1 `migrate_to_mcp` script; records its old entrypoint, replacement MCP tool, no replacement CLI command, docs updates, tests to port, source removal paths, bundle removal paths, and installed-cache validation.
   - Evidence mode: planner
-  - Evidence: Pending.
+  - Evidence: Completed 2026-07-05. `verification.md` sections "Script Migration Inventory" and "Replacement Contract: `traceability_lookup.py`" classify retained and migrated scripts and accept the `traceability_lookup.py` replacement contract before implementation.
 
 ## Phase 2: Shared Internal Modules
 
 **Purpose**: Introduce shared implementation internals without creating new public tool surfaces.
 
-- [ ] T004 Create shared lifecycle module structure.
+- [x] T004 Create shared lifecycle module structure.
   - Depends on: T003
   - Requirement: Requirement 9
   - Files: `skills/spec-lifecycle-manager/scripts/lifecycle/`, bundled plugin copies, tests
   - Acceptance: The package contains importable shared lifecycle modules for touched behavior, and existing entrypoints can import them without circular imports or path hacks beyond the current script bootstrap pattern.
   - Evidence mode: implementation
-  - Evidence: Pending.
-  - [ ] T004.1 Add `lifecycle/__init__.py`.
-    - Evidence: Pending.
-  - [ ] T004.2 Add `lifecycle/actions.py` for `available_next_actions`.
-    - Evidence: Pending.
-  - [ ] T004.3 Add `lifecycle/capabilities.py` for capability report construction.
-    - Evidence: Pending.
-  - [ ] T004.4 Add `lifecycle/migration.py` for script inventory and removal checks.
-    - Evidence: Pending.
-  - [ ] T004.5 Add `lifecycle/traceability.py` for moved traceability lookup logic.
-    - Evidence: Pending.
+  - Evidence: Completed 2026-07-05. Added importable `lifecycle/` modules to the source skill and both bundled plugin copies. `package-contract .` reports source, Codex bundle, and Claude bundle parity with 57 files per skill copy.
+  - [x] T004.1 Add `lifecycle/__init__.py`.
+    - Evidence: Completed 2026-07-05 in source, Codex bundle, and Claude bundle.
+  - [x] T004.2 Add `lifecycle/actions.py` for `available_next_actions`.
+    - Evidence: Completed 2026-07-05 with deterministic `lifecycle_next_actions` helper.
+  - [x] T004.3 Add `lifecycle/capabilities.py` for capability report construction.
+    - Evidence: Completed 2026-07-05 with advisory `lifecycle_capabilities` report helper that preserves unknown client fields.
+  - [x] T004.4 Add `lifecycle/migration.py` for script inventory and removal checks.
+    - Evidence: Completed 2026-07-05 with accepted v1 inventory and migrated-script closure blocker helper.
+  - [x] T004.5 Add `lifecycle/traceability.py` for moved traceability lookup logic.
+    - Evidence: Completed 2026-07-05 as the internal import target for traceability lookup delegation ahead of T010 migration.
 
-- [ ] T005 Add shared-module tests.
+- [x] T005 Add shared-module tests.
   - Depends on: T004
   - Requirement: Requirement 7, Requirement 8, Requirement 9
   - Files: `tests/runtime/`, `tests/traceability/`
   - Acceptance: Tests cover shared module behavior independently of MCP transport and prove representative shared functions are not implemented only in entrypoint handlers.
   - Evidence mode: validation
-  - Evidence: Pending.
+  - Evidence: Completed 2026-07-05. Added `tests/runtime/test_lifecycle_modules.py`; focused run passed 6 tests, and full Python unittest discovery passed 178 tests.
 
 ## Phase 3: MCP Tool Contracts
 

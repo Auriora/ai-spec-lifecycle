@@ -566,4 +566,4 @@ package validation needs.
 - Canonical context: `canonical-context.md`
 - Tasks: `tasks.md`
 - Traceability: `traceability.md`
-- Verification: pending
+- Verification: `verification.md`
