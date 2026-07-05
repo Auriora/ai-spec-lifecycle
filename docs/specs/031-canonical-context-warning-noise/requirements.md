@@ -4,7 +4,7 @@ doc_type: spec
 artifact_type: requirements
 status: draft
 authoring_mode: wizard
-lifecycle_stage: requirements
+lifecycle_stage: tasks
 owner: platform
 last_reviewed: 2026-07-05
 backlog_item: B058
@@ -82,16 +82,18 @@ artifact should be added.
 | reference | modify | `docs/reference/spec-lifecycle-runtime.md` | Document advisory signal behavior and expected agent response. |
 | skill guidance | modify | `skills/spec-lifecycle-manager/SKILL.md` | Tighten instructions for when to add `canonical-context.md`. |
 | templates/prompts | modify | `skills/spec-lifecycle-manager/references/spec-package/`, `skills/spec-lifecycle-manager/prompts/` | Clarify wording where diagnostics or wizard guidance are surfaced. |
+| runtime surfaces | modify | `lint_spec_package`, `agent_readiness_packet`, `closure_check` | Review and align all surfaces that can return canonical-context diagnostics or readiness guidance. |
+| bundled plugin copies | modify | `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/`, `plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/` | Keep distributed skill, prompts, templates, and runtime copies aligned with source. |
 
 ## Staged Readiness
 
-- **Current stage:** requirements
-- **Next stage:** design
+- **Current stage:** tasks
+- **Next stage:** agent_ready
 - **Ready to design when:** diagnostic classes, affected runtime surfaces, and
-  expected non-blocking behavior are accepted.
+  expected non-blocking behavior are accepted. Complete.
 - **Design-first exception:** no
-- **Optional artifacts recommended:** none
-- **Downstream review needed:** design, tasks, verification
+- **Optional artifacts recommended:** `traceability.md` with `tasks.md`
+- **Downstream review needed:** implementation readiness and verification
 
 ## Requirements
 
@@ -167,6 +169,28 @@ runtime diagnostic semantics, so that different agents respond consistently.
    or sync checks run, THEN THE SYSTEM SHALL show updated guidance in source
    and bundled copies.
 
+### Requirement 5: Runtime Surface Alignment
+
+**User Story:** As a coding agent, I want every lifecycle surface that reports
+canonical-context guidance to use the same advisory semantics, so that tool
+choice does not change whether I create artifacts or block progress.
+
+#### Acceptance Criteria
+
+1. GIVEN `lint_spec_package` reports canonical-context diagnostics, WHEN the
+   output is inspected, THEN THE SYSTEM SHALL preserve advisory wording and the
+   concrete risk trigger.
+2. GIVEN `agent_readiness_packet` includes canonical-context guidance, WHEN the
+   output is inspected, THEN THE SYSTEM SHALL distinguish readiness guidance
+   from mandatory artifact creation.
+3. GIVEN `closure_check` encounters canonical-context-related evidence or
+   missing artifacts, WHEN the output is inspected, THEN THE SYSTEM SHALL NOT
+   block closure solely because `canonical-context.md` is absent unless a
+   separate accepted rule makes it blocking.
+4. GIVEN direct CLI and MCP outputs expose the same surface, WHEN they are
+   compared, THEN THE SYSTEM SHALL return equivalent diagnostic semantics from
+   shared lifecycle internals.
+
 ## Correctness Properties
 
 - **CP-001:** Advisory canonical-context diagnostics never require artifact
@@ -177,6 +201,9 @@ runtime diagnostic semantics, so that different agents respond consistently.
   imported-source risk by itself.
 - **CP-004:** Real stale-doc, imported-source, or authority-conflict evidence
   remains detectable after false-positive reduction.
+- **CP-005:** `lint_spec_package`, `agent_readiness_packet`, and
+  `closure_check` do not disagree about whether canonical-context findings are
+  advisory or blocking.
 
 ## Technical Context
 
@@ -190,12 +217,13 @@ runtime diagnostic semantics, so that different agents respond consistently.
   dogfood-breaking behavior changes.
 - **Performance Goals:** No material scan or lint performance regression.
 
-## Open Questions
+## Resolved Design Questions
 
-| Question | Why it matters | Blocks design? |
-|----------|----------------|----------------|
-| Should this be implemented as lint wording only, heuristic changes only, or both? | Determines test scope and affected runtime functions. | yes |
-| Should prompt changes include `documentation-wizard` only or all lifecycle prompts that mention canonical context? | Determines bundle and prompt validation scope. | yes |
+| Question | Resolution | Design destination |
+|----------|------------|--------------------|
+| Which concrete wording changes belong in prompts/templates/docs, and which heuristic changes belong in runtime signal detection? | Runtime signal detection handles concrete risk classification and false-positive reduction. Prompts, templates, skill guidance, and durable docs handle wording and agent-response expectations. | `design.md#overview`, `design.md#components-and-changes` |
+| Should prompt changes include `documentation-wizard` only or all lifecycle prompts that mention canonical context? | All prompt surfaces that mention canonical context are in scope. | `design.md#overview`, `design.md#components-and-changes` |
+| Should `agent_readiness_packet` and `closure_check` directly compute canonical-context guidance or consume normalized diagnostics from shared internals? | They should consume normalized shared runtime diagnostics and closure blockers rather than computing separate meanings. | `design.md#system-architecture`, `design.md#data-flow` |
 
 ## Success Criteria
 
@@ -205,10 +233,13 @@ runtime diagnostic semantics, so that different agents respond consistently.
   imported-source risk.
 - **SC-003:** Prompt, template, runtime reference, and bundled plugin copies
   remain in sync after the change.
+- **SC-004:** `lint_spec_package`, `agent_readiness_packet`, and
+  `closure_check` expose consistent advisory semantics for canonical-context
+  findings.
 
 ## Related Artifacts
 
 - Backlog: `docs/backlog/README.md` B058
-- Design: not created yet
-- Tasks: not created yet
+- Design: `docs/specs/031-canonical-context-warning-noise/design.md`
+- Tasks: `docs/specs/031-canonical-context-warning-noise/tasks.md`
 - Verification: not created yet
