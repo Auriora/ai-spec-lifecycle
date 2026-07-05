@@ -24,6 +24,7 @@ SCRIPT_DIR = Path(__file__).resolve().parents[1]
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
+from lifecycle import requirements as requirements_parser
 from lifecycle import traceability
 from lifecycle.closure import (
     build_validation_plan as closure_validation_plan,
@@ -1011,6 +1012,21 @@ def lint_doc(path: Path, artifact_type: str | None = None) -> list[dict[str, Any
             diagnostics.append(diagnostic("warn", code, path, f"Missing section: {title}", artifact_type=artifact))
 
     if artifact == "requirements":
+        for priority_item in requirements_parser.requirement_blocks(path)[1]:
+            diagnostics.append(
+                diagnostic(
+                    priority_item["severity"],
+                    priority_item["code"],
+                    path,
+                    priority_item["message"],
+                    priority_item.get("line"),
+                    artifact_type=artifact,
+                )
+            )
+            diagnostics[-1]["requirement_id"] = priority_item["requirement_id"]
+            diagnostics[-1]["priority"] = priority_item["priority"]
+            if priority_item.get("canonical_priority"):
+                diagnostics[-1]["canonical_priority"] = priority_item["canonical_priority"]
         for title, code in [
             ("Durable Source Baseline", "REQUIREMENTS_DURABLE_BASELINE_MISSING"),
             ("Goals", "REQUIREMENTS_GOALS_MISSING"),
@@ -2727,45 +2743,7 @@ def spec_stage(spec: dict[str, Any], next_payload: dict[str, Any] | None = None)
 
 def requirement_blocks(spec_path: Path) -> list[dict[str, Any]]:
     path = spec_path / "requirements.md"
-    if not path.exists():
-        return []
-    lines = read_text(path).splitlines()
-    starts: list[tuple[int, str]] = []
-    for idx, line in enumerate(lines):
-        match = re.match(r"^###\s+(Requirement\s+[^:]+):?\s*(.*?)\s*$", line)
-        if match:
-            starts.append((idx, match.group(1).strip()))
-    blocks: list[dict[str, Any]] = []
-    for pos, (start, req_id) in enumerate(starts):
-        end = starts[pos + 1][0] if pos + 1 < len(starts) else len(lines)
-        for idx in range(start + 1, end):
-            if lines[idx].startswith("## ") and not lines[idx].startswith("### "):
-                end = idx
-                break
-        text = "\n".join(lines[start:end])
-        criteria: list[dict[str, str]] = []
-        in_acceptance = False
-        current_number: str | None = None
-        current_text: list[str] = []
-        for line in lines[start:end]:
-            if line.strip().lower() == "#### acceptance criteria":
-                in_acceptance = True
-                continue
-            if in_acceptance and line.startswith("#### "):
-                break
-            if not in_acceptance:
-                continue
-            item = re.match(r"^\s*(\d+)\.\s+(.*)$", line)
-            if item:
-                if current_number:
-                    criteria.append({"id": f"{req_id} AC{current_number}", "text": " ".join(current_text).strip()})
-                current_number = item.group(1)
-                current_text = [item.group(2).strip()]
-            elif current_number and line.strip():
-                current_text.append(line.strip())
-        if current_number:
-            criteria.append({"id": f"{req_id} AC{current_number}", "text": " ".join(current_text).strip()})
-        blocks.append({"id": req_id, "text": text, "acceptance_criteria": criteria})
+    blocks, _diagnostics = requirements_parser.requirement_blocks(path)
     return blocks
 
 

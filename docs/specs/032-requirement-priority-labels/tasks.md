@@ -33,7 +33,7 @@ T015 -> T016 -> T017 -> T018
 **Purpose**: Establish one parser and lint path before propagating priority
 through readiness, traceability, and closure.
 
-- [ ] T001 Add requirement priority parser fixtures and unit tests.
+- [x] T001 Add requirement priority parser fixtures and unit tests.
   - Depends on: none
   - Requirement: Requirement 1, Requirement 2
   - Properties: CP-001, CP-005
@@ -44,9 +44,9 @@ through readiness, traceability, and closure.
     shorthand labels, unknown labels, and `won't-have` as an invalid accepted
     requirement priority.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Implemented parser fixtures and runtime tests covering unlabeled requirements, canonical must-have/should-have/could-have labels, duplicate priority lines, shorthand labels, unknown labels, and won't-have exclusion values. Verified by PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime.
 
-- [ ] T002 Implement a shared requirement parser used by runtime paths.
+- [x] T002 Implement a shared requirement parser used by runtime paths.
   - Depends on: T001
   - Requirement: Requirement 1, Requirement 3
   - Properties: CP-004, CP-005
@@ -58,17 +58,27 @@ through readiness, traceability, and closure.
     `core.py` and `traceability.py`; existing requirement IDs and acceptance
     criteria remain backward compatible.
   - Evidence mode: implementation
-  - Evidence: Pending.
-  - [ ] T002.1 Add the shared parser module and preserve existing requirement
+  - Evidence: Implemented shared lifecycle.requirements parser and wired core.requirement_blocks plus traceability requirement collection to use it while preserving existing IDs and acceptance-criteria payloads. Verified by runtime and traceability unit tests.
+  - [x] T002.1 Add the shared parser module and preserve existing requirement
     block payload fields.
-  - [ ] T002.2 Return optional `priority` on requirement records when present.
-  - [ ] T002.3 Return structured parser diagnostics without making missing
+  - Evidence: Shared lifecycle.requirements parser module added while preserving requirement block payload fields.
+  - Evidence mode: implementation
+  - [x] T002.2 Return optional `priority` on requirement records when present.
+  - Evidence: Parser returns optional priority on requirement records for canonical must-have, should-have, and could-have values.
+  - Evidence mode: implementation
+  - [x] T002.3 Return structured parser diagnostics without making missing
     priority a diagnostic.
-  - [ ] T002.4 Update current `core.py` callers to use the shared parser.
-  - [ ] T002.5 Update `traceability.py` requirement collection to use the
+  - Evidence: Parser returns duplicate, shorthand, unknown, and exclusion priority diagnostics while missing priority remains non-diagnostic.
+  - Evidence mode: implementation
+  - [x] T002.4 Update current `core.py` callers to use the shared parser.
+  - Evidence: core.requirement_blocks now delegates to the shared parser, and requirements lint consumes shared parser diagnostics.
+  - Evidence mode: implementation
+  - [x] T002.5 Update `traceability.py` requirement collection to use the
     shared parser.
 
-- [ ] T003 Integrate priority diagnostics into requirements lint.
+  - Evidence: traceability.collect_requirements now uses the shared parser and propagates parsed priority when present.
+  - Evidence mode: implementation
+- [x] T003 Integrate priority diagnostics into requirements lint.
   - Depends on: T002
   - Requirement: Requirement 1, Requirement 2, Requirement 4
   - Properties: CP-001
@@ -79,9 +89,9 @@ through readiness, traceability, and closure.
     `requirements.md` files; unlabeled active, closed, and removed specs are
     not failed solely for missing labels.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Integrated requirement priority diagnostics into requirements lint for duplicate, shorthand, unknown, and won't-have priority values; missing labels remain non-diagnostic. Verified by PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime and spec package lint.
 
-- [ ] T004 Checkpoint - Shared parser validation.
+- [x] T004 Checkpoint - Shared parser validation.
   - Depends on: T003
   - Requirement: Requirement 1, Requirement 2
   - Files: `docs/specs/032-requirement-priority-labels/verification.md`
@@ -89,7 +99,7 @@ through readiness, traceability, and closure.
     risk is recorded before coverage semantics are implemented.
   - Validation: `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime`
   - Evidence mode: validation
-  - Evidence: Pending.
+  - Evidence: Focused parser/lint checkpoint passed: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime; traceability regression also passed with PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.traceability.test_traceability_lookup. No parser compatibility risks found for phase 1.
 
 ## Phase 2: Readiness And Closure Semantics
 

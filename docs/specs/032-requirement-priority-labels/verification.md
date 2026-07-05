@@ -23,7 +23,7 @@ the temporary spec package can close.
 
 | Gate | Required? | Status | Evidence |
 |------|-----------|--------|----------|
-| Parser and lint behavior covers Requirement 1, Requirement 2, CP-001, and CP-005 | yes | pending | T004 evidence after focused parser and lint tests. |
+| Parser and lint behavior covers Requirement 1, Requirement 2, CP-001, and CP-005 | yes | passed | T004 evidence: focused parser/lint and traceability regression tests passed on 2026-07-05. |
 | Readiness and closure semantics cover Requirement 3, CP-002, CP-003, and CP-004 | yes | pending | T008 evidence after focused readiness and closure tests. |
 | Traceability and MCP propagation cover Requirement 3 AC4, Requirement 4 AC2, CP-004, and CP-005 | yes | pending | T011 evidence after runtime and MCP tests. |
 | Prompt, template, source-skill, and bundled-plugin parity cover Requirement 4 AC1 and AC3 | yes | pending | T015 and T016 evidence after prompt validation, package-contract, and sync-guard. |
@@ -34,7 +34,8 @@ the temporary spec package can close.
 
 | Command | Purpose | Result | Evidence |
 |---------|---------|--------|----------|
-| `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime` | Focused parser, lint, readiness, closure, and traceability runtime checks. | pending | T004, T008, T016 |
+| `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime` | Focused parser, lint, readiness, closure, and traceability runtime checks. | passed, 135 tests | T004 |
+| `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.traceability.test_traceability_lookup` | Traceability lookup regression coverage for shared parser adoption. | passed, 9 tests | T004 |
 | `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime tests.runtime.test_spec_mcp_server` | Focused runtime plus MCP propagation checks. | pending | T011, T016 |
 | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py prompts .` | Prompt definition validation. | pending | T015, T016 |
 | `npm run validate` | Repository validation bundle including package-contract and sync-guard. | pending | T017 |
@@ -86,10 +87,10 @@ the temporary spec package can close.
 
 | Task ID | Status | Evidence | Notes |
 |---------|--------|----------|-------|
-| T001 | pending | | Parser fixture tests not started. |
-| T002 | pending | | Shared parser implementation not started. |
-| T003 | pending | | Requirements lint integration not started. |
-| T004 | pending | | Parser checkpoint evidence not recorded. |
+| T001 | complete | Parser fixtures and runtime tests cover unlabeled requirements, canonical `must-have`/`should-have`/`could-have` labels, duplicate priority lines, shorthand labels, unknown labels, and `won't-have` exclusion values. | Verified by focused runtime tests. |
+| T002 | complete | `lifecycle.requirements` now provides shared requirement parsing, acceptance-criteria extraction, optional priority parsing, and parser diagnostics consumed by `core.py` and `traceability.py`. | Existing requirement IDs and acceptance-criteria payloads remain backward compatible. |
+| T003 | complete | Requirements lint reports duplicate, shorthand, unknown, and `won't-have` priority values; missing priority remains non-diagnostic. | Verified by focused runtime tests and spec package lint. |
+| T004 | complete | Focused parser/lint checkpoint passed; no parser compatibility risk found before coverage semantics implementation. | Runtime and traceability regression tests passed. |
 | T005 | pending | | Coverage disposition tests not started. |
 | T006 | pending | | Coverage helper implementation not started. |
 | T007 | pending | | Readiness and closure integration not started. |
@@ -110,6 +111,7 @@ the temporary spec package can close.
 | Date | Evidence | Result | Notes |
 |------|----------|--------|-------|
 | 2026-07-05 | Verification artifact created and traceability mappings updated before implementation. | pending validation | Addresses readiness finding that CP-001 through CP-005 lacked verification mapping and checkpoint tasks referenced a missing artifact. |
+| 2026-07-05 | Phase 1 parser foundation implemented and validated. | passed | `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime` passed 135 tests; `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.traceability.test_traceability_lookup` passed 9 tests; `spec_runtime.py lint docs/specs/032-requirement-priority-labels` reported 0 diagnostics; `git diff --check` passed. |
 
 ## Manual Or External Verification
 

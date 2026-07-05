@@ -1825,6 +1825,65 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertTrue(waived)
         self.assertTrue(waived[0]["waived"])
 
+    def test_requirement_blocks_parse_canonical_priorities(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = Path(tmp)
+            (spec / "requirements.md").write_text(
+                (FIXTURE_DIR / "requirement-priority-labels/canonical-requirements.md").read_text(encoding="utf-8"),
+                encoding="utf-8",
+            )
+
+            blocks = spec_runtime.requirement_blocks(spec)
+
+        self.assertEqual(["must-have", "should-have", "could-have"], [block.get("priority") for block in blocks])
+        self.assertEqual("Requirement 1 AC1", blocks[0]["acceptance_criteria"][0]["id"])
+        self.assertEqual(
+            "GIVEN context, WHEN mandatory behavior is parsed, THEN THE SYSTEM SHALL return priority.",
+            blocks[0]["acceptance_criteria"][0]["text"],
+        )
+
+    def test_lint_doc_reports_invalid_requirement_priorities(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "requirements.md"
+            path.write_text(
+                (FIXTURE_DIR / "requirement-priority-labels/invalid-priorities.md").read_text(encoding="utf-8"),
+                encoding="utf-8",
+            )
+
+            diagnostics = spec_runtime.lint_doc(path, "requirements")
+
+        codes = {item["code"] for item in diagnostics}
+        self.assertIn("REQUIREMENT_PRIORITY_DUPLICATE", codes)
+        self.assertIn("REQUIREMENT_PRIORITY_SHORTHAND", codes)
+        self.assertIn("REQUIREMENT_PRIORITY_UNKNOWN", codes)
+        self.assertIn("REQUIREMENT_PRIORITY_EXCLUSION_VALUE", codes)
+        shorthand = next(item for item in diagnostics if item["code"] == "REQUIREMENT_PRIORITY_SHORTHAND")
+        self.assertEqual("must-have", shorthand["canonical_priority"])
+
+    def test_lint_doc_does_not_report_missing_requirement_priority(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+
+            diagnostics = spec_runtime.lint_doc(spec / "requirements.md", "requirements")
+
+        self.assertFalse(any(item["code"].startswith("REQUIREMENT_PRIORITY") for item in diagnostics))
+
+    def test_task_details_includes_requirement_priority_from_shared_parser(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+            requirements = spec / "requirements.md"
+            requirements.write_text(
+                requirements.read_text(encoding="utf-8").replace(
+                    "**User Story:** As an agent, I want durable context, so that implementation is grounded.",
+                    "**User Story:** As an agent, I want durable context, so that implementation is grounded.\n\n**Priority:** must-have",
+                ),
+                encoding="utf-8",
+            )
+
+            payload = spec_runtime.task_details(spec, "T001")
+
+        self.assertEqual("must-have", payload["traceability_context"]["requirements"][0]["priority"])
+
     def test_lint_spec_package_returns_summary(self):
         with tempfile.TemporaryDirectory() as tmp:
             spec = write_complete_spec(Path(tmp))

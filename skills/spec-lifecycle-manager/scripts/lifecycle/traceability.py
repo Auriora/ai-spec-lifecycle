@@ -12,6 +12,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from lifecycle import requirements as requirements_parser
+
 
 TASK_RE = re.compile(r"\bT\d{3}(?:\.\d+)?\b")
 REQ_RE = re.compile(r"\bRequirement\s+\d+[A-Z]?\b", re.IGNORECASE)
@@ -115,42 +117,6 @@ def extract_task_blocks(text: str) -> dict[str, str]:
                 break
         blocks[task_id] = "\n".join(lines[start:end]).strip()
     return blocks
-
-
-def extract_requirement_sections(text: str) -> dict[str, str]:
-    matches = list(re.finditer(r"^###\s+(Requirement\s+\d+[A-Z]?:?.*)$", text, re.MULTILINE))
-    sections: dict[str, str] = {}
-    for idx, match in enumerate(matches):
-        start = match.start()
-        end = matches[idx + 1].start() if idx + 1 < len(matches) else len(text)
-        title = match.group(1).strip()
-        req_id = REQ_RE.search(title)
-        if req_id:
-            sections[req_id.group(0).lower()] = text[start:end].strip()
-    return sections
-
-
-def extract_acceptance_criteria(requirement_block: str) -> list[str]:
-    criteria: list[str] = []
-    in_ac = False
-    current: list[str] = []
-    for line in requirement_block.splitlines():
-        if re.match(r"^#{4}\s+Acceptance Criteria\b", line):
-            in_ac = True
-            continue
-        if in_ac and line.startswith("#### "):
-            break
-        if not in_ac:
-            continue
-        if re.match(r"^\d+\.\s+", line):
-            if current:
-                criteria.append(" ".join(current))
-            current = [line.strip()]
-        elif current and (line.startswith("   ") or line.startswith("      ")):
-            current.append(line.strip())
-    if current:
-        criteria.append(" ".join(current))
-    return criteria
 
 
 def referenced_markdown_paths(row: dict[str, str]) -> list[str]:
@@ -323,29 +289,28 @@ def task_lookup(spec_path: Path, task_id: str) -> dict[str, Any]:
 def collect_requirements(doc: MarkdownDoc | None, value: str) -> list[dict[str, Any]]:
     if not doc:
         return []
-    sections = extract_requirement_sections(doc.text)
+    blocks, _diagnostics = requirements_parser.requirement_blocks_from_text(doc.text)
+    sections = {block["id"].lower(): block for block in blocks}
+
+    def payload_for(block: dict[str, Any], req_id: str | None = None) -> dict[str, Any]:
+        payload = {
+            "id": req_id or block["id"],
+            "source": block["text"],
+            "acceptance_criteria": [item["source"] for item in block["acceptance_criteria"]],
+        }
+        if block.get("priority"):
+            payload["priority"] = block["priority"]
+        return payload
+
     if normalize_cell(value) in {"all requirements", "all requirement"}:
-        return [
-            {
-                "id": section.splitlines()[0].lstrip("#").strip().split(":", 1)[0],
-                "source": section,
-                "acceptance_criteria": extract_acceptance_criteria(section),
-            }
-            for section in sections.values()
-        ]
+        return [payload_for(block) for block in sections.values()]
     results: list[dict[str, Any]] = []
     seen: set[str] = set()
     for match in REQ_RE.finditer(value):
         req_id = match.group(0).lower()
         if req_id in sections and req_id not in seen:
             seen.add(req_id)
-            results.append(
-                {
-                    "id": match.group(0),
-                    "source": sections[req_id],
-                    "acceptance_criteria": extract_acceptance_criteria(sections[req_id]),
-                }
-            )
+            results.append(payload_for(sections[req_id], match.group(0)))
     return results
 
 

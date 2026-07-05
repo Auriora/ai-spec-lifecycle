@@ -10,5 +10,6 @@ __all__ = [
     "actions",
     "capabilities",
     "migration",
+    "requirements",
     "traceability",
 ]
