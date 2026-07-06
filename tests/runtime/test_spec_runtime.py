@@ -1488,6 +1488,7 @@ class SpecRuntimeTests(unittest.TestCase):
             "029-spec-closure-helper",
             "030-mcp-first-runtime-migration",
             "031-canonical-context-warning-noise",
+            "032-requirement-priority-labels",
         }
 
         self.assertEqual(0, payload["summary"]["error"])
