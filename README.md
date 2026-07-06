@@ -75,12 +75,12 @@ tagging a release:
 
 ```bash
 slc release notes \
-  --from v0.2.0 \
+  --from v0.3.0 \
   --to HEAD \
   --version 0.2.1 \
-  --output docs/release-notes/v0.2.1-draft.md \
-  --evidence-output docs/release-notes/v0.2.1-evidence.json \
-  --agent-instructions docs/release-notes/v0.2.1-agent.md
+  --output docs/release-notes/v0.3.0-draft.md \
+  --evidence-output docs/release-notes/v0.3.0-evidence.json \
+  --agent-instructions docs/release-notes/v0.3.0-agent.md
 ```
 
 Review the generated evidence and write the final release note to
@@ -98,7 +98,7 @@ this repository and copying files with `rsync`.
 Install the latest released package globally:
 
 ```bash
-npm install -g https://github.com/Auriora/ai-spec-lifecycle/releases/download/v0.2.1/auriora-ai-spec-lifecycle-0.2.1.tgz
+npm install -g https://github.com/Auriora/ai-spec-lifecycle/releases/download/v0.3.0/auriora-ai-spec-lifecycle-0.3.0.tgz
 ```
 
 ### Codex
@@ -144,7 +144,7 @@ For offline or tarball-based Claude installs, unpack the same release tarball
 and use its bundled marketplace:
 
 ```bash
-tar -xzf auriora-ai-spec-lifecycle-0.2.1.tgz
+tar -xzf auriora-ai-spec-lifecycle-0.3.0.tgz
 claude plugin marketplace add ./package
 claude plugin install spec-lifecycle-manager@ai-spec-lifecycle
 ```
