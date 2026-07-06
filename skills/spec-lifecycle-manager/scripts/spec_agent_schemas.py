@@ -133,7 +133,23 @@ def traceability_lookup_output_schema() -> dict[str, Any]:
         "properties": {
             "lookup": {"type": "object"},
             "traceability_row": {"type": "object"},
-            "requirements": {"type": "array", "items": {"type": "object"}},
+            "requirements": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "string"},
+                        "title": {"type": "string"},
+                        "priority": {
+                            "anyOf": [
+                                {"type": "string", "enum": ["must-have", "should-have", "could-have"]},
+                                {"type": "null"},
+                            ]
+                        },
+                        "acceptance_criteria": {"type": "array", "items": {"type": "object"}},
+                    },
+                },
+            },
             "design_sections": {"type": "array", "items": {"type": "string"}},
             "durable_targets": {"type": "array", "items": {"type": "string"}},
             "gaps": {"type": "array", "items": {"type": "object"}},

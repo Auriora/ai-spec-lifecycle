@@ -6,7 +6,7 @@ status: draft
 authoring_mode: wizard
 lifecycle_stage: tasks
 owner: platform
-last_reviewed: 2026-07-05
+last_reviewed: 2026-07-06
 backlog_item: B057
 ---
 
@@ -91,6 +91,8 @@ from `requirements.md`, `design.md`, or `tasks.md`, reconcile it before coding.
   durable promotion targets change.
 - Keep priority values in this file aligned with parsed requirement source;
   task rows should not become the source of truth for priority.
+- MoE review on 2026-07-06 confirmed that the `must-have` values in this matrix
+  now match requirement-level priority metadata in `requirements.md`.
 - Before closure, every `not-covered` row must become `complete`,
   `partial-routed`, `out-of-scope`, or rejected with one explicit residual
   destination.

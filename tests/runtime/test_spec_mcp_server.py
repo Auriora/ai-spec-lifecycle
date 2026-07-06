@@ -208,6 +208,8 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertIn("outputSchema", inventory_schema)
         self.assertIn("outputSchema", traceability_schema)
         self.assertIn("available_next_actions", capabilities_schema["outputSchema"]["required"])
+        requirement_schema = traceability_schema["outputSchema"]["properties"]["requirements"]["items"]
+        self.assertIn("priority", requirement_schema["properties"])
 
     def test_lifecycle_capabilities_tool_returns_stable_surface_decision(self):
         with tempfile.TemporaryDirectory() as tmp:

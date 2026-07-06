@@ -101,6 +101,8 @@ out-of-scope behavior without weakening correctness or closure discipline.
 requirements, so that agents can tell mandatory gates from optional
 enhancements.
 
+**Priority:** must-have
+
 #### Acceptance Criteria
 
 1. GIVEN a requirement is mandatory, WHEN it is authored, THEN THE SYSTEM SHALL
@@ -128,6 +130,8 @@ enhancements.
 priority labels to remain valid, so that the new model does not create noisy
 retroactive work.
 
+**Priority:** must-have
+
 #### Acceptance Criteria
 
 1. GIVEN an existing active spec lacks MoSCoW priority labels, WHEN lint or
@@ -145,6 +149,8 @@ retroactive work.
 **User Story:** As a coding agent, I want priority labels to affect planning and
 closure guidance consistently, so that I do not treat optional work as blocking
 or mandatory work as deferrable by accident.
+
+**Priority:** must-have
 
 #### Acceptance Criteria
 
@@ -170,6 +176,8 @@ or mandatory work as deferrable by accident.
 
 **User Story:** As a skill user, I want prompts and tooling to surface priority
 without adding ceremony, so that requirement authoring remains ergonomic.
+
+**Priority:** must-have
 
 #### Acceptance Criteria
 

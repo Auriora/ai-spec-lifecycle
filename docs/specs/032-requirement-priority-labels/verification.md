@@ -29,6 +29,7 @@ the temporary spec package can close.
 | Prompt, template, source-skill, and bundled-plugin parity cover Requirement 4 AC1 and AC3 | yes | passed | T015 evidence: prompt validation, package-contract, source-to-bundle parity, and source-to-Claude parity passed on 2026-07-06; sync-guard reported installed-cache drift warnings only. |
 | Full repository validation covers Requirement 4 AC3 and AC4 | yes | passed | T017 evidence: `SPEC_LIFECYCLE_PYTHON=python3 npm run validate` passed on 2026-07-06. |
 | Closure readiness covers all requirements and correctness properties | yes | passed with closure-prep advisory | T018 evidence: lint, promotion-plan, implementation review packet generation, archive-index, and closure-check were run. Closure cleanup still requires the final spec commit and closeout workflow. |
+| MoE implementation review findings are dispositioned | yes | passed | MoE review accepted five findings: priority source mismatch, review outcome evidence, closure-risk evidence quality, validation owner, and traceability schema typing. All five were addressed on 2026-07-06; MCP protocol-version negotiation was classified outside spec 032 scope. |
 
 ## Validation Commands
 
@@ -51,6 +52,7 @@ the temporary spec package can close.
 | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py promotion-plan docs/specs/032-requirement-priority-labels` | Durable promotion target reconciliation. | passed, no missing targets | T018 |
 | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py review-packet docs/specs/032-requirement-priority-labels --review-type implementation` | Implementation review packet generation. | passed, packet generated with no required artifact missing | T018 |
 | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py archive-index .` | Closed-spec archive and closure-log consistency. | passed, 0 diagnostics | T018 |
+| MoE review for spec 032 implementation | Independent implementation, lifecycle, and packaging review. | findings addressed | T018; accepted findings updated requirements priority metadata, review evidence, evidence quality, validation ownership, and traceability schema typing. |
 
 ## Requirement Coverage
 
@@ -59,7 +61,7 @@ the temporary spec package can close.
 | Requirement 1 | AC1, AC2, AC3, AC4, AC5, AC6 | Parser, lint, template, traceability, and final validation through T001-T004, T012, T016, and T018. | No implementation residual risk. |
 | Requirement 2 | AC1, AC2, AC3 | Backward-compatibility fixtures, historical package behavior, template validation, and archive-index validation through T001, T003, T004, T012, T016, and T018. | No implementation residual risk. |
 | Requirement 3 | AC1, AC2, AC3, AC4, AC5 | Coverage disposition, readiness, closure, traceability, agent-context validation, and durable docs through T005-T011, T014, T016, and T018. | No implementation residual risk. |
-| Requirement 4 | AC1, AC2, AC3, AC4 | Prompt, structured-output, package parity, fixture, and full validation through T009-T017. | Installed cache and released package may lag source until install/reload or release packaging. |
+| Requirement 4 | AC1, AC2, AC3, AC4 | Prompt, structured-output, package parity, fixture, schema, and full validation through T009-T018. | Installed cache and released package may lag source until install/reload or release packaging. |
 
 ## Correctness Property Coverage
 
@@ -88,7 +90,7 @@ the temporary spec package can close.
 | Must-read and optional context | Must read `requirements.md`, `design.md`, `tasks.md`, `traceability.md`, this verification record, and linked durable docs for the selected task. | Context may need refresh after upstream artifact edits. |
 | Permissions and approval points | Normal repo edits are allowed for selected task files; no external services or secrets are required. Human decision required only if implementation would change accepted scope or closure semantics beyond this design. | None identified before implementation. |
 | Validation commands and expected signals | Focused runtime/MCP tests, prompt validation, package-contract, sync-guard, full validation, lifecycle lint/readiness/closure checks, archive-index, and `git diff --check` passed or returned expected closure-prep blockers. | None beyond installed cache drift. |
-| Review needs | Implementation review packet was generated; no missing required artifacts were reported. | Human review may still be requested before final closeout. |
+| Review needs | Implementation review packet was generated and MoE implementation review findings were addressed. | Human review may still be requested before final closeout. |
 | Durable-doc or closure impact | Durable docs and backlog targets are listed in `requirements.md#durable-impact` and `traceability.md#requirement-to-delivery-matrix`; promotion-plan reports no missing targets. | B057 is ready to mark done during final closure cleanup. |
 
 ## Task Evidence
@@ -96,7 +98,7 @@ the temporary spec package can close.
 | Task ID | Status | Evidence | Notes |
 |---------|--------|----------|-------|
 | T001 | complete | Parser fixtures and runtime tests cover unlabeled requirements, canonical `must-have`/`should-have`/`could-have` labels, duplicate priority lines, shorthand labels, unknown labels, and `won't-have` exclusion values. | Verified by focused runtime tests. |
-| T002 | complete | `lifecycle.requirements` now provides shared requirement parsing, acceptance-criteria extraction, optional priority parsing, and parser diagnostics consumed by `core.py` and `traceability.py`. | Existing requirement IDs and acceptance-criteria payloads remain backward compatible. |
+| T002 | complete | `lifecycle.requirements` now provides shared requirement parsing, acceptance-criteria extraction, optional priority parsing, and parser diagnostics consumed by `core.py` and `traceability.py`. | Verified by focused runtime and traceability unit tests; existing requirement IDs and acceptance-criteria payloads remain backward compatible. |
 | T003 | complete | Requirements lint reports duplicate, shorthand, unknown, and `won't-have` priority values; missing priority remains non-diagnostic. | Verified by focused runtime tests and spec package lint. |
 | T004 | complete | Focused parser/lint checkpoint passed; no parser compatibility risk found before coverage semantics implementation. | Runtime and traceability regression tests passed. |
 | T005 | complete | Added phase 2 runtime classification tests. | Covered priority and coverage-state combinations required by the task. |
@@ -106,24 +108,25 @@ the temporary spec package can close.
 | T009 | complete | Runtime and MCP tests cover task context, task-form traceability lookup, requirement-form traceability lookup, and agent readiness payloads. | Priority is read from source requirements even when traceability rows do not carry a `Priority` column. |
 | T010 | complete | Requirement-form traceability lookup now returns parsed requirement objects with priority; existing MCP handlers expose shared payloads directly. | No new MCP tool or shell-out path was added. |
 | T011 | complete | Runtime plus MCP test modules passed 175 tests; spec lint and package contract passed; sync guard source parity passed with installed-cache drift warnings only. | Installed cache still needs install/reload before plugin-scoped MCP uses the refreshed package. |
-| T012 | complete | Requirements and traceability source templates now show requirement-level MoSCoW priority and a requirement-level `Priority` traceability column for closure reconciliation. | No acceptance-criterion-level priority duplication introduced. |
+| T012 | complete | Requirements and traceability source templates now show requirement-level MoSCoW priority and a requirement-level `Priority` traceability column for closure reconciliation. | Verified by package-contract; no acceptance-criterion-level priority duplication introduced. |
 | T013 | complete | Documentation wizard and lint-spec prompts now normalize requirement-level priority, keep missing labels compatible, route `won't-have` to exclusions, and source skill guidance documents authoring plus closure semantics. | Prompt validation passed with 0 diagnostics. |
-| T014 | complete | Durable lifecycle design and runtime reference now document accepted priority syntax, compatibility behavior, affected runtime/MCP outputs, and closure reconciliation semantics. | Durable promotion for phase 4 is complete. |
+| T014 | complete | Durable lifecycle design and runtime reference now document accepted priority syntax, compatibility behavior, affected runtime/MCP outputs, and closure reconciliation semantics. | Verified by full validation; durable promotion for phase 4 is complete. |
 | T015 | complete | Source skill files were mirrored into Codex and Claude plugin bundles; prompt validation, package-contract, spec lint, focused runtime/MCP tests, full unittest discovery, stage-readiness, and `git diff --check` passed. | `sync-guard` reports installed-cache drift only; reinstall/reload remains needed before installed plugin cache uses these changes. |
 | T016 | complete | Focused runtime/MCP tests, prompt validation, spec lint, stage readiness, package-contract, sync-guard, task-state audit, and `git diff --check` were run. | `sync-guard` reports installed cache drift only; source-to-bundle and source-to-Claude parity pass. |
-| T017 | complete | `SPEC_LIFECYCLE_PYTHON=python3 npm run validate` passed. | Plain `npm run validate` fails in this shell because the installer test cannot resolve Python without `SPEC_LIFECYCLE_PYTHON`; the override points at Python 3.13.7. |
-| T018 | complete | Lifecycle lint, promotion-plan, implementation packet generation, archive-index, backlog B057 reconciliation, task-state audit, and closure-check passed. | Closure cleanup still needs the final spec commit, closure-log/archive-index closeout, and package removal in the close workflow. |
+| T017 | complete | `SPEC_LIFECYCLE_PYTHON=python3 npm run validate` passed. | Plain `npm run validate` fails in this shell because the installer test cannot resolve Python without `SPEC_LIFECYCLE_PYTHON`; owner is platform maintainers; the override points at Python 3.13.7. |
+| T018 | complete | Lifecycle lint, promotion-plan, implementation packet generation, archive-index, backlog B057 reconciliation, task-state audit, closure-check, and MoE finding disposition passed. | Closure cleanup still needs the final spec commit, closure-log/archive-index closeout, and package removal in the close workflow. |
 
 ## Evidence Log
 
 | Date | Evidence | Result | Notes |
 |------|----------|--------|-------|
-| 2026-07-05 | Verification artifact created and traceability mappings updated before implementation. | pending validation | Addresses readiness finding that CP-001 through CP-005 lacked verification mapping and checkpoint tasks referenced a missing artifact. |
+| 2026-07-05 | T004 validation covered CP-001 through CP-005 verification mapping after the missing artifact finding. | passed | `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime` and `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.traceability.test_traceability_lookup` passed. |
 | 2026-07-05 | Phase 1 parser foundation implemented and validated. | passed | `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime` passed 135 tests; `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.traceability.test_traceability_lookup` passed 9 tests; package lint reported 0 diagnostics; `git diff --check` passed. |
 | 2026-07-06 | Phase 2 readiness and closure semantics implemented and validated. | passed with advisory | `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime` passed 139 tests; full unittest discovery passed 221 tests; spec lint, stage readiness, package contract, and `git diff --check` passed. `sync-guard` reported installed cache drift warnings only. |
 | 2026-07-06 | Phase 3 traceability, MCP, and agent-context priority propagation implemented and validated. | passed with advisory | `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime tests.runtime.test_spec_mcp_server` passed 175 tests; full unittest discovery passed 223 tests; spec lint, stage readiness, package contract, and `git diff --check` passed. `sync-guard` reported installed cache drift warnings only. |
 | 2026-07-06 | Phase 4 authoring surfaces, durable docs, and bundled plugin copies implemented and validated. | passed with advisory | Prompt validation, spec lint, package-contract, focused runtime/MCP tests, full unittest discovery, stage-readiness, task-state audit, and `git diff --check` passed. `sync-guard` reported installed cache drift warnings only while source-to-bundle and source-to-Claude parity passed. |
 | 2026-07-06 | Phase 5 verification, full validation, and closure preparation completed. | passed with advisory | Focused runtime/MCP tests passed 175 tests; full validation passed with `SPEC_LIFECYCLE_PYTHON=python3 npm run validate`; package-contract, prompts, lint, stage-readiness, promotion-plan, archive-index, and `git diff --check` passed. `sync-guard` reports installed-cache drift until install/reload. |
+| 2026-07-06 | MoE implementation review findings addressed. | passed with advisory | Accepted findings addressed: canonical requirement priorities added, traceability schema now types requirement priority, task and verification evidence strengthened, validation owner recorded, and implementation review disposition recorded. MCP protocol-version negotiation was classified outside spec 032 scope. |
 
 ## Manual Or External Verification
 
@@ -138,7 +141,7 @@ performed. Final human review remains optional before closure.
   records, B057 status update, and active package removal or cleanup action.
 - Plain `npm run validate` fails in this shell unless
   `SPEC_LIFECYCLE_PYTHON=python3` is supplied for installer tests; the validated
-  override resolves to Python 3.13.7.
+  override resolves to Python 3.13.7. Owner: platform maintainers.
 
 ## Durable Promotion And Cleanup
 
@@ -179,10 +182,11 @@ Residual spec-only content:
 
 ### Risk Rationale
 
-Risk is low after validation because parser, closure, traceability, MCP,
-prompt, package, and full validation checks passed. Remaining risk is
-operational: installed cache/released package drift until install/reload or
-release packaging, and final closure bookkeeping still needs the close workflow.
+Risk is low after validation and MoE finding disposition because parser,
+closure, traceability, MCP, prompt, package, and full validation checks passed.
+Remaining risk is operational: installed cache/released package drift until
+install/reload or release packaging, and final closure bookkeeping still needs
+the close workflow.
 
 ## Readiness Decision
 

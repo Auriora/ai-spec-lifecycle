@@ -6,7 +6,7 @@ status: draft
 authoring_mode: wizard
 lifecycle_stage: design
 owner: platform
-last_reviewed: 2026-07-05
+last_reviewed: 2026-07-06
 backlog_item: B057
 ---
 
@@ -32,6 +32,11 @@ paths. Unlabeled specs remain compatible. Priority is included in requirement
 coverage outputs that already report requirements. Templates, prompts, source
 skill guidance, runtime docs, and bundled plugin copies will be updated
 together and validated with package-contract and sync checks.
+
+MoE review on 2026-07-06 confirmed that spec 032's own requirements now carry
+canonical requirement-level `**Priority:** must-have` metadata. This aligns the
+design with the runtime source of truth and does not change the component or
+data-flow design.
 
 ## Requirement Coverage
 

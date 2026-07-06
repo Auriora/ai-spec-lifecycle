@@ -6,7 +6,7 @@ status: draft
 authoring_mode: wizard
 lifecycle_stage: tasks
 owner: platform
-last_reviewed: 2026-07-05
+last_reviewed: 2026-07-06
 backlog_item: B057
 ---
 
@@ -58,25 +58,25 @@ through readiness, traceability, and closure.
     `core.py` and `traceability.py`; existing requirement IDs and acceptance
     criteria remain backward compatible.
   - Evidence mode: implementation
-  - Evidence: Implemented shared lifecycle.requirements parser and wired core.requirement_blocks plus traceability requirement collection to use it while preserving existing IDs and acceptance-criteria payloads. Verified by runtime and traceability unit tests.
+  - Evidence: Implemented shared lifecycle.requirements parser and wired core.requirement_blocks plus traceability requirement collection to use it while preserving existing IDs and acceptance-criteria payloads. Verified by PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime tests.traceability.test_traceability_lookup.
   - [x] T002.1 Add the shared parser module and preserve existing requirement
     block payload fields.
-  - Evidence: Shared lifecycle.requirements parser module added while preserving requirement block payload fields.
+  - Evidence: Shared lifecycle.requirements parser module added while preserving requirement block payload fields. Verified by PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime.
   - Evidence mode: implementation
   - [x] T002.2 Return optional `priority` on requirement records when present.
-  - Evidence: Parser returns optional priority on requirement records for canonical must-have, should-have, and could-have values.
+  - Evidence: Parser returns optional priority on requirement records for canonical must-have, should-have, and could-have values. Verified by PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime.
   - Evidence mode: implementation
   - [x] T002.3 Return structured parser diagnostics without making missing
     priority a diagnostic.
-  - Evidence: Parser returns duplicate, shorthand, unknown, and exclusion priority diagnostics while missing priority remains non-diagnostic.
+  - Evidence: Parser returns duplicate, shorthand, unknown, and exclusion priority diagnostics while missing priority remains non-diagnostic. Verified by PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime.
   - Evidence mode: implementation
   - [x] T002.4 Update current `core.py` callers to use the shared parser.
-  - Evidence: core.requirement_blocks now delegates to the shared parser, and requirements lint consumes shared parser diagnostics.
+  - Evidence: core.requirement_blocks now delegates to the shared parser, and requirements lint consumes shared parser diagnostics. Verified by PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime.
   - Evidence mode: implementation
   - [x] T002.5 Update `traceability.py` requirement collection to use the
     shared parser.
 
-  - Evidence: traceability.collect_requirements now uses the shared parser and propagates parsed priority when present.
+  - Evidence: traceability.collect_requirements now uses the shared parser and propagates parsed priority when present. Verified by PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.traceability.test_traceability_lookup.
   - Evidence mode: implementation
 - [x] T003 Integrate priority diagnostics into requirements lint.
   - Depends on: T002
@@ -225,7 +225,7 @@ MoSCoW convention consistently.
     `Priority` where it helps closure reconciliation; no template requires
     duplicate priority on every acceptance criterion.
   - Evidence mode: implementation
-  - Evidence: Requirements and traceability source templates now show requirement-level MoSCoW priority, include a requirement-level Priority column for closure reconciliation, and state that acceptance criteria inherit parent priority without per-criterion duplication.
+  - Evidence: Requirements and traceability source templates now show requirement-level MoSCoW priority, include a requirement-level Priority column for closure reconciliation, and state that acceptance criteria inherit parent priority without per-criterion duplication. Verified by PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .
 
 - [x] T013 Update prompts and skill guidance.
   - Depends on: T012
@@ -249,7 +249,7 @@ MoSCoW convention consistently.
     compatibility behavior, affected runtime/MCP outputs, and closure
     reconciliation semantics.
   - Evidence mode: implementation
-  - Evidence: Durable lifecycle design and runtime reference now document accepted priority syntax, compatibility, affected runtime/MCP outputs, and priority-aware closure reconciliation semantics.
+  - Evidence: Durable lifecycle design and runtime reference now document accepted priority syntax, compatibility, affected runtime/MCP outputs, and priority-aware closure reconciliation semantics. Verified by SPEC_LIFECYCLE_PYTHON=python3 npm run validate.
 
 - [x] T015 Sync bundled plugin copies and validate package parity.
   - Depends on: T014
@@ -292,7 +292,7 @@ for durable promotion and closure.
     updated with command output summary.
   - Validation: `npm run validate`
   - Evidence mode: validation
-  - Evidence: Full validation passed with SPEC_LIFECYCLE_PYTHON=python3 npm run validate. Plain npm run validate needs the interpreter override in this shell because the installer test could not resolve Python; the validated override uses Python 3.13.7.
+  - Evidence: Full validation passed with SPEC_LIFECYCLE_PYTHON=python3 npm run validate. Plain npm run validate needs the interpreter override in this shell because the installer test could not resolve Python; the validated override uses Python 3.13.7. Owner: platform maintainers.
 
 - [x] T018 Review implementation, promote durable outcomes, and prepare closure.
   - Depends on: T017
@@ -307,7 +307,7 @@ for durable promotion and closure.
   - Validation: MCP `lint_spec_package`, MCP `closure_check`,
     implementation review packet, archive/closure validation during closeout.
   - Evidence mode: validation
-  - Evidence: Implementation packet generation, promotion-plan, archive-index, backlog B057 reconciliation, and closure-prep checks completed. Promotion-plan reports no missing targets, B057 is ready to mark done during closure, and verification records the remaining close workflow actions.
+  - Evidence: MoE pass completed; accepted findings addressed in requirements.md, spec_agent_schemas.py, tests/runtime/test_spec_mcp_server.py, task evidence, and validation ownership. Tasks were reviewed after the design and traceability updates on 2026-07-06; no implementation task changes were required. Promotion-plan reports no missing targets, B057 is ready to mark done during closure, and verification records the remaining close workflow actions.
 
 ## Execution Rules
 
