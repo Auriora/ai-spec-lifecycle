@@ -38,5 +38,5 @@
     "residual_risk",
     "next_action"
   ],
-  "client_support_recovery": "If MCP tools are unavailable, run the matching spec_runtime.py scan, lint, prompts, archive-index, or closure-check command."
+  "client_support_recovery": "Use MCP scan_specs, lint_spec_package, prompts_validate, archive_index, and closure_check when available. If MCP tools are unavailable, inspect the affected artifacts directly and reserve retained scripts for explicit recovery."
 }

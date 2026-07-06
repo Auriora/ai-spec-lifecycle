@@ -269,7 +269,7 @@ MoSCoW convention consistently.
 **Purpose**: Prove the implementation, record evidence, and prepare the spec
 for durable promotion and closure.
 
-- [ ] T016 Consolidate verification evidence and run focused validation.
+- [x] T016 Consolidate verification evidence and run focused validation.
   - Depends on: T015
   - Requirement: Requirement 1, Requirement 2, Requirement 3, Requirement 4
   - Properties: CP-001, CP-002, CP-003, CP-004, CP-005
@@ -281,9 +281,9 @@ for durable promotion and closure.
   - Validation: Focused Python runtime/MCP tests, prompt validation, package
     contract, sync guard, and `git diff --check`.
   - Evidence mode: validation
-  - Evidence: Pending.
+  - Evidence: Focused phase 5 validation passed: runtime/MCP tests passed 175 tests; prompts, spec lint, stage readiness, package-contract, sync-guard, task-state audit, and git diff --check ran. sync-guard reported installed-cache drift warnings only while source-to-bundle and source-to-Claude parity passed.
 
-- [ ] T017 Run full validation and address failures.
+- [x] T017 Run full validation and address failures.
   - Depends on: T016
   - Requirement: Requirement 4
   - Files: `tests/`, `docs/specs/032-requirement-priority-labels/verification.md`
@@ -292,9 +292,9 @@ for durable promotion and closure.
     updated with command output summary.
   - Validation: `npm run validate`
   - Evidence mode: validation
-  - Evidence: Pending.
+  - Evidence: Full validation passed with SPEC_LIFECYCLE_PYTHON=python3 npm run validate. Plain npm run validate needs the interpreter override in this shell because the installer test could not resolve Python; the validated override uses Python 3.13.7.
 
-- [ ] T018 Review implementation, promote durable outcomes, and prepare closure.
+- [x] T018 Review implementation, promote durable outcomes, and prepare closure.
   - Depends on: T017
   - Requirement: Requirement 1, Requirement 2, Requirement 3, Requirement 4
   - Properties: CP-001, CP-002, CP-003, CP-004, CP-005
@@ -307,7 +307,7 @@ for durable promotion and closure.
   - Validation: MCP `lint_spec_package`, MCP `closure_check`,
     implementation review packet, archive/closure validation during closeout.
   - Evidence mode: validation
-  - Evidence: Pending.
+  - Evidence: Implementation packet generation, promotion-plan, archive-index, backlog B057 reconciliation, and closure-prep checks completed. Promotion-plan reports no missing targets, B057 is ready to mark done during closure, and verification records the remaining close workflow actions.
 
 ## Execution Rules
 

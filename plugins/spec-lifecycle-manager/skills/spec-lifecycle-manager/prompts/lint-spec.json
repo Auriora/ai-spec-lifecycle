@@ -35,5 +35,5 @@
     "recommended_fixes",
     "residual_risk"
   ],
-  "client_support_recovery": "Use MCP lint_spec_package or lint_doc when available. If MCP tools are unavailable, inspect the package or changed document directly and reserve spec_runtime.py lint for explicit no-MCP recovery."
+  "client_support_recovery": "Use MCP lint_spec_package or lint_doc when available. If MCP tools are unavailable, inspect the package or changed document directly."
 }

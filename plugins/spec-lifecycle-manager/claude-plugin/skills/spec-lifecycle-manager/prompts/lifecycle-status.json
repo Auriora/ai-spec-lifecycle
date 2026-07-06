@@ -36,5 +36,5 @@
     "blockers",
     "recommended_next_action"
   ],
-  "client_support_recovery": "If MCP tools are unavailable, run spec_runtime.py scan or active-spec-preflight from the repository root."
+  "client_support_recovery": "Use MCP scan_specs or active_spec_preflight when available. If MCP tools are unavailable, inspect docs/specs and durable lifecycle indexes directly."
 }

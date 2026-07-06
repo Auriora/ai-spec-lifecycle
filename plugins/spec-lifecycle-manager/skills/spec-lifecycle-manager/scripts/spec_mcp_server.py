@@ -29,6 +29,12 @@ from lifecycle.migration import script_migration_inventory
 PROTOCOL_VERSION = "2025-06-18"
 SERVER_NAME = "spec-lifecycle-manager"
 SERVER_VERSION = "0.1.0"
+SERVER_INSTRUCTIONS = (
+    "Use spec-lifecycle-manager tools for lifecycle context, validation, "
+    "traceability, task state, promotion, and closure. Prefer MCP tools over "
+    "direct runtime-script commands; retained runtime scripts are for CI, "
+    "explicit recovery when MCP is unavailable, and MCP debugging."
+)
 REPO_ROOT_PROPERTY = "Repository root. Defaults to current working directory."
 WORKSPACE_ROOT_ENV_VARS = (
     "SPEC_LIFECYCLE_REPO_ROOT",
@@ -855,6 +861,7 @@ def handle_request(message: dict[str, Any], repo_root: Path) -> dict[str, Any] |
                         "prompts": {"listChanged": False},
                     },
                     "serverInfo": {"name": SERVER_NAME, "version": SERVER_VERSION},
+                    "instructions": SERVER_INSTRUCTIONS,
                 },
             )
         if method == "ping":

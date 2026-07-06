@@ -38,5 +38,5 @@
     "canonical_context_need",
     "decision_gate"
   ],
-  "client_support_recovery": "If MCP tools are unavailable, inspect AGENTS.md, docs/backlog, docs/roadmap, and run spec_runtime.py scan before classifying."
+  "client_support_recovery": "Use MCP scan_specs and active_spec_preflight when available. If MCP tools are unavailable, inspect AGENTS.md, docs/specs, docs/backlog, and docs/roadmap before classifying."
 }

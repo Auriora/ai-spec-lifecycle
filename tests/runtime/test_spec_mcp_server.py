@@ -154,6 +154,8 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertIn("tools", result["capabilities"])
         self.assertIn("resources", result["capabilities"])
         self.assertIn("prompts", result["capabilities"])
+        self.assertIn("Prefer MCP tools", result["instructions"])
+        self.assertIn("runtime scripts are for CI", result["instructions"])
 
     def test_tools_list_and_call_scan_specs(self):
         with tempfile.TemporaryDirectory() as tmp:

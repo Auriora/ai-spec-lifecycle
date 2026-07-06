@@ -47,5 +47,5 @@
     "next_actions",
     "validation_or_recovery_commands"
   ],
-  "client_support_recovery": "If MCP tools are unavailable, run spec_runtime.py lifecycle-guide or spec_runtime.py bootstrap-plan from the repository root."
+  "client_support_recovery": "Use MCP lifecycle_guide or bootstrap_plan when available. If MCP tools are unavailable, inspect repository instructions, durable docs, backlog, roadmap, and active spec files directly."
 }

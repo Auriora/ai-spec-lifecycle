@@ -91,5 +91,5 @@
     "validation_or_recovery_commands",
     "residual_risk"
   ],
-  "client_support_recovery": "If MCP tools are unavailable, run spec_runtime.py scan, active-spec-preflight, no-active-spec-context, stage-readiness, promotion-plan, closure-check, and prompts from the repository root as applicable."
+  "client_support_recovery": "Use MCP scan_specs, active_spec_preflight, no_active_spec_context, stage_readiness, promotion_plan, closure_check, and prompts_validate when available. If MCP tools are unavailable, inspect repository docs and spec artifacts directly."
 }
