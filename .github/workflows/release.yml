@@ -59,7 +59,29 @@ jobs:
       - name: Capture release metadata
         id: release
         run: |
-          node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('npm-pack.json','utf8'))[0]; const pkg=JSON.parse(fs.readFileSync('package.json','utf8')); const lines=['# Release Artifact Summary','',`- Package: ${pkg.name}`,`- Version: ${pkg.version}`,`- Tarball: ${p.filename}`,`- Integrity: ${p.integrity}`,`- Shasum: ${p.shasum}`,`- Source commit: ${process.env.GITHUB_SHA}`,`- Release notes: docs/release-notes/v${pkg.version}.md`,`- Publish requested: ${process.env.PUBLISH_REQUESTED}`,`- NPM token configured: ${process.env.HAS_NPM_TOKEN}`]; fs.writeFileSync('release-summary.md', lines.join('\n') + '\n'); fs.appendFileSync(process.env.GITHUB_OUTPUT, `version=${pkg.version}\nnotes=docs/release-notes/v${pkg.version}.md\ntarball=${p.filename}\n`);"
+          node <<'NODE'
+          const fs = require('fs');
+          const p = JSON.parse(fs.readFileSync('npm-pack.json', 'utf8'))[0];
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          const lines = [
+            '# Release Artifact Summary',
+            '',
+            `- Package: ${pkg.name}`,
+            `- Version: ${pkg.version}`,
+            `- Tarball: ${p.filename}`,
+            `- Integrity: ${p.integrity}`,
+            `- Shasum: ${p.shasum}`,
+            `- Source commit: ${process.env.GITHUB_SHA}`,
+            `- Release notes: docs/release-notes/v${pkg.version}.md`,
+            `- Publish requested: ${process.env.PUBLISH_REQUESTED}`,
+            `- NPM token configured: ${process.env.HAS_NPM_TOKEN}`,
+          ];
+          fs.writeFileSync('release-summary.md', `${lines.join('\n')}\n`);
+          fs.appendFileSync(
+            process.env.GITHUB_OUTPUT,
+            `version=${pkg.version}\nnotes=docs/release-notes/v${pkg.version}.md\ntarball=${p.filename}\n`,
+          );
+          NODE
         env:
           PUBLISH_REQUESTED: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.publish == 'true' }}
 

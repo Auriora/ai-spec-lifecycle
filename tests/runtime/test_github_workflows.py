@@ -31,6 +31,7 @@ class GitHubWorkflowTests(unittest.TestCase):
             "workflow_dispatch:",
             "publish:",
             "npm pack --json > npm-pack.json",
+            "node <<'NODE'",
             "release-summary.md",
             "docs/release-notes/v",
             "Missing release notes",
@@ -45,6 +46,7 @@ class GitHubWorkflowTests(unittest.TestCase):
         ):
             with self.subTest(expected=expected):
                 self.assertIn(expected, workflow)
+        self.assertNotIn("node -e", workflow)
 
 
 if __name__ == "__main__":

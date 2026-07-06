@@ -162,8 +162,9 @@ class DevCliPlanTests(unittest.TestCase):
 
         self.assertEqual(tag_commands[0].argv, ("git", "tag", "-a", "v0.2.1", "-m", "Release v0.2.1"))
         self.assertEqual(tag_commands[1].argv, ("git", "push", "origin", "v0.2.1"))
-        self.assertIn("gh release create v0.2.1", " ".join(" ".join(command.argv) for command in github_commands))
-        self.assertIn("--notes-file docs/release-notes/v0.2.1.md", " ".join(" ".join(command.argv) for command in github_commands))
+        github_command_text = " ".join(" ".join(command.argv) for command in github_commands).replace("\\", "/")
+        self.assertIn("gh release create v0.2.1", github_command_text)
+        self.assertIn("--notes-file docs/release-notes/v0.2.1.md", github_command_text)
         self.assertTrue(all(command.mutates for command in tag_commands))
         self.assertTrue(all(command.mutates for command in github_commands))
 

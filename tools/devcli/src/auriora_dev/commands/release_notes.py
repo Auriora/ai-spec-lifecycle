@@ -5,7 +5,7 @@ import json
 import re
 import subprocess
 from dataclasses import asdict, dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal
 
@@ -156,7 +156,7 @@ def collect_release_notes_evidence(
         repository=git_stdout(root, "config", "--get", "remote.origin.url", allow_empty=True) or root.name,
         repository_root=str(root),
         branch=git_stdout(root, "branch", "--show-current", allow_empty=True) or "detached",
-        generated_at=datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+        generated_at=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
         commits=commits_with_files,
         files=range_files,
         areas=area_index(range_files),
