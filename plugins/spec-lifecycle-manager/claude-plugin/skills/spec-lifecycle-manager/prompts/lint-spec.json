@@ -25,6 +25,7 @@
     "Use the spec-lifecycle-manager skill.",
     "Run deterministic lint before semantic review.",
     "Explain findings by severity and lifecycle gate.",
+    "Treat missing requirement-level MoSCoW priority as compatible by default. When priority diagnostics exist, explain canonical values as must-have, should-have, and could-have, and route won't-have wording to non-goals, out-of-scope text, rejected decisions, or routed residuals.",
     "Keep waivers visible with their recorded reasons."
   ],
   "return_format": [
@@ -34,5 +35,5 @@
     "recommended_fixes",
     "residual_risk"
   ],
-  "client_support_recovery": "If MCP tools are unavailable, run spec_runtime.py lint on the package or changed document."
+  "client_support_recovery": "Use MCP lint_spec_package or lint_doc when available. If MCP tools are unavailable, inspect the package or changed document directly and reserve spec_runtime.py lint for explicit no-MCP recovery."
 }

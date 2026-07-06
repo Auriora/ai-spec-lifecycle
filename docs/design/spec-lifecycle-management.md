@@ -48,8 +48,8 @@ location.
 Current fallback package files:
 
 - `requirements.md`: problem context, goals, non-goals, glossary, user stories
-  with EARS acceptance criteria, correctness properties, technical context, and
-  success criteria.
+  with optional requirement-level MoSCoW priority, EARS acceptance criteria,
+  correctness properties, technical context, and success criteria.
 - `design.md`: high-level design, low-level design, operational
   considerations, and open questions.
 - `tasks.md`: task dependency graph, phased task grouping, per-task status,
@@ -138,6 +138,19 @@ verification. Acceptance criteria should be mapped explicitly in
 need to add a new property-test dependency just to satisfy the lifecycle; use
 the project’s accepted test framework or documented manual verification when
 that is the right validation path.
+
+Requirement priority is optional requirement-level metadata. New specs may use
+`**Priority:** must-have`, `**Priority:** should-have`, or
+`**Priority:** could-have` directly under the user story. Acceptance criteria
+inherit their parent requirement priority; the lifecycle does not require
+duplicate criterion-level labels. Missing priority remains compatible for
+existing specs. Excluded scope belongs in non-goals, out-of-scope text,
+rejected decisions, or routed residuals rather than a persisted `won't-have`
+accepted requirement. When priority is present, readiness and closure
+reconciliation preserve the scope semantics: uncovered `must-have`
+requirements block unless explicitly rejected or human-superseded,
+`should-have` gaps need route or residual-risk rationale, and `could-have` gaps
+may close only when routed, rejected, or marked out of current scope.
 
 The Agent Readiness Contract is distinct from `ready_to_implement`. It gives a
 worker agent bounded context: selected task or requirement, likely affected

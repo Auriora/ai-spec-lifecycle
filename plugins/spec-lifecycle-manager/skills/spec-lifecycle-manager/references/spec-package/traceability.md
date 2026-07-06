@@ -33,15 +33,17 @@ traceability lookup script.
 ## Requirement To Delivery Matrix
 
 Use coverage state to reconcile broad requirements before closure, especially
-Must requirements, architectural targets, migrations, public interfaces, and
-cross-module behavior. Valid values are `complete`, `partial-routed`,
+`must-have` requirements, architectural targets, migrations, public interfaces,
+and cross-module behavior. Valid values are `complete`, `partial-routed`,
 `partial-blocking`, `not-covered`, and `out-of-scope`. Every partial,
 not-covered, or out-of-scope row needs one destination or a rejection rationale
-before closure.
+before closure. Priority is requirement-level context from `requirements.md`;
+include it here when it helps closure reconciliation, but do not duplicate it
+on every task or acceptance criterion row.
 
-| Requirement | Acceptance Criteria | Design Sections | Tasks | Verification | Durable Targets | Coverage State | Residual Destination |
-|-------------|---------------------|-----------------|-------|--------------|-----------------|----------------|----------------------|
-| Requirement 1 | AC1, AC2 | `design.md#section` | T001, T002 | `verification.md#gate` | `docs/path.md` | complete | none |
+| Requirement | Priority | Acceptance Criteria | Design Sections | Tasks | Verification | Durable Targets | Coverage State | Residual Destination |
+|-------------|----------|---------------------|-----------------|-------|--------------|-----------------|----------------|----------------------|
+| Requirement 1 | must-have | AC1, AC2 | `design.md#section` | T001, T002 | `verification.md#gate` | `docs/path.md` | complete | none |
 
 ## Correctness Property Coverage
 

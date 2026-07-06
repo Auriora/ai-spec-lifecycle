@@ -33,5 +33,5 @@
     "archive_index_updates",
     "cleanup_action"
   ],
-  "client_support_recovery": "If MCP tools are unavailable, run spec_runtime.py closure-check, promotion-plan, lint, and archive-index directly."
+  "client_support_recovery": "Use MCP closure_check, promotion_plan, lint_spec_package, and archive_index when available. If MCP tools are unavailable, use direct files plus retained recovery scripts only as an explicit fallback."
 }

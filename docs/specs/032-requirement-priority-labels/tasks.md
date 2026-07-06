@@ -214,7 +214,7 @@ report requirements, without adding new tools or task-row duplication.
 **Purpose**: Make future specs and durable lifecycle docs teach the accepted
 MoSCoW convention consistently.
 
-- [ ] T012 Update source templates for MoSCoW priority labels.
+- [x] T012 Update source templates for MoSCoW priority labels.
   - Depends on: T011
   - Requirement: Requirement 1, Requirement 2, Requirement 4
   - Properties: CP-001, CP-005
@@ -225,9 +225,9 @@ MoSCoW convention consistently.
     `Priority` where it helps closure reconciliation; no template requires
     duplicate priority on every acceptance criterion.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Requirements and traceability source templates now show requirement-level MoSCoW priority, include a requirement-level Priority column for closure reconciliation, and state that acceptance criteria inherit parent priority without per-criterion duplication.
 
-- [ ] T013 Update prompts and skill guidance.
+- [x] T013 Update prompts and skill guidance.
   - Depends on: T012
   - Requirement: Requirement 4
   - Files: `skills/spec-lifecycle-manager/prompts/documentation-wizard.json`,
@@ -238,9 +238,9 @@ MoSCoW convention consistently.
     labels as blocking by default; skill guidance describes MoSCoW semantics in
     authoring and closure review.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Documentation wizard and lint-spec prompts now normalize requirement-level priority, keep missing labels compatible, route won't-have to exclusions, and source skill guidance documents authoring plus closure semantics.
 
-- [ ] T014 Update durable runtime and lifecycle documentation.
+- [x] T014 Update durable runtime and lifecycle documentation.
   - Depends on: T013
   - Requirement: Requirement 3, Requirement 4
   - Files: `docs/design/spec-lifecycle-management.md`,
@@ -249,9 +249,9 @@ MoSCoW convention consistently.
     compatibility behavior, affected runtime/MCP outputs, and closure
     reconciliation semantics.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Durable lifecycle design and runtime reference now document accepted priority syntax, compatibility, affected runtime/MCP outputs, and priority-aware closure reconciliation semantics.
 
-- [ ] T015 Sync bundled plugin copies and validate package parity.
+- [x] T015 Sync bundled plugin copies and validate package parity.
   - Depends on: T014
   - Requirement: Requirement 4
   - Files: `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/`,
@@ -262,7 +262,7 @@ MoSCoW convention consistently.
   - Validation: `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py prompts .`;
     package-contract and sync-guard commands from `npm run validate`
   - Evidence mode: validation
-  - Evidence: Pending.
+  - Evidence: Source skill files were mirrored into Codex and Claude plugin bundles. Prompt validation, package-contract, spec lint, focused runtime/MCP tests, full unittest discovery, stage-readiness, and git diff --check passed; sync-guard reported installed-cache drift warnings only while source bundle parity passed.
 
 ## Phase 5: Verification, Review, And Closure Preparation
 

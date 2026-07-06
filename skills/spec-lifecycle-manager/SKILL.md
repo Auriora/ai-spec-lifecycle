@@ -260,6 +260,8 @@ Structure requirements as user stories with EARS acceptance criteria:
 
 **User Story:** As a [role], I want [feature], so that [benefit]
 
+**Priority:** must-have
+
 #### Acceptance Criteria
 
 1. GIVEN [context], WHEN [action], THEN [outcome]
@@ -268,6 +270,14 @@ Structure requirements as user stories with EARS acceptance criteria:
 ```
 
 EARS keywords: GIVEN/WHEN/THEN (behavioral), WHERE (context-dependent), WHILE (state-dependent), IF/THEN (conditional), SHALL (unconditional).
+
+Use optional requirement-level MoSCoW priority when it clarifies scope:
+`must-have`, `should-have`, or `could-have`. Place the line after the user
+story and before acceptance criteria. Missing priority remains compatible.
+Acceptance criteria inherit the parent requirement priority; do not require
+duplicate priority labels on every criterion. Excluded work belongs in
+non-goals, out-of-scope text, rejected decisions, or routed residuals rather
+than a persisted `won't-have` accepted requirement priority.
 
 Include a Correctness Properties section listing invariants that must hold for
 property-based testing. Keep the property IDs stable enough to reference from
@@ -543,26 +553,28 @@ artifacts, or missing heading anchors as reconciliation inputs before
 implementing the task.
 
 When MCP tools are unavailable or CLI validation is explicitly required, the
-repo-local `skills/spec-lifecycle-manager/scripts/spec_runtime.py` helper
-provides deterministic scanner, linter, next-task, closure-check, hook,
-review, and prompt-validation passes:
+repo-local `skills/spec-lifecycle-manager/scripts/spec_runtime.py` helper is a
+retained recovery and validation adapter. Normal agent-facing lifecycle
+commands have MCP owners:
+
+- `scan_specs` for inventory and health.
+- `spec_summary` for spec summaries.
+- `lint_spec_package` and `lint_doc` for lint checks.
+- `next_task` for task selection.
+- `closure_check` for closure readiness.
+- `reconcile_spec`, `promotion_plan`, `review_packet`, and
+  `agent_backed_tool` for their matching workflows.
+
+Use direct script commands only for no-MCP recovery, hooks, CI, package or
+prompt validation, and MCP debugging:
 
 ```bash
 skills/spec-lifecycle-manager/scripts/spec_runtime.py scan .
 skills/spec-lifecycle-manager/scripts/spec_runtime.py scan . --include-archived-lint
-skills/spec-lifecycle-manager/scripts/spec_runtime.py summary docs/specs/013-example-active-spec
-skills/spec-lifecycle-manager/scripts/spec_runtime.py lint docs/specs/013-example-active-spec
-skills/spec-lifecycle-manager/scripts/spec_runtime.py next-task docs/specs/013-example-active-spec
-skills/spec-lifecycle-manager/scripts/spec_runtime.py closure-check docs/specs/013-example-active-spec
 skills/spec-lifecycle-manager/scripts/spec_runtime.py prompts .
 skills/spec-lifecycle-manager/scripts/spec_runtime.py hook spec-file-changed --changed-files docs/specs/013-example-active-spec/tasks.md
 skills/spec-lifecycle-manager/scripts/spec_runtime.py hook implementation-task-complete --spec-path docs/specs/013-example-active-spec --task-id T009
 skills/spec-lifecycle-manager/scripts/spec_runtime.py hook spec-close-check --spec-path docs/specs/013-example-active-spec --severity-profile blocking
-skills/spec-lifecycle-manager/scripts/spec_runtime.py reconcile docs/specs/013-example-active-spec
-skills/spec-lifecycle-manager/scripts/spec_runtime.py promotion-plan docs/specs/013-example-active-spec
-skills/spec-lifecycle-manager/scripts/spec_runtime.py review-packet docs/specs/013-example-active-spec --review-type design_requirements_trace
-skills/spec-lifecycle-manager/scripts/spec_runtime.py review-packet docs/specs/013-example-active-spec --review-type implementation
-skills/spec-lifecycle-manager/scripts/spec_runtime.py agent-backed-tool docs/specs/013-example-active-spec --tool-name closure_risk_review --model-class cheap
 ```
 
 Review packet type values are canonical packet IDs, not free-form workflow
@@ -825,6 +837,14 @@ A spec can close only when:
 - unresolved work is moved to backlog, roadmap, issue tracker, or a follow-up
   spec;
 - indexes no longer present the package as active implementation work.
+
+When requirement priorities are present, closure review must preserve their
+scope semantics. Accepted `must-have` requirements with missing coverage block
+closure unless explicitly rejected or superseded by a human decision.
+Unimplemented `should-have` requirements need a route, rationale, or accepted
+residual risk. Unimplemented `could-have` requirements may close only when
+routed, rejected, or marked out of current scope. Missing priority uses legacy
+compatibility behavior and is not a blocker by itself.
 
 If the repository uses a spec closure log, or no repository-specific closure
 record exists and this skill's fallback lifecycle is being used, closing must

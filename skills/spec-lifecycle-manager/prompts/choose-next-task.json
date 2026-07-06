@@ -35,5 +35,5 @@
     "validation_plan",
     "blockers"
   ],
-  "client_support_recovery": "If MCP tools are unavailable, use spec_runtime.py next-task and read traceability.md directly; do not call a traceability_lookup.py script."
+  "client_support_recovery": "Use MCP next_task and traceability_lookup when available. If MCP tools are unavailable, read tasks.md, traceability.md, and linked artifacts directly; do not call a traceability_lookup.py script."
 }

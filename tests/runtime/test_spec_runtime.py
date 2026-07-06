@@ -1579,8 +1579,13 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertIn("docs/reference/current.md", payload["required_review"]["durable_targets"])
         self.assertEqual("mcp", payload["agent_interface"]["preferred"])
         self.assertIn("task_context", payload["agent_interface"]["mcp_tools"])
-        self.assertIn("MCP tool: traceability_lookup", payload["validation_commands"])
-        self.assertEqual(payload["script_validation_commands"], payload["validation_commands"])
+        self.assertTrue(any("MCP tool: traceability_lookup" in command for command in payload["validation_commands"]))
+        self.assertTrue(any("MCP tool: lint_spec_package" in command for command in payload["validation_commands"]))
+        self.assertFalse(any("spec_runtime.py lint" in command for command in payload["validation_commands"]))
+        self.assertNotEqual(payload["script_validation_commands"], payload["validation_commands"])
+        self.assertTrue(
+            any("spec_runtime.py lint" in command for command in payload["script_validation_commands"])
+        )
 
     def test_active_spec_preflight_selects_single_active_spec(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1595,6 +1600,8 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertIsNotNone(payload["agent_readiness_packet"])
         self.assertEqual("mcp", payload["agent_interface"]["preferred"])
         self.assertIn("active_spec_preflight", payload["agent_interface"]["mcp_tools"])
+        self.assertTrue(any("MCP tool: lint_spec_package" in command for command in payload["validation_commands"]))
+        self.assertFalse(any("spec_runtime.py lint" in command for command in payload["validation_commands"]))
 
     def test_validation_plan_classifies_runtime_change_and_task_contract(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1637,6 +1644,8 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertEqual("not_applicable", checks["unit-tests"]["applicability"])
         self.assertEqual("not_applicable", checks["unit-tests"]["validation_state"])
         self.assertTrue(checks["scan"]["required"])
+        self.assertEqual("scan_specs", checks["scan"].get("mcp_tool"))
+        self.assertNotIn("command", checks["scan"])
         self.assertTrue(checks["git-diff-check"]["required"])
 
     def test_validation_plan_classifies_spec_history_and_prompt_changes(self):
@@ -1659,7 +1668,11 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertIn("prompts", groups)
         self.assertTrue(payload["file_classification"]["docs_only"])
         self.assertTrue(checks["archive-index"]["required"])
+        self.assertEqual("archive_index", checks["archive-index"].get("mcp_tool"))
+        self.assertNotIn("command", checks["archive-index"])
         self.assertTrue(checks["prompts"]["required"])
+        self.assertEqual("prompts_validate", checks["prompts"].get("mcp_tool"))
+        self.assertNotIn("command", checks["prompts"])
         self.assertEqual("not_applicable", checks["unit-tests"]["applicability"])
 
     def test_validation_plan_returns_baseline_without_changed_files(self):
@@ -1671,6 +1684,7 @@ class SpecRuntimeTests(unittest.TestCase):
         checks = {item["id"]: item for item in payload["checks"]}
         self.assertFalse(payload["file_classification"]["has_changes"])
         self.assertTrue(checks["scan"]["required"])
+        self.assertNotIn("command", checks["scan"])
         self.assertEqual("recommended", checks["unit-tests"]["applicability"])
         self.assertEqual("recommended", checks["prompts"]["applicability"])
 
@@ -1784,8 +1798,8 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertIn("docs/history/spec-archive-index.md", payload["durable_context"])
         self.assertEqual("mcp", payload["agent_interface"]["preferred"])
         self.assertIn("no_active_spec_context", payload["agent_interface"]["mcp_tools"])
-        self.assertTrue(any("scan" in command for command in payload["validation_commands"]))
-        self.assertEqual(payload["script_validation_commands"], payload["validation_commands"])
+        self.assertIn("MCP tool: scan_specs", payload["validation_commands"])
+        self.assertTrue(any("spec_runtime.py scan" in command for command in payload["script_validation_commands"]))
 
     def test_active_spec_preflight_returns_no_active_context(self):
         with tempfile.TemporaryDirectory() as tmp:

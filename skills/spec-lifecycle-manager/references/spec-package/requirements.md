@@ -75,6 +75,8 @@ when the impact spans several documents or behavior classes.
 
 **User Story:** As a [role], I want [feature], so that [benefit]
 
+**Priority:** must-have
+
 #### Acceptance Criteria
 
 1. GIVEN [context], WHEN [action], THEN [outcome]
@@ -84,10 +86,20 @@ when the impact spans several documents or behavior classes.
 
 **User Story:** As a [role], I want [feature], so that [benefit]
 
+**Priority:** should-have
+
 #### Acceptance Criteria
 
 1. IF [condition], THEN THE SYSTEM SHALL [behavior]
 2. WHILE [state], THE SYSTEM SHALL [behavior]
+
+Use requirement-level MoSCoW priority when it clarifies scope. Accepted
+persisted values are `must-have`, `should-have`, and `could-have`. Missing
+priority remains valid for compatibility. Do not duplicate priority on every
+acceptance criterion; criteria inherit the parent requirement priority. Keep
+excluded work in non-goals, out-of-scope text, rejected decisions, or routed
+residuals rather than persisting `won't-have` as an accepted requirement
+priority.
 
 ## Correctness Properties
 

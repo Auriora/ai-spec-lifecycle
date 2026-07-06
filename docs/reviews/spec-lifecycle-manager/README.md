@@ -16,10 +16,9 @@ schemas, prompts, guardrails, and result quality can be refined over time.
 
 ## Scope
 
-Use this directory for bounded review results produced by
-`spec_runtime.py review-packet`, `spec_runtime.py agent-backed-tool`, future
-configured runner adapters, or manually recorded review dispositions for this
-repository's lifecycle work.
+Use this directory for bounded review results produced by MCP `review_packet`,
+MCP `agent_backed_tool`, future configured runner adapters, or manually
+recorded review dispositions for this repository's lifecycle work.
 
 Do not use this directory as the source of current product, runtime, or
 governance behavior. Accepted findings must be promoted into durable docs,

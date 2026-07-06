@@ -130,6 +130,10 @@ root whose specs should be exposed.
 Agents should call MCP tools before invoking the direct `.py` scripts whenever
 the `spec-lifecycle-manager` server is visible. Use the direct CLI commands
 only as validation, CI, runtime debugging, or no-MCP recovery surfaces.
+Generated agent-facing validation guidance uses MCP tool names for lifecycle
+operations such as `scan_specs`, `lint_spec_package`, `next_task`, and
+`closure_check`; script equivalents are retained only as recovery/admin
+commands.
 
 ### MCP Tools
 
@@ -235,6 +239,30 @@ acceptance-criteria coverage. Coverage gaps appear before implementation
 readiness so callers can repair traceability instead of discovering missing
 proof at closure.
 
+Requirement blocks may include optional MoSCoW priority metadata:
+
+```markdown
+**Priority:** must-have
+```
+
+Accepted persisted values are `must-have`, `should-have`, and `could-have`.
+Missing priority remains compatible and is not a diagnostic by itself.
+Persisted shorthand, unknown values, duplicate priority lines, and
+`won't-have` values are lint diagnostics; excluded scope should be recorded in
+non-goals, out-of-scope text, rejected decisions, or routed residuals.
+Acceptance criteria inherit their parent requirement priority because the
+runtime does not implement acceptance-criterion-level priority overrides.
+
+When priority is present, requirement coverage records preserve it in
+`stage-readiness`, `closure-check`, `closure-risk-review`,
+`agent-readiness-packet`, `task-details`, `task-context`, and
+`traceability-lookup` payloads wherever those outputs already include parsed
+requirement objects or requirement coverage. `must-have` gaps are blocking
+unless rejected or human-superseded, `should-have` gaps require route or
+residual-risk rationale, and `could-have` gaps may close only when routed,
+rejected, or out of current scope. Historical or closed packages without
+priority labels do not need migration.
+
 When a package declares broad durable-doc impact, stale-doc risk, imported
 sources, or canonical-context intent, lint and readiness surfaces also check for
 `canonical-context.md` or embedded `## Canonical Context` sections. Missing
@@ -287,13 +315,15 @@ override governance.
 - `risk_level`: optional caller-supplied risk label, preserved in output for
   clients that already classify risk.
 
-The direct CLI form is:
+Call the MCP `validation_plan` tool for normal agent workflows:
 
-```bash
-PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py validation-plan . \
-  --changed-files skills/spec-lifecycle-manager/scripts/spec_runtime.py docs/specs/019-validation-plan-builder/tasks.md \
-  --spec-path docs/specs/019-validation-plan-builder \
-  --task-id T001
+```text
+MCP tool: validation_plan
+changed_files:
+  - skills/spec-lifecycle-manager/scripts/spec_runtime.py
+  - docs/specs/019-validation-plan-builder/tasks.md
+spec_path: docs/specs/019-validation-plan-builder
+task_id: T001
 ```
 
 The MCP tool returns the same structured payload after normalizing repository
@@ -351,11 +381,12 @@ those files changed, and `git diff --check`. They classify unrelated code
 runtime checks as `not_applicable` unless the selected task or evidence context
 requires code validation.
 
-`evidence_quality_check` is a read-only advisory check for completed task
-evidence and `verification.md` evidence-log entries. The direct CLI form is:
+`evidence_quality_check` is a read-only advisory MCP check for completed task
+evidence and `verification.md` evidence-log entries:
 
-```bash
-PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py evidence-quality docs/specs/020-evidence-quality-check
+```text
+MCP tool: evidence_quality_check
+spec_path: docs/specs/020-evidence-quality-check
 ```
 
 The payload includes:
@@ -386,12 +417,12 @@ Classifications are deterministic heuristics:
 task is reported as weak evidence unless surrounding task files or validation
 context prove that automated validation does not apply.
 
-`closure_risk_review` is a read-only advisory check for deciding whether a
-completed package is ready for durable promotion and cleanup. The direct CLI
-form is:
+`closure_risk_review` is a read-only advisory MCP check for deciding whether a
+completed package is ready for durable promotion and cleanup:
 
-```bash
-PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py closure-risk-review docs/specs/021-closure-risk-review
+```text
+MCP tool: closure_risk_review
+spec_path: docs/specs/021-closure-risk-review
 ```
 
 Inputs:
@@ -802,18 +833,23 @@ tree and reports:
 - relevant helper surfaces such as `templates://spec-package`, `scan_specs`,
   `active_spec_preflight`, `task_context`, or `traceability_lookup`.
 
-Wizard authoring lint is also staged by default. Direct package lint validates
-the current wizard stage instead of requiring all downstream artifacts:
+Wizard authoring lint is also staged by default. Use MCP `lint_spec_package`
+for normal package lint; it validates the current wizard stage instead of
+requiring all downstream artifacts:
 
-```bash
-PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py lint docs/specs/123-example
+```text
+MCP tool: lint_spec_package
+spec_path: docs/specs/123-example
 ```
 
 Use full-package validation only when explicitly needed for closure, recovery,
-or a requested full scaffold:
+or a requested full scaffold. Through MCP, request full package lint where the
+client exposes the mode argument:
 
-```bash
-PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py lint docs/specs/123-example --mode full
+```text
+MCP tool: lint_spec_package
+spec_path: docs/specs/123-example
+mode: full
 ```
 
 If one write creates artifacts from multiple wizard stages, the hook reports
@@ -903,11 +939,12 @@ current lint rules:
 skills/spec-lifecycle-manager/scripts/spec_runtime.py scan . --include-archived-lint
 ```
 
-Direct lint remains strict for every package that is still present, including
-explicitly retained historical packages:
+MCP `lint_spec_package` remains strict for every package that is still present,
+including explicitly retained historical packages:
 
-```bash
-skills/spec-lifecycle-manager/scripts/spec_runtime.py lint docs/specs/013-example-active-spec
+```text
+MCP tool: lint_spec_package
+spec_path: docs/specs/013-example-active-spec
 ```
 
 Do not recreate removed packages just because old paths are recorded in the
@@ -953,21 +990,14 @@ outputs belong under `docs/reviews/spec-lifecycle-manager/`.
 
 ## Agent-Backed Tool Runner
 
-`agent-backed-tool` provides the first runner interface for advisory
+MCP `agent_backed_tool` provides the first runner interface for advisory
 agent-backed review tools. The current implementation intentionally does not
 invoke a secondary process. It builds the bounded review packet, returns a
 structured `unavailable` result with an informational diagnostic, and records
 that the local Codex CLI adapter is deferred.
 
-This keeps the initial behavior deterministic while preserving the contract for
-later runner adapters:
-
-```bash
-skills/spec-lifecycle-manager/scripts/spec_runtime.py agent-backed-tool \
-  docs/specs/013-agent-backed-lifecycle-tools \
-  --tool-name closure_risk_review \
-  --model-class cheap
-```
+This keeps the initial MCP behavior deterministic while preserving the contract
+for later runner adapters.
 
 The result is advisory, read-only, and non-mutating. `model_class` records the
 caller's requested class but the returned `model_class` is `disabled` while no

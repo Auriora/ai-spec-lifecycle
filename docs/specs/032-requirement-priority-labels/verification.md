@@ -26,7 +26,7 @@ the temporary spec package can close.
 | Parser and lint behavior covers Requirement 1, Requirement 2, CP-001, and CP-005 | yes | passed | T004 evidence: focused parser/lint and traceability regression tests passed on 2026-07-05. |
 | Readiness and closure semantics cover Requirement 3, CP-002, CP-003, and CP-004 | yes | passed | T008 evidence: focused runtime tests, stage readiness, package lint, full unittest discovery, and source/bundle parity checks passed on 2026-07-06. |
 | Traceability and MCP propagation cover Requirement 3 AC4, Requirement 4 AC2, CP-004, and CP-005 | yes | passed | T011 evidence: runtime and MCP tests passed on 2026-07-06. |
-| Prompt, template, source-skill, and bundled-plugin parity cover Requirement 4 AC1 and AC3 | yes | pending | T015 and T016 evidence after prompt validation, package-contract, and sync-guard. |
+| Prompt, template, source-skill, and bundled-plugin parity cover Requirement 4 AC1 and AC3 | yes | passed | T015 evidence: prompt validation, package-contract, source-to-bundle parity, and source-to-Claude parity passed on 2026-07-06; sync-guard reported installed-cache drift warnings only. |
 | Full repository validation covers Requirement 4 AC3 and AC4 | yes | pending | T017 evidence from `npm run validate` or recorded waiver. |
 | Closure readiness covers all requirements and correctness properties | yes | pending | T018 evidence from MCP `closure_check`, implementation review, promotion disposition, and archive/closure validation. |
 
@@ -36,15 +36,15 @@ the temporary spec package can close.
 |---------|---------|--------|----------|
 | `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime` | Focused parser, lint, readiness, closure, and traceability runtime checks. | passed, 140 tests | T004, T008, T011 |
 | `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.traceability.test_traceability_lookup` | Traceability lookup regression coverage for shared parser adoption. | passed, 9 tests | T004 |
-| `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'` | Full repository unittest discovery for runtime, MCP, traceability, package, and helper regressions. | passed, 223 tests | T008, T011 |
-| `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py lint docs/specs/032-requirement-priority-labels` | Lifecycle lint for spec 032. | passed, 0 diagnostics | T008 |
-| `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py stage-readiness docs/specs/032-requirement-priority-labels` | Stage readiness coverage and next-task signal after phase 2. | passed, ready_to_implement true for T008 | T008 |
-| `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .` | Source and package contract plus bundled plugin parity. | passed, 0 diagnostics | T008 |
-| `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py sync-guard .` | Source/bundle/cache parity check after mirrored runtime edits. | findings, 0 errors and 2 warnings | T008; source-to-bundle and source-to-Claude parity passed; installed cache drift remains until install/reload. |
-| `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime tests.runtime.test_spec_mcp_server` | Focused runtime plus MCP propagation checks. | passed, 175 tests | T011, T016 |
-| `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py prompts .` | Prompt definition validation. | pending | T015, T016 |
+| `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'` | Full repository unittest discovery for runtime, MCP, traceability, package, and helper regressions. | passed, 223 tests | T008, T011, T015 |
+| `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py lint docs/specs/032-requirement-priority-labels` | Lifecycle lint for spec 032. | passed, 0 diagnostics | T008, T015 |
+| `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py stage-readiness docs/specs/032-requirement-priority-labels` | Stage readiness coverage and next-task signal after phase 4. | passed, ready_to_implement true; selected next task T016 | T008, T015 |
+| `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .` | Source and package contract plus bundled plugin parity. | passed, 0 diagnostics | T008, T015 |
+| `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py sync-guard .` | Source/bundle/cache parity check after mirrored runtime, prompt, and template edits. | findings, 0 errors and 2 warnings | T008, T015; source-to-bundle and source-to-Claude parity passed; installed cache drift remains until install/reload. |
+| `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime tests.runtime.test_spec_mcp_server` | Focused runtime plus MCP propagation checks. | passed, 175 tests | T011, T015, T016 |
+| `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py prompts .` | Prompt definition validation. | passed, 0 diagnostics | T015, T016 |
 | `npm run validate` | Repository validation bundle including package-contract and sync-guard. | pending | T017 |
-| `git diff --check` | Whitespace validation before commit and closure. | passed | T008, T011 |
+| `git diff --check` | Whitespace validation before commit and closure. | passed | T008, T011, T015 |
 | MCP `lint_spec_package` | Lifecycle package lint for spec 032. | pending | T016, T018 |
 | MCP `stage_readiness` | Implementation readiness check for spec 032. | pending | T016 |
 | MCP `closure_check` | Closure readiness check for spec 032. | pending | T018 |
@@ -53,16 +53,16 @@ the temporary spec package can close.
 
 | Requirement | Acceptance criteria covered | Evidence | Residual risk |
 |-------------|-----------------------------|----------|---------------|
-| Requirement 1 | AC1, AC2, AC3, AC4, AC5, AC6 | Parser, lint, template, and traceability validation through T001-T004, T012, T016, and T018. | Pending until parser and template evidence is recorded. |
-| Requirement 2 | AC1, AC2, AC3 | Backward-compatibility fixtures, historical package behavior, and template validation through T001, T003, T004, T012, T016, and T018. | Pending until unlabeled active and historical fixtures pass. |
-| Requirement 3 | AC1, AC2, AC3, AC4, AC5 | Coverage disposition, readiness, closure, traceability, and agent-context validation through T005-T011, T014, T016, and T018. | Phase 2 and phase 3 runtime/MCP behavior are implemented; durable docs and closure reconciliation remain pending. |
+| Requirement 1 | AC1, AC2, AC3, AC4, AC5, AC6 | Parser, lint, template, and traceability validation through T001-T004, T012, T016, and T018. | Parser, lint, and template behavior are implemented; final consolidation remains at T016/T018. |
+| Requirement 2 | AC1, AC2, AC3 | Backward-compatibility fixtures, historical package behavior, and template validation through T001, T003, T004, T012, T016, and T018. | Backward compatibility and template behavior are implemented; final consolidation remains at T016/T018. |
+| Requirement 3 | AC1, AC2, AC3, AC4, AC5 | Coverage disposition, readiness, closure, traceability, and agent-context validation through T005-T011, T014, T016, and T018. | Runtime/MCP behavior and durable docs are implemented; final closure reconciliation remains at T018. |
 | Requirement 4 | AC1, AC2, AC3, AC4 | Prompt, structured-output, package parity, fixture, and full validation through T009-T017. | Existing released package may lag source behavior until release packaging runs. |
 
 ## Correctness Property Coverage
 
 | Property | Covered by | Evidence | Residual risk |
 |----------|------------|----------|---------------|
-| CP-001 | T001, T003, T004, T016 | Parser/lint tests for unlabeled active and historical specs. | Pending until T004/T016 evidence. |
+| CP-001 | T001, T003, T004, T016 | Parser/lint tests for unlabeled active and historical specs. | Parser/lint compatibility passed; final consolidation remains at T016. |
 | CP-002 | T005, T006, T007, T008, T016 | Runtime coverage tests for incomplete `must-have` requirements. | Phase 2 runtime closure/readiness coverage passed; final consolidation remains at T016. |
 | CP-003 | T005, T006, T007, T008, T016 | Runtime coverage tests for routed `could-have` requirements. | Phase 2 runtime closure/readiness coverage passed; final consolidation remains at T016. |
 | CP-004 | T002, T007, T009, T010, T011, T016 | Runtime/MCP payload tests for priority propagation. | Phase 2 readiness/closure and phase 3 traceability/MCP payloads passed; final consolidation remains at T016. |
@@ -72,10 +72,10 @@ the temporary spec package can close.
 
 | Broad requirement, design target, or review finding | Implemented in this spec | Coverage state | Deferred or rejected work | Destination | Blocks closure? | Evidence |
 |-----------------------------------------------------|--------------------------|----------------|---------------------------|-------------|-----------------|----------|
-| Requirement-level MoSCoW metadata syntax and parser | T001-T004, T012 | not-covered | none | none | yes | Pending task evidence. |
-| Priority-aware readiness and closure semantics | T005-T008, T014, T018 | partial-routed | durable documentation and final closure reconciliation remain | T014, T018 | no for phase 2; yes for final closure | Runtime helper, readiness, and closure behavior implemented and validated by T005-T008. |
+| Requirement-level MoSCoW metadata syntax and parser | T001-T004, T012 | complete | none | none | no | Parser, lint, and source template evidence recorded through T001-T004 and T012. |
+| Priority-aware readiness and closure semantics | T005-T008, T014, T018 | partial-routed | final closure reconciliation remains | T018 | no for phase 4; yes for final closure | Runtime helper, readiness, closure behavior, and durable documentation implemented and validated by T005-T008 and T014. |
 | Priority propagation through traceability, MCP, and agent context | T009-T011 | complete | none | none | no | Runtime and MCP tests prove `traceability_lookup`, `task_context`, and `agent_readiness_packet` include priority from source requirements without task-row duplication. |
-| Prompt, template, source skill, runtime docs, and bundled plugin parity | T012-T017 | not-covered | none | none | yes | Pending task evidence. |
+| Prompt, template, source skill, runtime docs, and bundled plugin parity | T012-T017 | partial-routed | final focused and full validation consolidation remains | T016, T017 | no for phase 4; yes for final validation | Templates, prompts, source skill, durable docs, and bundled plugin copies updated and validated through T012-T015. |
 
 ## Agent Readiness Evidence
 
@@ -103,10 +103,10 @@ the temporary spec package can close.
 | T009 | complete | Runtime and MCP tests cover task context, task-form traceability lookup, requirement-form traceability lookup, and agent readiness payloads. | Priority is read from source requirements even when traceability rows do not carry a `Priority` column. |
 | T010 | complete | Requirement-form traceability lookup now returns parsed requirement objects with priority; existing MCP handlers expose shared payloads directly. | No new MCP tool or shell-out path was added. |
 | T011 | complete | Runtime plus MCP test modules passed 175 tests; spec lint and package contract passed; sync guard source parity passed with installed-cache drift warnings only. | Installed cache still needs install/reload before plugin-scoped MCP uses the refreshed package. |
-| T012 | pending | | Source template updates not started. |
-| T013 | pending | | Prompt and skill guidance updates not started. |
-| T014 | pending | | Durable runtime/lifecycle documentation not started. |
-| T015 | pending | | Bundled plugin parity validation not started. |
+| T012 | complete | Requirements and traceability source templates now show requirement-level MoSCoW priority and a requirement-level `Priority` traceability column for closure reconciliation. | No acceptance-criterion-level priority duplication introduced. |
+| T013 | complete | Documentation wizard and lint-spec prompts now normalize requirement-level priority, keep missing labels compatible, route `won't-have` to exclusions, and source skill guidance documents authoring plus closure semantics. | Prompt validation passed with 0 diagnostics. |
+| T014 | complete | Durable lifecycle design and runtime reference now document accepted priority syntax, compatibility behavior, affected runtime/MCP outputs, and closure reconciliation semantics. | Durable promotion for phase 4 is complete. |
+| T015 | complete | Source skill files were mirrored into Codex and Claude plugin bundles; prompt validation, package-contract, spec lint, focused runtime/MCP tests, full unittest discovery, stage-readiness, and `git diff --check` passed. | `sync-guard` reports installed-cache drift only; reinstall/reload remains needed before installed plugin cache uses these changes. |
 | T016 | pending | | Focused validation consolidation not started. |
 | T017 | pending | | Full validation not started. |
 | T018 | pending | | Implementation review, promotion, and closure preparation not started. |
@@ -119,6 +119,7 @@ the temporary spec package can close.
 | 2026-07-05 | Phase 1 parser foundation implemented and validated. | passed | `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime` passed 135 tests; `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.traceability.test_traceability_lookup` passed 9 tests; `spec_runtime.py lint docs/specs/032-requirement-priority-labels` reported 0 diagnostics; `git diff --check` passed. |
 | 2026-07-06 | Phase 2 readiness and closure semantics implemented and validated. | passed with advisory | `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime` passed 139 tests; full unittest discovery passed 221 tests; spec lint, stage readiness, package contract, and `git diff --check` passed. `sync-guard` reported installed cache drift warnings only. |
 | 2026-07-06 | Phase 3 traceability, MCP, and agent-context priority propagation implemented and validated. | passed with advisory | `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime tests.runtime.test_spec_mcp_server` passed 175 tests; full unittest discovery passed 223 tests; spec lint, stage readiness, package contract, and `git diff --check` passed. `sync-guard` reported installed cache drift warnings only. |
+| 2026-07-06 | Phase 4 authoring surfaces, durable docs, and bundled plugin copies implemented and validated. | passed with advisory | Prompt validation, spec lint, package-contract, focused runtime/MCP tests, full unittest discovery, stage-readiness, task-state audit, and `git diff --check` passed. `sync-guard` reported installed cache drift warnings only while source-to-bundle and source-to-Claude parity passed. |
 
 ## Manual Or External Verification
 
@@ -126,8 +127,9 @@ No manual or external verification has been performed yet.
 
 ## Residual Risks
 
-- Existing released npm package may lag source behavior until the package
-  release workflow runs. Track during T015-T017 and release/package workflow.
+- Installed plugin cache and any released npm package may lag source behavior
+  until local install/reload or release packaging runs. Track during T016-T017
+  and release/package workflow.
 - Priority semantics rely on traceability coverage rows being maintained
   accurately. T018 must reconcile broad requirements against task evidence
   before closure.
@@ -139,9 +141,9 @@ No manual or external verification has been performed yet.
 
 | Spec content | Durable destination or deferral | Status | Evidence |
 |--------------|---------------------------------|--------|----------|
-| Requirements and accepted priority behavior | `skills/spec-lifecycle-manager/references/spec-package/requirements.md`, `docs/design/spec-lifecycle-management.md` | pending | T012, T014 |
-| Runtime/MCP behavior | `docs/reference/spec-lifecycle-runtime.md` | pending | T014 |
-| Prompt behavior | `skills/spec-lifecycle-manager/prompts/` and bundled plugin copies | pending | T013, T015 |
+| Requirements and accepted priority behavior | `skills/spec-lifecycle-manager/references/spec-package/requirements.md`, `docs/design/spec-lifecycle-management.md` | complete | T012, T014 |
+| Runtime/MCP behavior | `docs/reference/spec-lifecycle-runtime.md` | complete | T014 |
+| Prompt behavior | `skills/spec-lifecycle-manager/prompts/` and bundled plugin copies | complete | T013, T015 |
 | Decisions and rationale | Durable design/reference docs and closure log at closure | pending | T018 |
 | Follow-up work | `docs/backlog/README.md` or follow-up spec if discovered | pending | T018 |
 

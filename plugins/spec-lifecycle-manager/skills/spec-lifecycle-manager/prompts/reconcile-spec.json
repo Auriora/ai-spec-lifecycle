@@ -36,5 +36,5 @@
     "next_action",
     "evidence_or_residual_risk"
   ],
-  "client_support_recovery": "If MCP tools are unavailable, ask naturally to reconcile the spec using the spec-lifecycle-manager skill plus spec_runtime.py lint and next-task."
+  "client_support_recovery": "Use MCP reconcile_spec, lint_spec_package, and next_task when available. If MCP tools are unavailable, reconcile from the spec artifacts and durable docs directly."
 }

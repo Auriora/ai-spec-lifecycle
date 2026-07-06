@@ -3403,7 +3403,7 @@ def active_spec_preflight(
         "agent_interface": agent_interface(
             ["active_spec_preflight", "spec_summary", "lint_spec_package", "next_task", "task_context", "closure_check"]
         ),
-        "script_validation_commands": validation_commands_for_spec(selected_path),
+        "script_validation_commands": script_recovery_commands_for_spec(selected_path),
         "validation_commands": validation_commands_for_spec(selected_path),
         "guidance": [
             "Review requirements, design, traceability, verification, durable targets, and open decisions before implementation.",
@@ -3446,7 +3446,7 @@ def agent_readiness_packet(spec_path: Path, task_id: str) -> dict[str, Any]:
             "open_decisions": context.get("open_decisions", []),
         },
         "agent_interface": agent_interface(["agent_readiness_packet", "task_context", "traceability_lookup", "lint_spec_package"]),
-        "script_validation_commands": validation_commands_for_spec(spec, task_id),
+        "script_validation_commands": script_recovery_commands_for_spec(spec, task_id),
         "validation_commands": validation_commands_for_spec(spec, task_id),
         "guardrails": [
             "Do not implement from the task line alone.",
@@ -3493,9 +3493,9 @@ def no_active_spec_context(repo_root: Path) -> dict[str, Any]:
             "PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py prompts .",
         ],
         "validation_commands": [
-            "PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py scan .",
-            "PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py archive-index .",
-            "PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py prompts .",
+            "MCP tool: scan_specs",
+            "MCP tool: archive_index",
+            "MCP tool: prompts_validate",
         ],
         "guidance": [
             "No active spec package is present; use durable docs, backlog, roadmap, closure log, and archive index as context.",
@@ -3508,14 +3508,26 @@ def no_active_spec_context(repo_root: Path) -> dict[str, Any]:
 def validation_commands_for_spec(spec_path: Path, task_id: str | None = None) -> list[str]:
     rel = spec_path.as_posix()
     commands = [
-        f"PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py lint {rel}",
-        f"PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py next-task {rel}",
-        f"PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py closure-check {rel}",
+        f"MCP tool: lint_spec_package spec_path={rel}",
+        f"MCP tool: next_task spec_path={rel}",
+        f"MCP tool: closure_check spec_path={rel}",
         "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'",
         "git diff --check",
     ]
     if task_id:
-        commands.insert(1, "MCP tool: traceability_lookup")
+        commands.insert(1, f"MCP tool: traceability_lookup spec_path={rel} task_id={task_id}")
+    return commands
+
+
+def script_recovery_commands_for_spec(spec_path: Path, task_id: str | None = None) -> list[str]:
+    rel = spec_path.as_posix()
+    commands = [
+        f"PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py lint {rel}",
+        f"PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py next-task {rel}",
+        f"PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py closure-check {rel}",
+    ]
+    if task_id:
+        commands.insert(1, f"No-MCP recovery: read traceability.md for task {task_id}")
     return commands
 
 
@@ -3727,27 +3739,21 @@ def validation_plan(
             "scan",
             "Inspect active spec inventory and lifecycle health for spec or documentation changes.",
             ["spec inventory", "lifecycle health"],
-            command="PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py scan .",
             mcp_tool="scan_specs",
             required=req,
             applicability=app,
         )
     )
-    if spec:
-        lint_command = f"PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py lint {spec.relative_to(root).as_posix() if spec.is_relative_to(root) else spec.as_posix()}"
-    else:
-        lint_command = None
     req, app = validation_item_state(bool(spec) or spec_changed, required=bool(spec) or spec_changed)
     items.append(
         validation_item(
             "lint-spec",
             "Check the active package structure, task evidence, and traceability fields.",
             ["spec authoring quality", "task evidence"],
-            command=lint_command,
             mcp_tool="lint_spec_package",
             required=req,
             applicability=app,
-            blocker=None if lint_command else ("spec_path is required for package lint." if spec_changed else None),
+            blocker=None if spec else ("spec_path is required for package lint." if spec_changed else None),
         )
     )
     req, app = validation_item_state(runtime_changed or baseline or not docs_only, required=runtime_changed, recommended=baseline or not docs_only)
@@ -3767,7 +3773,6 @@ def validation_plan(
             "archive-index",
             "Validate closure-log and archive-index consistency when history records change.",
             ["closed spec lookup", "closure metadata"],
-            command="PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py archive-index .",
             mcp_tool="archive_index",
             required=req,
             applicability=app,
@@ -3779,7 +3784,6 @@ def validation_plan(
             "prompts",
             "Validate prompt definitions when prompt files change or during baseline lifecycle checks.",
             ["MCP prompt contract"],
-            command="PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py prompts .",
             mcp_tool="prompts_validate",
             required=req,
             applicability=app,
