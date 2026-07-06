@@ -3,7 +3,7 @@ title: Spec closure log
 doc_type: history
 status: active
 owner: platform
-last_reviewed: 2026-07-05
+last_reviewed: 2026-07-06
 ---
 
 # Spec Closure Log
@@ -13,6 +13,43 @@ package history is preserved by Git unless a repository-specific archive policy
 requires visible archived docs.
 
 ## Entries
+
+### 2026-07-06 - 032-requirement-priority-labels
+
+- **Spec:** `docs/specs/032-requirement-priority-labels/`
+- **Title:** Requirement priority labels
+- **Final spec commit:** `6bdc2a2`
+- **Closure cleanup commit:** `PENDING_CLEANUP_COMMIT`
+- **Closure action:** removed
+- **Closed by:** platform
+- **Durable docs updated:**
+  - `docs/backlog/README.md`
+  - `docs/design/spec-lifecycle-management.md`
+  - `docs/reference/spec-lifecycle-runtime.md`
+  - `skills/spec-lifecycle-manager/SKILL.md`
+  - `skills/spec-lifecycle-manager/prompts/`
+  - `skills/spec-lifecycle-manager/references/spec-package/`
+  - `skills/spec-lifecycle-manager/scripts/lifecycle/requirements.py`
+  - `skills/spec-lifecycle-manager/scripts/lifecycle/core.py`
+  - `skills/spec-lifecycle-manager/scripts/lifecycle/traceability.py`
+  - `skills/spec-lifecycle-manager/scripts/spec_agent_schemas.py`
+  - `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/`
+  - `plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/`
+  - `tests/runtime/test_spec_runtime.py`
+  - `tests/runtime/test_spec_mcp_server.py`
+  - `tests/traceability/test_traceability_lookup.py`
+- **Verification summary:** Spec 032 reached 27 complete and verified tasks.
+  MCP `closure_check` reported ready with no blockers and complete coverage for
+  all four `must-have` requirements. The implementation evidence included
+  parser/lint tests, priority-aware readiness and closure checks,
+  traceability/MCP/agent-context propagation tests, prompt validation,
+  package-contract and source/bundle parity checks, archive-index validation,
+  and full repository validation with `SPEC_LIFECYCLE_PYTHON=python3 npm run validate`.
+- **Residual risks:** Installed plugin caches and released packages may lag
+  source behavior until local install/reload or release packaging runs. Plain
+  `npm run validate` may require `SPEC_LIFECYCLE_PYTHON=python3` in shells
+  where installer tests cannot otherwise resolve Python.
+- **Follow-up:** none
 
 ### 2026-07-05 - 031-canonical-context-warning-noise
 
@@ -107,8 +144,9 @@ requires visible archived docs.
   prompts, templates, and runtime adapter. Dynamic MCP tool-list refresh remains
   intentionally deferred; v1 uses a stable tool surface with
   `available_next_actions`.
-- **Follow-up:** `B057` remains open for requirement priority labels and `B058`
-  remains open for canonical-context warning wording.
+- **Follow-up:** `B057` later closed through spec
+  `032-requirement-priority-labels`; `B058` later closed through spec
+  `031-canonical-context-warning-noise`.
 
 ### 2026-07-04 - 026-guided-documentation-wizard
 
