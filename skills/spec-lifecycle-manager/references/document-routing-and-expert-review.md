@@ -1,3 +1,11 @@
+---
+title: Document routing and expert review
+doc_type: reference
+status: active
+owner: platform
+last_reviewed: 2026-07-06
+---
+
 # Document Routing And Expert Review
 
 Use this reference when a spec affects durable documentation or when review roles are needed. Map these roles onto the target repository's documented structure; do not create or require these folder names unless the repository already uses them.
@@ -9,7 +17,10 @@ validation, change rules, AGENTS.md boundaries, and anti-patterns.
 Use `agent-workbench-evidence-boundary.md` when Agent Workbench, or an
 equivalent repository-evidence provider, contributes freshness, context,
 diagnostics, impact, or validation-plan evidence. Treat that evidence as input
-to review, not as proof or lifecycle authority.
+to review, not as proof or lifecycle authority. If provider search output is
+sparse, low-signal, or surprising, classify it as a routing limitation and
+recover through repository indexes, targeted file inventory, and direct reads
+before making absence or root-cause claims.
 
 ## Durable Doc Roles
 

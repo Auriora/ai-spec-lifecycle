@@ -642,6 +642,14 @@ affects confidence, record freshness, capability, skipped evidence, diagnostics
 status, validation-plan status, and residual risk using
 `references/agent-workbench-evidence-boundary.md`.
 
+Sparse or surprising Workbench search output is inconclusive. Do not report
+that authoritative docs, code, or contracts are absent just because
+`docs_search`, `context_for_task`, symbol search, or another ranked routing
+surface missed them. State that the provider query was sparse or partial, then
+pivot to repository instructions, durable indexes, targeted file inventory, and
+direct reads of likely source files before making absence, implementation,
+drift, or root-cause claims.
+
 `agent-backed-tool` is also advisory and read-only. The current runner
 implementation is a disabled stub: it builds the bounded review packet and
 returns a structured `unavailable` result instead of invoking a secondary

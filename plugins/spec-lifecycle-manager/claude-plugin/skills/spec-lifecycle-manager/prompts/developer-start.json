@@ -34,6 +34,7 @@
     "Call lifecycle_guide first when MCP tools are available.",
     "If the repository is blank or near blank, use bootstrap_plan and keep the result preview-only until the user approves writes.",
     "When durable docs, legacy docs, stale-doc risk, or imported sources shape current implementation authority for a new spec, inspect the concrete risk before adding artifacts; create canonical-context.md or return an import plan only when useful, with source path, target spec-local path, import mode, canonical scope, and promotion target.",
+    "When Agent Workbench or another repo-evidence provider returns sparse, low-signal, stale, truncated, or surprising routing output, report that provider limitation and recover through repository instructions, durable indexes, targeted file inventory, and direct reads before claiming docs, code, contracts, tests, or current behavior are absent.",
     "Do not invent architecture, pattern guidance, or agent directives for a blank repository.",
     "Report the current repository classification, docs readiness, active spec readiness, bootstrap recommendation, tooling, and next safe actions."
   ],
@@ -47,5 +48,5 @@
     "next_actions",
     "validation_or_recovery_commands"
   ],
-  "client_support_recovery": "Use MCP lifecycle_guide or bootstrap_plan when available. If MCP tools are unavailable, inspect repository instructions, durable docs, backlog, roadmap, and active spec files directly."
+  "client_support_recovery": "Use MCP lifecycle_guide or bootstrap_plan when available. If MCP tools are unavailable or repo-evidence search is sparse, inspect repository instructions, durable docs, backlog, roadmap, active spec files, and targeted source inventories directly."
 }

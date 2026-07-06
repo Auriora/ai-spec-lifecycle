@@ -86,6 +86,10 @@ Omit fields that are not applicable rather than fabricating confidence.
 ## Interpretation Rules
 
 - Routing evidence is not proof.
+- Sparse or low-signal search output is not absence evidence. Treat it as a
+  query or scope limitation, then inspect repository instructions, durable
+  indexes, targeted file inventories, and direct source files before claiming
+  docs, code, contracts, or tests are missing.
 - Planned validation is not completed validation.
 - Clean diagnostics do not mean tests passed.
 - Stale, cold, partial, or unsupported provider status must be refreshed or
@@ -94,6 +98,23 @@ Omit fields that are not applicable rather than fabricating confidence.
   authoritative source directly.
 - Provider confidence must not override durable docs, executable contracts,
   tests, review findings, or governance gates.
+
+## Recovery Pattern
+
+When Workbench output is sparse, surprising, truncated, stale, or only
+resource-backed:
+
+1. Report the provider state precisely, for example "the Workbench query did
+   not surface detailed analytics docs."
+2. Check repository instructions and durable indexes such as `AGENTS.md`,
+   `README.md`, `docs/README.md`, backlog, roadmap, closure logs, and archive
+   indexes.
+3. Use targeted file inventory (`rg --files`, known doc classes, likely
+   subsystem paths) to identify candidate authoritative files.
+4. Directly read the smallest complete set of candidate docs, contracts, code,
+   and tests needed for the claim.
+5. Carry unresolved provider gaps as residual risk instead of converting them
+   into root-cause or absence claims.
 
 ## Review Stance
 
