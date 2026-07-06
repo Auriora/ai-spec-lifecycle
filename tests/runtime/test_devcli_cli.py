@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import sys
+import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -21,6 +23,13 @@ from auriora_dev.commands.package import (
 )
 from auriora_dev.commands.plugin import build_plugin_status_plan
 from auriora_dev.commands.release import build_release_preflight_plan
+from auriora_dev.commands.release import (
+    build_github_release_plan,
+    build_release_tag_plan,
+    install_command,
+    tarball_name,
+)
+from auriora_dev.commands.release_notes import collect_release_notes_evidence, render_release_notes
 from auriora_dev.commands.spec import build_spec_plan
 from auriora_dev.commands.sync import build_bundles_plan, build_guard_plan
 
@@ -129,6 +138,80 @@ class DevCliPlanTests(unittest.TestCase):
         self.assertNotIn("git push", flattened)
         self.assertNotIn("gh release", flattened)
         self.assertTrue(all(not command.mutates for command in commands))
+
+    def test_release_tag_and_github_plans_are_explicitly_mutating(self) -> None:
+        tag_commands = build_release_tag_plan(
+            REPO_ROOT,
+            version="0.2.1",
+            remote="origin",
+            push=True,
+            force=False,
+        )
+        github_commands = build_github_release_plan(
+            REPO_ROOT,
+            version="0.2.1",
+            notes_file=Path("docs/release-notes/v0.2.1.md"),
+            title=None,
+            draft=True,
+            prerelease=False,
+            existing=False,
+            create_tag=False,
+            push_tag=False,
+            preflight=False,
+        )
+
+        self.assertEqual(tag_commands[0].argv, ("git", "tag", "-a", "v0.2.1", "-m", "Release v0.2.1"))
+        self.assertEqual(tag_commands[1].argv, ("git", "push", "origin", "v0.2.1"))
+        self.assertIn("gh release create v0.2.1", " ".join(" ".join(command.argv) for command in github_commands))
+        self.assertIn("--notes-file docs/release-notes/v0.2.1.md", " ".join(" ".join(command.argv) for command in github_commands))
+        self.assertTrue(all(command.mutates for command in tag_commands))
+        self.assertTrue(all(command.mutates for command in github_commands))
+
+    def test_release_artifact_names_match_repo_package(self) -> None:
+        self.assertEqual(tarball_name("v0.2.1"), "auriora-ai-spec-lifecycle-0.2.1.tgz")
+        self.assertEqual(
+            install_command("0.2.1"),
+            "npm install -g https://github.com/Auriora/ai-spec-lifecycle/releases/download/v0.2.1/auriora-ai-spec-lifecycle-0.2.1.tgz",
+        )
+
+    def test_release_notes_collects_git_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._git(root, "init")
+            self._git(root, "config", "user.email", "release@example.com")
+            self._git(root, "config", "user.name", "Release Tester")
+            (root / "README.md").write_text("initial\n", encoding="utf-8")
+            self._git(root, "add", "README.md")
+            self._git(root, "commit", "-m", "Initial release")
+            self._git(root, "tag", "v0.1.0")
+            (root / "skills").mkdir()
+            (root / "skills" / "feature.md").write_text("feature\n", encoding="utf-8")
+            self._git(root, "add", "skills/feature.md")
+            self._git(root, "commit", "-m", "Add skill feature")
+
+            evidence = collect_release_notes_evidence(
+                root,
+                from_ref="v0.1.0",
+                to_ref="HEAD",
+                version="0.2.0",
+                validation_note="unit validation passed",
+                validation_file=None,
+            )
+            markdown = render_release_notes(
+                evidence,
+                release_format="draft",
+                include_evidence=True,
+                final=False,
+            )
+
+        self.assertEqual(evidence.version, "0.2.0")
+        self.assertEqual(len(evidence.commits), 1)
+        self.assertIn("skills/feature.md", evidence.areas["skill_runtime"])
+        self.assertIn("Spec Lifecycle Manager v0.2.0", markdown)
+        self.assertIn("unit validation passed", markdown)
+
+    def _git(self, root: Path, *args: str) -> None:
+        subprocess.run(("git", *args), cwd=root, text=True, capture_output=True, check=True)
 
 
 if __name__ == "__main__":

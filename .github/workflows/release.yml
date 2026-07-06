@@ -16,7 +16,7 @@ on:
         type: boolean
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   package:
@@ -57,10 +57,17 @@ jobs:
         run: npm pack --json > npm-pack.json
 
       - name: Capture release metadata
+        id: release
         run: |
-          node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('npm-pack.json','utf8'))[0]; const pkg=JSON.parse(fs.readFileSync('package.json','utf8')); const lines=['# Release Artifact Summary','',`- Package: ${pkg.name}`,`- Version: ${pkg.version}`,`- Tarball: ${p.filename}`,`- Integrity: ${p.integrity}`,`- Shasum: ${p.shasum}`,`- Source commit: ${process.env.GITHUB_SHA}`,`- Publish requested: ${process.env.PUBLISH_REQUESTED}`,`- NPM token configured: ${process.env.HAS_NPM_TOKEN}`]; fs.writeFileSync('release-summary.md', lines.join('\n') + '\n');"
+          node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('npm-pack.json','utf8'))[0]; const pkg=JSON.parse(fs.readFileSync('package.json','utf8')); const lines=['# Release Artifact Summary','',`- Package: ${pkg.name}`,`- Version: ${pkg.version}`,`- Tarball: ${p.filename}`,`- Integrity: ${p.integrity}`,`- Shasum: ${p.shasum}`,`- Source commit: ${process.env.GITHUB_SHA}`,`- Release notes: docs/release-notes/v${pkg.version}.md`,`- Publish requested: ${process.env.PUBLISH_REQUESTED}`,`- NPM token configured: ${process.env.HAS_NPM_TOKEN}`]; fs.writeFileSync('release-summary.md', lines.join('\n') + '\n'); fs.appendFileSync(process.env.GITHUB_OUTPUT, `version=${pkg.version}\nnotes=docs/release-notes/v${pkg.version}.md\ntarball=${p.filename}\n`);"
         env:
           PUBLISH_REQUESTED: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.publish == 'true' }}
+
+      - name: Verify release notes
+        run: |
+          test -f "${NOTES}" || { echo "Missing release notes: ${NOTES}" >&2; exit 1; }
+        env:
+          NOTES: ${{ steps.release.outputs.notes }}
 
       - name: Upload release artifacts
         uses: actions/upload-artifact@v4
@@ -71,6 +78,21 @@ jobs:
             npm-pack.json
             release-summary.md
           if-no-files-found: error
+
+      - name: Publish GitHub release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+          NOTES: ${{ steps.release.outputs.notes }}
+          TARBALL: ${{ steps.release.outputs.tarball }}
+        run: |
+          if gh release view "${TAG}" >/dev/null 2>&1; then
+            gh release edit "${TAG}" --title "${TAG}" --notes-file "${NOTES}"
+            gh release upload "${TAG}" "${TARBALL}" --clobber
+          else
+            gh release create "${TAG}" "${TARBALL}" --title "${TAG}" --notes-file "${NOTES}"
+          fi
 
       - name: Report skipped publish
         if: github.event_name != 'workflow_dispatch' || github.event.inputs.publish != 'true' || env.HAS_NPM_TOKEN != 'true'

@@ -68,6 +68,27 @@ In Codex sessions where the `spec-lifecycle-manager` MCP server is available,
 prefer the MCP tools for lifecycle context and use the direct Python commands
 for CI, recovery, and runtime debugging.
 
+## Releases
+
+Use the local developer CLI to prepare release notes from Git evidence before
+tagging a release:
+
+```bash
+slc release notes \
+  --from v0.2.0 \
+  --to HEAD \
+  --version 0.2.1 \
+  --output docs/release-notes/v0.2.1-draft.md \
+  --evidence-output docs/release-notes/v0.2.1-evidence.json \
+  --agent-instructions docs/release-notes/v0.2.1-agent.md
+```
+
+Review the generated evidence and write the final release note to
+`docs/release-notes/vX.Y.Z.md`. The GitHub release workflow requires that file
+for tag builds and publishes the packed npm tarball to the matching GitHub
+release. npm publishing remains guarded by manual `workflow_dispatch` plus the
+`NPM_TOKEN` secret.
+
 ## Install
 
 The supported distribution path is the npm package tarball attached to GitHub
