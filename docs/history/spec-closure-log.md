@@ -19,7 +19,7 @@ requires visible archived docs.
 - **Spec:** `docs/specs/032-requirement-priority-labels/`
 - **Title:** Requirement priority labels
 - **Final spec commit:** `6bdc2a2`
-- **Closure cleanup commit:** `PENDING_CLEANUP_COMMIT`
+- **Closure cleanup commit:** `1b65421`
 - **Closure action:** removed
 - **Closed by:** platform
 - **Durable docs updated:**
