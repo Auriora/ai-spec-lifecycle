@@ -578,6 +578,38 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertIn("available_next_actions", stage)
         self.assertIn("Requirement 1", {item["id"] for item in readiness["required_review"]["requirements"]})
 
+    def test_mcp_context_tools_include_source_requirement_priority(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / ".git").mkdir()
+            spec = write_current_spec(repo)
+            requirements = spec / "requirements.md"
+            requirements.write_text(
+                requirements.read_text(encoding="utf-8").replace(
+                    "### Requirement 1: Current",
+                    "### Requirement 1: Current\n\n**Priority:** could-have",
+                ),
+                encoding="utf-8",
+            )
+            responses = self.send(
+                rpc(1, "tools/call", {"name": "task_context", "arguments": {"repo_root": str(repo), "spec_path": "001-current", "task_id": "T001"}}),
+                rpc(2, "tools/call", {"name": "traceability_lookup", "arguments": {"repo_root": str(repo), "spec_path": "001-current", "task_id": "T001"}}),
+                rpc(3, "tools/call", {"name": "traceability_lookup", "arguments": {"repo_root": str(repo), "spec_path": "001-current", "requirement": "Requirement 1"}}),
+                rpc(4, "tools/call", {"name": "agent_readiness_packet", "arguments": {"repo_root": str(repo), "spec_path": "001-current", "task_id": "T001"}}),
+                root=repo,
+            )
+
+        task_context = responses[0]["result"]["structuredContent"]
+        task_lookup = responses[1]["result"]["structuredContent"]
+        requirement_lookup = responses[2]["result"]["structuredContent"]
+        readiness = responses[3]["result"]["structuredContent"]
+        self.assertNotIn("Priority", task_context["traceability_row"])
+        self.assertEqual("could-have", task_context["requirements"][0]["priority"])
+        self.assertEqual("could-have", task_lookup["requirements"][0]["priority"])
+        self.assertEqual("could-have", requirement_lookup["requirements"][0]["priority"])
+        self.assertEqual("could-have", readiness["traceability_context"]["requirements"][0]["priority"])
+        self.assertEqual("could-have", readiness["required_review"]["requirements"][0]["priority"])
+
     def test_lint_spec_package_returns_shared_canonical_context_diagnostic_shape(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)

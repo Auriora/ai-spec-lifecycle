@@ -337,7 +337,10 @@ def reverse_lookup(spec_path: Path, kind: str, value: str) -> dict[str, Any]:
         )
         return base_payload(spec_path, kind, value, None, gaps)
     add_reference_gaps(spec_path, docs, row, gaps)
-    return base_payload(spec_path, kind, value, row, gaps)
+    payload = base_payload(spec_path, kind, value, row, gaps)
+    if kind == "requirement":
+        payload["requirements"] = collect_requirements(docs.get("requirements.md"), row.get("Requirement", value))
+    return payload
 
 
 def base_payload(

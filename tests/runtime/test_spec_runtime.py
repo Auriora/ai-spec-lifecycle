@@ -1971,6 +1971,28 @@ class SpecRuntimeTests(unittest.TestCase):
 
         self.assertEqual("must-have", payload["traceability_context"]["requirements"][0]["priority"])
 
+    def test_traceability_and_agent_context_include_source_requirement_priority(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+            requirements = spec / "requirements.md"
+            requirements.write_text(
+                requirements.read_text(encoding="utf-8").replace(
+                    "**User Story:** As an agent, I want durable context, so that implementation is grounded.",
+                    "**User Story:** As an agent, I want durable context, so that implementation is grounded.\n\n**Priority:** should-have",
+                ),
+                encoding="utf-8",
+            )
+
+            task_context = spec_runtime.traceability_context(spec, "T001")
+            requirement_lookup = spec_runtime.traceability.reverse_lookup(spec, "requirement", "Requirement 1")
+            packet = spec_runtime.agent_readiness_packet(spec, "T001")
+
+        self.assertNotIn("Priority", task_context["traceability_row"])
+        self.assertEqual("should-have", task_context["requirements"][0]["priority"])
+        self.assertEqual("should-have", requirement_lookup["requirements"][0]["priority"])
+        self.assertEqual("should-have", packet["traceability_context"]["requirements"][0]["priority"])
+        self.assertEqual("should-have", packet["required_review"]["requirements"][0]["priority"])
+
     def test_requirement_coverage_disposition_classifies_priority_states(self):
         with tempfile.TemporaryDirectory() as tmp:
             spec = write_priority_coverage_spec(Path(tmp))

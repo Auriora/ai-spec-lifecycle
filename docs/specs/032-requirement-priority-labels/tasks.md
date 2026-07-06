@@ -172,7 +172,7 @@ without changing task status semantics.
 **Purpose**: Ensure priority reaches the agent-facing surfaces that already
 report requirements, without adding new tools or task-row duplication.
 
-- [ ] T009 Add traceability and MCP priority propagation tests.
+- [x] T009 Add traceability and MCP priority propagation tests.
   - Depends on: T008
   - Requirement: Requirement 3, Requirement 4
   - Properties: CP-004, CP-005
@@ -184,9 +184,9 @@ report requirements, without adding new tools or task-row duplication.
     when the source requirement has priority, even when task rows do not
     duplicate priority.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Added runtime and MCP tests proving priority propagation through task context, task-form traceability lookup, requirement-form traceability lookup, and agent readiness packet payloads. Validation passed: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime tests.runtime.test_spec_mcp_server.
 
-- [ ] T010 Implement priority propagation through traceability and MCP paths.
+- [x] T010 Implement priority propagation through traceability and MCP paths.
   - Depends on: T009
   - Requirement: Requirement 3, Requirement 4
   - Properties: CP-004, CP-005
@@ -197,9 +197,9 @@ report requirements, without adding new tools or task-row duplication.
     payloads without shelling out, adding a new MCP tool, or requiring task-row
     priority columns.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Implemented requirement-form traceability lookup priority propagation through shared traceability requirement collection; existing MCP handlers expose the shared payload directly without shelling out or adding tools. Validation passed: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime tests.runtime.test_spec_mcp_server.
 
-- [ ] T011 Checkpoint - Agent context validation.
+- [x] T011 Checkpoint - Agent context validation.
   - Depends on: T010
   - Requirement: Requirement 3, Requirement 4
   - Files: `docs/specs/032-requirement-priority-labels/verification.md`
@@ -207,7 +207,7 @@ report requirements, without adding new tools or task-row duplication.
     task context path remains backward compatible for unlabeled specs.
   - Validation: `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime tests.runtime.test_spec_mcp_server`
   - Evidence mode: validation
-  - Evidence: Pending.
+  - Evidence: Phase 3 validation passed: runtime plus MCP test modules passed 175 tests; spec lint passed with 0 diagnostics; package contract passed; sync guard reported installed cache drift warnings only while source bundle parity passed.
 
 ## Phase 4: Authoring Surfaces And Durable Docs
 
