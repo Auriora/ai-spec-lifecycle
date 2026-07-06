@@ -2785,6 +2785,146 @@ def requirement_aliases(requirement_id: str) -> list[str]:
     return aliases
 
 
+COMPLETE_REQUIREMENT_COVERAGE_STATES = {"complete", "covered", "implemented"}
+ROUTED_REQUIREMENT_COVERAGE_STATES = {"partial-routed", "routed"}
+BLOCKING_REQUIREMENT_COVERAGE_STATES = {"partial-blocking", "blocking"}
+OUT_OF_SCOPE_REQUIREMENT_COVERAGE_STATES = {"out-of-scope", "out of scope", "not-in-scope", "deferred"}
+REJECTED_REQUIREMENT_COVERAGE_STATES = {"rejected"}
+INCOMPLETE_REQUIREMENT_COVERAGE_STATES = {"not-covered", "not covered", "missing", "gap", "partial", ""}
+
+
+def normalize_requirement_coverage_state(value: str) -> str:
+    text = strip_markdown_value(value).lower()
+    text = re.sub(r"\s+", " ", text)
+    return text
+
+
+def requirement_delivery_row_for_requirement(rows: list[dict[str, str]], requirement_id: str) -> dict[str, str]:
+    aliases = requirement_aliases(requirement_id)
+    for row in rows:
+        requirement_value = row.get("Requirement", "") or row.get("Requirements", "")
+        if any(value_mentions_id(requirement_value, alias) for alias in aliases):
+            return row
+    return {}
+
+
+def requirement_residual_text(row: dict[str, str]) -> str:
+    values = [
+        row.get("Residual Destination", ""),
+        row.get("Destination", ""),
+        row.get("Residual Risk", ""),
+        row.get("Deferred or rejected work", ""),
+        row.get("Notes", ""),
+        row.get("Evidence", ""),
+    ]
+    return " ".join(strip_markdown_value(value) for value in values if strip_markdown_value(value))
+
+
+def requirement_row_has_rationale(row: dict[str, str]) -> bool:
+    text = requirement_residual_text(row)
+    return bool(text and text.lower() not in {"none", "n/a", "pending", "tbd", "todo"})
+
+
+def requirement_row_is_rejected(row: dict[str, str], coverage_state: str) -> bool:
+    text = requirement_residual_text(row).lower()
+    return coverage_state in REJECTED_REQUIREMENT_COVERAGE_STATES or "reject" in text
+
+
+def requirement_row_is_human_superseded(row: dict[str, str]) -> bool:
+    text = requirement_residual_text(row).lower()
+    return "human-superseded" in text or "human superseded" in text or "superseded by human" in text or "human decision" in text
+
+
+def requirement_row_is_out_of_scope(row: dict[str, str], coverage_state: str) -> bool:
+    text = requirement_residual_text(row).lower()
+    return coverage_state in OUT_OF_SCOPE_REQUIREMENT_COVERAGE_STATES or "out-of-scope" in text or "out of scope" in text
+
+
+def requirement_row_is_routed(row: dict[str, str], coverage_state: str) -> bool:
+    text = requirement_residual_text(row).lower()
+    return (
+        coverage_state in ROUTED_REQUIREMENT_COVERAGE_STATES
+        or "routed" in text
+        or "backlog" in text
+        or "roadmap" in text
+        or "follow-up" in text
+        or "follow up" in text
+        or "accepted residual risk" in text
+    )
+
+
+def requirement_coverage_disposition(spec_path: Path) -> list[dict[str, Any]]:
+    rows = traceability_table_rows(spec_path, "Requirement To Delivery Matrix")
+    dispositions: list[dict[str, Any]] = []
+    for requirement in requirement_blocks(spec_path):
+        row = requirement_delivery_row_for_requirement(rows, requirement["id"])
+        raw_state = row.get("Coverage State", "") or row.get("Coverage", "")
+        coverage_state = normalize_requirement_coverage_state(raw_state)
+        priority = requirement.get("priority")
+        complete = coverage_state in COMPLETE_REQUIREMENT_COVERAGE_STATES
+        rejected = requirement_row_is_rejected(row, coverage_state)
+        human_superseded = requirement_row_is_human_superseded(row)
+        out_of_scope = requirement_row_is_out_of_scope(row, coverage_state)
+        routed = requirement_row_is_routed(row, coverage_state)
+        has_rationale = requirement_row_has_rationale(row)
+        explicit_blocking = coverage_state in BLOCKING_REQUIREMENT_COVERAGE_STATES
+        blocking = False
+        code: str | None = None
+        message = ""
+        residual_status = "none"
+
+        if complete:
+            residual_status = "complete"
+        elif rejected:
+            residual_status = "rejected"
+        elif human_superseded:
+            residual_status = "human_superseded"
+        elif out_of_scope:
+            residual_status = "out_of_scope"
+        elif routed:
+            residual_status = "routed"
+        elif has_rationale:
+            residual_status = "rationale"
+        elif not row:
+            residual_status = "missing_row"
+        elif coverage_state in INCOMPLETE_REQUIREMENT_COVERAGE_STATES:
+            residual_status = "unrouted"
+        else:
+            residual_status = "unknown"
+
+        if priority == "must-have" and not complete and not rejected and not human_superseded:
+            blocking = True
+            code = "REQUIREMENT_COVERAGE_MUST_HAVE_BLOCKING"
+            message = f"{requirement['id']} is must-have but is not completely covered."
+        elif priority == "should-have" and not complete and not (rejected or human_superseded or out_of_scope or routed or has_rationale):
+            blocking = True
+            code = "REQUIREMENT_COVERAGE_SHOULD_HAVE_UNROUTED"
+            message = f"{requirement['id']} is should-have but lacks an explicit route, rationale, or accepted residual risk."
+        elif priority == "could-have" and not complete and not (rejected or human_superseded or out_of_scope or routed):
+            blocking = True
+            code = "REQUIREMENT_COVERAGE_COULD_HAVE_UNROUTED"
+            message = f"{requirement['id']} is could-have but is not routed, rejected, or marked out of current scope."
+        elif priority and explicit_blocking:
+            blocking = True
+            code = "REQUIREMENT_COVERAGE_EXPLICIT_BLOCKING"
+            message = f"{requirement['id']} has an explicitly blocking coverage state."
+
+        disposition = {
+            "requirement": requirement["id"],
+            "priority": priority,
+            "coverage_state": coverage_state or "unspecified",
+            "residual_destination": strip_markdown_value(row.get("Residual Destination", "")),
+            "residual_status": residual_status,
+            "blocking": blocking,
+            "non_blocking_residual": (not complete and not blocking and residual_status not in {"none", "missing_row", "unrouted", "unknown"}),
+        }
+        if code:
+            disposition["code"] = code
+            disposition["message"] = message
+        dispositions.append(disposition)
+    return dispositions
+
+
 def stage_readiness(spec_path: Path) -> dict[str, Any]:
     spec = spec_path.resolve()
     inventory = artifact_inventory(spec)
@@ -2823,6 +2963,7 @@ def stage_readiness(spec_path: Path) -> dict[str, Any]:
     property_rows = traceability_table_rows(spec, "Correctness Property Mapping")
     requirement_rows = traceability_table_rows(spec, "Requirement To Delivery Matrix")
     task_rows = traceability_table_rows(spec, "Task To Context Matrix")
+    requirement_coverage = requirement_coverage_disposition(spec)
 
     coverage_properties: list[dict[str, Any]] = []
     for prop in properties:
@@ -2887,6 +3028,20 @@ def stage_readiness(spec_path: Path) -> dict[str, Any]:
                 ]
                 blocking_gaps.append({"severity": "error", "acceptance_criterion": criterion["id"], **gaps[0]})
             coverage_acceptance.append({"id": criterion["id"], "status": status, "gaps": gaps})
+
+    for disposition in requirement_coverage:
+        if disposition["blocking"]:
+            blocking_gaps.append(
+                {
+                    "severity": "error",
+                    "requirement": disposition["requirement"],
+                    "priority": disposition.get("priority"),
+                    "coverage_state": disposition["coverage_state"],
+                    "residual_destination": disposition["residual_destination"],
+                    "code": disposition["code"],
+                    "message": disposition["message"],
+                }
+            )
 
     downstream_review_needs: list[dict[str, Any]] = []
     artifact_paths = {name: spec / name for name in ["requirements.md", "design.md", "tasks.md", "traceability.md", "verification.md"]}
@@ -2963,6 +3118,7 @@ def stage_readiness(spec_path: Path) -> dict[str, Any]:
         "coverage": {
             "properties": coverage_properties,
             "acceptance_criteria": coverage_acceptance,
+            "requirements": requirement_coverage,
         },
         "agent_readiness_contract": {
             "status": readiness.get("status") if readiness else "not_applicable",
@@ -2975,6 +3131,7 @@ def stage_readiness(spec_path: Path) -> dict[str, Any]:
             "context_gap_count": len(context_gaps),
             "property_gap_count": sum(len(item["gaps"]) for item in coverage_properties),
             "acceptance_gap_count": sum(len(item["gaps"]) for item in coverage_acceptance),
+            "requirement_blocking_count": sum(1 for item in requirement_coverage if item["blocking"]),
         },
     }
 
@@ -4452,6 +4609,19 @@ def closure_check(spec_path: Path) -> dict[str, Any]:
     for item in lint_result["diagnostics"]:
         if item["severity"] == "error":
             blockers.append({"code": item["code"], "message": item["message"], "path": item["path"]})
+    requirement_coverage = requirement_coverage_disposition(spec_path)
+    for disposition in requirement_coverage:
+        if disposition["blocking"]:
+            blockers.append(
+                {
+                    "code": disposition["code"],
+                    "message": disposition["message"],
+                    "requirement": disposition["requirement"],
+                    "priority": disposition.get("priority"),
+                    "coverage_state": disposition["coverage_state"],
+                    "residual_destination": disposition["residual_destination"],
+                }
+            )
     blockers.extend(canonical_context_closure_blockers(spec_path))
     if spec_path.name == "030-mcp-first-runtime-migration":
         codex_home = Path(os.environ.get("CODEX_HOME", "~/.codex")).expanduser()
@@ -4468,6 +4638,7 @@ def closure_check(spec_path: Path) -> dict[str, Any]:
         "spec_path": str(spec_path.resolve()),
         "ready": not blockers,
         "blockers": blockers,
+        "requirement_coverage": requirement_coverage,
         "lint_summary": lint_result["summary"],
         "promotion_required": True,
     }

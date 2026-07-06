@@ -312,6 +312,93 @@ def write_complete_spec(repo: Path, status: str = "draft") -> Path:
     return spec
 
 
+def write_priority_coverage_spec(repo: Path) -> Path:
+    spec = write_complete_spec(repo)
+    frontmatter = "\n".join(
+        [
+            "---",
+            "title: Priority coverage",
+            "doc_type: spec",
+            "artifact_type: {artifact}",
+            "status: draft",
+            "owner: platform",
+            "last_reviewed: 2026-07-05",
+            "---",
+            "",
+        ]
+    )
+    requirement_rows = [
+        ("Requirement 1", "must-have", "complete", "none"),
+        ("Requirement 2", "must-have", "not-covered", "none"),
+        ("Requirement 3", "must-have", "rejected", "Rejected by human maintainer."),
+        ("Requirement 4", "must-have", "human-superseded", "Superseded by human decision."),
+        ("Requirement 5", "should-have", "partial-routed", "Routed to backlog B999."),
+        ("Requirement 6", "should-have", "not-covered", "none"),
+        ("Requirement 7", "could-have", "out-of-scope", "Marked out of scope for this spec."),
+        ("Requirement 8", "could-have", "partial-blocking", "none"),
+        ("Requirement 9", "could-have", "not-covered", "none"),
+        ("Requirement 10", None, "not-covered", "none"),
+    ]
+    requirement_lines = [
+        "# Requirements",
+        "",
+        "## Requirements",
+        "",
+    ]
+    for requirement_id, priority, _state, _residual in requirement_rows:
+        requirement_lines.extend(
+            [
+                f"### {requirement_id}: Priority Case",
+                "",
+                "**User Story:** As an agent, I want priority coverage semantics, so that closure behavior is consistent.",
+                "",
+            ]
+        )
+        if priority:
+            requirement_lines.extend([f"**Priority:** {priority}", ""])
+        requirement_lines.extend(
+            [
+                "#### Acceptance Criteria",
+                "",
+                "1. GIVEN coverage rows, WHEN closure is checked, THEN THE SYSTEM SHALL classify the requirement.",
+                "",
+            ]
+        )
+    requirement_lines.extend(["## Correctness Properties", "", "- CP-001: Priority coverage is classified consistently."])
+    (spec / "requirements.md").write_text(frontmatter.format(artifact="requirements") + "\n".join(requirement_lines), encoding="utf-8")
+
+    traceability_lines = [
+        "# Traceability",
+        "",
+        "## Task To Context Matrix",
+        "",
+        "| Task ID | Requirements | Acceptance Criteria | Design Sections | Change Impact | Verification | Durable Targets | Open Decisions |",
+        "|---------|--------------|---------------------|-----------------|---------------|--------------|-----------------|----------------|",
+        "| T001 | Requirement 1; Requirement 2; Requirement 3; Requirement 4; Requirement 5; Requirement 6; Requirement 7; Requirement 8; Requirement 9; Requirement 10 | AC1 | `design.md#task-context` | none | `verification.md#quality-gates` | `docs/reference/current.md` | none |",
+        "",
+        "## Requirement To Delivery Matrix",
+        "",
+        "| Requirement | Acceptance Criteria | Priority | Coverage State | Residual Destination | Design Sections | Tasks | Verification | Durable Targets |",
+        "|-------------|---------------------|----------|----------------|----------------------|-----------------|-------|--------------|-----------------|",
+    ]
+    for requirement_id, priority, coverage_state, residual in requirement_rows:
+        traceability_lines.append(
+            f"| {requirement_id} | AC1 | {priority or 'none'} | {coverage_state} | {residual} | `design.md#task-context` | T001 | `verification.md#quality-gates` | `docs/reference/current.md` |"
+        )
+    traceability_lines.extend(
+        [
+            "",
+            "## Correctness Property Mapping",
+            "",
+            "| Property | Design | Covered by tasks | Verification |",
+            "|----------|--------|------------------|--------------|",
+            "| CP-001 | `design.md#task-context` | T001 | `verification.md#quality-gates` |",
+        ]
+    )
+    (spec / "traceability.md").write_text(frontmatter.format(artifact="traceability") + "\n".join(traceability_lines), encoding="utf-8")
+    return spec
+
+
 def append_requirements_text(spec: Path, text: str) -> None:
     requirements = spec / "requirements.md"
     requirements.write_text(requirements.read_text(encoding="utf-8") + text, encoding="utf-8")
@@ -1883,6 +1970,85 @@ class SpecRuntimeTests(unittest.TestCase):
             payload = spec_runtime.task_details(spec, "T001")
 
         self.assertEqual("must-have", payload["traceability_context"]["requirements"][0]["priority"])
+
+    def test_requirement_coverage_disposition_classifies_priority_states(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_priority_coverage_spec(Path(tmp))
+
+            dispositions = spec_runtime.requirement_coverage_disposition(spec)
+
+        by_requirement = {item["requirement"]: item for item in dispositions}
+        self.assertEqual("complete", by_requirement["Requirement 1"]["coverage_state"])
+        self.assertFalse(by_requirement["Requirement 1"]["blocking"])
+        self.assertEqual("REQUIREMENT_COVERAGE_MUST_HAVE_BLOCKING", by_requirement["Requirement 2"]["code"])
+        self.assertFalse(by_requirement["Requirement 3"]["blocking"])
+        self.assertEqual("rejected", by_requirement["Requirement 3"]["residual_status"])
+        self.assertFalse(by_requirement["Requirement 4"]["blocking"])
+        self.assertEqual("human_superseded", by_requirement["Requirement 4"]["residual_status"])
+        self.assertFalse(by_requirement["Requirement 5"]["blocking"])
+        self.assertEqual("routed", by_requirement["Requirement 5"]["residual_status"])
+        self.assertEqual("REQUIREMENT_COVERAGE_SHOULD_HAVE_UNROUTED", by_requirement["Requirement 6"]["code"])
+        self.assertFalse(by_requirement["Requirement 7"]["blocking"])
+        self.assertEqual("out_of_scope", by_requirement["Requirement 7"]["residual_status"])
+        self.assertEqual("partial-blocking", by_requirement["Requirement 8"]["coverage_state"])
+        self.assertEqual("REQUIREMENT_COVERAGE_COULD_HAVE_UNROUTED", by_requirement["Requirement 9"]["code"])
+        self.assertIsNone(by_requirement["Requirement 10"]["priority"])
+        self.assertFalse(by_requirement["Requirement 10"]["blocking"])
+
+    def test_stage_readiness_reports_priority_requirement_coverage(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_priority_coverage_spec(Path(tmp))
+            payload = spec_runtime.stage_readiness(spec)
+
+        requirement_coverage = payload["coverage"]["requirements"]
+        by_requirement = {item["requirement"]: item for item in requirement_coverage}
+        self.assertEqual("must-have", by_requirement["Requirement 2"]["priority"])
+        self.assertTrue(by_requirement["Requirement 2"]["blocking"])
+        self.assertEqual("should-have", by_requirement["Requirement 6"]["priority"])
+        self.assertEqual("could-have", by_requirement["Requirement 9"]["priority"])
+        self.assertEqual(4, payload["summary"]["requirement_blocking_count"])
+        gap_codes = {item["code"] for item in payload["blocking_gaps"]}
+        self.assertIn("REQUIREMENT_COVERAGE_MUST_HAVE_BLOCKING", gap_codes)
+        self.assertIn("REQUIREMENT_COVERAGE_SHOULD_HAVE_UNROUTED", gap_codes)
+        self.assertIn("REQUIREMENT_COVERAGE_COULD_HAVE_UNROUTED", gap_codes)
+
+    def test_closure_check_includes_priority_requirement_coverage_blockers(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_priority_coverage_spec(Path(tmp))
+            payload = spec_runtime.closure_check(spec)
+
+        self.assertFalse(payload["ready"])
+        self.assertEqual(10, len(payload["requirement_coverage"]))
+        blockers = [item for item in payload["blockers"] if item["code"].startswith("REQUIREMENT_COVERAGE_")]
+        self.assertEqual(4, len(blockers))
+        self.assertTrue(any(item["requirement"] == "Requirement 2" and item["priority"] == "must-have" for item in blockers))
+        self.assertTrue(any(item["requirement"] == "Requirement 6" and item["priority"] == "should-have" for item in blockers))
+        self.assertTrue(any(item["requirement"] == "Requirement 9" and item["priority"] == "could-have" for item in blockers))
+
+    def test_unlabeled_requirement_coverage_preserves_legacy_closure_behavior(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+            traceability_path = spec / "traceability.md"
+            traceability_path.write_text(
+                traceability_path.read_text(encoding="utf-8").replace(
+                    "| Requirement | Acceptance Criteria | Design Sections | Tasks | Verification | Durable Targets |",
+                    "| Requirement | Acceptance Criteria | Coverage State | Residual Destination | Design Sections | Tasks | Verification | Durable Targets |",
+                ).replace(
+                    "|-------------|---------------------|-----------------|-------|--------------|-----------------|",
+                    "|-------------|---------------------|----------------|----------------------|-----------------|-------|--------------|-----------------|",
+                ).replace(
+                    "| Requirement 1 | AC1 | `design.md#task-context` | T001 | `verification.md#quality-gates` | `docs/reference/current.md` |",
+                    "| Requirement 1 | AC1 | not-covered | none | `design.md#task-context` | T001 | `verification.md#quality-gates` | `docs/reference/current.md` |",
+                ),
+                encoding="utf-8",
+            )
+
+            payload = spec_runtime.closure_check(spec)
+
+        self.assertTrue(payload["ready"])
+        self.assertEqual("not-covered", payload["requirement_coverage"][0]["coverage_state"])
+        self.assertIsNone(payload["requirement_coverage"][0]["priority"])
+        self.assertFalse(payload["requirement_coverage"][0]["blocking"])
 
     def test_lint_spec_package_returns_summary(self):
         with tempfile.TemporaryDirectory() as tmp:

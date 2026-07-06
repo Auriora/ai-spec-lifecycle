@@ -106,7 +106,7 @@ through readiness, traceability, and closure.
 **Purpose**: Make MoSCoW priority affect requirement coverage consistently
 without changing task status semantics.
 
-- [ ] T005 Add tests for priority-aware requirement coverage dispositions.
+- [x] T005 Add tests for priority-aware requirement coverage dispositions.
   - Depends on: T004
   - Requirement: Requirement 3
   - Properties: CP-002, CP-003, CP-004
@@ -117,9 +117,9 @@ without changing task status semantics.
     partial-blocking, not-covered, out-of-scope, rejected, and
     human-superseded coverage rows.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Added phase 2 runtime classification tests. Validation passed: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime.
 
-- [ ] T006 Implement the shared requirement coverage disposition helper.
+- [x] T006 Implement the shared requirement coverage disposition helper.
   - Depends on: T005
   - Requirement: Requirement 3
   - Properties: CP-002, CP-003, CP-004
@@ -129,16 +129,23 @@ without changing task status semantics.
     destination, blockers, and non-blocking residuals while preserving legacy
     unlabeled behavior.
   - Evidence mode: implementation
-  - Evidence: Pending.
-  - [ ] T006.1 Classify `must-have` incomplete coverage as blocking unless
+  - Evidence: Implemented shared requirement_coverage_disposition helper in lifecycle/core.py to combine parsed requirement priority with Requirement To Delivery Matrix coverage state and residual destination, including blockers and non-blocking residuals while preserving unlabeled legacy behavior. Verified by PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime.
+  - [x] T006.1 Classify `must-have` incomplete coverage as blocking unless
     explicitly rejected or human-superseded.
-  - [ ] T006.2 Classify `should-have` incomplete coverage as requiring route,
+  - Evidence: must-have incomplete coverage now produces a shared requirement coverage blocker unless the row is rejected or human-superseded. Validation passed in tests.runtime.test_spec_runtime.
+  - Evidence mode: implementation
+  - [x] T006.2 Classify `should-have` incomplete coverage as requiring route,
     rationale, or accepted residual risk.
-  - [ ] T006.3 Classify `could-have` incomplete coverage as closable only when
+  - Evidence: should-have incomplete coverage now requires a route, rationale, accepted residual, rejection, supersession, or scope disposition. Validation passed in tests.runtime.test_spec_runtime.
+  - Evidence mode: implementation
+  - [x] T006.3 Classify `could-have` incomplete coverage as closable only when
     routed, rejected, or out of current scope.
-  - [ ] T006.4 Preserve existing behavior when priority is absent.
-
-- [ ] T007 Integrate priority coverage into readiness and closure outputs.
+  - Evidence: could-have incomplete coverage now closes only with an explicit route, rejection, human supersession, or scope disposition. Validation passed in tests.runtime.test_spec_runtime.
+  - Evidence mode: implementation
+  - [x] T006.4 Preserve existing behavior when priority is absent.
+  - Evidence: Unlabeled requirement rows keep legacy closure behavior and do not create requirement coverage blockers. Validation passed in tests.runtime.test_spec_runtime.
+  - Evidence mode: implementation
+- [x] T007 Integrate priority coverage into readiness and closure outputs.
   - Depends on: T006
   - Requirement: Requirement 3, Requirement 4
   - Properties: CP-002, CP-003, CP-004
@@ -148,9 +155,9 @@ without changing task status semantics.
     output include requirement priority where requirement coverage is reported;
     `closure_check` includes blockers from the shared coverage helper.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Integrated priority requirement coverage into stage_readiness coverage.requirements, readiness gap output, readiness summary counts, closure_check requirement_coverage, and closure_check blockers. Validation passed: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime.
 
-- [ ] T008 Checkpoint - Readiness and closure validation.
+- [x] T008 Checkpoint - Readiness and closure validation.
   - Depends on: T007
   - Requirement: Requirement 3
   - Files: `docs/specs/032-requirement-priority-labels/verification.md`
@@ -158,7 +165,7 @@ without changing task status semantics.
     closure behavior; legacy unlabeled fixtures still pass.
   - Validation: `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_spec_runtime`
   - Evidence mode: validation
-  - Evidence: Pending.
+  - Evidence: Phase 2 validation passed: focused runtime tests passed 139 tests, full unittest discovery passed 221 tests, spec lint passed with 0 diagnostics, stage readiness passed, package contract passed, and git diff check passed. Sync guard reported installed cache drift warnings only; source bundle parity passed.
 
 ## Phase 3: Traceability, MCP, And Agent Context
 
