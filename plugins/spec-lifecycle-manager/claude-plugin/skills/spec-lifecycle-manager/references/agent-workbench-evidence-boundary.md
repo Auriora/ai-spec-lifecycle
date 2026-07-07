@@ -101,11 +101,11 @@ Omit fields that are not applicable rather than fabricating confidence.
 
 ## Recovery Pattern
 
-When Workbench output is sparse, surprising, truncated, stale, or only
-resource-backed:
+When repository-evidence output is sparse, surprising, truncated, stale, or
+only resource-backed:
 
-1. Report the provider state precisely, for example "the Workbench query did
-   not surface detailed analytics docs."
+1. Report the provider state precisely, for example "the provider query did
+   not surface the expected subsystem docs."
 2. Check repository instructions and durable indexes such as `AGENTS.md`,
    `README.md`, `docs/README.md`, backlog, roadmap, closure logs, and archive
    indexes.

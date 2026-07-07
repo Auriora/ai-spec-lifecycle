@@ -27,7 +27,7 @@
     "Classify the request as trivial, small, spec-needed, review, or closure.",
     "Use repository governance, active spec state, durable docs, and risk level to justify the classification.",
     "For spec-needed work with broad durable-doc impact, stale-doc risk, imported durable sources, or resumed-spec drift, inspect the concrete authority risk before implementation readiness; recommend canonical-context.md or an explicit canonical-context import plan when useful, but keep the diagnostic advisory unless repository policy makes it blocking.",
-    "When Agent Workbench or another repo-evidence provider returns sparse, low-signal, stale, truncated, or surprising routing output, treat it as inconclusive routing evidence. Pivot to repository instructions, durable indexes, targeted file inventory, and direct reads before making absence, drift, implementation, or root-cause claims.",
+    "When a repository-evidence provider returns sparse, low-signal, stale, truncated, or surprising routing output, treat it as inconclusive routing evidence. Pivot to repository instructions, durable indexes, targeted file inventory, and direct reads before making absence, drift, implementation, or root-cause claims.",
     "Route trivial and small work to proportionate validation; route behavior, cross-module, packaging, governance, or ambiguous work to an active or new spec."
   ],
   "return_format": [

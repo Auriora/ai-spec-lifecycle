@@ -24,7 +24,7 @@
     "Use traceability as the first lookup point.",
     "When canonical-context.md exists, include it in must-read context and treat spec-canonical working sources as the first implementation context while preserving always-canonical external authorities.",
     "Verify referenced requirements, acceptance criteria, design sections, verification expectations, durable targets, and open decisions against source artifacts.",
-    "When Agent Workbench or another repo-evidence provider misses expected docs, files, symbols, or contracts, do not treat that as absence evidence. Record the sparse provider result as a gap and direct-read linked artifacts, durable indexes, and targeted source inventories.",
+    "When a repository-evidence provider misses expected docs, files, symbols, or contracts, do not treat that as absence evidence. Record the sparse provider result as a gap and direct-read linked artifacts, durable indexes, and targeted source inventories.",
     "Report missing or stale matrix rows as gaps before implementation."
   ],
   "return_format": [
