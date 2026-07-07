@@ -880,6 +880,20 @@ For ordinary spec authoring writes, the wrapper can also emit concise
 next-action guidance even when there are no lint errors. It does not block
 edits, modify files, update task evidence, or install itself.
 
+To avoid repeating the same advisory output when a client emits duplicate
+post-write events, the wrapper keeps a short debounce cache for identical
+post-write file states. The default window is 45 seconds. The cache key includes
+the repository, hook name, spec package, changed file set, and changed file
+content fingerprint, so a new edit in the same spec package is checked again
+instead of being hidden by the debounce.
+
+Debounce settings:
+
+| Environment variable | Default | Behavior |
+| --- | --- | --- |
+| `SPEC_LIFECYCLE_HOOK_DEBOUNCE_SECONDS` | `45` | Set to `0` to disable duplicate-event debounce. |
+| `SPEC_LIFECYCLE_HOOK_DEBOUNCE_PATH` | Next to the hook log | Override the JSON cache path used for duplicate-event suppression. |
+
 Recommended global Codex hook entry:
 
 ```json

@@ -57,10 +57,15 @@ def write_valid_spec(repo: Path, relative: str = "docs/specs/001-valid") -> None
     )
 
 
-def run_hook(payload: dict[str, object]) -> subprocess.CompletedProcess[str]:
+def run_hook(
+    payload: dict[str, object],
+    extra_env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
     with tempfile.TemporaryDirectory() as tmp:
         env = os.environ.copy()
         env["SPEC_LIFECYCLE_HOOK_LOG"] = str(Path(tmp) / "hook.log.jsonl")
+        if extra_env:
+            env.update(extra_env)
         return subprocess.run(
             [sys.executable, str(HOOK)],
             input=json.dumps(payload),
@@ -69,6 +74,24 @@ def run_hook(payload: dict[str, object]) -> subprocess.CompletedProcess[str]:
             check=True,
             env=env,
         )
+
+
+def run_hook_with_log(
+    payload: dict[str, object],
+    log_path: Path,
+    debounce_path: Path,
+) -> subprocess.CompletedProcess[str]:
+    env = os.environ.copy()
+    env["SPEC_LIFECYCLE_HOOK_LOG"] = str(log_path)
+    env["SPEC_LIFECYCLE_HOOK_DEBOUNCE_PATH"] = str(debounce_path)
+    return subprocess.run(
+        [sys.executable, str(HOOK)],
+        input=json.dumps(payload),
+        text=True,
+        capture_output=True,
+        check=True,
+        env=env,
+    )
 
 
 class CodexSpecLifecycleHookTests(unittest.TestCase):
@@ -144,6 +167,93 @@ class CodexSpecLifecycleHookTests(unittest.TestCase):
 
         self.assertIn("Next spec artifact: traceability.md", context)
         self.assertEqual("", result.stderr)
+
+    def test_hook_debounces_repeated_spec_edits(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            repo = tmp_path / "repo"
+            repo.mkdir()
+            (repo / ".git").mkdir()
+            write_valid_spec(repo)
+            log_path = tmp_path / "hook.log.jsonl"
+            debounce_path = tmp_path / "debounce.json"
+            payload = {
+                "hook_event_name": "PostToolUse",
+                "cwd": str(repo),
+                "tool_name": "apply_patch",
+                "tool_response": {
+                    "output": "Updated the following files:\nM docs/specs/001-valid/tasks.md\n"
+                },
+            }
+
+            first = run_hook_with_log(payload, log_path, debounce_path)
+            second = run_hook_with_log(payload, log_path, debounce_path)
+            records = [json.loads(line) for line in log_path.read_text(encoding="utf-8").splitlines()]
+
+        first_data = json.loads(first.stdout)
+        self.assertIn("Spec lifecycle advisory guidance.", first_data["hookSpecificOutput"]["additionalContext"])
+        self.assertEqual("", second.stdout)
+        self.assertEqual("", second.stderr)
+        self.assertEqual("skipped_debounced", records[-1]["status"])
+        self.assertEqual(
+            [
+                {"hook": "spec-file-changed", "changed_files": ["docs/specs/001-valid/tasks.md"]},
+                {"hook": "task-checkbox-changed", "changed_files": ["docs/specs/001-valid/tasks.md"]},
+            ],
+            records[-1]["skipped_debounced"],
+        )
+
+    def test_hook_rechecks_when_spec_content_changes_inside_debounce_window(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            repo = tmp_path / "repo"
+            repo.mkdir()
+            (repo / ".git").mkdir()
+            write_valid_spec(repo)
+            log_path = tmp_path / "hook.log.jsonl"
+            debounce_path = tmp_path / "debounce.json"
+            payload = {
+                "hook_event_name": "PostToolUse",
+                "cwd": str(repo),
+                "tool_name": "apply_patch",
+                "tool_response": {
+                    "output": "Updated the following files:\nM docs/specs/001-valid/tasks.md\n"
+                },
+            }
+
+            first = run_hook_with_log(payload, log_path, debounce_path)
+            (repo / "docs/specs/001-valid/tasks.md").write_text(
+                "# Tasks\n\n- [z] T001 Broken state.\n",
+                encoding="utf-8",
+            )
+            second = run_hook_with_log(payload, log_path, debounce_path)
+            records = [json.loads(line) for line in log_path.read_text(encoding="utf-8").splitlines()]
+
+        self.assertIn("Spec lifecycle advisory guidance.", json.loads(first.stdout)["hookSpecificOutput"]["additionalContext"])
+        self.assertIn("Spec lifecycle advisory guidance.", json.loads(second.stdout)["hookSpecificOutput"]["additionalContext"])
+        self.assertRegex(second.stdout, r"\b(ERROR|WARN)\b")
+        self.assertEqual("checked", records[-1]["status"])
+
+    def test_hook_debounce_can_be_disabled(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            repo.mkdir()
+            (repo / ".git").mkdir()
+            write_valid_spec(repo)
+            payload = {
+                "hook_event_name": "PostToolUse",
+                "cwd": str(repo),
+                "tool_name": "apply_patch",
+                "tool_response": {
+                    "output": "Updated the following files:\nM docs/specs/001-valid/tasks.md\n"
+                },
+            }
+
+            first = run_hook(payload, {"SPEC_LIFECYCLE_HOOK_DEBOUNCE_SECONDS": "0"})
+            second = run_hook(payload, {"SPEC_LIFECYCLE_HOOK_DEBOUNCE_SECONDS": "0"})
+
+        self.assertIn("Spec lifecycle advisory guidance.", json.loads(first.stdout)["hookSpecificOutput"]["additionalContext"])
+        self.assertIn("Spec lifecycle advisory guidance.", json.loads(second.stdout)["hookSpecificOutput"]["additionalContext"])
 
     def test_hook_reports_advisory_findings_for_invalid_spec(self):
         with tempfile.TemporaryDirectory() as tmp:

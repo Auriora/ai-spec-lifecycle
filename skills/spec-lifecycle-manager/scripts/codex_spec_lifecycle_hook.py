@@ -6,8 +6,10 @@ from __future__ import annotations
 import json
 import os
 import re
+import hashlib
 import subprocess
 import sys
+import time
 from json import JSONDecodeError
 from pathlib import Path
 from typing import Any
@@ -30,6 +32,7 @@ WRITE_STYLE_TOOL_NAMES = {
 WRITE_STYLE_PATH_KEYS = ("path", "file_path", "filepath", "filename", "target_file", "notebook_path")
 HOOK_TIMEOUT_SECONDS = 5
 MAX_DIAGNOSTICS = 6
+DEFAULT_DEBOUNCE_SECONDS = 45
 
 
 def read_payload() -> dict[str, Any] | None:
@@ -54,6 +57,47 @@ def append_log(record: dict[str, Any]) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(record, sort_keys=True) + "\n")
+    except OSError:
+        return
+
+
+def debounce_cache_path() -> Path:
+    configured = os.environ.get("SPEC_LIFECYCLE_HOOK_DEBOUNCE_PATH")
+    if configured:
+        return Path(configured).expanduser()
+    log_path = Path(os.environ.get("SPEC_LIFECYCLE_HOOK_LOG", str(DEFAULT_LOG_PATH))).expanduser()
+    return log_path.with_name(f"{log_path.name}.debounce.json")
+
+
+def debounce_seconds() -> float:
+    raw = os.environ.get("SPEC_LIFECYCLE_HOOK_DEBOUNCE_SECONDS", str(DEFAULT_DEBOUNCE_SECONDS))
+    try:
+        return max(0.0, float(raw))
+    except ValueError:
+        return float(DEFAULT_DEBOUNCE_SECONDS)
+
+
+def read_debounce_cache() -> dict[str, float]:
+    try:
+        data = json.loads(debounce_cache_path().read_text(encoding="utf-8"))
+    except (JSONDecodeError, OSError):
+        return {}
+    if not isinstance(data, dict):
+        return {}
+    cache: dict[str, float] = {}
+    for key, value in data.items():
+        if isinstance(key, str) and isinstance(value, (int, float)):
+            cache[key] = float(value)
+    return cache
+
+
+def write_debounce_cache(cache: dict[str, float], now: float, window_seconds: float) -> None:
+    prune_before = now - max(window_seconds * 8, 300)
+    pruned = {key: timestamp for key, timestamp in cache.items() if timestamp >= prune_before}
+    path = debounce_cache_path()
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(pruned, sort_keys=True), encoding="utf-8")
     except OSError:
         return
 
@@ -155,6 +199,51 @@ def is_spec_file(path: str) -> bool:
     relative = Path(path)
     parts = relative.parts
     return relative.suffix == ".md" and parts and parts[0] == "docs" and "specs" in parts and parts.index("specs") + 1 < len(parts)
+
+
+def spec_scope_for_file(path: str) -> str | None:
+    relative = Path(path)
+    parts = relative.parts
+    if not parts or "specs" not in parts:
+        return None
+    index = parts.index("specs")
+    if index + 1 >= len(parts):
+        return None
+    return Path(*parts[: index + 2]).as_posix()
+
+
+def file_state_fingerprint(repo_root: Path, changed_files: list[str]) -> str:
+    digest = hashlib.sha256()
+    for changed in sorted(dict.fromkeys(changed_files)):
+        digest.update(changed.encode("utf-8"))
+        path = (repo_root / changed).resolve()
+        try:
+            data = path.read_bytes()
+        except OSError:
+            digest.update(b"\0missing")
+        else:
+            digest.update(b"\0")
+            digest.update(hashlib.sha256(data).hexdigest().encode("ascii"))
+    return digest.hexdigest()
+
+
+def debounce_keys(repo_root: Path, hook_name: str, changed_files: list[str]) -> list[str]:
+    fingerprint = file_state_fingerprint(repo_root, changed_files)
+    keys: list[str] = []
+    for changed in changed_files:
+        scope = spec_scope_for_file(changed) if is_spec_file(changed) else None
+        if scope is None:
+            continue
+        key = f"{repo_root}|{hook_name}|{scope}|{fingerprint}"
+        if key not in keys:
+            keys.append(key)
+    return keys
+
+
+def recently_checked(keys: list[str], cache: dict[str, float], now: float, window_seconds: float) -> bool:
+    if not keys or window_seconds <= 0:
+        return False
+    return all(now - cache.get(key, 0.0) < window_seconds for key in keys)
 
 
 def is_task_file(path: str) -> bool:
@@ -316,7 +405,15 @@ def main() -> int:
         append_log({"status": "skipped_no_spec_lifecycle_targets", "repo_root": str(repo_root), "changed_files": changed_files})
         return 0
     results: list[dict[str, Any]] = []
+    now = time.time()
+    window_seconds = debounce_seconds()
+    cache = read_debounce_cache() if window_seconds > 0 else {}
+    skipped_debounced: list[dict[str, Any]] = []
     for hook_name, files in commands:
+        keys = debounce_keys(repo_root, hook_name, files)
+        if recently_checked(keys, cache, now, window_seconds):
+            skipped_debounced.append({"hook": hook_name, "changed_files": files})
+            continue
         try:
             results.append(run_runtime_hook(repo_root, hook_name, files))
         except (OSError, subprocess.TimeoutExpired) as exc:
@@ -334,8 +431,22 @@ def main() -> int:
                     "summary": {"error": 0, "warn": 1, "info": 0},
                 }
             )
+        for key in keys:
+            cache[key] = now
+    if window_seconds > 0:
+        write_debounce_cache(cache, now, window_seconds)
     context = build_context(results)
-    append_log({"status": "checked", "repo_root": str(repo_root), "changed_files": changed_files, "results": results})
+    status = "skipped_debounced" if skipped_debounced and not results else "checked"
+    append_log(
+        {
+            "status": status,
+            "repo_root": str(repo_root),
+            "changed_files": changed_files,
+            "results": results,
+            "skipped_debounced": skipped_debounced,
+            "debounce_seconds": window_seconds,
+        }
+    )
     if context:
         emit_context(context)
     return 0
