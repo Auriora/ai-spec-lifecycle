@@ -182,7 +182,12 @@ TASK_STATE_MARKERS = {
 RUNNABLE_TASK_STATUSES = {"pending", "in_progress", "partial"}
 TASK_LINE_RE = re.compile(r"^\s*-\s+\[([ xX~/>\-?!Yy*eE])\]\s+(T\d{3}(?:\.\d+)?)\b(.*)$")
 UNRESOLVED_EVIDENCE_RE = re.compile(
-    r"\b(pending|partial|follow[- ]?up|blocked|future|review|not verified|not run|todo|tbd)\b",
+    r"(^\s*(?:pending|partial|blocked|todo|tbd)\b|"
+    r"\b(?:not verified|not run|not executed|unable to run)\b|"
+    r"\b(?:incomplete|unfinished|unresolved)\b|"
+    r"\bfollow[- ]?up remains\b|"
+    r"\bremaining work\b|"
+    r"\b(?:needs?|requires?)\b.{0,80}\b(?:before|to)\b.{0,80}\b(?:complete|completion|close|closure)\b)",
     re.IGNORECASE,
 )
 COMPLETION_LIMITED_EVIDENCE_MODES = {"planner", "dry_run", "routing", "no_op", "blocked_output", "contract", "contract_only"}
@@ -778,6 +783,20 @@ def evidence_mode_allows_completion(task: Task, evidence_mode: str) -> bool:
     return any(variant in acceptance for variant in variants)
 
 
+def evidence_mode_matches_task_kind(task: Task) -> bool:
+    mode = task.evidence_mode
+    if not mode:
+        return True
+    if evidence_mode_allows_completion(task, mode):
+        return True
+    context = " ".join([task.title, task.acceptance, " ".join(task.files)]).lower()
+    if mode == "contract":
+        return any(term in context for term in ["contract", "interface", "seam", "sign-off", "signoff"])
+    if mode == "planner":
+        return any(term in context for term in ["design", "requirements", "traceability", "spec", "plan", "planning", ".md", "docs/"])
+    return False
+
+
 def task_audit_finding(
     classification: str,
     task: Task,
@@ -845,7 +864,7 @@ def task_state_findings(task: Task, by_id: dict[str, Task], spec_path: Path) -> 
                 task.evidence,
             )
         )
-    if task.complete and task.evidence_mode in {"planner", "dry_run", "routing", "contract"}:
+    if task.complete and task.evidence_mode in {"planner", "dry_run", "routing", "contract"} and not evidence_mode_matches_task_kind(task):
         findings.append(
             task_audit_finding(
                 "plan_only_completion",
@@ -3899,6 +3918,10 @@ def classify_evidence_text(evidence: str, record: dict[str, Any] | None = None) 
     if EVIDENCE_WAIVER_RE.search(text):
         signals.append("waiver")
         return "waived", signals, "Evidence records an explicit waiver or accepted risk."
+    concrete = EVIDENCE_CONCRETE_RE.findall(text)
+    if concrete:
+        signals.extend(sorted({item.strip("`")[:80] for item in concrete if item}))
+        return "concrete", signals, "Evidence cites concrete commands, paths, commits, or result counts."
     if EVIDENCE_DEFERRED_RE.search(text):
         signals.append("deferred")
         return "deferred", signals, "Evidence records deferred or follow-up validation."
@@ -3910,10 +3933,6 @@ def classify_evidence_text(evidence: str, record: dict[str, Any] | None = None) 
     if EVIDENCE_NOT_RUN_RE.search(text):
         signals.append("not_run")
         return "not_run", signals, "Evidence says validation was not run."
-    concrete = EVIDENCE_CONCRETE_RE.findall(text)
-    if concrete:
-        signals.extend(sorted({item.strip("`")[:80] for item in concrete if item}))
-        return "concrete", signals, "Evidence cites concrete commands, paths, commits, or result counts."
     if EVIDENCE_VAGUE_RE.search(text) or re.search(r"\b(done|complete|completed|implemented|passed|fixed)\b", text, re.IGNORECASE):
         signals.append("vague_completion")
         return "vague", signals, "Evidence uses completion wording without concrete proof."
@@ -3956,7 +3975,7 @@ def verification_evidence_records(spec_path: Path) -> list[dict[str, Any]]:
         if not in_log:
             continue
         stripped = line.strip()
-        if not stripped or stripped.startswith("|---") or re.match(r"^\|\s*(Date|Evidence|Command|Check)\b", stripped, re.IGNORECASE):
+        if not stripped or stripped.startswith("|---") or re.match(r"^\|\s*(Date|Evidence|Command|Check|Req|Requirement|Property)\b", stripped, re.IGNORECASE):
             continue
         evidence = ""
         if stripped.startswith("|"):

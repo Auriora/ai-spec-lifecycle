@@ -1035,6 +1035,40 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertTrue(any(item["code"] == "EVIDENCE_MISSING" for item in payload["diagnostics"]))
         self.assertTrue(any(item["code"] == "EVIDENCE_NOT_RUN" for item in payload["diagnostics"]))
 
+    def test_evidence_quality_prefers_concrete_proof_over_incidental_routing_language(self):
+        cases = [
+            "`vitest run` 459/459 pass. FOLLOW-UP: decide later whether legacy rows should be purged.",
+            "Previous validation was not run before this repair; `python3 -m unittest tests/runtime/test_spec_runtime.py` passed 141 tests now.",
+            "`pytest tests/foo.py` passed 12 tests. Future cleanup can tighten the schema.",
+        ]
+
+        for evidence in cases:
+            with self.subTest(evidence=evidence):
+                classification, signals, _reason = spec_runtime.classify_evidence_text(evidence)
+                self.assertEqual("concrete", classification)
+                self.assertTrue(signals)
+
+    def test_evidence_quality_skips_verification_table_header_rows(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_evidence_quality_spec(Path(tmp))
+            verification = spec / "verification.md"
+            verification.write_text(
+                verification.read_text(encoding="utf-8").replace(
+                    "| Evidence | Result |\n|----------|--------|",
+                    "| Req | Evidence | Validation |\n|-----|----------|------------|",
+                ),
+                encoding="utf-8",
+            )
+
+            payload = spec_runtime.evidence_quality_check(spec)
+
+        weak_headers = [
+            item
+            for item in payload["records"]
+            if item["source_type"] == "verification" and item["classification"] == "weak" and "Req | Evidence | Validation" in item["evidence"]
+        ]
+        self.assertEqual([], weak_headers)
+
     def test_evidence_quality_cli_outputs_json(self):
         with tempfile.TemporaryDirectory() as tmp:
             spec = write_evidence_quality_spec(Path(tmp))
@@ -2660,6 +2694,71 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertIn("candidate_complete", classes)
         self.assertIn("metadata_missing", classes)
         self.assertIn("non_pending_marker_with_pending_evidence", classes)
+
+    def test_task_state_audit_allows_non_blocking_review_and_follow_up_evidence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            spec = write_complete_spec(repo)
+            (spec / "tasks.md").write_text(
+                "\n".join(
+                    [
+                        "# Tasks",
+                        "",
+                        "- [x] T001 Completed after interface cleanup review.",
+                        "  - Evidence: Complete after interface cleanup review; focused tests pass.",
+                        "",
+                        "- [x] T002 Completed with downstream routing.",
+                        "  - Evidence: Opportunity embedding remains routed to spec `001`; this task is complete.",
+                        "",
+                        "- [x] T003 Completed with non-blocking follow-up.",
+                        "  - Evidence: Complete. FOLLOW-UP (design question for the user, not resolved here): decide whether legacy rows should be purged; deferred, not deleted unilaterally.",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            payload = spec_runtime.task_state_audit(spec)
+
+        findings = [item for item in payload["findings"] if item["classification"] == "contradictory_completion_evidence"]
+        self.assertEqual([], findings)
+
+    def test_task_state_audit_allows_planner_and_contract_evidence_for_matching_task_kind(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            spec = write_complete_spec(repo)
+            (spec / "tasks.md").write_text(
+                "\n".join(
+                    [
+                        "# Tasks",
+                        "",
+                        "- [x] T001 Pin interface contract.",
+                        "  - Files: `docs/specs/001-example/design.md`",
+                        "  - Acceptance: Interface contract is documented.",
+                        "  - Evidence mode: contract",
+                        "  - Evidence: `design.md#Interface contract` records the agreed shape.",
+                        "",
+                        "- [x] T002 Write low-level design addendum.",
+                        "  - Files: `docs/specs/001-example/design.md`",
+                        "  - Acceptance: Design section is completed.",
+                        "  - Evidence mode: planner",
+                        "  - Evidence: `design.md#Low-Level Design` records the module location.",
+                        "",
+                        "- [x] T003 Implement runtime behavior.",
+                        "  - Files: `skills/spec-lifecycle-manager/scripts/lifecycle/core.py`",
+                        "  - Acceptance: Runtime behavior is implemented.",
+                        "  - Evidence mode: contract",
+                        "  - Evidence: Contract drafted.",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            payload = spec_runtime.task_state_audit(spec)
+
+        by_task = {item["task_id"]: item["classification"] for item in payload["findings"] if item["classification"] == "plan_only_completion"}
+        self.assertNotIn("T001", by_task)
+        self.assertNotIn("T002", by_task)
+        self.assertEqual("plan_only_completion", by_task["T003"])
 
     def test_task_state_audit_reports_cross_spec_dependency_untrusted(self):
         with tempfile.TemporaryDirectory() as tmp:
