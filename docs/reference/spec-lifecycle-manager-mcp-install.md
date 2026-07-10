@@ -102,8 +102,11 @@ POSIX shell, so no `bash`, Git Bash, WSL, MSYS2, or Cygwin is required on any OS
 
 Because no single Python command name exists on every OS (`python3` is usually
 absent on Windows; `py` is absent on macOS/Linux; `python` is guaranteed
-nowhere), the interpreter is resolved explicitly at install time and pinned into
-the installed `.mcp.json`/`hooks.json`. Resolution order:
+nowhere), the interpreter is resolved explicitly at install time. The installed
+`.mcp.json` launches the portable Node `mcp-launch.mjs` shim without setting
+`cwd`; the resolved Python command is passed to the shim through
+`SPEC_LIFECYCLE_PYTHON`. Hooks are pinned directly in `hooks.json`. Resolution
+order:
 
 | Platform | Order (first that reports Python ≥ 3.10 wins) |
 |----------|----------------------------------------------|
@@ -119,10 +122,10 @@ launch.
 ### Marketplace (no-installer) default
 
 When the plugin is added directly from a marketplace, no installer runs, so the
-shipped `.mcp.json`/`hooks.json` ship the portable default command `python`.
-Ensure a **Python 3.10+ interpreter named `python` is on PATH**, or set
-`SPEC_LIFECYCLE_PYTHON`, for that zero-config path. The npm/installer path does
-not need this — it pins the host-resolved interpreter.
+shipped `.mcp.json` starts `node ${PLUGIN_ROOT}/mcp-launch.mjs` and the shim
+uses `python3` by default. Ensure a **Python 3.10+ interpreter named `python3`
+is on PATH**, or set `SPEC_LIFECYCLE_PYTHON`, for that zero-config path. The
+npm/installer path does not need this — it pins the host-resolved interpreter.
 
 ## Install Flow
 
@@ -145,7 +148,9 @@ The installer:
 - removes the old managed host-level MCP config block when present;
 - removes the old managed global advisory hook when present;
 - copies the self-contained plugin to the local marketplace plugin directory;
-- pins the resolved interpreter into the installed `.mcp.json`/`hooks.json`;
+- materializes the installed `.mcp.json` to the local launcher path, leaves
+  `cwd` unset so the MCP session cwd remains the default repo root, and pins the
+  resolved interpreter into the launcher environment and `hooks.json`;
 - updates the local marketplace entry; and
 - runs `codex plugin add spec-lifecycle-manager@<marketplace-name>`
   (skip with `--skip-plugin-add`).
@@ -307,16 +312,16 @@ with no flag required. Use `claude plugin list` to confirm it is installed and
 enabled, and `claude plugin uninstall spec-lifecycle-manager@ai-spec-lifecycle`
 to remove it.
 
-The Claude plugin wrapper starts the MCP server from its own plugin root in exec
-form (`command` + `args`), using `${CLAUDE_PLUGIN_ROOT}` so the path resolves
-correctly regardless of the caller's working directory or install location. The
-shipped default `command` is `python`; the installer pins the host-resolved
-interpreter (e.g. `py` with arg `-3` on Windows, `python3` on macOS/Linux):
+The Claude plugin wrapper starts the MCP server through the same portable
+launcher used by Codex, using `${CLAUDE_PLUGIN_ROOT}` so the path resolves
+correctly regardless of install location. The launcher preserves the caller's
+working directory as the default repo root and then starts the bundled Python
+server. The shipped default launcher interpreter is `python3`; set
+`SPEC_LIFECYCLE_PYTHON` when a different Python command is required:
 
 ```jsonc
-// shipped default; installer pins the resolved interpreter
-{ "command": "python",
-  "args": ["${CLAUDE_PLUGIN_ROOT}/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py"] }
+{ "command": "node",
+  "args": ["${CLAUDE_PLUGIN_ROOT}/mcp-launch.mjs"] }
 ```
 
 After changing the plugin wrapper, skill, MCP config, or hooks, run
@@ -330,20 +335,20 @@ A self-contained walkthrough for installing the Claude plugin on Windows.
 **Prerequisites**
 
 1. **Claude Code** installed (the `claude` command works in your terminal).
-2. **Python 3.10+ with `python` on PATH.** Install from
+2. **Python 3.10+ with `python3` on PATH**, or set `SPEC_LIFECYCLE_PYTHON`.
+   Install from
    [python.org](https://www.python.org/downloads/) and check **"Add python.exe
    to PATH"** during setup, then confirm in a *new* terminal:
 
    ```powershell
-   python --version
+   python3 --version
    ```
 
    It must print `3.10` or higher. The zero-installer marketplace path uses the
-   shipped static `command: python`, so a working `python` (not just the `py`
-   launcher) must resolve. If `python` opens the Microsoft Store, disable
-   **Settings → Apps → App execution aliases → python.exe** or reinstall Python
-   with the PATH option. (Node.js is not required for the Claude path — only for
-   the npm/Codex installer.)
+   Node launcher plus `python3` by default. If your Windows install only exposes
+   the `py` launcher, set `SPEC_LIFECYCLE_PYTHON=py -3`. Node.js is required for
+   the MCP launcher; hooks still use the Python hook command configured in the
+   plugin.
 
 **Install** (one command each, no manual download):
 
@@ -407,7 +412,7 @@ Use this checklist in this repository after install, sync, or reload:
 | Check | Expected evidence |
 |-------|-------------------|
 | Plugin validates | `plugin-creator` validation passes for `plugins/spec-lifecycle-manager`. |
-| Plugin is self-contained | `skills/`, `.mcp.json`, `hooks/hooks.json`, scripts, prompts, and references exist under the plugin root. |
+| Plugin is self-contained | `skills/`, `.mcp.json`, `mcp-launch.mjs`, `hooks/hooks.json`, scripts, prompts, and references exist under the plugin root. |
 | MCP tools visible after reload | Codex exposes plugin-scoped `spec-lifecycle-manager` MCP tools. |
 | Server starts | `initialize` returns server name `spec-lifecycle-manager`. |
 | Spec scan works | `scan_specs` returns repo-relative paths and the expected active-spec count when `repo_root` is supplied or inferred. |
@@ -419,8 +424,8 @@ Use this checklist in this repository after install, sync, or reload:
 | Retired migrated scripts are absent | `sync-guard` and `closure_check` report no migrated-script drift for source, bundled plugin copies, or installed cache. |
 | Package contract validates | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .` returns no diagnostics for npm contract metadata, required package files, source/bundle parity, and provenance. |
 | npm tarball contains payload | `npm pack --dry-run --json` includes `package.json`, the npm installer bin, npm package contract, existing installer script, and plugin bundle. |
-| Claude plugin validates | Package tests confirm the Claude manifest, MCP config, hook config, skill, and runtime script are bundled under `plugins/spec-lifecycle-manager/claude-plugin/`. |
-| Claude plugin is in npm payload | `npm pack --dry-run --json` includes the Claude plugin manifest, `.mcp.json`, hooks, skill, and MCP runtime script. |
+| Claude plugin validates | Package tests confirm the Claude manifest, MCP config, launcher, hook config, skill, and runtime script are bundled under `plugins/spec-lifecycle-manager/claude-plugin/`. |
+| Claude plugin is in npm payload | `npm pack --dry-run --json` includes the Claude plugin manifest, `.mcp.json`, launcher, hooks, skill, and MCP runtime script. |
 | No old standalone skill remains | `~/.codex/skills/spec-lifecycle-manager/` is absent after installer cleanup. |
 | No old managed host MCP remains | `~/.codex/config.toml` does not contain the old installer-managed `mcp_servers.spec-lifecycle-manager` block. |
 

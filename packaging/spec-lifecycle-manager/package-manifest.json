@@ -8,7 +8,7 @@
     "npm_publish_status": "pack-ready-not-published"
   },
   "installer": "packaging/spec-lifecycle-manager/installer.mjs",
-  "entrypoint": "plugin-bundled mcpServers entry: plugins/spec-lifecycle-manager/.mcp.json",
+  "entrypoint": "plugin-bundled MCP launcher: plugins/spec-lifecycle-manager/mcp-launch.mjs via plugins/spec-lifecycle-manager/.mcp.json",
   "dependency_install": {
     "python": ">=3.10",
     "install_command": "none",

@@ -121,9 +121,13 @@ python3 plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/spe
 ```
 
 The Codex plugin defines the installed MCP server in
-`plugins/spec-lifecycle-manager/.mcp.json`. Direct CLI invocation is for local
-validation, CI, or MCP debugging. The first optional argument is the repository
-root whose specs should be exposed.
+`plugins/spec-lifecycle-manager/.mcp.json` through the portable
+`mcp-launch.mjs` shim. Plugin MCP config must not set `cwd`: the MCP launch cwd
+is the target repository, and the shim forwards it as
+`SPEC_LIFECYCLE_DEFAULT_REPO_ROOT` while resolving the bundled Python server
+from the plugin root. Direct CLI invocation is for local validation, CI, or MCP
+debugging. The first optional argument, or `--repo-root`, is the repository root
+whose specs should be exposed.
 
 ### MCP-First Usage
 
@@ -520,10 +524,11 @@ inventory for the bound repository. A repository override is used only when
 MCP tool and resource payloads normalize repository paths for client display:
 paths inside the target repository are returned relative to that repository,
 and `repo_root` is reported as `.`. The server must not expose the plugin load
-path or installed cache path as spec inventory. If the plugin launcher starts
-the server without an explicit repository argument, it can set
-`SPEC_LIFECYCLE_REPO_ROOT`, `CODEX_REPO_ROOT`, `CODEX_WORKSPACE_ROOT`,
-`CODEX_WORKSPACE`, or `WORKSPACE_ROOT` so resource reads such as
+path or installed cache path as spec inventory. Plugin launchers should leave
+`cwd` unset and set `SPEC_LIFECYCLE_DEFAULT_REPO_ROOT` from the MCP launch cwd.
+Fixed-target integrations may set `SPEC_LIFECYCLE_REPO_ROOT`,
+`CODEX_REPO_ROOT`, `CODEX_WORKSPACE_ROOT`, `CODEX_WORKSPACE`, or
+`WORKSPACE_ROOT`, or pass `--repo-root`, so resource reads such as
 `specs://active` bind to the workspace instead of the plugin directory.
 JSON resources include a `resource_binding` object with the resource URI,
 repo-root binding, and path policy so clients can explain which workspace was

@@ -874,7 +874,7 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertEqual(".", payload["resource_binding"]["repo_root"])
         self.assertNotIn(str(repo), content["text"])
 
-    def test_resources_use_pwd_when_launched_from_plugin_directory(self):
+    def test_resources_use_launcher_default_root_when_launched_from_plugin_directory(self):
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
             repo = base / "target"
@@ -886,7 +886,7 @@ class SpecMcpServerTests(unittest.TestCase):
             [response] = self.send(
                 rpc(1, "resources/read", {"uri": "specs://active"}),
                 root=None,
-                env={"PWD": str(repo)},
+                env={"SPEC_LIFECYCLE_DEFAULT_REPO_ROOT": str(repo), "PWD": str(plugin)},
                 process_cwd=plugin,
             )
 
@@ -896,6 +896,34 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertEqual("docs/specs/001-current", payload["specs"][0]["path"])
         self.assertEqual(".", payload["resource_binding"]["repo_root"])
         self.assertNotIn(str(repo), content["text"])
+
+    def test_server_repo_root_flag_overrides_launcher_default(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            env_repo = base / "env-target"
+            arg_repo = base / "arg-target"
+            env_repo.mkdir()
+            arg_repo.mkdir()
+            (env_repo / ".git").mkdir()
+            (arg_repo / ".git").mkdir()
+            write_current_spec(env_repo, "docs/specs/001-env")
+            write_current_spec(arg_repo, "docs/specs/002-arg")
+
+            command = [sys.executable, str(SERVER), "--repo-root", str(arg_repo)]
+            completed = subprocess.run(
+                command,
+                input=json.dumps(rpc(1, "resources/read", {"uri": "specs://active"})) + "\n",
+                check=True,
+                capture_output=True,
+                text=True,
+                env={**os.environ, "SPEC_LIFECYCLE_DEFAULT_REPO_ROOT": str(env_repo)},
+                cwd=env_repo,
+            )
+
+        [response] = [json.loads(line) for line in completed.stdout.splitlines() if line.strip()]
+        content = response["result"]["contents"][0]
+        payload = json.loads(content["text"])
+        self.assertEqual("docs/specs/002-arg", payload["specs"][0]["path"])
 
     def test_archive_index_tool_and_resource(self):
         responses = self.send(

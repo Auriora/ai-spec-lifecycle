@@ -16,6 +16,17 @@ function tempHomes() {
   return { base, home: path.join(base, "home"), mkt: path.join(base, "mkt") };
 }
 
+async function withPythonOverride(callback, value = "python3") {
+  const prev = process.env.SPEC_LIFECYCLE_PYTHON;
+  process.env.SPEC_LIFECYCLE_PYTHON = value;
+  try {
+    return await callback();
+  } finally {
+    if (prev === undefined) delete process.env.SPEC_LIFECYCLE_PYTHON;
+    else process.env.SPEC_LIFECYCLE_PYTHON = prev;
+  }
+}
+
 test("--help returns 0", async () => {
   assert.equal(await install(["--help"]), 0);
 });
@@ -27,12 +38,12 @@ test("unknown option returns 2", async () => {
 test("real install copies the plugin tree and registers the marketplace", async () => {
   const { base, home, mkt } = tempHomes();
   try {
-    const code = await install([
-      "--source", repoRoot,
-      "--codex-home", home,
-      "--marketplace-root", mkt,
-      "--skip-plugin-add",
-    ]);
+    const code = await withPythonOverride(() => install([
+        "--source", repoRoot,
+        "--codex-home", home,
+        "--marketplace-root", mkt,
+        "--skip-plugin-add",
+      ]));
     assert.equal(code, 0);
 
     // Plugin tree copied into the Codex home and the marketplace root.
@@ -62,13 +73,13 @@ test("real install copies the plugin tree and registers the marketplace", async 
 test("--skip-marketplace leaves the marketplace untouched", async () => {
   const { base, home, mkt } = tempHomes();
   try {
-    const code = await install([
-      "--source", repoRoot,
-      "--codex-home", home,
-      "--marketplace-root", mkt,
-      "--skip-plugin-add",
-      "--skip-marketplace",
-    ]);
+    const code = await withPythonOverride(() => install([
+        "--source", repoRoot,
+        "--codex-home", home,
+        "--marketplace-root", mkt,
+        "--skip-plugin-add",
+        "--skip-marketplace",
+      ]));
     assert.equal(code, 0);
     assert.ok(!fs.existsSync(path.join(mkt, ".agents", "plugins", "marketplace.json")));
   } finally {
@@ -93,11 +104,10 @@ test("pins the resolved interpreter into installed configs (override = py -3)", 
 
     const codexMcp = JSON.parse(fs.readFileSync(path.join(root, ".mcp.json"), "utf8"));
     const codexServer = codexMcp.mcpServers["spec-lifecycle-manager"];
-    assert.equal(codexServer.command, "py");
-    assert.deepEqual(codexServer.args, [
-      "-3",
-      "./skills/spec-lifecycle-manager/scripts/spec_mcp_server.py",
-    ]);
+    assert.equal(codexServer.command, "node");
+    assert.deepEqual(codexServer.args, [path.join(root, "mcp-launch.mjs")]);
+    assert.equal(codexServer.env.SPEC_LIFECYCLE_PYTHON, "py -3");
+    assert.equal(codexServer.cwd, undefined);
 
     // Claude hook: exec form (command + args), no shell string.
     const claudeHook = JSON.parse(

@@ -1,10 +1,9 @@
 {
   "mcpServers": {
     "spec-lifecycle-manager": {
-      "cwd": ".",
-      "command": "python",
+      "command": "node",
       "args": [
-        "./skills/spec-lifecycle-manager/scripts/spec_mcp_server.py"
+        "${PLUGIN_ROOT}/mcp-launch.mjs"
       ],
       "startup_timeout_sec": 30.0
     }

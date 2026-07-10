@@ -30,12 +30,14 @@ const REQUIRED_PATHS = [
   "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py",
   "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/prompts",
   "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/references",
+  "plugins/spec-lifecycle-manager/mcp-launch.mjs",
   "plugins/spec-lifecycle-manager/.mcp.json",
   "plugins/spec-lifecycle-manager/hooks/hooks.json",
   "packaging/spec-lifecycle-manager/package-manifest.json",
 ];
 
 const EXECUTABLE_SCRIPTS = [
+  "mcp-launch.mjs",
   "skills/spec-lifecycle-manager/scripts/spec_runtime.py",
   "skills/spec-lifecycle-manager/scripts/spec_mcp_server.py",
   "skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py",
@@ -48,7 +50,6 @@ Options:
   --codex-home <path>   Codex home. Defaults to $CODEX_HOME or ~/.codex.
   --marketplace-root <path>
                         Local marketplace root. Defaults to ~.
-  --repo-root <path>    Repository root exposed by the MCP server. Defaults to source root.
   --skip-codex-config   Do not remove old host-level Codex MCP config.
   --skip-codex-hooks    Do not remove old global Codex hook config.
   --skip-marketplace    Copy files without editing the local marketplace.
@@ -77,7 +78,6 @@ function parseArgs(argv) {
     codexHome: process.env.CODEX_HOME || path.join(os.homedir(), ".codex"),
     marketplaceRoot: process.env.SPEC_LIFECYCLE_MARKETPLACE_ROOT || os.homedir(),
     marketplaceName: process.env.SPEC_LIFECYCLE_MARKETPLACE_NAME || "auriora-local",
-    repoRoot: "",
     writeCodexConfig: true,
     writeCodexHooks: true,
     writeMarketplace: true,
@@ -91,7 +91,6 @@ function parseArgs(argv) {
       case "--source": opts.source = argv[i += 1]; break;
       case "--codex-home": opts.codexHome = argv[i += 1]; break;
       case "--marketplace-root": opts.marketplaceRoot = argv[i += 1]; break;
-      case "--repo-root": opts.repoRoot = argv[i += 1]; break;
       case "--skip-codex-config": opts.writeCodexConfig = false; break;
       case "--skip-codex-hooks": opts.writeCodexHooks = false; break;
       case "--skip-marketplace": opts.writeMarketplace = false; break;
@@ -307,16 +306,17 @@ function writeMarketplaceJson(marketplaceJson, marketplaceName, dryRun) {
 
 // --- T002/T003: pin the resolved interpreter into the installed configs ---
 
-/** Pin `.mcp.json`: replace the interpreter, preserve the `*.py` script arg. */
+/** Pin `.mcp.json`: materialize the launcher path and pass the interpreter through env. */
 function pinMcpFile(file, pythonCmd) {
   const data = JSON.parse(fs.readFileSync(file, "utf8"));
   const servers = data.mcpServers || {};
+  const launchPath = path.join(path.dirname(file), "mcp-launch.mjs");
   for (const key of Object.keys(servers)) {
     const server = servers[key];
-    const scriptArg = (server.args || []).find((arg) => String(arg).endsWith(".py"));
-    if (!scriptArg) continue;
-    server.command = pythonCmd[0];
-    server.args = [...pythonCmd.slice(1), scriptArg];
+    server.command = "node";
+    server.args = [launchPath];
+    server.env = { ...(server.env || {}), SPEC_LIFECYCLE_PYTHON: pythonCmd.join(" ") };
+    delete server.cwd;
   }
   fs.writeFileSync(file, `${JSON.stringify(data, null, 2)}\n`, "utf8");
 }
@@ -393,10 +393,8 @@ export async function install(argv = []) {
 
   try {
     const sourceRoot = fs.realpathSync(opts.source ? opts.source : process.cwd());
-    const repoRoot = fs.realpathSync(opts.repoRoot ? opts.repoRoot : sourceRoot);
     const codexHome = ensureDirResolved(opts.codexHome);
     const marketplaceRoot = ensureDirResolved(opts.marketplaceRoot);
-    void repoRoot; // resolved for parity; reserved for future MCP repo-root wiring
 
     for (const relativePath of REQUIRED_PATHS) {
       if (!fs.existsSync(path.join(sourceRoot, relativePath))) {

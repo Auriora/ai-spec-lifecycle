@@ -26,9 +26,11 @@ class SpecPluginPackageTests(unittest.TestCase):
     def test_plugin_bundles_runtime_components(self):
         self.assertTrue((PLUGIN / ".codex-plugin" / "plugin.json").is_file())
         self.assertTrue((PLUGIN / ".mcp.json").is_file())
+        self.assertTrue((PLUGIN / "mcp-launch.mjs").is_file())
         self.assertTrue((PLUGIN / "hooks" / "hooks.json").is_file())
         self.assertTrue((CLAUDE_PLUGIN / ".claude-plugin" / "plugin.json").is_file())
         self.assertTrue((CLAUDE_PLUGIN / ".mcp.json").is_file())
+        self.assertTrue((CLAUDE_PLUGIN / "mcp-launch.mjs").is_file())
         self.assertTrue((CLAUDE_PLUGIN / "hooks" / "hooks.json").is_file())
         self.assertTrue((PLUGIN / "skills" / "spec-lifecycle-manager" / "SKILL.md").is_file())
         self.assertTrue((PLUGIN / "skills" / "spec-lifecycle-manager" / "scripts" / "spec_mcp_server.py").is_file())
@@ -50,9 +52,9 @@ class SpecPluginPackageTests(unittest.TestCase):
         # interpreter (py -3 / python3 / python) at install time.
         mcp = json.loads((PLUGIN / ".mcp.json").read_text(encoding="utf-8"))
         server = mcp["mcpServers"]["spec-lifecycle-manager"]
-        self.assertEqual(".", server["cwd"])
-        self.assertEqual("python", server["command"])
-        self.assertIn("./skills/spec-lifecycle-manager/scripts/spec_mcp_server.py", server["args"])
+        self.assertNotIn("cwd", server)
+        self.assertEqual("node", server["command"])
+        self.assertEqual(["${PLUGIN_ROOT}/mcp-launch.mjs"], server["args"])
 
         # Codex hook keeps exec-via-shell-string form (OQ4) with the portable
         # default interpreter and the runtime-expanded ${PLUGIN_ROOT} token.
@@ -76,11 +78,9 @@ class SpecPluginPackageTests(unittest.TestCase):
 
         mcp = json.loads((CLAUDE_PLUGIN / ".mcp.json").read_text(encoding="utf-8"))
         server = mcp["mcpServers"]["spec-lifecycle-manager"]
-        self.assertEqual("python", server["command"])
-        self.assertIn(
-            "${CLAUDE_PLUGIN_ROOT}/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py",
-            server["args"],
-        )
+        self.assertNotIn("cwd", server)
+        self.assertEqual("node", server["command"])
+        self.assertEqual(["${CLAUDE_PLUGIN_ROOT}/mcp-launch.mjs"], server["args"])
 
         # Claude hook uses exec form (command + args array) so it is spawned
         # without a shell on every OS (Spec 028 R3/P1).
@@ -188,8 +188,10 @@ class SpecPluginPackageTests(unittest.TestCase):
         self.assertIn("plugins/spec-lifecycle-manager/.codex-plugin/plugin.json", files)
         self.assertIn("plugins/spec-lifecycle-manager/claude-plugin/.claude-plugin/plugin.json", files)
         self.assertIn("plugins/spec-lifecycle-manager/claude-plugin/.mcp.json", files)
+        self.assertIn("plugins/spec-lifecycle-manager/claude-plugin/mcp-launch.mjs", files)
         self.assertIn("plugins/spec-lifecycle-manager/claude-plugin/hooks/hooks.json", files)
         self.assertIn("plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/SKILL.md", files)
+        self.assertIn("plugins/spec-lifecycle-manager/mcp-launch.mjs", files)
         self.assertIn("plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/SKILL.md", files)
         self.assertFalse(any("__pycache__" in path for path in files))
         self.assertFalse(any(path.endswith((".pyc", ".pyo")) for path in files))

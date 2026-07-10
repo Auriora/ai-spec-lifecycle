@@ -19,9 +19,9 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".."
 function ok(msg) { process.stdout.write(`  ok  ${msg}\n`); }
 function fail(msg) { throw new Error(msg); }
 
-async function mcpInitialize(command, args, cwd) {
+async function mcpInitialize(command, args, cwd, env = process.env) {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { cwd, stdio: ["pipe", "pipe", "pipe"] });
+    const child = spawn(command, args, { cwd, env, stdio: ["pipe", "pipe", "pipe"] });
     let out = "";
     let stderr = "";
     const timer = setTimeout(() => {
@@ -44,6 +44,7 @@ async function mcpInitialize(command, args, cwd) {
     child.stderr.on("data", (chunk) => { stderr += chunk; });
     child.on("error", (err) => { clearTimeout(timer); reject(err); });
     child.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", id: 1, method: "initialize", params: {} })}\n`);
+    child.stdin.end();
   });
 }
 
@@ -70,12 +71,16 @@ async function main() {
 
   try {
     // 1) Shell-free install (skip codex registration; CI runners have no codex).
+    const previousPython = process.env.SPEC_LIFECYCLE_PYTHON;
+    process.env.SPEC_LIFECYCLE_PYTHON = previousPython || "python3";
     const code = await install([
       "--source", repoRoot,
       "--codex-home", home,
       "--marketplace-root", mkt,
       "--skip-plugin-add",
     ]);
+    if (previousPython === undefined) delete process.env.SPEC_LIFECYCLE_PYTHON;
+    else process.env.SPEC_LIFECYCLE_PYTHON = previousPython;
     if (code !== 0) fail(`install exited ${code}`);
     ok("install completed shell-free");
 
@@ -84,8 +89,8 @@ async function main() {
     // 2) MCP launch + initialize handshake using the installed (pinned) config.
     const mcp = JSON.parse(fs.readFileSync(path.join(pluginRoot, ".mcp.json"), "utf8"));
     const server = mcp.mcpServers["spec-lifecycle-manager"];
-    const serverCwd = server.cwd === "." || !server.cwd ? pluginRoot : path.resolve(pluginRoot, server.cwd);
-    const resp = await mcpInitialize(server.command, server.args, serverCwd);
+    if (server.cwd) fail(`installed MCP config must not set cwd: ${JSON.stringify(server)}`);
+    const resp = await mcpInitialize(server.command, server.args, repoRoot, { ...process.env, ...(server.env || {}) });
     if (!resp.result || !resp.result.protocolVersion) fail(`initialize missing protocolVersion: ${JSON.stringify(resp)}`);
     if (resp.result.serverInfo?.name !== "spec-lifecycle-manager") fail(`unexpected serverInfo: ${JSON.stringify(resp.result.serverInfo)}`);
     ok(`MCP initialize handshake (protocolVersion=${resp.result.protocolVersion}, interpreter=${server.command})`);

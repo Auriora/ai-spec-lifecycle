@@ -37,12 +37,12 @@ SERVER_INSTRUCTIONS = (
 )
 REPO_ROOT_PROPERTY = "Repository root. Defaults to current working directory."
 WORKSPACE_ROOT_ENV_VARS = (
+    "SPEC_LIFECYCLE_DEFAULT_REPO_ROOT",
     "SPEC_LIFECYCLE_REPO_ROOT",
     "CODEX_REPO_ROOT",
     "CODEX_WORKSPACE_ROOT",
     "CODEX_WORKSPACE",
     "WORKSPACE_ROOT",
-    "PWD",
 )
 SPEC_PATH_PROPERTIES = {
     "repo_root": REPO_ROOT_PROPERTY,
@@ -900,9 +900,22 @@ def serve(repo_root: Path | None = None) -> int:
     return 0
 
 
+def repo_root_from_argv(argv: list[str]) -> Path | None:
+    for index, arg in enumerate(argv):
+        if arg == "--repo-root" and index + 1 < len(argv):
+            return Path(argv[index + 1]).resolve()
+        if arg.startswith("--repo-root="):
+            value = arg.split("=", 1)[1]
+            if value:
+                return Path(value).resolve()
+        if not arg.startswith("-"):
+            return Path(arg).resolve()
+    return None
+
+
 def main(argv: list[str] | None = None) -> int:
     args = argv if argv is not None else sys.argv[1:]
-    repo_root = Path(args[0]).resolve() if args else None
+    repo_root = repo_root_from_argv(args)
     return serve(repo_root)
 
 

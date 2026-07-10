@@ -1,9 +1,9 @@
 {
   "mcpServers": {
     "spec-lifecycle-manager": {
-      "command": "python",
+      "command": "node",
       "args": [
-        "${CLAUDE_PLUGIN_ROOT}/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py"
+        "${CLAUDE_PLUGIN_ROOT}/mcp-launch.mjs"
       ]
     }
   }
