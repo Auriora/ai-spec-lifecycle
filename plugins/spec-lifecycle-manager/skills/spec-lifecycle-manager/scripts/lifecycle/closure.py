@@ -19,13 +19,19 @@ from typing import Any
 
 
 PENDING_CLEANUP_COMMIT = "pending-cleanup-commit"
-VALID_STATUSES = {"removed", "archived", "retained_as_history"}
-STATUS_TO_ACTION = {
+VALID_STATUSES = {"retained", "removed", "superseded"}
+ACTION_TO_STATUS = {
+    "archived": "retained",
+    "retained-as-history": "retained",
     "removed": "removed",
-    "archived": "archived",
-    "retained_as_history": "retained-as-history",
+    "removed-after-index": "removed",
+    "superseded": "superseded",
 }
-ACTION_TO_STATUS = {value: key for key, value in STATUS_TO_ACTION.items()}
+STATUS_ACTIONS = {
+    "retained": {"archived", "retained-as-history"},
+    "removed": {"removed", "removed-after-index"},
+    "superseded": {"superseded"},
+}
 WRITE_ACTION_TYPES = {"cleanup_package", "resolve_cleanup_hash", "render_records", "update_active_reference"}
 HISTORICAL_REFERENCE_PATHS = {
     "docs/history/spec-closure-log.md",
@@ -35,6 +41,7 @@ KNOWN_ACTIVE_REFERENCE_PATHS = {
     "docs/backlog/README.md",
     "docs/roadmap/README.md",
 }
+DEFAULT_ARCHIVED_SPEC_ROOT = "docs/history/archived-specs"
 
 
 @dataclass(frozen=True)
@@ -99,6 +106,7 @@ class PlannedEdit:
     preview: str
     precondition: FilePrecondition
     content: str | None = None
+    destination_path: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
@@ -266,8 +274,21 @@ def _normalize_metadata(data: ClosureMetadata | dict[str, Any]) -> tuple[Closure
     if isinstance(data, ClosureMetadata):
         metadata = data
     elif isinstance(data, dict):
-        status = str(data.get("status") or "removed").replace("-", "_")
-        action = str(data.get("closure_action") or STATUS_TO_ACTION.get(status, "removed"))
+        status_provided = bool(str(data.get("status") or "").strip())
+        raw_status = str(data.get("status") or "").replace("_", "-")
+        action = str(data.get("closure_action") or "")
+        if not action and raw_status == "archived":
+            action = "archived"
+        if not action and raw_status == "retained-as-history":
+            action = "retained-as-history"
+        if not action:
+            action = raw_status or "removed"
+        if raw_status in {"archived", "retained-as-history"}:
+            status = "retained"
+        elif status_provided:
+            status = raw_status
+        else:
+            status = ACTION_TO_STATUS.get(action, "removed")
         metadata = ClosureMetadata(
             spec_id=str(data.get("spec_id") or ""),
             title=str(data.get("title") or ""),
@@ -304,13 +325,13 @@ def validate_closure_metadata(metadata: ClosureMetadata, *, final: bool = False)
             diagnostics.append(Diagnostic("error", "CLOSURE_METADATA_FIELD_MISSING", f"Closure metadata missing field: {field_name}."))
     if metadata.status not in VALID_STATUSES:
         diagnostics.append(Diagnostic("error", "CLOSURE_STATUS_INVALID", f"Invalid closure status: {metadata.status}."))
-    expected_action = STATUS_TO_ACTION.get(metadata.status)
-    if expected_action and metadata.closure_action != expected_action:
+    allowed_actions = STATUS_ACTIONS.get(metadata.status, set())
+    if allowed_actions and metadata.closure_action not in allowed_actions:
         diagnostics.append(
             Diagnostic(
                 "error",
                 "CLOSURE_STATUS_ACTION_MISMATCH",
-                f"status={metadata.status} requires closure_action={expected_action}, got {metadata.closure_action}.",
+                f"status={metadata.status} requires closure_action in {sorted(allowed_actions)}, got {metadata.closure_action}.",
             )
         )
     if final and metadata.cleanup_commit == PENDING_CLEANUP_COMMIT:
@@ -355,6 +376,7 @@ def parse_closure_plan(value: ClosurePlan | dict[str, Any] | str) -> ClosurePlan
                     required_snippet=pre.get("required_snippet"),
                 ),
                 content=item.get("content"),
+                destination_path=item.get("destination_path"),
             )
         )
     actions = [
@@ -499,7 +521,7 @@ def render_closure_log_entry(metadata: ClosureMetadata) -> str:
 def render_archive_index_row(metadata: ClosureMetadata) -> str:
     durable = "; ".join(f"`{item}`" for item in metadata.durable_destinations) if metadata.durable_destinations else "none"
     return (
-        f"| {metadata.spec_id} | {metadata.title} | `{metadata.package_path}/` | {metadata.status.replace('_', '-')} | "
+        f"| {metadata.spec_id} | {metadata.title} | `{metadata.package_path}/` | {metadata.status} | "
         f"{metadata.final_spec_commit} | {metadata.cleanup_commit} | {metadata.closure_action} | {durable} | "
         "`docs/history/spec-closure-log.md` |"
     )
@@ -564,15 +586,18 @@ def _planned_record_edits(repo_root: Path, metadata: ClosureMetadata) -> list[Pl
     ]
 
 
-def _cleanup_edit(repo_root: Path, metadata: ClosureMetadata) -> PlannedEdit:
+def _cleanup_edit(repo_root: Path, metadata: ClosureMetadata, source_package_path: str) -> PlannedEdit:
+    action = "move" if metadata.closure_action == "archived" else "delete"
+    destination_path = metadata.package_path if action == "move" else None
     return PlannedEdit(
         edit_id="cleanup_package",
-        path=metadata.package_path,
-        action="delete" if metadata.status == "removed" else "move",
+        path=source_package_path,
+        action=action,
         reason="Remove or archive the temporary spec package after durable closure metadata is recorded.",
-        preview=f"{metadata.closure_action} {metadata.package_path}",
-        precondition=_precondition(repo_root, metadata.package_path),
+        preview=f"{metadata.closure_action} {source_package_path}" + (f" -> {destination_path}" if destination_path else ""),
+        precondition=_precondition(repo_root, source_package_path),
         content=None,
+        destination_path=destination_path,
     )
 
 
@@ -670,11 +695,14 @@ def closure_plan(
     selected_commit = final_spec_commit or (candidates[0].commit if len([item for item in candidates if item.confidence == "high"]) == 1 else "pending")
     if selected_commit == "pending":
         diagnostics.append(Diagnostic("warn", "CLOSURE_FINAL_SPEC_COMMIT_SELECTION_REQUIRED", "Final spec commit must be selected explicitly when candidate evidence is absent or ambiguous."))
-    status = ACTION_TO_STATUS.get(closure_action, closure_action.replace("-", "_"))
+    status = ACTION_TO_STATUS.get(closure_action, closure_action)
+    package_path = rel_spec
+    if closure_action == "archived":
+        package_path = f"{DEFAULT_ARCHIVED_SPEC_ROOT}/{spec.name}"
     metadata = ClosureMetadata(
         spec_id=spec.name,
         title=_title_from_requirements(spec),
-        package_path=rel_spec,
+        package_path=package_path,
         status=status,
         closure_action=closure_action,
         final_spec_commit=selected_commit,
@@ -700,7 +728,7 @@ def closure_plan(
     references = classify_spec_references(root, spec.name, rel_spec) if include_reference_scan else {}
     if references.get("active_stale"):
         diagnostics.append(Diagnostic("warn", "CLOSURE_ACTIVE_REFERENCES_PRESENT", "Active references require review or explicit planned edits before cleanup."))
-    edits = _planned_record_edits(root, metadata) + [_cleanup_edit(root, metadata)]
+    edits = _planned_record_edits(root, metadata) + [_cleanup_edit(root, metadata, rel_spec)]
     actions = [
         ClosureAction("render_records", "render_records", "preview", True, ["render_closure_log", "render_archive_index"]),
         ClosureAction("cleanup_package", "cleanup_package", "preview", True, [edit.edit_id for edit in edits]),
@@ -764,6 +792,12 @@ def _write_edit(repo_root: Path, edit: PlannedEdit) -> None:
             shutil.rmtree(target)
         elif target.exists():
             target.unlink()
+    elif edit.action == "move":
+        if not edit.destination_path:
+            raise ValueError("Move planned edit missing destination_path.")
+        destination = repo_root / _repo_relative(repo_root, edit.destination_path)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(target), str(destination))
     else:
         raise ValueError(f"Unsupported planned edit action: {edit.action}")
 
@@ -788,6 +822,8 @@ def closure_apply(
     for edit in edits:
         try:
             _repo_relative(root, edit.path)
+            if edit.destination_path:
+                _repo_relative(root, edit.destination_path)
         except ValueError as exc:
             diagnostics.append(Diagnostic("error", "CLOSURE_EDIT_PATH_INVALID", str(exc), edit.path))
         stale = _verify_precondition(root, edit.precondition)

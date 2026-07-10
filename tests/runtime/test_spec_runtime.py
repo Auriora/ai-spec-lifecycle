@@ -595,7 +595,7 @@ class SpecRuntimeTests(unittest.TestCase):
                 "spec_id": "030-mcp-first-runtime-migration",
                 "title": "MCP-first runtime migration",
                 "package_path": "docs/specs/030-mcp-first-runtime-migration",
-                "status": "retained_as_history",
+                "status": "retained",
                 "closure_action": "retained-as-history",
                 "final_spec_commit": "de3aa4f",
                 "cleanup_commit": "520d37d",
@@ -603,7 +603,20 @@ class SpecRuntimeTests(unittest.TestCase):
             }
         )
 
-        self.assertEqual("retained_as_history", metadata.status)
+        self.assertEqual("retained", metadata.status)
+        archived = closure_core.parse_closure_metadata(
+            {
+                "spec_id": "030-mcp-first-runtime-migration",
+                "title": "MCP-first runtime migration",
+                "package_path": "docs/history/archived-specs/030-mcp-first-runtime-migration",
+                "status": "retained",
+                "closure_action": "archived",
+                "final_spec_commit": "de3aa4f",
+                "cleanup_commit": "520d37d",
+                "verification_summary": "Tests passed.",
+            }
+        )
+        self.assertEqual("retained", archived.status)
         with self.assertRaises(ValueError):
             closure_core.parse_closure_metadata(
                 {
@@ -617,6 +630,32 @@ class SpecRuntimeTests(unittest.TestCase):
                     "verification_summary": "Tests passed.",
                 }
             )
+
+    def test_closure_plan_archived_action_moves_package_and_uses_retained_status(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            source = FIXTURE_DIR / "spec-closure-helper/spec-030-closure-scenario/before-cleanup"
+            shutil.copytree(source, repo, dirs_exist_ok=True)
+            spec = repo / "docs/specs/030-mcp-first-runtime-migration"
+
+            payload = spec_runtime.closure_plan(
+                spec,
+                repo_root=repo,
+                final_spec_commit="de3aa4f",
+                closure_action="archived",
+            )
+            cleanup = next(item for item in payload["planned_edits"] if item["edit_id"] == "cleanup_package")
+
+        self.assertEqual("retained", payload["metadata"]["status"])
+        self.assertEqual("archived", payload["metadata"]["closure_action"])
+        self.assertEqual("docs/history/archived-specs/030-mcp-first-runtime-migration", payload["metadata"]["package_path"])
+        self.assertEqual("move", cleanup["action"])
+        self.assertEqual("docs/specs/030-mcp-first-runtime-migration", cleanup["path"])
+        self.assertEqual("docs/history/archived-specs/030-mcp-first-runtime-migration", cleanup["destination_path"])
+        archive_index = next(item for item in payload["planned_edits"] if item["edit_id"] == "render_archive_index")
+        columns = [column.strip() for column in archive_index["preview"].strip("|").split("|")]
+        self.assertEqual("retained", columns[3])
+        self.assertEqual("archived", columns[6])
 
     def test_closure_plan_composes_preview_records_and_validation_without_mutation(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -760,6 +799,36 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertIn("520d37d", index_text)
         self.assertNotIn("pending-cleanup-commit", log_text)
         self.assertNotIn("pending-cleanup-commit", index_text)
+
+    def test_closure_apply_archived_action_moves_package_to_archived_location(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            source = FIXTURE_DIR / "spec-closure-helper/spec-030-closure-scenario/before-cleanup"
+            shutil.copytree(source, repo, dirs_exist_ok=True)
+            spec = repo / "docs/specs/030-mcp-first-runtime-migration"
+            plan = spec_runtime.closure_plan(
+                spec,
+                repo_root=repo,
+                final_spec_commit="de3aa4f",
+                closure_action="archived",
+            )
+
+            applied = spec_runtime.closure_apply(
+                spec,
+                repo_root=repo,
+                plan=plan,
+                action_id="cleanup_package",
+                dry_run=False,
+                write_intent=True,
+            )
+            archived_spec = repo / "docs/history/archived-specs/030-mcp-first-runtime-migration"
+            source_exists = (repo / "docs/specs/030-mcp-first-runtime-migration").exists()
+            archived_requirements_exists = (archived_spec / "requirements.md").is_file()
+
+        self.assertEqual("updated", applied["status"])
+        self.assertFalse(source_exists)
+        self.assertTrue(archived_requirements_exists)
+        self.assertIn("docs/specs/030-mcp-first-runtime-migration", applied["changed_files"])
 
     def test_closure_apply_rejects_path_traversal_edit(self):
         metadata = closure_core.parse_closure_metadata(

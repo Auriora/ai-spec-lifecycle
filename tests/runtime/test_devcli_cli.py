@@ -181,6 +181,7 @@ class DevCliPlanTests(unittest.TestCase):
             self._git(root, "init")
             self._git(root, "config", "user.email", "release@example.com")
             self._git(root, "config", "user.name", "Release Tester")
+            self._git(root, "config", "commit.gpgsign", "false")
             (root / "README.md").write_text("initial\n", encoding="utf-8")
             self._git(root, "add", "README.md")
             self._git(root, "commit", "-m", "Initial release")
