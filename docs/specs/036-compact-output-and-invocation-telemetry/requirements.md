@@ -81,8 +81,7 @@ authority for operational observability.
 
 - **Current stage:** requirements
 - **Next stage:** design
-- **Ready to design when:** compact/detail boundary, expansion identity,
-  invocation taxonomy, and privacy constraints are accepted.
+- **Ready to design when:** satisfied on 2026-07-12 by the decisions below.
 - **Design-first exception:** no
 - **Optional artifacts recommended:** `research.md` for representative payload sizing only
 - **Downstream review needed:** design, tasks, traceability, verification
@@ -209,12 +208,13 @@ so that existing consumers are not silently broken.
   while retaining one-step targeted expansion; measure established tools before
   proposing any later default migration.
 
-## Open Questions
+## Accepted Requirements Decisions
 
-| Question | Why it matters | Blocks design? |
-|----------|----------------|----------------|
-| Should supported detail selection use `detail=compact|full|section` or a dedicated expansion operation? | Determines the final public schema; established defaults remain compatible either way. | yes |
-| What canonical serialization and repository identity derivation satisfy determinism and privacy review? | Controls fingerprints, wrong-root diagnosis, and disclosure risk. | yes |
+| Decision | Rationale | Status |
+|----------|-----------|--------|
+| New aggregate tools use same-tool `detail=compact\|full\|section`; established tools retain their defaults. | Avoids stored cursors and preserves compatibility while enabling one-step expansion. | accepted |
+| Fingerprints use domain-tagged, sorted, compact UTF-8 JSON and SHA-256 over repo-relative decision inputs. | Produces deterministic expansion identity without timestamps, content payloads, or host paths. | accepted |
+| Repository identity uses a domain-separated hash of the Git root commit identity, otherwise `unknown`. | Distinguishes repositories without exposing host paths; the value is correlatable to a known public repository and must be documented as such. | accepted with privacy caveat |
 
 ## Success Criteria
 

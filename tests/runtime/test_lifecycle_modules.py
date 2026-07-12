@@ -24,10 +24,15 @@ class LifecycleModuleTests(unittest.TestCase):
     def test_capability_report_uses_unknown_client_fields_without_guessing(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
+            (repo / "package.json").write_text(
+                '{"name": "target-application", "version": "99.0.0"}\n',
+                encoding="utf-8",
+            )
             report = lifecycle_capabilities(repo)
 
         self.assertEqual("partial", report["status"])
         self.assertEqual("spec-lifecycle-manager", report["server"]["name"])
+        self.assertEqual("0.3.0", report["server"]["version"])
         self.assertFalse(report["server"]["capabilities"]["tools"]["listChanged"])
         self.assertEqual("unknown", report["client"]["name"])
         self.assertEqual("stable_tool_surface", report["dynamic_tools"]["decision"])
@@ -54,6 +59,12 @@ class LifecycleModuleTests(unittest.TestCase):
         self.assertEqual("ExampleClient", report["client"]["name"])
         self.assertEqual({"roots": {"listChanged": True}}, report["client"]["capabilities"])
         self.assertEqual("unknown", report["dynamic_tools"]["client_refresh_observed"])
+
+    def test_capability_report_allows_an_explicit_server_version(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            report = lifecycle_capabilities(Path(tmp), server_version="9.8.7-test")
+
+        self.assertEqual("9.8.7-test", report["server"]["version"])
 
     def test_next_actions_are_state_based_not_client_based(self):
         with tempfile.TemporaryDirectory() as tmp:

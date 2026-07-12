@@ -24,11 +24,13 @@ from lifecycle import traceability
 from lifecycle.actions import lifecycle_next_actions
 from lifecycle.capabilities import lifecycle_capabilities
 from lifecycle.migration import script_migration_inventory
+from lifecycle.provenance import resolve_runtime_identity
 
 
 PROTOCOL_VERSION = "2025-06-18"
 SERVER_NAME = "spec-lifecycle-manager"
-SERVER_VERSION = "0.1.0"
+RUNTIME_IDENTITY = resolve_runtime_identity(Path(__file__))
+SERVER_VERSION = RUNTIME_IDENTITY["package_version"]
 SERVER_INSTRUCTIONS = (
     "Use spec-lifecycle-manager tools for lifecycle context, validation, "
     "traceability, task state, promotion, and closure. Prefer MCP tools over "
