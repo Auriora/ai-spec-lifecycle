@@ -97,6 +97,17 @@ last_reviewed: 2026-07-12
   limited to the intentionally older installed cache/reload boundary and
   missing committed sync evidence, both resolved after this slice is committed
   and reinstalled.
+- **2026-07-12 — T008:** Promoted the accepted compact creation-plan contract
+  and provenance guidance into `docs/design/spec-lifecycle-management.md`,
+  `docs/reference/spec-lifecycle-runtime.md`, and
+  `skills/spec-lifecycle-manager/SKILL.md`; synchronized both bundles; marked
+  B062 done; and reduced the roadmap sequence to Spec 034. V029-V031 passed:
+  `npm run validate` completed with 303 Python and 25 Node tests plus lifecycle,
+  archive, prompt, package, sync, dry-run pack, and whitespace checks. All four
+  must-have requirements are recorded complete with no unrouted implementation
+  scope. Residual risks remain documented: Git-derived repository identity is
+  correlatable, legacy builds may report `unknown`, and installed cache refresh
+  requires reinstall/reload after closure.
 
 ## Quality Gates
 

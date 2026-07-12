@@ -57,10 +57,7 @@ for active implementation specs.
 
 ## Suggested Build Sequence
 
-1. Continue the remaining `036-compact-output-and-invocation-telemetry` work;
-   its minimum envelope and provenance slices are delivered, but the spec is
-   not complete.
-2. Continue `034-phase-completion-helper` now that the read-only Spec 033 gate
+1. Continue `034-phase-completion-helper` now that the read-only Spec 033 gate
    contract is stable, so guarded completion writes consume accepted gate
    semantics rather than defining a competing readiness model.
 

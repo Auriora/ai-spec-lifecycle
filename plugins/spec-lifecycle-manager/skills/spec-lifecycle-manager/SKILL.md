@@ -67,6 +67,12 @@ writer must atomically claim the directory; ordinary writes after validation
 are not race-safe. Use retained `spec-id-inventory` and `spec-creation-plan`
 CLI commands only for validation, CI, MCP debugging, or no-MCP recovery.
 
+`spec_creation_plan` defaults to a bounded compact decision. Use its expansion
+arguments for `detail=full` or a targeted `numbering`, `template`, or
+`validation` section instead of asking for unrelated nested detail. Treat a
+`stale` response as a requirement to re-review the refreshed plan and
+fingerprint before creation; never reuse the earlier proposal as proof.
+
 If no active package exists and the user is not asking to start one, do not
 recreate or browse removed spec packages as if they are current work. Use
 durable docs, `docs/backlog/`, `docs/roadmap/`, the closure log, and the spec

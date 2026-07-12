@@ -21,16 +21,16 @@ last_reviewed: 2026-07-12
 | T005 | R1, R4.3, R4.5 | CP-1, CP-2, CP-5 | Compact Envelope | V018-V021 |
 | T006 | Requirement 1 (AC 1-5); Requirement 4 (AC 3-5) | CP-001, CP-002, CP-004, CP-005 | Compatibility And Rollout | V022-V025 |
 | T007 | Requirement 2 (AC 5); Requirement 4 (AC 5) | CP-003, CP-004 | Component Boundaries | V026-V028 |
-| T008 | all | all | Durable Promotion Targets | V029-V031 |
+| T008 | Requirement 1; Requirement 2; Requirement 3; Requirement 4 | CP-001-CP-007 | Durable Promotion Targets | V029-V031 |
 
 ## Requirement To Delivery Matrix
 
-| Requirement | Tasks | Verification |
-|-------------|-------|--------------|
-| Requirement 1: Compact Default Results | T001, T005, T006 | V001-V002, V018-V025 |
-| Requirement 2: Invocation Metadata | T001-T004, T007 | V003-V017, V026-V028 |
-| Requirement 3: Privacy And Determinism | T001, T003 | V001-V006, V010-V014 |
-| Requirement 4: Adoption And Compatibility | T002-T007 | V007-V028 |
+| Requirement | Tasks | Verification | Coverage State | Evidence | Residual Risk |
+|-------------|-------|--------------|----------------|----------|---------------|
+| Requirement 1: Compact Default Results | T001, T005, T006 | V001-V002, V018-V025 | complete | Deterministic bounds, blocker retention, detail modes, and stale expansion passed focused and full validation. | none |
+| Requirement 2: Invocation Metadata | T001-T004, T007 | V003-V017, V026-V028 | complete | MCP/CLI provenance, package/build identity, root source, and bundle parity passed. | none |
+| Requirement 3: Privacy And Determinism | T001, T003 | V001-V006, V010-V014 | complete | Privacy exclusions, canonical fingerprints, repository identity, and deterministic parity passed. | Repository identity remains correlatable with known Git history as documented. |
+| Requirement 4: Adoption And Compatibility | T002-T007 | V007-V028 | complete | Existing defaults remain compatible; both new aggregates publish validated compact/full/section schemas. | Installed legacy bundles may report unknown build identity until refreshed. |
 
 ## Design To Implementation Matrix
 

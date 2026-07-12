@@ -160,6 +160,13 @@ expansion whose expected fingerprint no longer matches returns a stale response
 with refreshed arguments instead of presenting new evidence as the referenced
 result.
 
+`spec_creation_plan` uses the same aggregate contract for provisional creation
+decisions. Its compact default preserves allocation status, confidence, proposed
+ID and path, collision blockers, bounds, and deterministic expansion. Callers
+can request bounded `full` output or the closed `numbering`, `template`, and
+`validation` sections. MCP and CLI adapters attach their own invocation
+metadata while the shared allocation and creation logic remains caller-agnostic.
+
 Spec numbering is runtime-owned rather than agent arithmetic. The read-only
 `spec_id_inventory` surface selects one docs root and combines active,
 archive-index, closure-log, retained, and explicit legacy-range evidence. It

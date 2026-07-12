@@ -247,16 +247,25 @@ disposition. A matching acknowledgement preserves a visible
 reducing allocation confidence; missing, malformed, or stale acknowledgements
 remain warnings. Every colliding prefix remains consumed and is never reused.
 
-Use MCP `spec_creation_plan` with an ASCII lower-kebab `slug` to obtain the
-proposed ID/path, template fallback chain, artifact set, required values,
-preconditions, validation commands, and evidence fingerprint. `reservation` is
-always false. Revalidate immediately before creation; stale evidence or
-collision returns refreshed arguments and a fresh proposal. A future writer
-must atomically claim the directory.
+Use MCP `spec_creation_plan` with an ASCII lower-kebab `slug` to obtain a
+compact provisional creation decision. The compact default preserves status,
+allocation confidence, proposed ID/path, collision blockers, explicit bounds,
+an evidence fingerprint, and a deterministic expansion call. `detail=full`
+returns the bounded current plan; `detail=section` accepts `numbering`,
+`template`, or `validation`. Fingerprint mismatch returns `stale` with refreshed
+same-tool arguments rather than presenting current evidence as the earlier
+plan.
+
+The full and section views expose template fallback, artifact set, required
+values, preconditions, validation commands, and fresh collision proposals.
+`reservation` is always false. Revalidate immediately before creation; a future
+writer must atomically claim the directory. MCP and CLI decisions are
+equivalent after transport-owned `lifecycle_metadata` is ignored.
 
 ```bash
 PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py spec-id-inventory . --docs-root docs
 PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py spec-creation-plan my-feature --repo-root . --docs-root docs
+PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py spec-creation-plan my-feature --repo-root . --detail section --section numbering
 ```
 
 `scan_specs`, no-active context, and bootstrap reuse the same allocator and

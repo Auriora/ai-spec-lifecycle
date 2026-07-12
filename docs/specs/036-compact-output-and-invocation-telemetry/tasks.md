@@ -98,13 +98,19 @@ last_reviewed: 2026-07-12
     whitespace checks. Sync guard only reports expected older installed-cache,
     reload, and pre-commit sync-evidence advisories.
 
-- [ ] T008 Promote durable documentation and close B062
+- [x] T008 Promote durable documentation and close B062
   - Depends on: T001-T007
   - Update design/reference/skill guidance, record verification evidence,
     reconcile residual risks, and complete lifecycle closure.
   - Acceptance: durable docs describe shipped behavior, B062 is reconciled,
     closure checks pass, and temporary scaffolding is removed per policy.
-
+  - Evidence: 2026-07-12, promoted compact aggregate/provenance behavior to
+    durable design, runtime, and skill guidance; synchronized bundles; marked
+    B062 done; updated roadmap sequencing; and recorded complete coverage for
+    all must-have requirements. V029-V031 passed via `npm run validate` with
+    303 Python and 25 Node tests plus lifecycle, archive, prompts, package,
+    sync, dry-run pack, and whitespace checks. Residual installed-cache refresh
+    is routed to post-closure reinstall/reload.
 ## Dependency Summary
 
 `T001 -> T002 -> T003`; `T001 -> T004`; `T001 -> T005`; then
