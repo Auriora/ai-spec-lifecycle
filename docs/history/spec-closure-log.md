@@ -14,6 +14,20 @@ requires visible archived docs.
 
 ## Entries
 
+### 2026-07-12 - 037-closure-response-contract
+
+- **Spec:** `docs/specs/037-closure-response-contract/`
+- **Title:** Closure Response Contract
+- **Final spec commit:** `c9be2cf`
+- **Closure cleanup commit:** `pending-cleanup-commit`
+- **Closure action:** removed
+- **Durable docs updated:**
+  - `docs/reference/spec-lifecycle-runtime.md#closure-helper-tools`
+  - `docs/backlog/README.md`
+- **Verification summary:** Closure validation not yet executed.
+- **Residual risks:**
+  - none
+- **Follow-up:** none
 ### 2026-07-12 - 036-compact-output-and-invocation-telemetry
 
 - **Spec:** `docs/specs/036-compact-output-and-invocation-telemetry/`
