@@ -48,12 +48,16 @@ last_reviewed: 2026-07-12
     limit state, same-tool expansion, authority preservation, and path privacy.
     Full validation passed with 271 Python and 25 Node tests.
 
-- [ ] T004 Add MCP and retained CLI phase-gate surfaces
+- [x] T004 Add MCP and retained CLI phase-gate surfaces
   - Depends on: T003
   - Add schemas, dispatch, transport provenance, and parity tests without changing
     established tool responses.
   - Acceptance: MCP/CLI decisions match after metadata removal and normal output
     contains no absolute host paths.
+  - Evidence: 2026-07-12, MCP and CLI expose compact/full/section/stale shapes,
+    closed selector schemas, transport provenance, invalid-argument handling,
+    exact parity without metadata, and path privacy. Full validation passed with
+    275 Python and 25 Node tests.
 
 ## Phase 3: Packaging And Promotion
 

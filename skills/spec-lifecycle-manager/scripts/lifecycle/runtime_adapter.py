@@ -109,6 +109,15 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     stage = sub.add_parser("stage-readiness", help="Return staged artifact, coverage, and agent readiness status.")
     stage.add_argument("spec_path", type=Path)
 
+    phase_gate = sub.add_parser("phase-gate-check", help="Return a bounded lifecycle phase decision.")
+    phase_gate.add_argument("spec_path", type=Path)
+    phase_gate.add_argument("--detail", choices=["compact", "full", "section"], default="compact")
+    phase_gate.add_argument(
+        "--section",
+        choices=["source_signals", "coverage", "validation", "promotion", "closure"],
+    )
+    phase_gate.add_argument("--expected-fingerprint")
+
     validation = sub.add_parser("validation-plan", help="Plan validation checks from changed files and optional task context.")
     validation.add_argument("repo_root", type=Path, nargs="?", default=Path.cwd())
     validation.add_argument("--changed-files", nargs="*", default=[])
@@ -280,6 +289,25 @@ def main(argv: list[str] | None = None) -> int:
         payload = bootstrap_plan(args.repo_root, args.docs_root, args.project_summary, args.create_spec, args.spec_slug)
     elif args.command == "stage-readiness":
         payload = stage_readiness(args.spec_path.resolve())
+    elif args.command == "phase-gate-check":
+        if args.detail == "section" and args.section is None:
+            raise ValueError("--section is required when --detail=section")
+        if args.detail != "section" and args.section is not None:
+            raise ValueError("--section is only valid when --detail=section")
+        spec_path = args.spec_path.resolve()
+        repo_root = repo_root_for(spec_path)
+        payload = phase_gate_check(
+            spec_path,
+            detail=args.detail,
+            section=args.section,
+            expected_fingerprint=args.expected_fingerprint,
+        )
+        payload["lifecycle_metadata"] = assemble_lifecycle_metadata(
+            repo_root,
+            invocation_surface="cli",
+            root_source="argument",
+            runtime_start_path=Path(__file__),
+        )
     elif args.command == "validation-plan":
         payload = validation_plan(args.repo_root, args.changed_files, args.spec_path, args.task_id, args.risk_level)
     elif args.command == "evidence-quality":

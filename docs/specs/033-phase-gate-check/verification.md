@@ -64,6 +64,12 @@ last_reviewed: 2026-07-12
   preservation, cross-mode fingerprints, wording/mtime stability, freshness-
   driven stale expansion, and path/privacy exclusions. Full validation passed
   with 271 Python and 25 Node tests.
+- **2026-07-12 — T004:** Added the MCP `phase_gate_check` and retained CLI
+  `phase-gate-check` surfaces with closed input/output schemas and adapter-owned
+  provenance. V024-V028 pass for all response modes, stale expansion, selector
+  rejection, invocation metadata, exact MCP/CLI parity after metadata removal,
+  established-schema compatibility, and absence of absolute host paths. Full
+  validation passed with 275 Python and 25 Node tests.
 
 ## Quality Gates
 

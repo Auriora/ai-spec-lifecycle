@@ -267,6 +267,26 @@ def tool_definitions() -> list[dict[str, Any]]:
             ["spec_path"],
         ),
         tool_schema(
+            "phase_gate_check",
+            "Return a bounded, read-only lifecycle phase decision and expansion references.",
+            {
+                **SPEC_PATH_PROPERTIES,
+                "detail": {
+                    "type": "string",
+                    "enum": ["compact", "full", "section"],
+                    "default": "compact",
+                },
+                "section": {
+                    "type": "string",
+                    "enum": ["source_signals", "coverage", "validation", "promotion", "closure"],
+                },
+                "expected_fingerprint": spec_agent_schemas.evidence_fingerprint_schema(),
+            },
+            ["spec_path"],
+            output_schema=spec_agent_schemas.phase_gate_check_output_schema(),
+            input_all_of=spec_agent_schemas.detail_selector_schema()["allOf"],
+        ),
+        tool_schema(
             "validation_plan",
             "Plan validation checks from changed files and optional task context.",
             {
@@ -478,6 +498,7 @@ def tool_schema(
     required: list[str] | None = None,
     *,
     output_schema: dict[str, Any] | None = None,
+    input_all_of: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     schema_properties = {
         key: value if isinstance(value, dict) else {"type": "string", "description": value}
@@ -495,6 +516,8 @@ def tool_schema(
     }
     if output_schema is not None:
         schema["outputSchema"] = output_schema
+    if input_all_of is not None:
+        schema["inputSchema"]["allOf"] = input_all_of
     return schema
 
 
@@ -550,6 +573,27 @@ def call_tool(
     if name == "stage_readiness":
         spec_path = spec_path_arg(arguments, default_root)
         return with_available_next_actions(lifecycle_core.stage_readiness(spec_path), root, spec_path), root
+    if name == "phase_gate_check":
+        detail = str(arguments.get("detail") or "compact")
+        section = arguments.get("section")
+        # Keep runtime validation authoritative for callers that do not enforce JSON Schema.
+        if detail == "section" and section is None:
+            raise ValueError("section is required when detail='section'")
+        if detail != "section" and section is not None:
+            raise ValueError("section is only valid when detail='section'")
+        payload = lifecycle_core.phase_gate_check(
+            spec_path_arg(arguments, default_root),
+            detail=detail,
+            section=str(section) if section is not None else None,
+            expected_fingerprint=arguments.get("expected_fingerprint"),
+        )
+        payload["lifecycle_metadata"] = assemble_lifecycle_metadata(
+            root,
+            invocation_surface="mcp",
+            root_source="argument" if arguments.get("repo_root") else default_root_source,
+            runtime_start_path=Path(__file__),
+        )
+        return payload, root
     if name == "validation_plan":
         spec_path = spec_path_arg(arguments, default_root) if arguments.get("spec_path") or arguments.get("spec_id") else None
         changed_files = arguments.get("changed_files") or []

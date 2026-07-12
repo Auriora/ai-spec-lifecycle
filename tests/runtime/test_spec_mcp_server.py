@@ -1075,6 +1075,57 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertEqual(-32602, payload["error"]["code"])
         self.assertIn("Unknown tool", payload["error"]["message"])
 
+    def test_phase_gate_tool_publishes_closed_selector_and_output_contract(self):
+        [response] = self.send(rpc(1, "tools/list"))
+        tool = {item["name"]: item for item in response["result"]["tools"]}["phase_gate_check"]
+
+        self.assertEqual(["spec_path"], tool["inputSchema"]["required"])
+        self.assertFalse(tool["inputSchema"]["additionalProperties"])
+        self.assertEqual(
+            ["source_signals", "coverage", "validation", "promotion", "closure"],
+            tool["inputSchema"]["properties"]["section"]["enum"],
+        )
+        self.assertEqual(4, len(tool["outputSchema"]["oneOf"]))
+
+    def test_phase_gate_mcp_modes_stale_metadata_and_cli_parity(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / ".git").mkdir()
+            spec = write_current_spec(repo)
+            compact_response, full_response, section_response, stale_response = self.send(
+                rpc(1, "tools/call", {"name": "phase_gate_check", "arguments": {"repo_root": str(repo), "spec_path": "001-current"}}),
+                rpc(2, "tools/call", {"name": "phase_gate_check", "arguments": {"repo_root": str(repo), "spec_path": "001-current", "detail": "full"}}),
+                rpc(3, "tools/call", {"name": "phase_gate_check", "arguments": {"repo_root": str(repo), "spec_path": "001-current", "detail": "section", "section": "coverage"}}),
+                rpc(4, "tools/call", {"name": "phase_gate_check", "arguments": {"repo_root": str(repo), "spec_path": "001-current", "expected_fingerprint": "sha256:" + "0" * 64}}),
+                root=repo,
+            )
+            compact = compact_response["result"]["structuredContent"]
+            cli = subprocess.run(
+                [sys.executable, str(ROOT / "skills/spec-lifecycle-manager/scripts/spec_runtime.py"), "phase-gate-check", str(spec)],
+                check=True, capture_output=True, text=True,
+            )
+
+        self.assertEqual("compact", compact["detail"])
+        self.assertEqual("full", full_response["result"]["structuredContent"]["detail"])
+        self.assertEqual("coverage", section_response["result"]["structuredContent"]["section"])
+        self.assertEqual("stale", stale_response["result"]["structuredContent"]["status"])
+        self.assertEqual("mcp", compact["lifecycle_metadata"]["invocation_surface"])
+        self.assertEqual("argument", compact["lifecycle_metadata"]["root_source"])
+        cli_payload = json.loads(cli.stdout)
+        self.assertEqual("cli", cli_payload["lifecycle_metadata"]["invocation_surface"])
+        compact.pop("lifecycle_metadata")
+        cli_payload.pop("lifecycle_metadata")
+        self.assertEqual(compact, cli_payload)
+        self.assertNotIn(str(repo), json.dumps(compact))
+
+    def test_phase_gate_rejects_invalid_selector_combinations(self):
+        missing_section, misplaced_section = self.send(
+            rpc(1, "tools/call", {"name": "phase_gate_check", "arguments": {"spec_path": "033-phase-gate-check", "detail": "section"}}),
+            rpc(2, "tools/call", {"name": "phase_gate_check", "arguments": {"spec_path": "033-phase-gate-check", "detail": "compact", "section": "coverage"}}),
+        )
+        self.assertIn("section is required", missing_section["error"]["message"])
+        self.assertIn("section is only valid", misplaced_section["error"]["message"])
+
 
 if __name__ == "__main__":
     unittest.main()

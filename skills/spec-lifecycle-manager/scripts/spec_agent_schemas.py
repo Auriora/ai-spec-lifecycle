@@ -201,6 +201,51 @@ def stale_expansion_response_schema() -> dict[str, Any]:
     }
 
 
+def phase_gate_check_output_schema() -> dict[str, Any]:
+    """Closed output union for the phase-gate aggregate and stale expansion."""
+
+    base_properties = {
+        "schema_version": {"type": "string", "const": "1"},
+        "decision": {"type": "object"},
+        "evidence_fingerprint": evidence_fingerprint_schema(),
+        "lifecycle_metadata": lifecycle_metadata_schema(),
+    }
+    compact = compact_aggregate_envelope_schema()
+    full = {
+        "type": "object",
+        "required": [
+            "detail", "schema_version", "decision", "evidence_fingerprint",
+            "findings", "next_actions", "context", "lifecycle_metadata",
+        ],
+        "properties": {
+            **base_properties,
+            "detail": {"type": "string", "const": "full"},
+            "findings": {"type": "array", "maxItems": 200, "items": {"type": "object"}},
+            "next_actions": {"type": "array", "maxItems": 100, "items": {"type": "object"}},
+            "context": {"type": "object"},
+        },
+        "additionalProperties": False,
+    }
+    section = {
+        "type": "object",
+        "required": [
+            "detail", "schema_version", "decision", "evidence_fingerprint",
+            "section", "content", "lifecycle_metadata",
+        ],
+        "properties": {
+            **base_properties,
+            "detail": {"type": "string", "const": "section"},
+            "section": {
+                "type": "string",
+                "enum": ["source_signals", "coverage", "validation", "promotion", "closure"],
+            },
+            "content": {"type": "object"},
+        },
+        "additionalProperties": False,
+    }
+    return {"oneOf": [compact, full, section, stale_expansion_response_schema()]}
+
+
 def review_packet_output_schema() -> dict[str, Any]:
     return {
         "review_type": "string",

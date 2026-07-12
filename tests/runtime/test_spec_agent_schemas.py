@@ -95,6 +95,31 @@ class CompactSchemaValidationTests(unittest.TestCase):
         }
         self.assert_valid(stale, spec_agent_schemas.stale_expansion_response_schema())
 
+    def test_phase_gate_union_accepts_each_closed_shape(self):
+        schema = spec_agent_schemas.phase_gate_check_output_schema()
+        compact = compact_fixture()
+        full = {
+            "detail": "full", "schema_version": "1", "decision": {},
+            "evidence_fingerprint": "sha256:" + "a" * 64,
+            "findings": [], "next_actions": [], "context": {},
+            "lifecycle_metadata": metadata(),
+        }
+        section = {
+            "detail": "section", "schema_version": "1", "decision": {},
+            "evidence_fingerprint": "sha256:" + "a" * 64,
+            "section": "coverage", "content": {}, "lifecycle_metadata": metadata(),
+        }
+        stale = {
+            "status": "stale", "schema_version": "1",
+            "requested_fingerprint": "sha256:" + "a" * 64,
+            "current_evidence_fingerprint": "sha256:" + "b" * 64,
+            "expansion": {"tool": "phase_gate_check", "arguments": {}},
+            "lifecycle_metadata": metadata(),
+        }
+        for fixture in (compact, full, section, stale):
+            with self.subTest(shape=fixture.get("detail", fixture.get("status"))):
+                self.assert_valid(fixture, schema)
+
     def test_compact_envelope_rejects_malformed_fingerprint_and_bounds(self):
         schema = spec_agent_schemas.compact_aggregate_envelope_schema()
         malformed = copy.deepcopy(compact_fixture())
