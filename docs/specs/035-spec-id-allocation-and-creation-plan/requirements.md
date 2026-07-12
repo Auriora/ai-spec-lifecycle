@@ -229,12 +229,17 @@ safe reservation.
 - **Constraints:** repo-relative output; multiple docs roots; removal-by-default history; no v1 write mutation.
 - **Performance Goals:** one bounded repository inventory suitable for spec creation preflight.
 
-## Open Questions
+## Accepted Design Decisions
 
-| Question | Why it matters | Blocks design? |
-|----------|----------------|----------------|
-| What exact fingerprint inputs and canonical serialization should v1 use? | Determines deterministic staleness checks across MCP and CLI. | yes |
-| Should inventory and creation planning be separate public tools, or one planning tool plus fields in scan/preflight? | Determines discoverability without requiring extra agent calls. | yes |
+- Reuse the shared Spec 036 canonical JSON and evidence-fingerprint helper with
+  a `spec-creation-plan-v1` domain. Fingerprint only selected scope, normalized
+  numbering evidence, template authority, requested slug, proposed path, and
+  artifact/precondition contract.
+- Expose two public read-only surfaces: `spec_id_inventory` owns numbering
+  evidence and `next_available_spec_number`; `spec_creation_plan` requires a
+  caller-supplied slug and composes inventory with template and path planning.
+  Add the next number and a creation-plan action to scan/no-active orientation
+  instead of creating a third next-ID tool.
 
 ## Success Criteria
 
@@ -249,6 +254,6 @@ safe reservation.
 
 - Backlog: `docs/backlog/README.md` B061
 - Contract dependency: `docs/specs/036-compact-output-and-invocation-telemetry/requirements.md`
-- Design: not created yet
+- Design: `docs/specs/035-spec-id-allocation-and-creation-plan/design.md`
 - Tasks: not created yet
 - Verification: not created yet

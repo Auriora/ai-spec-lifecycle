@@ -497,6 +497,188 @@ def discover_spec_paths(repo_root: Path, docs_root: str | None = None) -> list[P
     return sorted(paths)
 
 
+SPEC_ID_PATTERN = re.compile(r"^(?P<number>[0-9]{3,})-(?P<slug>[a-z0-9]+(?:-[a-z0-9]+)*)$")
+
+
+def _selected_docs_root(repo_root: Path, docs_root: str | None = None) -> tuple[Path, str]:
+    root = repo_root.resolve()
+    selected_text = (docs_root or "docs").replace("\\", "/").strip("/")
+    selected = (root / selected_text).resolve()
+    try:
+        relative = selected.relative_to(root).as_posix()
+    except ValueError as exc:
+        raise ValueError("docs_root must remain beneath repo_root") from exc
+    if relative in {"", "."} or any(part in {"", ".", ".."} for part in Path(relative).parts):
+        raise ValueError("docs_root must name a repository-relative documentation root")
+    return selected, relative
+
+
+def _numbering_evidence(
+    source_kind: str,
+    source_path: Path,
+    spec_id: str,
+    status: str,
+    repo_root: Path,
+) -> dict[str, Any]:
+    match = SPEC_ID_PATTERN.fullmatch(spec_id)
+    return {
+        "source_kind": source_kind,
+        "source_path": repo_display_path(source_path, repo_root),
+        "spec_id": spec_id,
+        "numeric_prefix": int(match.group("number")) if match else None,
+        "status": status,
+    }
+
+
+def _legacy_range_upper_bound(rows: list[dict[str, str]]) -> int | None:
+    bounds: list[int] = []
+    for row in rows:
+        text = " ".join(row.values())
+        for match in re.finditer(r"(?<![0-9])([0-9]{3,})\s*(?:-|–|to)\s*([0-9]{3,})(?![0-9])", text, re.IGNORECASE):
+            bounds.append(max(int(match.group(1)), int(match.group(2))))
+        for key, value in row.items():
+            if "upper" in key.lower() and re.fullmatch(r"[0-9]{3,}", value.strip()):
+                bounds.append(int(value.strip()))
+    return max(bounds) if bounds else None
+
+
+def spec_id_inventory(repo_root: Path, docs_root: str | None = None) -> dict[str, Any]:
+    """Return read-only, docs-root-scoped numbering evidence and next ID."""
+    root = repo_root.resolve()
+    selected, selected_relative = _selected_docs_root(root, docs_root)
+    specs_root = selected / "specs"
+    history_root = selected / "history"
+    archive_path = history_root / "spec-archive-index.md"
+    closure_path = history_root / "spec-closure-log.md"
+    diagnostics: list[dict[str, Any]] = []
+    evidence: list[dict[str, Any]] = []
+
+    if specs_root.exists():
+        for path in sorted((item for item in specs_root.iterdir() if item.is_dir()), key=lambda item: item.name):
+            evidence.append(_numbering_evidence("active_package", path, path.name, "active", root))
+
+    archive_ids: set[str] = set()
+    legacy_rows: list[dict[str, str]] = []
+    if archive_path.exists():
+        rows, _lines = markdown_table_after_heading(archive_path, "Entries")
+        for row in rows:
+            spec_id = strip_markdown_value(row.get("Spec ID", ""))
+            if not spec_id:
+                continue
+            archive_ids.add(spec_id)
+            evidence.append(
+                _numbering_evidence(
+                    "archive_index",
+                    archive_path,
+                    spec_id,
+                    strip_markdown_value(row.get("Status", "closed")).lower(),
+                    root,
+                )
+            )
+        legacy_rows, _legacy_lines = markdown_table_after_heading(archive_path, "Legacy Gaps")
+
+    if closure_path.exists():
+        for line in read_text(closure_path).splitlines():
+            heading = re.match(r"^###\s+\d{4}-\d{2}-\d{2}\s+-\s+(.+?)\s*$", line)
+            if heading and heading.group(1).strip() not in archive_ids:
+                evidence.append(
+                    _numbering_evidence("closure_log", closure_path, heading.group(1).strip(), "closed", root)
+                )
+
+    established_scope = specs_root.exists() and any(item.is_dir() for item in specs_root.iterdir())
+    central_archive = root / "docs/history/spec-archive-index.md"
+    if selected_relative != "docs" and not archive_path.exists() and central_archive.exists():
+        central_rows, _central_lines = markdown_table_after_heading(central_archive, "Entries")
+        claimed_prefix = f"{selected_relative}/specs/"
+        if any(strip_markdown_value(row.get("Package path", "")).startswith(claimed_prefix) for row in central_rows):
+            diagnostics.append(
+                diagnostic(
+                    "error",
+                    "SPEC_ID_HISTORY_AMBIGUOUS",
+                    central_archive,
+                    "A repository-level history source references the selected docs root, but the selected root has no local history owner.",
+                    waivable=False,
+                )
+            )
+    if established_scope and not archive_path.exists() and not closure_path.exists():
+        diagnostics.append(
+            diagnostic(
+                "warn",
+                "SPEC_ID_HISTORY_MISSING",
+                history_root,
+                "Selected docs root has active spec evidence but no matching history source.",
+                waivable=True,
+            )
+        )
+
+    for item in evidence:
+        if item["numeric_prefix"] is None:
+            diagnostics.append(
+                diagnostic(
+                    "warn",
+                    "SPEC_ID_MALFORMED",
+                    root / item["source_path"],
+                    f"Malformed spec ID does not contribute a numeric prefix: {item['spec_id']}",
+                    waivable=True,
+                )
+            )
+
+    ids_by_prefix: dict[int, set[str]] = {}
+    for item in evidence:
+        prefix = item["numeric_prefix"]
+        if isinstance(prefix, int):
+            ids_by_prefix.setdefault(prefix, set()).add(str(item["spec_id"]))
+    for prefix, spec_ids in sorted(ids_by_prefix.items()):
+        if len(spec_ids) > 1:
+            diagnostics.append(
+                diagnostic(
+                    "warn",
+                    "SPEC_ID_PREFIX_DUPLICATE",
+                    specs_root,
+                    f"Numeric prefix {prefix:03d} is used by: {', '.join(sorted(spec_ids))}",
+                    waivable=True,
+                )
+            )
+
+    legacy_upper_bound = _legacy_range_upper_bound(legacy_rows)
+    parsed_numbers = sorted(ids_by_prefix)
+    candidates = [*parsed_numbers, *([legacy_upper_bound] if legacy_upper_bound is not None else [])]
+    next_number = max(candidates) + 1 if candidates else 0
+    width = max(3, len(str(next_number)))
+    summary = diagnostic_summary(diagnostics)
+    confidence = "low" if summary["error"] else "reduced" if summary["warn"] or any(
+        item["source_kind"] == "closure_log" for item in evidence
+    ) else "high"
+    evidence.sort(
+        key=lambda item: (
+            item["numeric_prefix"] is None,
+            item["numeric_prefix"] if item["numeric_prefix"] is not None else 0,
+            item["spec_id"],
+            item["source_kind"],
+            item["source_path"],
+        )
+    )
+    return {
+        "schema_version": "1",
+        "numbering_scope": {
+            "docs_root": selected_relative,
+            "specs_root": f"{selected_relative}/specs",
+            "history_sources": [
+                repo_display_path(path, root) for path in (archive_path, closure_path) if path.exists()
+            ],
+        },
+        "used_numbers": parsed_numbers,
+        "highest_used_number": max(candidates) if candidates else None,
+        "next_available_spec_number": f"{next_number:0{width}d}",
+        "provisional": True,
+        "confidence": confidence,
+        "legacy_upper_bound": legacy_upper_bound,
+        "evidence": evidence,
+        "diagnostics": relativize_diagnostic_paths(diagnostics, root),
+        "summary": {**summary, "evidence_count": len(evidence)},
+    }
+
+
 def skill_spec_package_templates_dir() -> Path:
     return Path(__file__).resolve().parents[2] / "references" / "spec-package"
 
