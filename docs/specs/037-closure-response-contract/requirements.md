@@ -41,6 +41,7 @@ can act on, so that lifecycle operations do not displace implementation context.
 1. WHEN `closure_plan` returns, THEN THE SYSTEM SHALL omit complete replacement bodies and return decisions, findings, action handles, paths, hashes, sizes, and short previews only.
 2. WHEN more detail is needed, THEN THE SYSTEM SHALL expand one closed section without returning executable replacement content.
 3. THE SYSTEM SHALL keep every normal or expanded closure manifest at or below 32 KiB by construction.
+4. WHEN an MCP result includes `structuredContent`, THEN THE SYSTEM SHALL provide only a short text summary in `content` rather than serializing the structured payload again.
 
 ### Requirement 2: Restart-safe action execution
 
@@ -76,6 +77,7 @@ and non-text state, so that findings represent sources I can review or edit.
 - P002: Repeating `render_records` leaves one closure-log entry and one archive row for the spec ID.
 - P003: A spec-package content change changes the plan fingerprint.
 - P004: The serialized manifest never exceeds 32 KiB.
+- P005: MCP tool `content` remains below 512 bytes and does not repeat structured payload collections.
 
 ## Non-goals
 

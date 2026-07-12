@@ -105,6 +105,27 @@ def text_content(payload: Any) -> list[dict[str, str]]:
     return [{"type": "text", "text": json_text(payload)}]
 
 
+def tool_text_summary(payload: Any) -> str:
+    """Describe a structured tool result without serializing it a second time."""
+    if not isinstance(payload, dict):
+        count = len(payload) if isinstance(payload, list) else 1
+        return f"Spec Lifecycle Manager returned {count} result item(s). See structuredContent."
+    fields: list[str] = []
+    for key in ("status", "detail", "spec_id", "spec_path", "task_id", "action_id", "plan_id"):
+        value = payload.get(key)
+        if value is not None and not isinstance(value, (dict, list)):
+            fields.append(f"{key}={value}")
+    decision = payload.get("decision")
+    if isinstance(decision, dict):
+        for key in ("ready", "spec_id"):
+            value = decision.get(key)
+            if value is not None and f"{key}={value}" not in fields:
+                fields.append(f"{key}={value}")
+    prefix = "Spec Lifecycle Manager result"
+    summary = f"{prefix}: {', '.join(fields)}." if fields else f"{prefix}."
+    return f"{summary} See structuredContent for authoritative data."
+
+
 def relative_path_for_mcp(path: Path, repo_root: Path) -> str | None:
     resolved = path.resolve()
     try:
@@ -147,7 +168,7 @@ def normalize_mcp_payload(payload: Any, repo_root: Path) -> Any:
 def tool_result(payload: Any, repo_root: Path) -> dict[str, Any]:
     normalized = normalize_mcp_payload(payload, repo_root)
     return {
-        "content": text_content(normalized),
+        "content": [{"type": "text", "text": tool_text_summary(normalized)}],
         "structuredContent": normalized if isinstance(normalized, dict) else {"result": normalized},
         "isError": False,
     }

@@ -33,3 +33,8 @@ last_reviewed: 2026-07-12
   - Files: `tests/runtime/test_spec_mcp_server.py`, `docs/reference/spec-lifecycle-runtime.md`, plugin bundle mirrors
   - Acceptance: Full validation, package parity, and diff checks pass.
   - Evidence: `npm run validate` passed: 306 Python tests, 25 Node tests, scan, archive index, prompts, package contract, sync guard, pack dry run, and diff check.
+- [x] T005 Remove duplicate JSON from the MCP transport envelope.
+  - Depends on: T004
+  - Files: `skills/spec-lifecycle-manager/scripts/spec_mcp_server.py`, `tests/runtime/test_spec_mcp_server.py`, plugin bundle mirrors
+  - Acceptance: `structuredContent` remains authoritative and unchanged; text `content` is a useful summary below 512 bytes and does not repeat payload collections.
+  - Evidence: MCP module passed 46 tests; `npm run validate` passed 307 Python tests, 25 Node tests, package contract, bundle parity, runtime checks, pack dry run, and diff check.

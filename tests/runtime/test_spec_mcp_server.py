@@ -552,6 +552,24 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertEqual("rejected", apply_payload["status"])
         self.assertIn("CLOSURE_WRITE_INTENT_MISSING", {item["code"] for item in apply_payload["diagnostics"]})
 
+    def test_tool_result_text_summarizes_without_duplicating_structured_payload(self):
+        payload = {
+            "status": "ready",
+            "plan_id": "abc123",
+            "edit_summaries": [{"preview": "x" * 5000}],
+        }
+
+        result = spec_mcp_server.tool_result(payload, ROOT)
+        text = result["content"][0]["text"]
+
+        self.assertEqual(payload, result["structuredContent"])
+        self.assertLess(len(text.encode("utf-8")), 512)
+        self.assertIn("status=ready", text)
+        self.assertIn("plan_id=abc123", text)
+        self.assertIn("structuredContent", text)
+        self.assertNotIn("edit_summaries", text)
+        self.assertNotIn("x" * 100, text)
+
     def test_closure_mcp_plan_is_bounded_and_actions_are_sequential_and_idempotent(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)

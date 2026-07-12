@@ -296,6 +296,10 @@ or `validation` and requires the same closure inputs plus the expected
 the relevance contract and is not a license to generate a large payload and
 truncate it afterward.
 
+MCP tool results carry the authoritative object once in `structuredContent`.
+The protocol text `content` contains only a short status/identifier summary and
+points clients to `structuredContent`; it does not duplicate the JSON object.
+
 Active-reference discovery reads root `.gitignore` and `.aiignore` rules as
 ordered additional skip signals, including negation. It also excludes `.git`,
 `.cache`, Python caches, common database and WAL/SHM files, and binary files.

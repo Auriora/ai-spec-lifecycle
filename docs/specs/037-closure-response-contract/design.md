@@ -39,6 +39,8 @@ durable records. This makes sequential calls independent and restart-safe.
   `_insert_archive_row` replaces a matching first-column spec ID.
 - Reference scanning combines root ignore rules with narrow safety exclusions
   for cache, VCS, database/WAL/SHM, Python cache, and detected binary files.
+- The MCP result envelope keeps the authoritative object in `structuredContent`;
+  its required text content is a sub-512-byte status and identifier summary.
 
 ## Error Handling
 

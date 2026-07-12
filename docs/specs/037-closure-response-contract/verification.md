@@ -23,6 +23,7 @@ last_reviewed: 2026-07-12
 |---|---|---|---|
 | 2026-07-12 | Focused MCP runtime | `python3 -m unittest tests.runtime.test_spec_mcp_server` | Pass: 45 tests |
 | 2026-07-12 | Full repository | `npm run validate` | Pass: 306 Python, 25 Node, runtime/package/sync/pack/diff gates |
+| 2026-07-12 | MCP envelope follow-up | `python3 -m unittest tests.runtime.test_spec_mcp_server`; `npm run validate` | Pass: 46 focused; 307 Python and 25 Node full-suite tests |
 
 ## Residual Risks
 

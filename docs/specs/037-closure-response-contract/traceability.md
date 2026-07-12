@@ -17,12 +17,13 @@ last_reviewed: 2026-07-12
 | T002 | R1 | P001, P004 | Manifest projection | Response-size and key-shape assertions | `docs/reference/spec-lifecycle-runtime.md#closure-helper-tools` |
 | T003 | R2 | P002, P003 | Stateless apply and upsert | Sequential, duplicate, cleanup-order, stale tests | `docs/reference/spec-lifecycle-runtime.md#closure-helper-tools` |
 | T004 | R1-R3 | P001-P004 | Operational considerations | Full repository validation and bundle parity | Runtime reference and B063 |
+| T005 | R1 | P005 | MCP result envelope | Text-summary compatibility and size regression | `docs/reference/spec-lifecycle-runtime.md#closure-helper-tools` |
 
 ## Requirement To Delivery Matrix
 
 | Requirement | Tasks | Verification |
 |---|---|---|
-| R1 | T002, T004 | MCP response shape and serialized size |
+| R1 | T002, T004, T005 | MCP response shape, serialized size, and non-duplicating envelope |
 | R2 | T003, T004 | Sequential, duplicate, cleanup-order, and stale tests |
 | R3 | T001, T004 | Ignore/cache/database/WAL/binary scan fixture |
 
@@ -34,6 +35,7 @@ last_reviewed: 2026-07-12
 | Stateless MCP apply | `spec_mcp_server.py` | T003 |
 | Record upsert and cleanup proof | `lifecycle/closure.py` | T003 |
 | Scan exclusions | `lifecycle/closure.py` | T001 |
+| MCP result envelope | `spec_mcp_server.py` | T005 |
 
 ## Open Decision Impact
 
