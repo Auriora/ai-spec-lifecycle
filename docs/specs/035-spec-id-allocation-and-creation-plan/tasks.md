@@ -48,7 +48,7 @@ last_reviewed: 2026-07-12
 
 ## Phase 2: Existing Workflow Integration
 
-- [ ] T003 Reuse allocation in bootstrap, scan, and no-active orientation
+- [x] T003 Reuse allocation in bootstrap, scan, and no-active orientation
   - Depends on: T001, T002.
   - Files: shared lifecycle core and orientation/bootstrap fixtures.
   - Replace hard-coded bootstrap numbering and add next-number/action fields to
@@ -56,7 +56,13 @@ last_reviewed: 2026-07-12
   - Acceptance: blank scopes still propose `000`; established repositories use
     the same allocator; scan and no-active results expose the provisional next
     number without agent-side arithmetic.
-  - Evidence: Pending.
+  - Evidence: 2026-07-12, bootstrap delegates first/established spec paths to
+    shared creation planning; scan and no-active/preflight orientation add the
+    provisional next number, confidence/diagnostic summary, and creation-plan
+    action without replacing established fields. Empty scopes preserve `000`,
+    nested roots remain isolated, and low-confidence error state suppresses the
+    action. Fifteen focused fixtures and the 293-test full Python suite pass;
+    source/Codex/Claude parity and `git diff --check` pass.
 
 - [ ] T004 Add retained CLI inventory and creation-plan surfaces
   - Depends on: T003.

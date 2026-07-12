@@ -84,7 +84,13 @@ last_reviewed: 2026-07-12
   stale fingerprints, collision diagnostics, and fresh fallback proposals.
   V013-V026 pass with 11 focused fixtures; the complete Python suite passes 289
   tests, bundle parity is synchronized, and `git diff --check` passes.
-- Pending implementation evidence for T003-T007.
+- **2026-07-12 — T003:** Replaced hard-coded bootstrap allocation with shared
+  creation planning and added provisional next-number/confidence/action fields
+  to scan, no-active context, and no-active preflight. V027-V032 pass for empty,
+  established, nested-root, additive inventory, and unusable-allocation cases;
+  15 focused fixtures and the complete 293-test Python suite pass with bundle
+  parity and `git diff --check`.
+- Pending implementation evidence for T004-T007.
 
 ## Residual Risks
 

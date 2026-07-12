@@ -931,6 +931,7 @@ def template_authority(repo_root: Path) -> dict[str, Any]:
 
 def scan_specs(repo_root: Path, docs_root: str | None = None, include_archived_lint: bool = False) -> dict[str, Any]:
     root = repo_root.resolve()
+    allocation = spec_id_inventory(root, docs_root)
     specs = []
     for spec_path in discover_spec_paths(root, docs_root):
         inventory = artifact_inventory(spec_path)
@@ -957,6 +958,23 @@ def scan_specs(repo_root: Path, docs_root: str | None = None, include_archived_l
             "templates": "templates://spec-package",
         },
         "template_authority": template_authority(root),
+        "next_available_spec_number": allocation["next_available_spec_number"],
+        "spec_id_allocation": {
+            "provisional": True,
+            "confidence": allocation["confidence"],
+            "diagnostics": allocation["diagnostics"],
+        },
+        "available_next_actions": [
+            {
+                "id": "plan_spec_creation",
+                "label": "Plan spec creation",
+                "tool": "spec_creation_plan",
+                "required": False,
+                "arguments": {"docs_root": allocation["numbering_scope"]["docs_root"]},
+            }
+        ]
+        if allocation["summary"]["error"] == 0
+        else [],
         "specs": specs,
     }
 
@@ -3723,6 +3741,7 @@ def bootstrap_plan(
         }
     ]
     required_values = []
+    creation_plan = None
     if project_summary:
         writes.append(
             {
@@ -3742,14 +3761,23 @@ def bootstrap_plan(
         )
     if create_spec:
         if spec_slug:
-            writes.append(
-                {
-                    "path": f"{docs_root}/specs/000-{spec_slug}/",
-                    "purpose": "Optional first spec package for an actual requested change.",
-                    "template_source": "references/spec-package",
-                    "preview_only": True,
-                }
-            )
+            creation_plan = spec_creation_plan(root, spec_slug, docs_root)
+            if creation_plan["status"] in {"ready", "stale"} and creation_plan["proposed_path"]:
+                writes.append(
+                    {
+                        "path": f"{creation_plan['proposed_path']}/",
+                        "purpose": "Optional first spec package for an actual requested change.",
+                        "template_source": creation_plan["template_authority"]["path"],
+                        "preview_only": True,
+                    }
+                )
+            else:
+                required_values.append(
+                    {
+                        "name": "valid_spec_slug_or_allocation",
+                        "reason": "Spec creation planning must return a safe, collision-free proposal.",
+                    }
+                )
         else:
             required_values.append({"name": "spec_slug", "reason": "A spec slug is required to preview an optional first spec package."})
     assumptions = [
@@ -3765,6 +3793,7 @@ def bootstrap_plan(
         "docs_root": docs_root,
         "docs_exists": docs.exists(),
         "writes": writes,
+        "spec_creation_plan": creation_plan,
         "required_user_values": required_values,
         "validation_commands": [
             f"PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py scan . --docs-root {docs_root}",
@@ -3802,7 +3831,7 @@ def active_spec_preflight(
     scan = scan_specs(root, docs_root)
     active_specs = [item for item in scan["specs"] if item["lifecycle"] == "active"]
     if not active_specs and spec_path is None:
-        context = no_active_spec_context(root)
+        context = no_active_spec_context(root, docs_root)
         return {
             "repo_root": str(root),
             "status": "no_active_spec",
@@ -3927,9 +3956,10 @@ def agent_readiness_packet(spec_path: Path, task_id: str) -> dict[str, Any]:
     }
 
 
-def no_active_spec_context(repo_root: Path) -> dict[str, Any]:
+def no_active_spec_context(repo_root: Path, docs_root: str | None = None) -> dict[str, Any]:
     root = repo_root.resolve()
     archive = archive_index(root)
+    allocation = spec_id_inventory(root, docs_root)
     durable_candidates = [
         "AGENTS.md",
         "docs/README.md",
@@ -3950,6 +3980,23 @@ def no_active_spec_context(repo_root: Path) -> dict[str, Any]:
         "archive_index_summary": archive["summary"],
         "archive_index_path": archive["path"],
         "removed_spec_count": archive["summary"].get("removed", 0),
+        "next_available_spec_number": allocation["next_available_spec_number"],
+        "spec_id_allocation": {
+            "provisional": True,
+            "confidence": allocation["confidence"],
+            "diagnostics": allocation["diagnostics"],
+        },
+        "available_next_actions": [
+            {
+                "id": "plan_spec_creation",
+                "label": "Plan spec creation",
+                "tool": "spec_creation_plan",
+                "required": False,
+                "arguments": {"docs_root": allocation["numbering_scope"]["docs_root"]},
+            }
+        ]
+        if allocation["summary"]["error"] == 0
+        else [],
         "agent_interface": agent_interface(["scan_specs", "no_active_spec_context", "archive_index", "prompts_validate"]),
         "script_validation_commands": [
             "PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py scan .",

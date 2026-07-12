@@ -199,6 +199,65 @@ class SpecIdInventoryTests(unittest.TestCase):
             self.assertEqual("001-race", payload["fresh_proposal"]["proposed_spec_id"])
             self.assertIn("SPEC_CREATION_PATH_COLLISION", {item["code"] for item in payload["diagnostics"]})
 
+    def test_bootstrap_reuses_shared_allocator_for_empty_and_established_scopes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            empty = core.bootstrap_plan(repo, create_spec=True, spec_slug="first")
+            (repo / "docs/specs/004-existing").mkdir(parents=True)
+            established = core.bootstrap_plan(repo, create_spec=True, spec_slug="next")
+
+            self.assertIn("docs/specs/000-first/", {item["path"] for item in empty["writes"]})
+            self.assertEqual("000", empty["spec_creation_plan"]["next_available_spec_number"])
+            self.assertIn("docs/specs/005-next/", {item["path"] for item in established["writes"]})
+            self.assertEqual("005", established["spec_creation_plan"]["next_available_spec_number"])
+
+    def test_scan_adds_allocation_without_changing_inventory(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / "docs/specs/002-current").mkdir(parents=True)
+
+            payload = core.scan_specs(repo)
+
+            self.assertEqual(["002-current"], [item["spec_id"] for item in payload["specs"]])
+            self.assertEqual("003", payload["next_available_spec_number"])
+            self.assertTrue(payload["spec_id_allocation"]["provisional"])
+            self.assertEqual("plan_spec_creation", payload["available_next_actions"][0]["id"])
+
+    def test_no_active_context_and_preflight_use_selected_scope_allocation(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            history = repo / "docs/platform/history"
+            history.mkdir(parents=True)
+            (history / "spec-archive-index.md").write_text(
+                "# Archive\n\n## Entries\n\n| Spec ID | Status |\n|---|---|\n| 008-old | removed |\n",
+                encoding="utf-8",
+            )
+            (history / "spec-closure-log.md").write_text("# Closure\n", encoding="utf-8")
+
+            context = core.no_active_spec_context(repo, "docs/platform")
+            preflight = core.active_spec_preflight(repo, docs_root="docs/platform")
+
+            self.assertEqual("009", context["next_available_spec_number"])
+            self.assertEqual("plan_spec_creation", context["available_next_actions"][0]["id"])
+            self.assertEqual("009", preflight["no_active_spec_context"]["next_available_spec_number"])
+
+    def test_unusable_allocation_does_not_advertise_creation_action(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / "docs/platform/specs/004-current").mkdir(parents=True)
+            central = repo / "docs/history"
+            central.mkdir(parents=True)
+            (central / "spec-archive-index.md").write_text(
+                "# Archive\n\n## Entries\n\n| Spec ID | Package path | Status |\n|---|---|---|\n"
+                "| 006-old | `docs/platform/specs/006-old/` | removed |\n",
+                encoding="utf-8",
+            )
+
+            scan = core.scan_specs(repo, "docs/platform")
+
+            self.assertEqual([], scan["available_next_actions"])
+            self.assertEqual("low", scan["spec_id_allocation"]["confidence"])
+
 
 if __name__ == "__main__":
     unittest.main()
