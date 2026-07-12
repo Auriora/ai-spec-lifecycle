@@ -14,6 +14,30 @@ requires visible archived docs.
 
 ## Entries
 
+### 2026-07-12 - 033-phase-gate-check
+
+- **Spec:** `docs/specs/033-phase-gate-check/`
+- **Title:** Phase gate check requirements
+- **Final spec commit:** `ac690d4`
+- **Closure cleanup commit:** `pending-cleanup-commit`
+- **Closure action:** removed
+- **Durable docs updated:**
+  - `docs/backlog/README.md`
+  - `skills/spec-lifecycle-manager/SKILL.md`
+  - `docs/design/spec-lifecycle-management.md`
+  - `docs/reference/spec-lifecycle-runtime.md`
+- **Verification summary:** The final package recorded all six tasks complete
+  and verified. Source `closure-check` reported ready with no blockers;
+  promotion planning found all four durable targets. Full pre-cleanup
+  validation passed with 278 Python and 25 Node tests plus lifecycle,
+  archive/prompt/package/sync, npm dry-pack, and diff checks. Cleanup scan no
+  longer lists Spec 033; final archive validation follows cleanup-hash
+  resolution.
+- **Residual risks:** Already-running Codex or Claude sessions need the updated
+  package installed and reloaded before their MCP process recognizes multiline
+  verification evidence and table-form promotion baselines.
+- **Follow-up:** none
+
 ### 2026-07-06 - 032-requirement-priority-labels
 
 - **Spec:** `docs/specs/032-requirement-priority-labels/`
