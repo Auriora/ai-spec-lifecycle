@@ -79,8 +79,7 @@ decisions block the next lifecycle stage.
 
 - **Current stage:** requirements
 - **Next stage:** design
-- **Ready to design when:** phase names, gate semantics, output shape, and
-  advisory/blocking boundaries are accepted.
+- **Ready to design when:** satisfied on 2026-07-12 by the accepted decisions below.
 - **Design-first exception:** no
 - **Optional artifacts recommended:** none
 - **Downstream review needed:** design, tasks, traceability, verification
@@ -194,13 +193,14 @@ without silently changing governance, so that adoption can be dogfooded safely.
   internals require a small extraction.
 - **Performance Goals:** Suitable for preflight use on one active spec.
 
-## Open Questions
+## Accepted Requirements Decisions
 
-| Question | Why it matters | Blocks design? |
-|----------|----------------|----------------|
-| What exact phase enum should v1 expose? | Controls output compatibility. | yes |
-| Should phase gate be one tool or a mode of active preflight? | Determines MCP and CLI shape. | yes |
-| How should stale downstream artifacts be detected without expensive history analysis? | Determines feasibility and false-positive risk. | yes |
+| Decision | Rationale | Status |
+|----------|-----------|--------|
+| V1 phases are `requirements`, `design`, `tasks`, `implementation`, `verification`, `promotion`, `closure`, and `unknown`. | Separates artifact authoring, delivery, evidence, durable promotion, and final closure without exposing the current coarse internal labels. | accepted |
+| Add standalone `phase_gate_check`; do not change `active_spec_preflight` defaults or payload. | Preserves compatibility and avoids composing a selection facade that already repeats scan/lint/task work. | accepted |
+| Recorded upstream fingerprints prove `current` or `stale`; missing fingerprints produce `review_required`. Modification times remain advisory and cannot prove semantic staleness. | Avoids false blockers after checkout, copy, restore, or timestamp-only changes. | accepted |
+| Promotion remains the inferred phase until durable-promotion evidence and authoritative closure checks support closure. | Current promotion planning identifies targets but does not prove completion. | accepted |
 
 ## Cross-Spec Contract Dependency
 
