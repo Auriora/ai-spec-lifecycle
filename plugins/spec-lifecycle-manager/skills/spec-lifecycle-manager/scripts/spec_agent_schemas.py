@@ -270,45 +270,30 @@ def spec_id_inventory_output_schema() -> dict[str, Any]:
 
 
 def spec_creation_plan_output_schema() -> dict[str, Any]:
-    shared = {
+    base = {
         "schema_version": {"type": "string", "const": "1"},
-        "status": {"type": "string", "enum": ["ready", "stale", "collision", "invalid"]},
-        "provisional": {"type": "boolean", "const": True},
-        "reservation": {"type": "boolean", "const": False},
-        "numbering_scope": {"type": "object"},
-        "next_available_spec_number": {"type": "string", "pattern": "^[0-9]{3,}$"},
-        "proposed_spec_id": {"type": ["string", "null"]},
-        "proposed_path": {"type": ["string", "null"]},
-        "template_authority": {"type": ["object", "null"]},
-        "planned_core_artifacts": {"type": "array", "items": {"type": "string"}},
-        "planned_optional_artifacts": {"type": "array", "items": {"type": "string"}},
-        "required_user_values": {"type": "array", "items": {"type": "object"}},
-        "preconditions": {"type": "array", "items": {"type": "object"}},
-        "validation_commands": {"type": "array", "items": {"type": "string"}},
-        "evidence_fingerprint": {"oneOf": [evidence_fingerprint_schema(), {"type": "null"}]},
-        "diagnostics": {"type": "array", "items": {"type": "object"}},
+        "decision": {"type": "object"},
+        "evidence_fingerprint": evidence_fingerprint_schema(),
         "lifecycle_metadata": lifecycle_metadata_schema(),
     }
-    valid_only = {
-        "allocation_confidence": {"type": "string", "enum": ["high", "reduced", "low"]},
-        "path_within_specs_root": {"type": "boolean", "const": True},
-        "fingerprint_valid": {"type": "boolean"},
-        "refreshed_arguments": {"type": ["object", "null"]},
-        "fresh_proposal": {"type": ["object", "null"]},
-    }
-    valid = {
+    full = {
         "type": "object",
-        "required": [*shared, *valid_only],
-        "properties": {**shared, **valid_only},
+        "required": ["detail", *base, "plan"],
+        "properties": {**base, "detail": {"type": "string", "const": "full"}, "plan": {"type": "object"}},
         "additionalProperties": False,
     }
-    invalid = {
+    section = {
         "type": "object",
-        "required": list(shared),
-        "properties": shared,
+        "required": ["detail", *base, "section", "content"],
+        "properties": {
+            **base,
+            "detail": {"type": "string", "const": "section"},
+            "section": {"type": "string", "enum": ["numbering", "template", "validation"]},
+            "content": {"type": "object"},
+        },
         "additionalProperties": False,
     }
-    return {"oneOf": [valid, invalid]}
+    return {"oneOf": [compact_aggregate_envelope_schema(), full, section, stale_expansion_response_schema()]}
 
 
 def review_packet_output_schema() -> dict[str, Any]:

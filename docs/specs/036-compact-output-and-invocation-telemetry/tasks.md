@@ -87,10 +87,16 @@ last_reviewed: 2026-07-12
 
 ## Phase 3: Promotion And Closure
 
-- [ ] T007 Synchronize bundles and validate package parity
+- [x] T007 Synchronize bundles and validate package parity
   - Depends on: each source implementation slice
   - Run `slc sync bundles`, package contract, and sync guard.
   - Acceptance: source, Codex, and Claude copies match and all package checks pass.
+  - Evidence: 2026-07-12, source synchronized into Codex and Claude bundles.
+    V026-V028 passed: bundle sync and package contract passed; both
+    source/bundle parity checks are `in_sync`. `npm run validate` passed with
+    303 Python and 25 Node tests plus lifecycle, package, dry-run pack, and
+    whitespace checks. Sync guard only reports expected older installed-cache,
+    reload, and pre-commit sync-evidence advisories.
 
 - [ ] T008 Promote durable documentation and close B062
   - Depends on: T001-T007

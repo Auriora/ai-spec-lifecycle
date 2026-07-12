@@ -89,6 +89,14 @@ last_reviewed: 2026-07-12
   MCP/CLI decision parity. V022-V025 passed in an 88-test focused runtime,
   schema, phase-gate, and MCP run; direct compact and numbering-section CLI
   smokes and `git diff --check` passed. Bundle synchronization remains T007.
+- **2026-07-12 — T007:** Synchronized the source skill into Codex and Claude
+  plugin bundles. V026-V028 passed: bundle sync, package contract, and source to
+  both-bundle parity all report pass/in-sync. `npm run validate` passed with 303
+  Python and 25 Node tests plus scan, archive, prompt, package, sync-guard,
+  dry-run pack, and whitespace validation. Sync guard's remaining findings are
+  limited to the intentionally older installed cache/reload boundary and
+  missing committed sync evidence, both resolved after this slice is committed
+  and reinstalled.
 
 ## Quality Gates
 

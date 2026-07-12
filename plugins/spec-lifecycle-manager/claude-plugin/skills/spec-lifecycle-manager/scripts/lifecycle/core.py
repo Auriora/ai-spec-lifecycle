@@ -839,7 +839,7 @@ def _creation_plan_fingerprint_inputs(
     }
 
 
-def spec_creation_plan(
+def _spec_creation_plan_full(
     repo_root: Path,
     slug: str,
     docs_root: str | None = None,
@@ -971,6 +971,184 @@ def spec_creation_plan(
         "fresh_proposal": fresh_proposal,
         "diagnostics": diagnostics,
     }
+
+
+SPEC_CREATION_PLAN_DETAILS = {"compact", "full", "section"}
+SPEC_CREATION_PLAN_SECTIONS = {"numbering", "template", "validation"}
+SPEC_CREATION_PLAN_FINDING_LIMIT = 20
+SPEC_CREATION_PLAN_ACTION_LIMIT = 10
+SPEC_CREATION_PLAN_PAYLOAD_TARGET_BYTES = 32768
+
+
+def _spec_creation_plan_decision(payload: dict[str, Any]) -> dict[str, Any]:
+    return {
+        key: payload.get(key)
+        for key in (
+            "status",
+            "provisional",
+            "reservation",
+            "allocation_confidence",
+            "next_available_spec_number",
+            "proposed_spec_id",
+            "proposed_path",
+            "path_within_specs_root",
+            "fingerprint_valid",
+        )
+        if key in payload
+    }
+
+
+def _spec_creation_plan_actions(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    actions: list[dict[str, Any]] = []
+    for item in payload.get("preconditions", []):
+        if isinstance(item, dict):
+            actions.append({"action": "satisfy_precondition", **item})
+    for item in payload.get("required_user_values", []):
+        if isinstance(item, dict):
+            actions.append({"action": "provide_value", **item})
+    if payload.get("refreshed_arguments"):
+        actions.append(
+            {
+                "action": "refresh_plan",
+                "arguments": payload["refreshed_arguments"],
+            }
+        )
+    return actions
+
+
+def _spec_creation_plan_expansion(
+    slug: str,
+    docs_root: str,
+    fingerprint: str,
+    *,
+    detail: str,
+    section: str | None = None,
+) -> dict[str, Any]:
+    arguments: dict[str, Any] = {
+        "slug": slug,
+        "docs_root": docs_root,
+        "detail": detail,
+        "expected_fingerprint": fingerprint,
+    }
+    if section is not None:
+        arguments["section"] = section
+    return {"tool": "spec_creation_plan", "arguments": arguments}
+
+
+def spec_creation_plan(
+    repo_root: Path,
+    slug: str,
+    docs_root: str | None = None,
+    expected_fingerprint: str | None = None,
+    detail: str = "compact",
+    section: str | None = None,
+) -> dict[str, Any]:
+    """Return a bounded provisional spec-creation decision and expansion route."""
+    if detail not in SPEC_CREATION_PLAN_DETAILS:
+        raise ValueError("detail must be one of: compact, full, section")
+    if detail == "section":
+        if section not in SPEC_CREATION_PLAN_SECTIONS:
+            raise ValueError("section must be one of: numbering, template, validation")
+    elif section is not None:
+        raise ValueError("section is only valid when detail='section'")
+    if expected_fingerprint is not None and not UPSTREAM_FINGERPRINT_RE.fullmatch(expected_fingerprint):
+        raise ValueError("expected_fingerprint must be a sha256 fingerprint")
+
+    payload = _spec_creation_plan_full(repo_root, slug, docs_root)
+    selected_docs_root = payload["numbering_scope"]["docs_root"]
+    fingerprint = payload.get("evidence_fingerprint") or evidence_fingerprint(
+        {
+            "decision": _spec_creation_plan_decision(payload),
+            "diagnostics": payload.get("diagnostics", []),
+            "slug": slug,
+        },
+        domain="spec-creation-plan-invalid-v1",
+    )
+    if expected_fingerprint is not None and expected_fingerprint != fingerprint:
+        return {
+            "status": "stale",
+            "schema_version": "1",
+            "requested_fingerprint": expected_fingerprint,
+            "current_evidence_fingerprint": fingerprint,
+            "expansion": _spec_creation_plan_expansion(
+                slug, selected_docs_root, fingerprint, detail=detail, section=section
+            ),
+        }
+
+    decision = _spec_creation_plan_decision(payload)
+    base = {
+        "detail": detail,
+        "schema_version": "1",
+        "decision": decision,
+        "evidence_fingerprint": fingerprint,
+    }
+    if detail == "full":
+        return {**base, "plan": payload}
+    if detail == "section":
+        assert section is not None
+        sections = {
+            "numbering": {
+                "numbering_scope": payload.get("numbering_scope"),
+                "allocation_confidence": payload.get("allocation_confidence"),
+                "next_available_spec_number": payload.get("next_available_spec_number"),
+                "fresh_proposal": payload.get("fresh_proposal"),
+            },
+            "template": {
+                "template_authority": payload.get("template_authority"),
+                "planned_core_artifacts": payload.get("planned_core_artifacts", []),
+                "planned_optional_artifacts": payload.get("planned_optional_artifacts", []),
+            },
+            "validation": {
+                "preconditions": payload.get("preconditions", []),
+                "required_user_values": payload.get("required_user_values", []),
+                "validation_commands": payload.get("validation_commands", []),
+                "diagnostics": payload.get("diagnostics", []),
+            },
+        }
+        return {**base, "section": section, "content": sections[section]}
+
+    diagnostics = list(payload.get("diagnostics", []))
+    diagnostics.sort(
+        key=lambda item: (
+            0 if item.get("severity") == "error" or item.get("waivable") is False else 1,
+            str(item.get("code", "")),
+            str(item.get("path", "")),
+        )
+    )
+    findings = diagnostics[:SPEC_CREATION_PLAN_FINDING_LIMIT]
+    all_actions = _spec_creation_plan_actions(payload)
+    actions = all_actions[:SPEC_CREATION_PLAN_ACTION_LIMIT]
+    limits = {
+        "findings": {
+            "returned": len(findings),
+            "total": len(diagnostics),
+            "limit": SPEC_CREATION_PLAN_FINDING_LIMIT,
+            "truncated": len(findings) < len(diagnostics),
+        },
+        "next_actions": {
+            "returned": len(actions),
+            "total": len(all_actions),
+            "limit": SPEC_CREATION_PLAN_ACTION_LIMIT,
+            "truncated": len(actions) < len(all_actions),
+        },
+        "payload_target_bytes": SPEC_CREATION_PLAN_PAYLOAD_TARGET_BYTES,
+        "limit_exceeded": len(
+            [item for item in diagnostics if item.get("severity") == "error" or item.get("waivable") is False]
+        )
+        > SPEC_CREATION_PLAN_FINDING_LIMIT,
+    }
+    result = {
+        **base,
+        "findings": findings,
+        "next_actions": actions,
+        "limits": limits,
+        "expansion": _spec_creation_plan_expansion(
+            slug, selected_docs_root, fingerprint, detail="full"
+        ),
+    }
+    if len(canonical_json(result).encode("utf-8")) > SPEC_CREATION_PLAN_PAYLOAD_TARGET_BYTES:
+        limits["limit_exceeded"] = True
+    return result
 
 
 def skill_spec_package_templates_dir() -> Path:
@@ -3845,7 +4023,7 @@ def bootstrap_plan(
         )
     if create_spec:
         if spec_slug:
-            creation_plan = spec_creation_plan(root, spec_slug, docs_root)
+            creation_plan = spec_creation_plan(root, spec_slug, docs_root, detail="full")["plan"]
             if creation_plan["status"] in {"ready", "stale"} and creation_plan["proposed_path"]:
                 writes.append(
                     {

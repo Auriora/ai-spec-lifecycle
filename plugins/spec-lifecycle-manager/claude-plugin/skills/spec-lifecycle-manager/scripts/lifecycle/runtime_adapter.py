@@ -61,6 +61,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     creation.add_argument("--repo-root", type=Path, default=Path.cwd())
     creation.add_argument("--docs-root")
     creation.add_argument("--expected-fingerprint")
+    creation.add_argument("--detail", choices=["compact", "full", "section"], default="compact")
+    creation.add_argument("--section", choices=["numbering", "template", "validation"])
 
     summary = sub.add_parser("summary", help="Return specs://{id}/summary style payload.")
     summary.add_argument("spec_path", type=Path)
@@ -277,6 +279,8 @@ def main(argv: list[str] | None = None) -> int:
             args.slug,
             args.docs_root,
             args.expected_fingerprint,
+            args.detail,
+            args.section,
         )
         payload["lifecycle_metadata"] = assemble_lifecycle_metadata(
             args.repo_root,
