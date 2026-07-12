@@ -3,7 +3,7 @@ title: Agent development lifecycle roadmap
 doc_type: roadmap
 status: active
 owner: platform
-last_reviewed: 2026-07-04
+last_reviewed: 2026-07-12
 ---
 
 # Roadmap
@@ -49,11 +49,22 @@ for active implementation specs.
 | 2026-06-11 | Promote validation and release-readiness work after specs 017 and 018 closed. | R006-R009 sequence validation planning, evidence quality, closure risk, and npm publish/release workflow specs. | `docs/backlog/README.md`, archive entries for 019, 020, 021, 022, and 023 |
 | 2026-06-13 | Prioritize runtime packets that reduce implementation loops before conversation-history mining. | Validation planning, task-state audit, evidence quality, closure risk, and staged preflight address observed agent inefficiency more directly than another history scan. | `docs/backlog/README.md`, archive entries for 019, 020, 021, and 023, active specs 022 and 024 |
 | 2026-06-13 | Treat misleading live documentation as higher risk than Git-history recoverability. | Closure risk must prefer removing or marking misleading live documents before cleanup. Git history and archive indexes provide recovery for removed package detail. | Archive index entry `021-closure-risk-review` |
+| 2026-07-12 | Separate business priority from dependency build order for Specs 033-036. | Spec 034 remains the P1 friction item, but its guarded writer follows the read-only gate contract. Spec 036's minimum envelope design must be accepted before Specs 033 and 035 freeze public response schemas. | B031, B050, B061, B062; active Specs 033-036 |
 
 ## Suggested Build Sequence
 
-No active build sequence is selected. Choose the next implementation-ready
-candidate from the backlog when new lifecycle work is prioritized.
+1. Accept the minimum `036-compact-output-and-invocation-telemetry` envelope,
+   expansion, provenance, and compatibility design checkpoint before other new
+   aggregate response schemas are frozen; this is dependency order, not a
+   claim that B062 outranks the P1 phase-completion friction.
+2. Complete `033-phase-gate-check` design using that shared contract because its
+   bounded aggregate defines how existing lifecycle signals are composed.
+3. Complete `035-spec-id-allocation-and-creation-plan` using the same contract
+   so agents can open future specs without reconstructing numbering and template
+   authority.
+4. Continue `034-phase-completion-helper` after the read-only gate contract is
+   stable so guarded completion writes consume accepted gate semantics rather
+   than defining a competing readiness model.
 
 ## Routing Rules
 

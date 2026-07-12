@@ -6,9 +6,9 @@ status: draft
 authoring_mode: wizard
 lifecycle_stage: requirements
 owner: platform
-last_reviewed: 2026-07-05
+last_reviewed: 2026-07-12
 backlog_item: B031
-priority: P3
+priority: P2
 ---
 
 # Requirements
@@ -73,6 +73,7 @@ decisions block the next lifecycle stage.
 | skill guidance | modify | `skills/spec-lifecycle-manager/SKILL.md` | Update staged workflow guidance. |
 | backlog | modify | `docs/backlog/README.md` | Mark B031 complete at closure. |
 | tests | add | `tests/runtime/` | Add runtime and MCP coverage. |
+| package parity | modify | `plugins/spec-lifecycle-manager/`, `packaging/spec-lifecycle-manager/` | Sync bundled runtime, schemas, and package validation. |
 
 ## Staged Readiness
 
@@ -138,6 +139,18 @@ from established checks.
    source signal rather than recomputing incompatible semantics.
 3. GIVEN MCP and CLI surfaces expose phase gate output, WHEN they are compared,
    THEN THE SYSTEM SHALL return equivalent structured data from shared internals.
+4. GIVEN an agent would otherwise call preflight, lint, task selection,
+   traceability, validation, promotion, and closure tools separately, WHEN the
+   phase gate check runs, THEN THE SYSTEM SHALL return one bounded aggregate
+   result with the applicable source signals and omit inapplicable detail.
+5. GIVEN a source signal has evidence too large for the aggregate response,
+   WHEN the phase gate check renders it, THEN THE SYSTEM SHALL return a compact
+   summary plus deterministic follow-up arguments and an evidence fingerprint
+   instead of embedding the complete nested payload.
+6. GIVEN the common compact-response contract is not yet accepted, WHEN the
+   phase-gate response is designed, THEN THE SYSTEM SHALL treat its public
+   envelope as provisional and SHALL NOT freeze or implement a competing
+   expansion schema.
 
 ### Requirement 4: Advisory Boundary
 
@@ -164,6 +177,11 @@ without silently changing governance, so that adoption can be dogfooded safely.
   package.
 - **CP-004:** The tool is read-only and does not create, update, or remove spec
   artifacts.
+- **CP-005:** The aggregate gate result does not change the severity, authority,
+  or proof meaning of a composed source signal.
+- **CP-006:** Expansion arguments identify the source tool and selected evidence;
+  when the evidence fingerprint no longer matches, expansion reports `stale`
+  rather than presenting current evidence as the referenced result.
 
 ## Technical Context
 
@@ -184,10 +202,19 @@ without silently changing governance, so that adoption can be dogfooded safely.
 | Should phase gate be one tool or a mode of active preflight? | Determines MCP and CLI shape. | yes |
 | How should stale downstream artifacts be detected without expensive history analysis? | Determines feasibility and false-positive risk. | yes |
 
+## Cross-Spec Contract Dependency
+
+The phase-gate operation is the preferred decision facade, not a replacement
+for the authoritative source tools. Its source summaries and expansion behavior
+depend on the minimum compact-response contract in Spec 036. Spec 036's envelope,
+detail selection, evidence-fingerprint, and compatibility decisions must be
+accepted before this spec freezes or implements a public response schema.
+
 ## Success Criteria
 
-- **SC-001:** Agents can call one read-only check to understand current phase
-  and next required action.
+- **SC-001:** Agents can call one read-only check to understand current phase,
+  next required action, relevant task context, and applicable validation or
+  closure state without manually chaining lifecycle tools.
 - **SC-002:** Tests cover requirements-to-design, design-to-tasks,
   implementation-to-promotion, and closure readiness cases.
 - **SC-003:** Durable docs and skill guidance describe how phase gate output
@@ -196,6 +223,7 @@ without silently changing governance, so that adoption can be dogfooded safely.
 ## Related Artifacts
 
 - Backlog: `docs/backlog/README.md` B031
+- Contract dependency: `docs/specs/036-compact-output-and-invocation-telemetry/requirements.md`
 - Design: not created yet
 - Tasks: not created yet
 - Verification: not created yet

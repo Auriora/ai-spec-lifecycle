@@ -8,7 +8,7 @@ lifecycle_stage: requirements
 owner: platform
 last_reviewed: 2026-07-05
 backlog_item: B050
-priority: P4
+priority: P1
 ---
 
 # Requirements
