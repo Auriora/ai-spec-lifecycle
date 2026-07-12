@@ -59,6 +59,14 @@ This skill includes two kinds of fallback references:
 
 If no active package exists and the user asks to start one, create the smallest useful `[docs-root]/specs/[###-slug]/` package for the risk level. Use repository-documented spec-package templates when `docs/templates/spec-package/` or an equivalent explicit spec-package template location exists. If no repository-specific spec-package template exists, use `references/spec-package/` as the fallback package template. If both exist and differ, prefer the repository template and record the template authority decision.
 
+When MCP is available, obtain the provisional number from `spec_id_inventory`
+or call `spec_creation_plan` with the user-supplied slug; do not calculate it
+from directory listings. The plan is read-only and not a reservation.
+Revalidate its fingerprint immediately before creation. A future guarded
+writer must atomically claim the directory; ordinary writes after validation
+are not race-safe. Use retained `spec-id-inventory` and `spec-creation-plan`
+CLI commands only for validation, CI, MCP debugging, or no-MCP recovery.
+
 If no active package exists and the user is not asking to start one, do not
 recreate or browse removed spec packages as if they are current work. Use
 durable docs, `docs/backlog/`, `docs/roadmap/`, the closure log, and the spec

@@ -75,6 +75,8 @@ underlying workflow supports it.
 | Command | Purpose |
 | --- | --- |
 | `scan` | Discover spec packages, classify current versus old-format packages, and report artifact inventory, lifecycle, active-health summary, health, and template authority. |
+| `spec-id-inventory` | Return docs-root-scoped evidence and the next provisional monotonic spec number without writing files. |
+| `spec-creation-plan` | Preview a slugged ID/path, template/artifact plan, preconditions, validation, and stale-plan fingerprint without reserving or writing. |
 | `summary` | Return a `specs://{spec_id}/summary`-style payload with task counts, artifact state, open decisions, durable-source references, and health. |
 | `lint` | Run deterministic document or package lint checks for frontmatter, required sections, task IDs, dependencies, evidence, optional artifacts, and waivers. |
 | `next-task` | Select the next runnable task whose dependencies are complete with evidence and include traceability context when available. |
@@ -151,6 +153,8 @@ Write-capable tools default to dry-run and require explicit `write_intent` when
 `dry_run` is false.
 
 - `scan_specs`
+- `spec_id_inventory`
+- `spec_creation_plan`
 - `active_spec_preflight`
 - `lifecycle_guide`
 - `bootstrap_plan`
@@ -226,6 +230,29 @@ repo-relative paths and lowercase SHA-256 values:
 |---|---|
 | `docs/specs/123-example/requirements.md` | `sha256:<64 lowercase hex>` |
 ```
+
+### Spec ID Inventory And Creation Planning
+
+Use MCP `spec_id_inventory` to obtain `next_available_spec_number` for one
+selected docs root. It inventories active and historical prefixes, explicit
+legacy upper bounds, confidence, and diagnostics. The result is provisional:
+lower gaps are not reused, empty scopes return `000`, and another agent may
+claim the number after the call.
+
+Use MCP `spec_creation_plan` with an ASCII lower-kebab `slug` to obtain the
+proposed ID/path, template fallback chain, artifact set, required values,
+preconditions, validation commands, and evidence fingerprint. `reservation` is
+always false. Revalidate immediately before creation; stale evidence or
+collision returns refreshed arguments and a fresh proposal. A future writer
+must atomically claim the directory.
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py spec-id-inventory . --docs-root docs
+PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py spec-creation-plan my-feature --repo-root . --docs-root docs
+```
+
+`scan_specs`, no-active context, and bootstrap reuse the same allocator and
+expose the provisional next number and creation-plan action when safe.
 
 `scan_specs` accepts optional `repo_root`, `docs_root`, and
 `include_archived_lint` arguments. By default, archived packages remain visible

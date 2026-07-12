@@ -160,6 +160,21 @@ expansion whose expected fingerprint no longer matches returns a stale response
 with refreshed arguments instead of presenting new evidence as the referenced
 result.
 
+Spec numbering is runtime-owned rather than agent arithmetic. The read-only
+`spec_id_inventory` surface selects one docs root and combines active,
+archive-index, closure-log, retained, and explicit legacy-range evidence. It
+returns a provisional number above the greatest valid prefix or range upper
+bound, never fills lower gaps, and reports reduced or low confidence for
+malformed, duplicate, missing, or ambiguous history. Empty scopes return the
+bootstrap-compatible `000`.
+
+`spec_creation_plan` composes that allocation with a caller-supplied ASCII
+lower-kebab slug, path-ancestry proof, selected-root/repository/skill template
+precedence, artifact inventory, required values, validation commands, and a
+`spec-creation-plan-v1` fingerprint. It is preview-only and does not reserve an
+ID. Stale evidence or collision returns refreshed arguments and a fresh
+proposal; a future writer must atomically claim the directory.
+
 Correctness properties and acceptance criteria are part of readiness, not
 closure-only paperwork. Each stable correctness property should map to design
 behavior and at least one task plus automated or documented manual

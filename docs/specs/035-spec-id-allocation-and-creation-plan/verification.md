@@ -105,7 +105,13 @@ last_reviewed: 2026-07-12
   contract, sync guard, lifecycle/archive/prompt checks, npm dry-pack,
   established-schema tests, and `git diff --check` pass in the 297-Python/
   25-Node full validation. V045-V048 pass.
-- Pending promotion and closure evidence for T007.
+- **2026-07-12 — T007:** Promoted runtime-owned provisional numbering,
+  preview/revalidation behavior, and the future atomic-writer boundary into
+  durable design, runtime reference, and source/bundled skill guidance; closed
+  B061 and marked roadmap R013 delivered. V049-V052 and full validation pass
+  with 297 Python and 25 Node tests plus lifecycle/archive/prompt/package/sync,
+  npm dry-pack, and diff checks. The final package commit is the immutable
+  closure-plan input.
 
 ## Residual Risks
 

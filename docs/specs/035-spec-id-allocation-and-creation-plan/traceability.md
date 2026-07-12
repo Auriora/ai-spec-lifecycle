@@ -24,13 +24,13 @@ last_reviewed: 2026-07-12
 
 ## Requirement To Delivery Matrix
 
-| Requirement | Tasks | Primary proof |
-|-------------|-------|---------------|
-| Requirement 1: Numbering Inventory | T001, T005 | scoped evidence/diagnostic fixtures and MCP schema |
-| Requirement 2: Next Spec ID | T001, T002, T004-T005 | monotonic, slug, path, and parity fixtures |
-| Requirement 3: Preview-Only Creation Plan | T002, T004-T005 | plan, collision, template, and read-only fixtures |
-| Requirement 4: Bootstrap And Existing Repo Consistency | T003-T006 | additive integration and adapter/package tests |
-| Requirement 5: Stale Plan Validation And Future Write Boundary | T002, T005, T007 | fingerprint/staleness tests and durable contract |
+| Requirement | Tasks | Coverage State | Primary proof |
+|-------------|-------|----------------|---------------|
+| Requirement 1: Numbering Inventory | T001, T005 | complete | scoped evidence/diagnostic fixtures and MCP schema |
+| Requirement 2: Next Spec ID | T001, T002, T004-T005 | complete | monotonic, slug, path, and parity fixtures |
+| Requirement 3: Preview-Only Creation Plan | T002, T004-T005 | complete | plan, collision, template, and read-only fixtures |
+| Requirement 4: Bootstrap And Existing Repo Consistency | T003-T006 | complete | additive integration and adapter/package tests |
+| Requirement 5: Stale Plan Validation And Future Write Boundary | T002, T005, T007 | complete | fingerprint/staleness tests and durable contract |
 
 ## Design To Implementation Matrix
 

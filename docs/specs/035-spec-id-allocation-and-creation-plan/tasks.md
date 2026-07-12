@@ -104,12 +104,17 @@ last_reviewed: 2026-07-12
     Python and 25 Node tests, lifecycle/archive/prompt/package/sync checks, npm
     dry-pack, established-schema compatibility, and `git diff --check`.
 
-- [ ] T007 Promote durable documentation and close B061
+- [x] T007 Promote durable documentation and close B061
   - Depends on: T006.
   - Acceptance: durable design/reference/skill guidance describes provisional
     allocation and the future atomic-writer boundary; backlog/roadmap and
     closure records reconcile.
-  - Evidence: Pending.
+  - Evidence: 2026-07-12, durable lifecycle design, runtime reference, and
+    source/bundled skill guidance describe runtime-owned provisional numbering,
+    preview planning, revalidation, and the future atomic-writer boundary;
+    B061 and roadmap R013 are delivered. Full validation passes with 297 Python
+    and 25 Node tests plus lifecycle/archive/prompt/package/sync, npm dry-pack,
+    and diff checks. The final package commit is retained for closure records.
 
 ## Dependency Summary
 
