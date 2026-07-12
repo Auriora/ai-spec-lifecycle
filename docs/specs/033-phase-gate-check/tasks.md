@@ -24,13 +24,17 @@ last_reviewed: 2026-07-12
     checks, and diagnostic meaning pass focused tests. Full `npm run validate`
     passed with 260 Python and 25 Node tests.
 
-- [ ] T002 Implement upstream fingerprint and staleness states
+- [x] T002 Implement upstream fingerprint and staleness states
   - Depends on: T001
   - Files: shared lifecycle core and focused fixtures.
   - Read normalized recorded fingerprints and return current/stale/
     review_required/not_applicable without treating mtimes as proof.
   - Acceptance: content changes invalidate recorded evidence; mtime-only changes
     never produce stale or a new blocker.
+  - Evidence: 2026-07-12, matching, changed, missing, mtime-only, read-only, and
+    multi-upstream fixtures pass with deterministic current/stale/
+    review_required/not_applicable states. Full validation passed with 263
+    Python and 25 Node tests.
 
 ## Phase 2: Aggregate Contract And Surfaces
 

@@ -41,6 +41,7 @@ from lifecycle.closure import (
     validate_owned_closure_records as closure_validate_owned_closure_records,
 )
 from lifecycle.migration import migrated_script_closure_check
+from lifecycle.provenance import evidence_fingerprint
 from spec_agent_schemas import (
     agent_unavailable_result_schema,
     review_packet_output_schema,
@@ -5532,6 +5533,112 @@ PHASE_GATE_NEXT_PHASE = {
     "unknown": None,
 }
 
+PHASE_GATE_UPSTREAMS = {
+    "design.md": ("requirements.md",),
+    "tasks.md": ("requirements.md", "design.md"),
+    "traceability.md": ("requirements.md", "design.md"),
+    "verification.md": ("requirements.md", "design.md"),
+}
+UPSTREAM_FINGERPRINT_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
+
+
+def _repo_relative_artifact_identity(spec_path: Path, artifact: str) -> str:
+    path = spec_path / artifact
+    root = repo_root_for(spec_path)
+    try:
+        return path.resolve().relative_to(root.resolve()).as_posix()
+    except ValueError:
+        return path.name
+
+
+def _artifact_evidence_fingerprint(spec_path: Path, artifact: str) -> str | None:
+    """Fingerprint normalized artifact content without exposing it."""
+    path = spec_path / artifact
+    if not path.is_file():
+        return None
+    identity = _repo_relative_artifact_identity(spec_path, artifact)
+    content = read_text(path).replace("\r\n", "\n").replace("\r", "\n")
+    return evidence_fingerprint(
+        {"artifact": identity, "content": content},
+        domain=f"spec-lifecycle-upstream-artifact-v1:{artifact}",
+    )
+
+
+def _recorded_upstream_fingerprints(path: Path) -> dict[str, str]:
+    rows, _ = markdown_table_after_heading(path, "Upstream Fingerprints")
+    recorded: dict[str, str] = {}
+    for row in rows:
+        artifact = strip_markdown_value(
+            row.get("Upstream Artifact", row.get("Artifact", ""))
+        )
+        fingerprint = strip_markdown_value(row.get("Fingerprint", "")).lower()
+        if artifact and UPSTREAM_FINGERPRINT_RE.fullmatch(fingerprint):
+            recorded[artifact] = fingerprint
+    return recorded
+
+
+def _phase_gate_artifact_freshness(spec_path: Path) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    for downstream, upstreams in PHASE_GATE_UPSTREAMS.items():
+        downstream_path = spec_path / downstream
+        if not downstream_path.is_file():
+            results.append(
+                {
+                    "artifact": downstream,
+                    "status": "not_applicable",
+                    "upstreams": [],
+                }
+            )
+            continue
+
+        recorded = _recorded_upstream_fingerprints(downstream_path)
+        comparisons: list[dict[str, Any]] = []
+        for upstream in upstreams:
+            current = _artifact_evidence_fingerprint(spec_path, upstream)
+            upstream_identity = _repo_relative_artifact_identity(spec_path, upstream)
+            recorded_value = recorded.get(upstream_identity)
+            if current is None:
+                status = "not_applicable"
+            elif recorded_value is None:
+                status = "review_required"
+            elif recorded_value == current:
+                status = "current"
+            else:
+                status = "stale"
+            comparison: dict[str, Any] = {
+                "artifact": upstream_identity,
+                "status": status,
+                "recorded_fingerprint": recorded_value,
+                "current_fingerprint": current,
+            }
+            if status == "stale":
+                comparison["reconciliation_action"] = (
+                    f"Review {downstream} against changed {upstream}, then record "
+                    "the accepted current fingerprint."
+                )
+            comparisons.append(comparison)
+
+        statuses = {item["status"] for item in comparisons}
+        if "stale" in statuses:
+            aggregate = "stale"
+        elif "review_required" in statuses:
+            aggregate = "review_required"
+        elif statuses == {"current"}:
+            aggregate = "current"
+        else:
+            aggregate = "not_applicable"
+        result: dict[str, Any] = {
+            "artifact": downstream,
+            "status": aggregate,
+            "upstreams": comparisons,
+        }
+        if aggregate == "stale":
+            result["reconciliation_action"] = (
+                f"Reconcile {downstream} with its stale upstream artifact(s)."
+            )
+        results.append(result)
+    return results
+
 
 def _phase_gate_diagnostic(item: dict[str, Any]) -> dict[str, Any]:
     """Keep authoritative diagnostic meaning while omitting verbose text."""
@@ -5741,6 +5848,7 @@ def phase_gate_context(spec_path: Path) -> dict[str, Any]:
         "phase": phase,
         "next_phase": PHASE_GATE_NEXT_PHASE[phase],
         "missing_evidence": missing_evidence,
+        "artifact_freshness": _phase_gate_artifact_freshness(spec),
         "sources": sources[:7],
     }
 

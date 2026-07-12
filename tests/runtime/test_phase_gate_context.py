@@ -1,3 +1,4 @@
+import os
 import sys
 import tempfile
 import unittest
@@ -30,6 +31,7 @@ class PhaseGateContextTests(unittest.TestCase):
         )
 
     def base_spec(self, root: Path, status: str = "active") -> Path:
+        (root / ".git").mkdir(exist_ok=True)
         spec = root / "docs/specs/001-example"
         spec.mkdir(parents=True)
         self.write(
@@ -50,6 +52,25 @@ class PhaseGateContextTests(unittest.TestCase):
             status,
         )
         return spec
+
+    def fingerprint(self, spec: Path, artifact: str) -> str:
+        return core._artifact_evidence_fingerprint(spec, artifact)
+
+    def record_fingerprints(self, spec: Path, artifact: str, upstreams: list[str]) -> None:
+        path = spec / artifact
+        rows = "\n".join(
+            f"| `{core._repo_relative_artifact_identity(spec, upstream)}` | "
+            f"`{self.fingerprint(spec, upstream)}` |"
+            for upstream in upstreams
+        )
+        path.write_text(
+            path.read_text(encoding="utf-8")
+            + "\n## Upstream Fingerprints\n\n"
+            + "| Upstream Artifact | Fingerprint |\n|---|---|\n"
+            + rows
+            + "\n",
+            encoding="utf-8",
+        )
 
     def add_design(self, spec: Path) -> None:
         self.write(
@@ -192,6 +213,81 @@ None.
             [item["source"] for item in first["sources"]],
             [item["source"] for item in second["sources"]],
         )
+
+    def test_matching_and_changed_upstream_fingerprints(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = self.base_spec(Path(tmp))
+            self.add_design(spec)
+            self.record_fingerprints(spec, "design.md", ["requirements.md"])
+            current = core.phase_gate_context(spec)["artifact_freshness"][0]
+            self.assertEqual("current", current["status"])
+
+            requirements = spec / "requirements.md"
+            requirements.write_text(
+                requirements.read_text(encoding="utf-8") + "\nChanged decision.\n",
+                encoding="utf-8",
+            )
+            stale = core.phase_gate_context(spec)["artifact_freshness"][0]
+            self.assertEqual("stale", stale["status"])
+            self.assertIn("reconciliation_action", stale)
+            self.assertNotEqual(
+                stale["upstreams"][0]["recorded_fingerprint"],
+                stale["upstreams"][0]["current_fingerprint"],
+            )
+
+    def test_missing_record_is_review_required_and_mtime_is_ignored(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = self.base_spec(Path(tmp))
+            self.add_design(spec)
+            missing = core.phase_gate_context(spec)["artifact_freshness"][0]
+            self.assertEqual("review_required", missing["status"])
+
+            self.record_fingerprints(spec, "design.md", ["requirements.md"])
+            before = core.phase_gate_context(spec)["artifact_freshness"]
+            requirements = spec / "requirements.md"
+            stat = requirements.stat()
+            os.utime(requirements, (stat.st_atime + 20, stat.st_mtime + 20))
+            after = core.phase_gate_context(spec)["artifact_freshness"]
+            self.assertEqual(before, after)
+            self.assertEqual("current", after[0]["status"])
+
+    def test_multiple_upstreams_are_ordered_and_gate_is_read_only(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = self.base_spec(Path(tmp))
+            self.add_design(spec)
+            self.add_tasks(spec)
+            self.add_traceability(spec)
+            self.add_verification(spec)
+            for artifact in ("tasks.md", "traceability.md", "verification.md"):
+                self.record_fingerprints(
+                    spec, artifact, ["requirements.md", "design.md"]
+                )
+            before = {
+                path.name: (path.read_bytes(), path.stat().st_mtime_ns)
+                for path in spec.iterdir()
+            }
+            first = core.phase_gate_context(spec)["artifact_freshness"]
+            second = core.phase_gate_context(spec)["artifact_freshness"]
+            after = {
+                path.name: (path.read_bytes(), path.stat().st_mtime_ns)
+                for path in spec.iterdir()
+            }
+
+            self.assertEqual(first, second)
+            self.assertEqual(before, after)
+            self.assertEqual(
+                ["design.md", "tasks.md", "traceability.md", "verification.md"],
+                [item["artifact"] for item in first],
+            )
+            for item in first[1:]:
+                self.assertEqual("current", item["status"])
+                self.assertEqual(
+                    [
+                        core._repo_relative_artifact_identity(spec, "requirements.md"),
+                        core._repo_relative_artifact_identity(spec, "design.md"),
+                    ],
+                    [upstream["artifact"] for upstream in item["upstreams"]],
+                )
 
 
 if __name__ == "__main__":

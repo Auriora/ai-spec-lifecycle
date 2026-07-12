@@ -52,6 +52,12 @@ last_reviewed: 2026-07-12
   severity/code/reference preservation, and lazy validation/promotion/closure
   checks. Full validation passed with 260 Python and 25 Node tests, package
   contract, bundle parity, npm pack, and diff checks.
+- **2026-07-12 — T002:** Added normalized upstream artifact fingerprints and
+  deterministic freshness states for design, tasks, traceability, and
+  verification. V011-V015 pass: matching records are current, content changes
+  are stale with reconciliation actions, absent/malformed records require
+  review, mtime-only changes are ignored, and repeated calls do not mutate
+  files. Full validation passed with 263 Python and 25 Node tests.
 
 ## Quality Gates
 
