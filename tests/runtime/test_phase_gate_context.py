@@ -489,6 +489,48 @@ None.
             {item["code"] for item in blocked["findings"]},
         )
 
+    def test_runnable_implementation_task_blocks_advancement(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = self.base_spec(Path(tmp))
+            self.add_design(spec)
+            self.record_fingerprints(spec, "design.md", ["requirements.md"])
+            self.add_tasks(spec)
+            self.record_fingerprints(
+                spec, "tasks.md", ["requirements.md", "design.md"]
+            )
+            self.add_traceability(spec)
+            self.record_fingerprints(
+                spec, "traceability.md", ["requirements.md", "design.md"]
+            )
+
+            payload = core.phase_gate_check(spec)
+
+        self.assertEqual("implementation", payload["decision"]["phase"])
+        self.assertFalse(payload["decision"]["ready_to_advance"])
+        task_blocker = next(
+            item
+            for item in payload["findings"]
+            if item["code"] == "PHASE_GATE_TASK_REMAINS"
+        )
+        self.assertEqual("next_task", task_blocker["source"])
+        self.assertEqual("T001", task_blocker["task_id"])
+        self.assertEqual("T001", task_blocker["reference"])
+        self.assertFalse(task_blocker["waivable"])
+        self.assertEqual(
+            {
+                "action": "continue_task",
+                "source": "next_task",
+                "code": "PHASE_GATE_TASK_REMAINS",
+                "reference": "T001",
+                "task_id": "T001",
+            },
+            next(
+                action
+                for action in payload["next_actions"]
+                if action["code"] == "PHASE_GATE_TASK_REMAINS"
+            ),
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

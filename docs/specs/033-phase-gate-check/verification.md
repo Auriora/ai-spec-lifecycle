@@ -74,6 +74,11 @@ last_reviewed: 2026-07-12
   package contract, sync guard, npm pack, and diff checks pass after all phase-
   gate source and adapter slices. V029-V031 pass with the 275-Python/25-Node
   full repository validation.
+- **2026-07-12 — live dogfood correction:** The installed MCP correctly exposed
+  the compact contract but initially reported implementation readiness while
+  T006 remained runnable. Added non-waivable `PHASE_GATE_TASK_REMAINS` and a
+  `continue_task` action. Requirements-stage readiness remains unaffected; 276
+  full Python tests and bundle/package checks pass after remediation.
 
 ## Quality Gates
 

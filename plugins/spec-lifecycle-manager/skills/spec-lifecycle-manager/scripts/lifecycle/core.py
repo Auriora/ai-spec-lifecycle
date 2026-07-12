@@ -5797,11 +5797,26 @@ def phase_gate_context(spec_path: Path) -> dict[str, Any]:
 
     if inventory["tasks.md"] == "present":
         next_payload = next_task(spec)
+        selected_task = next_payload.get("selected") or {}
+        next_task_findings: list[dict[str, Any]] = []
+        if phase == "implementation" and selected_task.get("task_id"):
+            next_task_findings.append(
+                {
+                    "severity": "error",
+                    "code": "PHASE_GATE_TASK_REMAINS",
+                    "task_id": selected_task["task_id"],
+                    "reference": selected_task["task_id"],
+                    "blocking": True,
+                    "waivable": False,
+                    "lifecycle_gate": "implementation",
+                }
+            )
         sources.append(
             _phase_gate_source(
                 "next_task",
-                status="selected" if next_payload.get("selected") else "none",
-                selected_task_id=(next_payload.get("selected") or {}).get("task_id"),
+                status="selected" if selected_task else "none",
+                findings=next_task_findings,
+                selected_task_id=selected_task.get("task_id"),
                 blocked_task_count=len(next_payload.get("blocked", [])),
             )
         )
@@ -5962,15 +5977,21 @@ def _phase_gate_decision_model(spec_path: Path, context: dict[str, Any]) -> dict
 
     findings.sort(key=_phase_gate_finding_sort_key)
     blockers = [item for item in findings if _phase_gate_is_blocking(item)]
-    actions = [
-        {
-            "action": "resolve_finding",
+    actions = []
+    for item in blockers:
+        action = {
+            "action": (
+                "continue_task"
+                if item.get("code") == "PHASE_GATE_TASK_REMAINS"
+                else "resolve_finding"
+            ),
             "source": item.get("source"),
             "code": item.get("code"),
             "reference": item.get("reference"),
         }
-        for item in blockers
-    ]
+        if item.get("task_id"):
+            action["task_id"] = item["task_id"]
+        actions.append(action)
     if not blockers and context.get("next_phase"):
         actions.append(
             {"action": "advance_phase", "target_phase": context["next_phase"]}
