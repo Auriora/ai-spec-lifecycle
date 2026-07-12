@@ -46,7 +46,12 @@ last_reviewed: 2026-07-12
 
 ## Evidence Log
 
-No implementation evidence recorded yet.
+- **2026-07-12 — T001:** Added shared caller-agnostic phase inference and
+  phase-applicable source summaries. V001-V010 pass across all public phases,
+  missing and archived packages, open-decision blocker fixtures, deterministic ordering,
+  severity/code/reference preservation, and lazy validation/promotion/closure
+  checks. Full validation passed with 260 Python and 25 Node tests, package
+  contract, bundle parity, npm pack, and diff checks.
 
 ## Quality Gates
 

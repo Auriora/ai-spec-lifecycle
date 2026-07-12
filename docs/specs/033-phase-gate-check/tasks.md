@@ -13,12 +13,16 @@ last_reviewed: 2026-07-12
 
 ## Phase 1: Shared Gate Semantics
 
-- [ ] T001 Implement phase inference and source summaries
+- [x] T001 Implement phase inference and source summaries
   - Files: shared lifecycle core and focused runtime tests.
   - Implement the public enum, conservative transition table, deterministic
     applicable-source list, and severity-preserving summaries.
   - Acceptance: fixtures cover all phases, unknown/not-applicable behavior,
     unresolved decisions, and source authority preservation.
+  - Evidence: 2026-07-12, all eight phases, missing/archived applicability,
+    open-decision blocker fixtures, deterministic max-seven source ordering, lazy late
+    checks, and diagnostic meaning pass focused tests. Full `npm run validate`
+    passed with 260 Python and 25 Node tests.
 
 - [ ] T002 Implement upstream fingerprint and staleness states
   - Depends on: T001

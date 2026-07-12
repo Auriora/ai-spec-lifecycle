@@ -5511,6 +5511,240 @@ def promotion_plan(spec_path: Path) -> dict[str, Any]:
     }
 
 
+PHASE_GATE_PHASES = (
+    "requirements",
+    "design",
+    "tasks",
+    "implementation",
+    "verification",
+    "promotion",
+    "closure",
+    "unknown",
+)
+PHASE_GATE_NEXT_PHASE = {
+    "requirements": "design",
+    "design": "tasks",
+    "tasks": "implementation",
+    "implementation": "verification",
+    "verification": "promotion",
+    "promotion": "closure",
+    "closure": None,
+    "unknown": None,
+}
+
+
+def _phase_gate_diagnostic(item: dict[str, Any]) -> dict[str, Any]:
+    """Keep authoritative diagnostic meaning while omitting verbose text."""
+    keys = (
+        "severity",
+        "code",
+        "path",
+        "line",
+        "artifact",
+        "task_id",
+        "requirement",
+        "property",
+        "acceptance_criterion",
+        "reference",
+        "proof",
+        "waivable",
+        "lifecycle_gate",
+    )
+    return {key: item[key] for key in keys if key in item}
+
+
+def _phase_gate_source(
+    name: str,
+    *,
+    status: str,
+    findings: list[dict[str, Any]] | None = None,
+    **counts: Any,
+) -> dict[str, Any]:
+    normalized = [_phase_gate_diagnostic(item) for item in (findings or [])]
+    payload: dict[str, Any] = {
+        "source": name,
+        "status": status,
+        "finding_count": len(normalized),
+        "findings": normalized,
+    }
+    payload.update(counts)
+    return payload
+
+
+def _verification_evidence_satisfied(spec_path: Path) -> bool:
+    records = verification_evidence_records(spec_path)
+    return bool(records) and all(
+        record.get("classification") not in EVIDENCE_ISSUE_CLASSIFICATIONS
+        for record in records
+    )
+
+
+def _promotion_evidence_satisfied(spec_path: Path) -> bool:
+    """Recognize explicit durable-promotion proof; never infer it from a plan."""
+    for record in verification_evidence_records(spec_path):
+        evidence = str(record.get("evidence") or "").lower()
+        if (
+            record.get("classification") not in EVIDENCE_ISSUE_CLASSIFICATIONS
+            and re.search(r"\b(promoted|promotion|durable (?:doc|documentation))\b", evidence)
+        ):
+            return True
+    return False
+
+
+def phase_gate_context(spec_path: Path) -> dict[str, Any]:
+    """Infer lifecycle phase and summarize only phase-applicable sources.
+
+    This shared, caller-agnostic context intentionally excludes compact rendering,
+    evidence fingerprints, and transport metadata. Later phase-gate surfaces can
+    build those contracts without duplicating lifecycle inference.
+    """
+    spec = spec_path.resolve()
+    if not spec.is_dir():
+        return {
+            "spec_path": str(spec),
+            "applicability": "missing",
+            "phase": "unknown",
+            "next_phase": None,
+            "sources": [],
+            "missing_evidence": ["spec package directory"],
+        }
+
+    summary = spec_summary(spec)
+    if summary["lifecycle"] == "archived":
+        return {
+            "spec_path": str(spec),
+            "applicability": "not_applicable",
+            "phase": "unknown",
+            "next_phase": None,
+            "sources": [],
+            "reason": "Archived packages are outside active phase-gate inference.",
+        }
+
+    inventory = summary["artifacts"]
+    tasks = parse_tasks(spec / "tasks.md") if inventory["tasks.md"] == "present" else []
+    by_id = {task.task_id: task for task in tasks}
+    runnable = [
+        task for task in tasks
+        if not task.complete and task.status in RUNNABLE_TASK_STATUSES
+    ]
+    all_verified = bool(tasks) and all(task_verified(task, by_id) for task in tasks)
+
+    missing_evidence: list[str] = []
+    if inventory["requirements.md"] != "present":
+        phase = "unknown"
+        missing_evidence.append("requirements.md")
+    elif inventory["design.md"] != "present":
+        phase = "requirements"
+    elif inventory["tasks.md"] != "present":
+        phase = "design"
+    elif not tasks or inventory["traceability.md"] != "present":
+        phase = "tasks"
+        if not tasks:
+            missing_evidence.append("task checklist items")
+        if inventory["traceability.md"] != "present":
+            missing_evidence.append("traceability.md")
+    elif runnable or not all_verified:
+        phase = "implementation"
+    elif not _verification_evidence_satisfied(spec):
+        phase = "verification"
+        missing_evidence.append("successful verification evidence")
+    elif not _promotion_evidence_satisfied(spec):
+        phase = "promotion"
+        missing_evidence.append("explicit durable-promotion evidence")
+    else:
+        phase = "closure"
+
+    lint_payload = lint_spec_package(spec)
+    assert isinstance(lint_payload, dict)
+    stage_findings = [
+        {
+            "severity": "error",
+            "code": "OPEN_DECISION_UNRESOLVED",
+            "path": str(spec / "open-decisions.md"),
+            "reference": decision.get("id"),
+            "waivable": False,
+            "lifecycle_gate": "authoring",
+        }
+        for decision in summary["open_decisions"]
+    ]
+    sources = [
+        _phase_gate_source(
+            "stage_readiness",
+            status="blocked" if missing_evidence else ("findings" if stage_findings else "ready"),
+            findings=stage_findings,
+            missing_evidence_count=len(missing_evidence),
+            unresolved_decision_count=len(summary["open_decisions"]),
+        ),
+        _phase_gate_source(
+            "lint_spec_package",
+            status="findings" if lint_payload["diagnostics"] else "pass",
+            findings=lint_payload["diagnostics"],
+            **lint_payload["summary"],
+        ),
+    ]
+
+    if inventory["tasks.md"] == "present":
+        next_payload = next_task(spec)
+        sources.append(
+            _phase_gate_source(
+                "next_task",
+                status="selected" if next_payload.get("selected") else "none",
+                selected_task_id=(next_payload.get("selected") or {}).get("task_id"),
+                blocked_task_count=len(next_payload.get("blocked", [])),
+            )
+        )
+        if inventory["traceability.md"] == "present":
+            sources.append(
+                _phase_gate_source(
+                    "task_context",
+                    status="available" if next_payload.get("traceability_context") else "not_applicable",
+                    context_gap_count=len((next_payload.get("traceability_context") or {}).get("gaps", [])),
+                )
+            )
+
+    if phase in {"verification", "promotion", "closure"}:
+        validation = validation_plan(repo_root_for(spec), [], spec)
+        sources.append(
+            _phase_gate_source(
+                "validation_plan",
+                status="advisory",
+                required_count=validation.get("summary", {}).get("required", 0),
+                blocked_count=validation.get("summary", {}).get("blocked", 0),
+                proof="plan_only",
+            )
+        )
+    if phase in {"promotion", "closure"}:
+        promotion = promotion_plan(spec)
+        sources.append(
+            _phase_gate_source(
+                "promotion_plan",
+                status="missing_targets" if promotion["missing_targets"] else "planned",
+                target_count=len(promotion["targets"]),
+                missing_target_count=len(promotion["missing_targets"]),
+                proof="plan_only",
+            )
+        )
+    if phase == "closure":
+        closure = closure_check(spec)
+        sources.append(
+            _phase_gate_source(
+                "closure_check",
+                status="ready" if closure["ready"] else "blocked",
+                findings=closure["blockers"],
+                blocker_count=len(closure["blockers"]),
+            )
+        )
+
+    return {
+        "spec_path": str(spec),
+        "applicability": "applicable",
+        "phase": phase,
+        "next_phase": PHASE_GATE_NEXT_PHASE[phase],
+        "missing_evidence": missing_evidence,
+        "sources": sources[:7],
+    }
+
+
 def normalize_review_packet_type(review_type: str | None) -> tuple[str, dict[str, Any]]:
     requested = (review_type or "").strip() or "design_requirements_trace"
     key = requested.lower().replace(" ", "_")
