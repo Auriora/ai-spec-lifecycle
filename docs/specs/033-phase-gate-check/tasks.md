@@ -61,9 +61,12 @@ last_reviewed: 2026-07-12
 
 ## Phase 3: Packaging And Promotion
 
-- [ ] T005 Synchronize bundles and validate package parity
+- [x] T005 Synchronize bundles and validate package parity
   - Depends on: each source implementation slice.
   - Acceptance: source/Codex/Claude parity and package contract pass.
+  - Evidence: 2026-07-12, repository-owned bundle synchronization, source/Codex/
+    Claude parity, strict package contract, sync guard, and npm pack passed after
+    T001-T004; full validation contains 275 Python and 25 Node tests.
 
 - [ ] T006 Promote durable documentation and close B031
   - Depends on: T001-T005.

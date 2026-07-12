@@ -70,6 +70,10 @@ last_reviewed: 2026-07-12
   rejection, invocation metadata, exact MCP/CLI parity after metadata removal,
   established-schema compatibility, and absence of absolute host paths. Full
   validation passed with 275 Python and 25 Node tests.
+- **2026-07-12 — T005:** Source, Codex, and Claude skill trees are synchronized;
+  package contract, sync guard, npm pack, and diff checks pass after all phase-
+  gate source and adapter slices. V029-V031 pass with the 275-Python/25-Node
+  full repository validation.
 
 ## Quality Gates
 
