@@ -720,6 +720,34 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertTrue(any(item["path"] == "docs/history/spec-closure-log.md" for item in refs["historical"]))
         self.assertFalse(any(item["path"] == "docs/history/spec-closure-log.md" for item in refs["active_stale"]))
 
+    def test_closure_reference_classifier_honors_root_ignore_files_and_negation(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            needle = "036-compact-output-and-invocation-telemetry"
+            (repo / ".gitignore").write_text(".cache/\n*.log\n!keep.log\n", encoding="utf-8")
+            (repo / ".aiignore").write_text("private/\n", encoding="utf-8")
+            (repo / ".cache").mkdir()
+            (repo / ".cache/graph.sqlite-wal").write_text(needle * 1000, encoding="utf-8")
+            (repo / "private").mkdir()
+            (repo / "private/session.txt").write_text(needle, encoding="utf-8")
+            (repo / "ignored.log").write_text(needle, encoding="utf-8")
+            (repo / "keep.log").write_text(needle, encoding="utf-8")
+            (repo / "docs").mkdir()
+            (repo / "docs/current.md").write_text(needle, encoding="utf-8")
+
+            refs = closure_core.classify_spec_references(
+                repo,
+                needle,
+                f"docs/specs/{needle}",
+            )
+
+        paths = {item["path"] for items in refs.values() for item in items}
+        self.assertIn("docs/current.md", paths)
+        self.assertIn("keep.log", paths)
+        self.assertNotIn(".cache/graph.sqlite-wal", paths)
+        self.assertNotIn("private/session.txt", paths)
+        self.assertNotIn("ignored.log", paths)
+
     def test_closure_record_rendering_and_drift_detection_use_one_payload(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
@@ -1721,6 +1749,7 @@ class SpecRuntimeTests(unittest.TestCase):
             "032-requirement-priority-labels",
             "033-phase-gate-check",
             "035-spec-id-allocation-and-creation-plan",
+            "036-compact-output-and-invocation-telemetry",
         }
 
         self.assertEqual(0, payload["summary"]["error"])

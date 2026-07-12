@@ -42,6 +42,84 @@ KNOWN_ACTIVE_REFERENCE_PATHS = {
     "docs/roadmap/README.md",
 }
 DEFAULT_ARCHIVED_SPEC_ROOT = "docs/history/archived-specs"
+ROOT_IGNORE_FILE_NAMES = (".gitignore", ".aiignore")
+
+
+@dataclass(frozen=True)
+class IgnoreRule:
+    pattern: str
+    negated: bool
+    directory_only: bool
+    anchored: bool
+    has_slash: bool
+
+
+def _parse_ignore_rules(content: str) -> list[IgnoreRule]:
+    rules: list[IgnoreRule] = []
+    for raw_line in content.splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        negated = line.startswith("!")
+        if negated:
+            line = line[1:]
+        anchored = line.startswith("/")
+        if anchored:
+            line = line[1:]
+        directory_only = line.endswith("/")
+        if directory_only:
+            line = line[:-1]
+        if not line:
+            continue
+        rules.append(
+            IgnoreRule(
+                pattern=line,
+                negated=negated,
+                directory_only=directory_only,
+                anchored=anchored,
+                has_slash="/" in line,
+            )
+        )
+    return rules
+
+
+def _read_root_ignore_rules(repo_root: Path) -> list[IgnoreRule]:
+    rules: list[IgnoreRule] = []
+    for name in ROOT_IGNORE_FILE_NAMES:
+        path = repo_root / name
+        try:
+            rules.extend(_parse_ignore_rules(path.read_text(encoding="utf-8")))
+        except (OSError, UnicodeError):
+            continue
+    return rules
+
+
+def _ignore_pattern_matches(pattern: str, value: str) -> bool:
+    escaped = re.escape(pattern).replace(r"\*", "[^/]*")
+    return re.fullmatch(escaped, value) is not None
+
+
+def _ignore_rule_matches(rule: IgnoreRule, relative_path: str, is_directory: bool) -> bool:
+    if (
+        rule.directory_only
+        and not is_directory
+        and relative_path != rule.pattern
+        and not relative_path.startswith(f"{rule.pattern}/")
+    ):
+        return False
+    if rule.anchored or rule.has_slash:
+        return _ignore_pattern_matches(rule.pattern, relative_path) or relative_path.startswith(
+            f"{rule.pattern}/"
+        )
+    return any(_ignore_pattern_matches(rule.pattern, segment) for segment in relative_path.split("/"))
+
+
+def _is_ignored_path(relative_path: str, is_directory: bool, rules: list[IgnoreRule]) -> bool:
+    ignored = False
+    for rule in rules:
+        if _ignore_rule_matches(rule, relative_path, is_directory):
+            ignored = not rule.negated
+    return ignored
 
 
 @dataclass(frozen=True)
@@ -460,14 +538,23 @@ def classify_spec_references(repo_root: Path, spec_id: str, package_path: str) -
     root = repo_root.resolve()
     needles = [spec_id, package_path.rstrip("/")]
     results: dict[str, list[dict[str, Any]]] = {"active_stale": [], "historical": [], "historical_or_validation": [], "review": []}
+    ignore_rules = _read_root_ignore_rules(root)
     for path in sorted(root.rglob("*")):
+        try:
+            rel = path.relative_to(root).as_posix()
+        except ValueError:
+            continue
+        if _is_ignored_path(rel, path.is_dir(), ignore_rules):
+            continue
         if not path.is_file() or ".git" in path.parts or "__pycache__" in path.parts:
             continue
         try:
-            rel = path.relative_to(root).as_posix()
-            text = path.read_text(encoding="utf-8", errors="ignore")
+            raw = path.read_bytes()
         except OSError:
             continue
+        if b"\x00" in raw[:8192]:
+            continue
+        text = raw.decode("utf-8", errors="ignore")
         for needle in needles:
             if not needle or needle not in text:
                 continue

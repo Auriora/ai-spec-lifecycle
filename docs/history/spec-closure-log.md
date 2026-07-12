@@ -19,7 +19,7 @@ requires visible archived docs.
 - **Spec:** `docs/specs/036-compact-output-and-invocation-telemetry/`
 - **Title:** Compact lifecycle output and invocation provenance requirements
 - **Final spec commit:** `4c7da1e`
-- **Closure cleanup commit:** `pending-cleanup-commit`
+- **Closure cleanup commit:** `07b731f`
 - **Closure action:** removed
 - **Durable docs updated:**
   - `docs/backlog/README.md`
