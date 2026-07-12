@@ -19,7 +19,7 @@ requires visible archived docs.
 - **Spec:** `docs/specs/033-phase-gate-check/`
 - **Title:** Phase gate check requirements
 - **Final spec commit:** `ac690d4`
-- **Closure cleanup commit:** `pending-cleanup-commit`
+- **Closure cleanup commit:** `c97cb20`
 - **Closure action:** removed
 - **Durable docs updated:**
   - `docs/backlog/README.md`

@@ -1719,6 +1719,7 @@ class SpecRuntimeTests(unittest.TestCase):
             "030-mcp-first-runtime-migration",
             "031-canonical-context-warning-noise",
             "032-requirement-priority-labels",
+            "033-phase-gate-check",
         }
 
         self.assertEqual(0, payload["summary"]["error"])
