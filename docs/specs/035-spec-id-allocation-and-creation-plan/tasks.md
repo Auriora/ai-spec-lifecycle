@@ -64,14 +64,19 @@ last_reviewed: 2026-07-12
     action. Fifteen focused fixtures and the 293-test full Python suite pass;
     source/Codex/Claude parity and `git diff --check` pass.
 
-- [ ] T004 Add retained CLI inventory and creation-plan surfaces
+- [x] T004 Add retained CLI inventory and creation-plan surfaces
   - Depends on: T003.
   - Files: runtime adapter and CLI tests.
   - Add validation/recovery commands with docs-root, slug, and expected-
     fingerprint arguments using caller-agnostic core results.
   - Acceptance: commands validate inputs, return repo-relative deterministic
     JSON, attach CLI provenance, and never mutate files.
-  - Evidence: Pending.
+  - Evidence: 2026-07-12, retained `spec-id-inventory` and
+    `spec-creation-plan` commands accept selected docs roots, slug, and expected
+    fingerprint arguments; return shared decisions with CLI provenance and
+    repo-relative paths; handle stale/invalid input; and remain read-only.
+    Seventeen focused fixtures and the 295-test full Python suite pass;
+    source/Codex/Claude parity and `git diff --check` pass.
 
 - [ ] T005 Add MCP tools, schemas, and MCP/CLI parity coverage
   - Depends on: T004.

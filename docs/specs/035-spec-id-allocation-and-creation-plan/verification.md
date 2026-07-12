@@ -90,7 +90,13 @@ last_reviewed: 2026-07-12
   established, nested-root, additive inventory, and unusable-allocation cases;
   15 focused fixtures and the complete 293-test Python suite pass with bundle
   parity and `git diff --check`.
-- Pending implementation evidence for T004-T007.
+- **2026-07-12 — T004:** Added retained `spec-id-inventory` and
+  `spec-creation-plan` CLI commands with docs-root, slug, and expected-
+  fingerprint arguments, structured invalid/stale results, adapter-owned CLI
+  provenance, repo-relative privacy, exact core parity, and read-only behavior.
+  V033-V036 pass with 17 focused fixtures and the complete 295-test Python
+  suite; bundle parity and `git diff --check` pass.
+- Pending implementation evidence for T005-T007.
 
 ## Residual Risks
 

@@ -3,9 +3,12 @@ import unittest
 from pathlib import Path
 import sys
 from unittest import mock
+import json
+import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT_DIR = ROOT / "skills/spec-lifecycle-manager/scripts"
+SCRIPT = SCRIPT_DIR / "spec_runtime.py"
 sys.path.insert(0, str(SCRIPT_DIR))
 
 from lifecycle import core
@@ -257,6 +260,67 @@ class SpecIdInventoryTests(unittest.TestCase):
 
             self.assertEqual([], scan["available_next_actions"])
             self.assertEqual("low", scan["spec_id_allocation"]["confidence"])
+
+    def test_cli_inventory_matches_core_and_attaches_cli_provenance(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / "docs/specs/003-current").mkdir(parents=True)
+            expected = core.spec_id_inventory(repo)
+
+            completed = subprocess.run(
+                [sys.executable, str(SCRIPT), "spec-id-inventory", str(repo)],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            payload = json.loads(completed.stdout)
+            metadata = payload.pop("lifecycle_metadata")
+            self.assertEqual(core.relativize_payload_paths(expected, repo), payload)
+            self.assertEqual("cli", metadata["invocation_surface"])
+            self.assertEqual("argument", metadata["root_source"])
+            self.assertNotIn(str(repo), completed.stdout)
+
+    def test_cli_creation_plan_supports_expected_fingerprint_and_invalid_slug(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            first = subprocess.run(
+                [sys.executable, str(SCRIPT), "spec-creation-plan", "feature", "--repo-root", str(repo)],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            first_payload = json.loads(first.stdout)
+            fingerprint = first_payload["evidence_fingerprint"]
+            self.assertEqual([], sorted(repo.rglob("*")))
+            (repo / "docs/specs/000-claimed").mkdir(parents=True)
+            before = sorted(path.relative_to(repo).as_posix() for path in repo.rglob("*"))
+            stale = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPT),
+                    "spec-creation-plan",
+                    "feature",
+                    "--repo-root",
+                    str(repo),
+                    "--expected-fingerprint",
+                    fingerprint,
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            invalid = subprocess.run(
+                [sys.executable, str(SCRIPT), "spec-creation-plan", "../bad", "--repo-root", str(repo)],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual("stale", json.loads(stale.stdout)["status"])
+            self.assertEqual("invalid", json.loads(invalid.stdout)["status"])
+            self.assertNotIn(str(repo), stale.stdout)
+            self.assertEqual(before, sorted(path.relative_to(repo).as_posix() for path in repo.rglob("*")))
 
 
 if __name__ == "__main__":

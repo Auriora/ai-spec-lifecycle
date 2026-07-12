@@ -52,6 +52,16 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     scan.add_argument("--docs-root")
     scan.add_argument("--include-archived-lint", action="store_true", help="Run authoring lint against archived specs during scan.")
 
+    spec_ids = sub.add_parser("spec-id-inventory", help="Return provisional spec numbering evidence and the next available number.")
+    spec_ids.add_argument("repo_root", type=Path, nargs="?", default=Path.cwd())
+    spec_ids.add_argument("--docs-root")
+
+    creation = sub.add_parser("spec-creation-plan", help="Preview a provisional, non-reserving spec package allocation.")
+    creation.add_argument("slug")
+    creation.add_argument("--repo-root", type=Path, default=Path.cwd())
+    creation.add_argument("--docs-root")
+    creation.add_argument("--expected-fingerprint")
+
     summary = sub.add_parser("summary", help="Return specs://{id}/summary style payload.")
     summary.add_argument("spec_path", type=Path)
 
@@ -134,6 +144,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 
     no_active = sub.add_parser("no-active-spec-context", help="Return durable context to use when no active spec exists.")
     no_active.add_argument("repo_root", type=Path, nargs="?", default=Path.cwd())
+    no_active.add_argument("--docs-root")
 
     closure = sub.add_parser("closure-check", help="Check spec closure readiness.")
     closure.add_argument("spec_path", type=Path)
@@ -252,6 +263,27 @@ def main(argv: list[str] | None = None) -> int:
         )
     elif args.command == "scan":
         payload = scan_specs(args.repo_root, args.docs_root, include_archived_lint=args.include_archived_lint)
+    elif args.command == "spec-id-inventory":
+        payload = spec_id_inventory(args.repo_root, args.docs_root)
+        payload["lifecycle_metadata"] = assemble_lifecycle_metadata(
+            args.repo_root,
+            invocation_surface="cli",
+            root_source="argument",
+            runtime_start_path=Path(__file__),
+        )
+    elif args.command == "spec-creation-plan":
+        payload = spec_creation_plan(
+            args.repo_root,
+            args.slug,
+            args.docs_root,
+            args.expected_fingerprint,
+        )
+        payload["lifecycle_metadata"] = assemble_lifecycle_metadata(
+            args.repo_root,
+            invocation_surface="cli",
+            root_source="argument",
+            runtime_start_path=Path(__file__),
+        )
     elif args.command == "summary":
         payload = spec_summary(args.spec_path.resolve())
     elif args.command == "lint":
@@ -315,7 +347,7 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == "agent-readiness-packet":
         payload = agent_readiness_packet(args.spec_path.resolve(), args.task_id)
     elif args.command == "no-active-spec-context":
-        payload = no_active_spec_context(args.repo_root)
+        payload = no_active_spec_context(args.repo_root, args.docs_root)
     elif args.command == "closure-check":
         payload = closure_check(args.spec_path.resolve())
     elif args.command == "closure-plan":
