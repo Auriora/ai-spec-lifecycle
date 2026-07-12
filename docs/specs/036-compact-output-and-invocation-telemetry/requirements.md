@@ -64,7 +64,7 @@ authority for operational observability.
 | `skills/spec-lifecycle-manager/scripts/spec_mcp_server.py` | Builds MCP results and exposes server version/root context. | high | Transport target. |
 | `skills/spec-lifecycle-manager/scripts/lifecycle/core.py` | Produces detailed lifecycle payloads shared by MCP and CLI. | high | Summary/detail seam. |
 | `docs/design/spec-lifecycle-management.md` | Defines the shipped bounded phase-gate composition contract. | high | First aggregate consumer delivered by Spec 033; final package retained at commit `ac690d4`. |
-| `docs/specs/035-spec-id-allocation-and-creation-plan/requirements.md` | Defines inventory and creation-plan responses. | high | Second aggregate consumer. |
+| `docs/reference/spec-lifecycle-runtime.md` | Defines shipped inventory and creation-plan responses. | high | Second aggregate consumer delivered by Spec 035; final package retained at commit `0efc405`. |
 
 ## Durable Impact
 
@@ -228,7 +228,7 @@ so that existing consumers are not silently broken.
 
 - Backlog: `docs/backlog/README.md` B062
 - Related delivery evidence: Spec 033 final package at commit `ac690d4`.
-- Related spec: `docs/specs/035-spec-id-allocation-and-creation-plan/requirements.md`
+- Related delivery evidence: Spec 035 final package at commit `0efc405`.
 - Design: not created yet
 - Tasks: not created yet
 - Verification: not created yet

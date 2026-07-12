@@ -14,6 +14,30 @@ requires visible archived docs.
 
 ## Entries
 
+### 2026-07-12 - 035-spec-id-allocation-and-creation-plan
+
+- **Spec:** `docs/specs/035-spec-id-allocation-and-creation-plan/`
+- **Title:** Spec ID allocation and creation plan requirements
+- **Final spec commit:** `0efc405`
+- **Closure cleanup commit:** `pending-cleanup-commit`
+- **Closure action:** removed
+- **Durable docs updated:**
+  - `docs/backlog/README.md`
+  - `docs/roadmap/README.md`
+  - `docs/reference/spec-lifecycle-runtime.md`
+  - `docs/design/spec-lifecycle-management.md`
+  - `skills/spec-lifecycle-manager/SKILL.md`
+- **Verification summary:** All seven tasks are complete and verified. Source
+  `closure-check` reports ready with complete coverage for all five prioritized
+  requirements; promotion planning reports no missing targets. Full validation
+  passes with 297 Python and 25 Node tests plus lifecycle/archive/prompt/
+  package/sync checks, npm dry-pack, and `git diff --check`. Cleanup scan no
+  longer lists Spec 035; final archive validation follows hash resolution.
+- **Residual risks:** Allocation remains provisional and non-reserving. A
+  future write-capable helper must atomically claim the directory. Running
+  Codex or Claude sessions require plugin reinstall/reload for the new tools.
+- **Follow-up:** none
+
 ### 2026-07-12 - 033-phase-gate-check
 
 - **Spec:** `docs/specs/033-phase-gate-check/`
