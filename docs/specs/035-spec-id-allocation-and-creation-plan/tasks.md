@@ -78,7 +78,7 @@ last_reviewed: 2026-07-12
     Seventeen focused fixtures and the 295-test full Python suite pass;
     source/Codex/Claude parity and `git diff --check` pass.
 
-- [ ] T005 Add MCP tools, schemas, and MCP/CLI parity coverage
+- [x] T005 Add MCP tools, schemas, and MCP/CLI parity coverage
   - Depends on: T004.
   - Files: MCP server, shared schemas, and MCP tests.
   - Expose `spec_id_inventory` and `spec_creation_plan` with closed schemas and
@@ -86,15 +86,23 @@ last_reviewed: 2026-07-12
   - Acceptance: tool discovery, schema rejection, compact contract,
     stale/collision responses, privacy, and exact decision parity after
     transport metadata removal pass.
-  - Evidence: Pending.
+  - Evidence: 2026-07-12, MCP exposes `spec_id_inventory` and
+    `spec_creation_plan` with closed input/output schemas, required slug and
+    fingerprint validation, adapter-owned provenance, explicit-null transport,
+    stale/invalid responses, repo-relative privacy, and exact CLI decisions
+    after metadata removal. Focused MCP tests and full validation pass with 297
+    Python and 25 Node tests.
 
 ## Phase 3: Packaging And Promotion
 
-- [ ] T006 Synchronize package bundles and validate compatibility
+- [x] T006 Synchronize package bundles and validate compatibility
   - Depends on: T001-T005.
   - Acceptance: source/Codex/Claude parity, package contract, sync guard, npm
     dry-pack, and full validation pass without changing established schemas.
-  - Evidence: Pending.
+  - Evidence: 2026-07-12, repository bundle synchronization leaves source,
+    Codex, and Claude trees identical; full `npm run validate` passes with 297
+    Python and 25 Node tests, lifecycle/archive/prompt/package/sync checks, npm
+    dry-pack, established-schema compatibility, and `git diff --check`.
 
 - [ ] T007 Promote durable documentation and close B061
   - Depends on: T006.

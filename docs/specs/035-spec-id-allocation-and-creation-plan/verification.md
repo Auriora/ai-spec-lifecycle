@@ -96,7 +96,16 @@ last_reviewed: 2026-07-12
   provenance, repo-relative privacy, exact core parity, and read-only behavior.
   V033-V036 pass with 17 focused fixtures and the complete 295-test Python
   suite; bundle parity and `git diff --check` pass.
-- Pending implementation evidence for T005-T007.
+- **2026-07-12 — T005:** Added MCP `spec_id_inventory` and
+  `spec_creation_plan` tools with closed schemas, required-slug validation,
+  MCP provenance, explicit-null preservation, stale/invalid output, privacy,
+  discovery, and exact CLI decision parity. V037-V044 and full validation pass
+  with 297 Python and 25 Node tests.
+- **2026-07-12 — T006:** Source/Codex/Claude trees are synchronized; package
+  contract, sync guard, lifecycle/archive/prompt checks, npm dry-pack,
+  established-schema tests, and `git diff --check` pass in the 297-Python/
+  25-Node full validation. V045-V048 pass.
+- Pending promotion and closure evidence for T007.
 
 ## Residual Risks
 

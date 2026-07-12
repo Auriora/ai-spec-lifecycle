@@ -129,11 +129,16 @@ def normalize_mcp_payload(payload: Any, repo_root: Path) -> Any:
         normalized = {}
         for key, value in payload.items():
             normalized_value = normalize_mcp_payload(value, repo_root)
-            if normalized_value is not None:
+            if normalized_value is not None or value is None:
                 normalized[key] = normalized_value
         return normalized
     if isinstance(payload, list):
-        return [item for item in (normalize_mcp_payload(value, repo_root) for value in payload) if item is not None]
+        normalized = []
+        for value in payload:
+            item = normalize_mcp_payload(value, repo_root)
+            if item is not None or value is None:
+                normalized.append(item)
+        return normalized
     if isinstance(payload, str):
         return normalize_mcp_string(payload, repo_root)
     return payload
@@ -229,6 +234,31 @@ def tool_definitions() -> list[dict[str, Any]]:
                     "description": "Set true to run authoring lint against archived specs during scan.",
                 },
             },
+        ),
+        tool_schema(
+            "spec_id_inventory",
+            "Return read-only numbering evidence and the next provisional spec number for one docs root.",
+            {
+                "repo_root": REPO_ROOT_PROPERTY,
+                "docs_root": "Optional docs root. Defaults to docs.",
+            },
+            output_schema=spec_agent_schemas.spec_id_inventory_output_schema(),
+        ),
+        tool_schema(
+            "spec_creation_plan",
+            "Preview a provisional, non-reserving spec ID, path, template, artifact set, and stale-plan contract.",
+            {
+                "repo_root": REPO_ROOT_PROPERTY,
+                "slug": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+                    "description": "Required ASCII lower-kebab spec slug.",
+                },
+                "docs_root": "Optional docs root. Defaults to docs.",
+                "expected_fingerprint": spec_agent_schemas.evidence_fingerprint_schema(),
+            },
+            ["slug"],
+            output_schema=spec_agent_schemas.spec_creation_plan_output_schema(),
         ),
         tool_schema(
             "active_spec_preflight",
@@ -554,6 +584,32 @@ def call_tool(
             arguments.get("docs_root"),
             include_archived_lint=bool_arg(arguments, "include_archived_lint"),
         ), root
+    if name == "spec_id_inventory":
+        payload = lifecycle_core.spec_id_inventory(root, arguments.get("docs_root"))
+        payload["lifecycle_metadata"] = assemble_lifecycle_metadata(
+            root,
+            invocation_surface="mcp",
+            root_source="argument" if arguments.get("repo_root") else default_root_source,
+            runtime_start_path=Path(__file__),
+        )
+        return payload, root
+    if name == "spec_creation_plan":
+        slug = arguments.get("slug")
+        if not isinstance(slug, str) or not slug:
+            raise ValueError("slug is required")
+        payload = lifecycle_core.spec_creation_plan(
+            root,
+            slug,
+            arguments.get("docs_root"),
+            arguments.get("expected_fingerprint"),
+        )
+        payload["lifecycle_metadata"] = assemble_lifecycle_metadata(
+            root,
+            invocation_surface="mcp",
+            root_source="argument" if arguments.get("repo_root") else default_root_source,
+            runtime_start_path=Path(__file__),
+        )
+        return payload, root
     if name == "active_spec_preflight":
         spec_path = spec_path_arg(arguments, default_root) if arguments.get("spec_path") or arguments.get("spec_id") else None
         payload = lifecycle_core.active_spec_preflight(root, spec_path, arguments.get("task_id"), arguments.get("docs_root"))

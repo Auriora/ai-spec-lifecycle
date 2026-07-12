@@ -10,6 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SERVER = ROOT / "skills/spec-lifecycle-manager/scripts/spec_mcp_server.py"
 SCRIPT_DIR = ROOT / "skills/spec-lifecycle-manager/scripts"
+RUNTIME_SCRIPT = SCRIPT_DIR / "spec_runtime.py"
 sys.path.insert(0, str(SCRIPT_DIR))
 
 import spec_mcp_server
@@ -170,6 +171,8 @@ class SpecMcpServerTests(unittest.TestCase):
 
         tools = {tool["name"] for tool in responses[0]["result"]["tools"]}
         self.assertIn("scan_specs", tools)
+        self.assertIn("spec_id_inventory", tools)
+        self.assertIn("spec_creation_plan", tools)
         self.assertIn("active_spec_preflight", tools)
         self.assertIn("lifecycle_guide", tools)
         self.assertIn("bootstrap_plan", tools)
@@ -202,6 +205,14 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertEqual("array", validation_schema["inputSchema"]["properties"]["changed_files"]["type"])
         bootstrap_schema = next(tool for tool in responses[0]["result"]["tools"] if tool["name"] == "bootstrap_plan")
         self.assertIn("boolean", bootstrap_schema["inputSchema"]["properties"]["create_spec"]["type"])
+        spec_id_schema = next(tool for tool in responses[0]["result"]["tools"] if tool["name"] == "spec_id_inventory")
+        creation_schema = next(tool for tool in responses[0]["result"]["tools"] if tool["name"] == "spec_creation_plan")
+        self.assertFalse(spec_id_schema["inputSchema"]["additionalProperties"])
+        self.assertFalse(spec_id_schema["outputSchema"]["additionalProperties"])
+        self.assertEqual(["slug"], creation_schema["inputSchema"]["required"])
+        self.assertFalse(creation_schema["inputSchema"]["additionalProperties"])
+        self.assertEqual(2, len(creation_schema["outputSchema"]["oneOf"]))
+        self.assertTrue(all(not item["additionalProperties"] for item in creation_schema["outputSchema"]["oneOf"]))
         capabilities_schema = next(tool for tool in responses[0]["result"]["tools"] if tool["name"] == "lifecycle_capabilities")
         inventory_schema = next(tool for tool in responses[0]["result"]["tools"] if tool["name"] == "script_migration_inventory")
         traceability_schema = next(tool for tool in responses[0]["result"]["tools"] if tool["name"] == "traceability_lookup")
@@ -218,6 +229,92 @@ class SpecMcpServerTests(unittest.TestCase):
         )
         requirement_schema = traceability_schema["outputSchema"]["properties"]["requirements"]["items"]
         self.assertIn("priority", requirement_schema["properties"])
+
+    def test_spec_allocation_mcp_tools_match_cli_decisions_and_provenance(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / "docs/specs/004-current").mkdir(parents=True)
+            inventory_cli = subprocess.run(
+                [sys.executable, str(RUNTIME_SCRIPT), "spec-id-inventory", str(repo)],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            creation_cli = subprocess.run(
+                [
+                    sys.executable,
+                    str(RUNTIME_SCRIPT),
+                    "spec-creation-plan",
+                    "next-feature",
+                    "--repo-root",
+                    str(repo),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            inventory_mcp, _ = spec_mcp_server.call_tool(
+                "spec_id_inventory", {"repo_root": str(repo)}, repo, "cwd"
+            )
+            creation_mcp, _ = spec_mcp_server.call_tool(
+                "spec_creation_plan",
+                {"repo_root": str(repo), "slug": "next-feature"},
+                repo,
+                "cwd",
+            )
+
+        inventory_cli_payload = json.loads(inventory_cli.stdout)
+        creation_cli_payload = json.loads(creation_cli.stdout)
+        inventory_cli_metadata = inventory_cli_payload.pop("lifecycle_metadata")
+        creation_cli_metadata = creation_cli_payload.pop("lifecycle_metadata")
+        inventory_mcp_metadata = inventory_mcp.pop("lifecycle_metadata")
+        creation_mcp_metadata = creation_mcp.pop("lifecycle_metadata")
+        self.assertEqual(inventory_cli_payload, inventory_mcp)
+        self.assertEqual(creation_cli_payload, creation_mcp)
+        self.assertEqual("cli", inventory_cli_metadata["invocation_surface"])
+        self.assertEqual("cli", creation_cli_metadata["invocation_surface"])
+        self.assertEqual("mcp", inventory_mcp_metadata["invocation_surface"])
+        self.assertEqual("mcp", creation_mcp_metadata["invocation_surface"])
+
+    def test_spec_creation_plan_mcp_reports_stale_invalid_and_missing_slug(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            first, _ = spec_mcp_server.call_tool(
+                "spec_creation_plan", {"repo_root": str(repo), "slug": "feature"}, repo, "cwd"
+            )
+            fingerprint = first["evidence_fingerprint"]
+            (repo / "docs/specs/000-claimed").mkdir(parents=True)
+            responses = self.send(
+                rpc(
+                    1,
+                    "tools/call",
+                    {
+                        "name": "spec_creation_plan",
+                        "arguments": {
+                            "repo_root": str(repo),
+                            "slug": "feature",
+                            "expected_fingerprint": fingerprint,
+                        },
+                    },
+                ),
+                rpc(
+                    2,
+                    "tools/call",
+                    {"name": "spec_creation_plan", "arguments": {"repo_root": str(repo), "slug": "../bad"}},
+                ),
+                rpc(3, "tools/call", {"name": "spec_creation_plan", "arguments": {"repo_root": str(repo)}}),
+                root=repo,
+            )
+
+        stale = responses[0]["result"]["structuredContent"]
+        invalid = responses[1]["result"]["structuredContent"]
+        self.assertEqual("stale", stale["status"])
+        self.assertEqual("001-feature", stale["proposed_spec_id"])
+        self.assertEqual("mcp", stale["lifecycle_metadata"]["invocation_surface"])
+        self.assertEqual("invalid", invalid["status"])
+        self.assertIsNone(invalid["proposed_path"])
+        self.assertEqual(-32602, responses[2]["error"]["code"])
+        self.assertNotIn(str(repo), json.dumps(responses))
 
     def test_lifecycle_capabilities_tool_returns_stable_surface_decision(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -246,6 +246,71 @@ def phase_gate_check_output_schema() -> dict[str, Any]:
     return {"oneOf": [compact, full, section, stale_expansion_response_schema()]}
 
 
+def spec_id_inventory_output_schema() -> dict[str, Any]:
+    properties = {
+        "schema_version": {"type": "string", "const": "1"},
+        "numbering_scope": {"type": "object"},
+        "used_numbers": {"type": "array", "items": {"type": "integer", "minimum": 0}},
+        "highest_used_number": {"type": ["integer", "null"], "minimum": 0},
+        "next_available_spec_number": {"type": "string", "pattern": "^[0-9]{3,}$"},
+        "provisional": {"type": "boolean", "const": True},
+        "confidence": {"type": "string", "enum": ["high", "reduced", "low"]},
+        "legacy_upper_bound": {"type": ["integer", "null"], "minimum": 0},
+        "evidence": {"type": "array", "items": {"type": "object"}},
+        "diagnostics": {"type": "array", "items": {"type": "object"}},
+        "summary": {"type": "object"},
+        "lifecycle_metadata": lifecycle_metadata_schema(),
+    }
+    return {
+        "type": "object",
+        "required": list(properties),
+        "properties": properties,
+        "additionalProperties": False,
+    }
+
+
+def spec_creation_plan_output_schema() -> dict[str, Any]:
+    shared = {
+        "schema_version": {"type": "string", "const": "1"},
+        "status": {"type": "string", "enum": ["ready", "stale", "collision", "invalid"]},
+        "provisional": {"type": "boolean", "const": True},
+        "reservation": {"type": "boolean", "const": False},
+        "numbering_scope": {"type": "object"},
+        "next_available_spec_number": {"type": "string", "pattern": "^[0-9]{3,}$"},
+        "proposed_spec_id": {"type": ["string", "null"]},
+        "proposed_path": {"type": ["string", "null"]},
+        "template_authority": {"type": ["object", "null"]},
+        "planned_core_artifacts": {"type": "array", "items": {"type": "string"}},
+        "planned_optional_artifacts": {"type": "array", "items": {"type": "string"}},
+        "required_user_values": {"type": "array", "items": {"type": "object"}},
+        "preconditions": {"type": "array", "items": {"type": "object"}},
+        "validation_commands": {"type": "array", "items": {"type": "string"}},
+        "evidence_fingerprint": {"oneOf": [evidence_fingerprint_schema(), {"type": "null"}]},
+        "diagnostics": {"type": "array", "items": {"type": "object"}},
+        "lifecycle_metadata": lifecycle_metadata_schema(),
+    }
+    valid_only = {
+        "allocation_confidence": {"type": "string", "enum": ["high", "reduced", "low"]},
+        "path_within_specs_root": {"type": "boolean", "const": True},
+        "fingerprint_valid": {"type": "boolean"},
+        "refreshed_arguments": {"type": ["object", "null"]},
+        "fresh_proposal": {"type": ["object", "null"]},
+    }
+    valid = {
+        "type": "object",
+        "required": [*shared, *valid_only],
+        "properties": {**shared, **valid_only},
+        "additionalProperties": False,
+    }
+    invalid = {
+        "type": "object",
+        "required": list(shared),
+        "properties": shared,
+        "additionalProperties": False,
+    }
+    return {"oneOf": [valid, invalid]}
+
+
 def review_packet_output_schema() -> dict[str, Any]:
     return {
         "review_type": "string",
