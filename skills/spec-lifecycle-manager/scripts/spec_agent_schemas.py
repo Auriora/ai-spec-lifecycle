@@ -5,6 +5,62 @@ from __future__ import annotations
 from typing import Any
 
 
+def lifecycle_metadata_schema() -> dict[str, Any]:
+    """Reusable v1 provenance schema for additive adapter metadata."""
+
+    return {
+        "type": "object",
+        "required": [
+            "schema_version",
+            "package_version",
+            "build_identity",
+            "invocation_surface",
+            "composition_sources",
+            "repo_root",
+            "repo_identity",
+            "root_source",
+            "fallback_reason",
+        ],
+        "properties": {
+            "schema_version": {"type": "string", "const": "1"},
+            "package_version": {"type": "string"},
+            "build_identity": {"type": "string"},
+            "invocation_surface": {
+                "type": "string",
+                "enum": ["mcp", "cli", "hook", "prompt", "unknown"],
+            },
+            "composition_sources": {
+                "type": "array",
+                "maxItems": 20,
+                "items": {"type": "string"},
+            },
+            "repo_root": {"type": "string", "const": "."},
+            "repo_identity": {
+                "type": "string",
+                "pattern": "^(unknown|sha256:[0-9a-f]{64})$",
+            },
+            "root_source": {
+                "type": "string",
+                "enum": ["argument", "environment", "cwd", "unknown"],
+            },
+            "fallback_reason": {
+                "type": "string",
+                "enum": [
+                    "ci",
+                    "package_validation",
+                    "hook_execution",
+                    "mcp_debugging",
+                    "mcp_unavailable",
+                    "explicit_recovery",
+                    "other",
+                    "none",
+                ],
+            },
+        },
+        "additionalProperties": False,
+    }
+
+
 def review_packet_output_schema() -> dict[str, Any]:
     return {
         "review_type": "string",
@@ -83,7 +139,7 @@ def agent_unavailable_result_schema() -> dict[str, Any]:
 def lifecycle_capabilities_output_schema() -> dict[str, Any]:
     return {
         "type": "object",
-        "required": ["status", "server", "client", "dynamic_tools", "available_next_actions"],
+        "required": ["status", "server", "client", "dynamic_tools", "available_next_actions", "lifecycle_metadata"],
         "properties": {
             "status": {"type": "string"},
             "server": {
@@ -107,6 +163,7 @@ def lifecycle_capabilities_output_schema() -> dict[str, Any]:
                 },
             },
             "available_next_actions": {"type": "array", "items": {"type": "object"}},
+            "lifecycle_metadata": lifecycle_metadata_schema(),
         },
     }
 

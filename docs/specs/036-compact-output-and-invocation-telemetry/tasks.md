@@ -36,13 +36,17 @@ last_reviewed: 2026-07-12
     source package `0.3.0`; explicit override and target-repo isolation tests
     passed in the 51-test focused runtime/MCP run.
 
-- [ ] T003 Add capabilities provenance canary and schemas
+- [x] T003 Add capabilities provenance canary and schemas
   - Depends on: T001, T002
   - Files: MCP/CLI adapters, `spec_agent_schemas.py`, relevant tests
   - Preserve root-selection source and attach additive lifecycle metadata only
     to capabilities in this compatibility slice.
   - Acceptance: MCP/CLI decisions remain equivalent after ignoring metadata;
     surfaces and root-source precedence are correct.
+  - Evidence: 2026-07-12, 200 focused tests and 248 full tests passed;
+    lifecycle capabilities retains decision parity while MCP/CLI provenance,
+    root-source precedence, privacy, and schema assertions pass. Bundle sync and
+    package contract passed.
 
 ## Phase 2: Packaging And Aggregate Contract
 

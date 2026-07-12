@@ -24,7 +24,7 @@ from lifecycle import traceability
 from lifecycle.actions import lifecycle_next_actions
 from lifecycle.capabilities import lifecycle_capabilities
 from lifecycle.migration import script_migration_inventory
-from lifecycle.provenance import resolve_runtime_identity
+from lifecycle.provenance import assemble_lifecycle_metadata, resolve_runtime_identity
 
 
 PROTOCOL_VERSION = "2025-06-18"
@@ -84,6 +84,17 @@ def workspace_repo_root() -> Path | None:
 
 def default_repo_root(path: Path | None = None) -> Path:
     return find_repo_root(path) if path is not None else workspace_repo_root() or find_repo_root()
+
+
+def default_repo_root_with_source(path: Path | None = None) -> tuple[Path, str]:
+    """Resolve the server binding while retaining how it was selected."""
+
+    if path is not None:
+        return find_repo_root(path), "argument"
+    workspace_root = workspace_repo_root()
+    if workspace_root is not None:
+        return workspace_root, "environment"
+    return find_repo_root(), "cwd"
 
 
 def json_text(payload: Any) -> str:
@@ -493,10 +504,27 @@ def with_available_next_actions(payload: dict[str, Any], repo_root: Path, spec_p
     return enriched
 
 
-def call_tool(name: str, arguments: dict[str, Any], default_root: Path) -> tuple[dict[str, Any], Path]:
+def call_tool(
+    name: str,
+    arguments: dict[str, Any],
+    default_root: Path,
+    default_root_source: str = "unknown",
+) -> tuple[dict[str, Any], Path]:
     root = repo_root_arg(arguments, default_root)
     if name == "lifecycle_capabilities":
-        return lifecycle_capabilities(root, server_name=SERVER_NAME, server_version=SERVER_VERSION, protocol_version=PROTOCOL_VERSION), root
+        payload = lifecycle_capabilities(
+            root,
+            server_name=SERVER_NAME,
+            server_version=SERVER_VERSION,
+            protocol_version=PROTOCOL_VERSION,
+        )
+        payload["lifecycle_metadata"] = assemble_lifecycle_metadata(
+            root,
+            invocation_surface="mcp",
+            root_source="argument" if arguments.get("repo_root") else default_root_source,
+            runtime_start_path=Path(__file__),
+        )
+        return payload, root
     if name == "scan_specs":
         return lifecycle_core.scan_specs(
             root,
@@ -845,7 +873,11 @@ def get_prompt(name: str, arguments: dict[str, Any], repo_root: Path) -> dict[st
     }
 
 
-def handle_request(message: dict[str, Any], repo_root: Path) -> dict[str, Any] | None:
+def handle_request(
+    message: dict[str, Any],
+    repo_root: Path,
+    root_source: str = "unknown",
+) -> dict[str, Any] | None:
     request_id = message.get("id")
     method = message.get("method")
     params = message.get("params") or {}
@@ -871,7 +903,12 @@ def handle_request(message: dict[str, Any], repo_root: Path) -> dict[str, Any] |
         if method == "tools/list":
             return response(request_id, {"tools": tool_definitions()})
         if method == "tools/call":
-            payload, target_root = call_tool(params.get("name", ""), params.get("arguments") or {}, repo_root)
+            payload, target_root = call_tool(
+                params.get("name", ""),
+                params.get("arguments") or {},
+                repo_root,
+                root_source,
+            )
             return response(request_id, tool_result(payload, target_root))
         if method == "resources/list":
             return response(request_id, {"resources": list_resources(repo_root)})
@@ -887,7 +924,7 @@ def handle_request(message: dict[str, Any], repo_root: Path) -> dict[str, Any] |
 
 
 def serve(repo_root: Path | None = None) -> int:
-    root = default_repo_root(repo_root)
+    root, root_source = default_repo_root_with_source(repo_root)
     for line in sys.stdin:
         if not line.strip():
             continue
@@ -896,7 +933,7 @@ def serve(repo_root: Path | None = None) -> int:
         except json.JSONDecodeError as exc:
             print(json.dumps(error_response(None, -32700, f"Parse error: {exc}")), flush=True)
             continue
-        result = handle_request(message, root)
+        result = handle_request(message, root, root_source)
         if result is not None:
             print(json.dumps(result, separators=(",", ":")), flush=True)
     return 0

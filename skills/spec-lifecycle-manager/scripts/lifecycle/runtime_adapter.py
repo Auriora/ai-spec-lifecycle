@@ -3,15 +3,49 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
 from lifecycle.core import *  # noqa: F401,F403 - runtime dispatch compatibility
+from lifecycle.capabilities import lifecycle_capabilities
+from lifecycle.provenance import assemble_lifecycle_metadata
+
+
+WORKSPACE_ROOT_ENV_VARS = (
+    "SPEC_LIFECYCLE_DEFAULT_REPO_ROOT",
+    "SPEC_LIFECYCLE_REPO_ROOT",
+    "CODEX_REPO_ROOT",
+    "CODEX_WORKSPACE_ROOT",
+    "CODEX_WORKSPACE",
+    "WORKSPACE_ROOT",
+)
+
+
+def _find_repo_root(path: Path) -> Path:
+    start = path.resolve()
+    for candidate in (start, *start.parents):
+        if (candidate / ".git").exists():
+            return candidate
+    return start
+
+
+def capabilities_root(argument: Path | None) -> tuple[Path, str]:
+    if argument is not None:
+        return _find_repo_root(argument), "argument"
+    for name in WORKSPACE_ROOT_ENV_VARS:
+        value = os.environ.get(name)
+        if value:
+            return _find_repo_root(Path(value)), "environment"
+    return _find_repo_root(Path.cwd()), "cwd"
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Spec lifecycle runtime helper.")
     sub = parser.add_subparsers(dest="command", required=True)
+
+    capabilities = sub.add_parser("lifecycle-capabilities", help="Report lifecycle runtime capability visibility.")
+    capabilities.add_argument("repo_root", type=Path, nargs="?", default=None)
 
     scan = sub.add_parser("scan", help="Scan active spec packages.")
     scan.add_argument("repo_root", type=Path, nargs="?", default=Path.cwd())
@@ -198,7 +232,16 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv or sys.argv[1:])
-    if args.command == "scan":
+    if args.command == "lifecycle-capabilities":
+        args.repo_root, root_source = capabilities_root(args.repo_root)
+        payload = lifecycle_capabilities(args.repo_root)
+        payload["lifecycle_metadata"] = assemble_lifecycle_metadata(
+            args.repo_root,
+            invocation_surface="cli",
+            root_source=root_source,
+            runtime_start_path=Path(__file__),
+        )
+    elif args.command == "scan":
         payload = scan_specs(args.repo_root, args.docs_root, include_archived_lint=args.include_archived_lint)
     elif args.command == "summary":
         payload = spec_summary(args.spec_path.resolve())

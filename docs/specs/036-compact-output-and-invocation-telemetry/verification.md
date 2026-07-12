@@ -61,6 +61,13 @@ last_reviewed: 2026-07-12
   contract passed; source, Codex, and Claude trees are in sync. Sync guard
   reports only installed-cache drift and reload advisories. The full Python
   suite passed 245 tests and `git diff --check` passed.
+- **2026-07-12 — T003:** Added lifecycle capabilities as the additive provenance
+  canary for MCP and the retained CLI. V010-V014 passed: external surfaces,
+  argument/environment/cwd root precedence, privacy, strict metadata schema,
+  and MCP/CLI decision parity were covered by 200 focused tests. Bundle sync,
+  package contract, 248 full tests, direct CLI smoke, and `git diff --check`
+  passed. Hook provenance remains inapplicable because capabilities is not a
+  hook-routable operation.
 
 ## Quality Gates
 

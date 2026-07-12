@@ -209,6 +209,13 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertIn("outputSchema", inventory_schema)
         self.assertIn("outputSchema", traceability_schema)
         self.assertIn("available_next_actions", capabilities_schema["outputSchema"]["required"])
+        self.assertIn("lifecycle_metadata", capabilities_schema["outputSchema"]["required"])
+        metadata_schema = capabilities_schema["outputSchema"]["properties"]["lifecycle_metadata"]
+        self.assertFalse(metadata_schema["additionalProperties"])
+        self.assertEqual(
+            ["mcp", "cli", "hook", "prompt", "unknown"],
+            metadata_schema["properties"]["invocation_surface"]["enum"],
+        )
         requirement_schema = traceability_schema["outputSchema"]["properties"]["requirements"]["items"]
         self.assertIn("priority", requirement_schema["properties"])
 
@@ -229,6 +236,57 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertEqual("unknown", payload["client"]["name"])
         self.assertEqual("stable_tool_surface", payload["dynamic_tools"]["decision"])
         self.assertIn("available_next_actions", payload)
+        metadata = payload["lifecycle_metadata"]
+        self.assertEqual("mcp", metadata["invocation_surface"])
+        self.assertEqual("argument", metadata["root_source"])
+        self.assertEqual(".", metadata["repo_root"])
+        self.assertNotIn(str(repo), json.dumps(metadata))
+
+    def test_lifecycle_capabilities_retains_mcp_default_root_source(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            argument_repo = base / "argument"
+            environment_repo = base / "environment"
+            cwd_repo = base / "cwd"
+            for repo in (argument_repo, environment_repo, cwd_repo):
+                repo.mkdir()
+                (repo / ".git").mkdir()
+
+            env = {
+                "SPEC_LIFECYCLE_DEFAULT_REPO_ROOT": str(environment_repo),
+                "SPEC_LIFECYCLE_REPO_ROOT": "",
+                "CODEX_REPO_ROOT": "",
+                "CODEX_WORKSPACE_ROOT": "",
+                "CODEX_WORKSPACE": "",
+                "WORKSPACE_ROOT": "",
+            }
+            [environment_response] = self.send(
+                rpc(1, "tools/call", {"name": "lifecycle_capabilities", "arguments": {}}),
+                root=None,
+                env=env,
+                process_cwd=cwd_repo,
+            )
+            [argument_response] = self.send(
+                rpc(
+                    2,
+                    "tools/call",
+                    {"name": "lifecycle_capabilities", "arguments": {"repo_root": str(argument_repo)}},
+                ),
+                root=None,
+                env=env,
+                process_cwd=cwd_repo,
+            )
+            env["SPEC_LIFECYCLE_DEFAULT_REPO_ROOT"] = ""
+            [cwd_response] = self.send(
+                rpc(3, "tools/call", {"name": "lifecycle_capabilities", "arguments": {}}),
+                root=None,
+                env=env,
+                process_cwd=cwd_repo,
+            )
+
+        self.assertEqual("environment", environment_response["result"]["structuredContent"]["lifecycle_metadata"]["root_source"])
+        self.assertEqual("argument", argument_response["result"]["structuredContent"]["lifecycle_metadata"]["root_source"])
+        self.assertEqual("cwd", cwd_response["result"]["structuredContent"]["lifecycle_metadata"]["root_source"])
 
     def test_script_migration_inventory_tool_returns_contracts(self):
         with tempfile.TemporaryDirectory() as tmp:

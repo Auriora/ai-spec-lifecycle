@@ -990,6 +990,66 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertIs(spec_runtime.main, runtime_adapter.main)
         self.assertFalse(hasattr(lifecycle_core, "main"))
 
+    def test_lifecycle_capabilities_cli_metadata_and_mcp_decision_parity(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / ".git").mkdir()
+            result = subprocess.run(
+                [sys.executable, str(SCRIPT), "lifecycle-capabilities", str(repo)],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            cli_payload = json.loads(result.stdout)
+            mcp_payload, _ = __import__("spec_mcp_server").call_tool(
+                "lifecycle_capabilities", {"repo_root": str(repo)}, repo, "cwd"
+            )
+
+        metadata = cli_payload.pop("lifecycle_metadata")
+        mcp_metadata = mcp_payload.pop("lifecycle_metadata")
+        self.assertEqual("cli", metadata["invocation_surface"])
+        self.assertEqual("mcp", mcp_metadata["invocation_surface"])
+        self.assertEqual("argument", metadata["root_source"])
+        self.assertEqual(mcp_payload, cli_payload)
+        self.assertNotIn(str(repo), json.dumps(metadata))
+
+    def test_lifecycle_capabilities_cli_root_source_precedence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            environment_repo = base / "environment"
+            cwd_repo = base / "cwd"
+            environment_repo.mkdir()
+            cwd_repo.mkdir()
+            env = {
+                **os.environ,
+                "SPEC_LIFECYCLE_DEFAULT_REPO_ROOT": str(environment_repo),
+                "SPEC_LIFECYCLE_REPO_ROOT": "",
+                "CODEX_REPO_ROOT": "",
+                "CODEX_WORKSPACE_ROOT": "",
+                "CODEX_WORKSPACE": "",
+                "WORKSPACE_ROOT": "",
+            }
+            environment_result = subprocess.run(
+                [sys.executable, str(SCRIPT), "lifecycle-capabilities"],
+                cwd=cwd_repo,
+                env=env,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            env["SPEC_LIFECYCLE_DEFAULT_REPO_ROOT"] = ""
+            cwd_result = subprocess.run(
+                [sys.executable, str(SCRIPT), "lifecycle-capabilities"],
+                cwd=cwd_repo,
+                env=env,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+        self.assertEqual("environment", json.loads(environment_result.stdout)["lifecycle_metadata"]["root_source"])
+        self.assertEqual("cwd", json.loads(cwd_result.stdout)["lifecycle_metadata"]["root_source"])
+
     def test_shared_core_is_not_a_cli_surface(self):
         core_path = SCRIPT_DIR / "lifecycle/core.py"
         source = core_path.read_text(encoding="utf-8")
