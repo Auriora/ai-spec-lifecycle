@@ -2,6 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 import sys
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT_DIR = ROOT / "skills/spec-lifecycle-manager/scripts"
@@ -111,6 +112,92 @@ class SpecIdInventoryTests(unittest.TestCase):
             self.assertEqual("005", payload["next_available_spec_number"])
             self.assertEqual("low", payload["confidence"])
             self.assertIn("SPEC_ID_HISTORY_AMBIGUOUS", {item["code"] for item in payload["diagnostics"]})
+
+    def test_creation_plan_is_stable_safe_and_read_only(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / "docs/specs/004-existing").mkdir(parents=True)
+            before = sorted(path.relative_to(repo).as_posix() for path in repo.rglob("*"))
+
+            first = core.spec_creation_plan(repo, "new-capability")
+            second = core.spec_creation_plan(
+                repo, "new-capability", expected_fingerprint=first["evidence_fingerprint"]
+            )
+
+            self.assertEqual("ready", first["status"])
+            self.assertEqual("005-new-capability", first["proposed_spec_id"])
+            self.assertEqual("docs/specs/005-new-capability", first["proposed_path"])
+            self.assertTrue(first["path_within_specs_root"])
+            self.assertTrue(first["provisional"])
+            self.assertFalse(first["reservation"])
+            self.assertTrue(second["fingerprint_valid"])
+            self.assertEqual(first["evidence_fingerprint"], second["evidence_fingerprint"])
+            self.assertEqual(before, sorted(path.relative_to(repo).as_posix() for path in repo.rglob("*")))
+
+    def test_creation_plan_rejects_unsafe_slugs_without_paths(self):
+        invalid = ["", "Bad", "two--parts", "-edge", "edge-", "../escape", "a/b", "naïve", "a.b", "a\nb"]
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            for slug in invalid:
+                with self.subTest(slug=slug):
+                    payload = core.spec_creation_plan(repo, slug)
+                    self.assertEqual("invalid", payload["status"])
+                    self.assertIsNone(payload["proposed_path"])
+                    self.assertIsNone(payload["evidence_fingerprint"])
+
+    def test_selected_docs_template_precedence_and_artifact_inventory(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            root_template = repo / "docs/templates/spec-package"
+            selected_template = repo / "docs/platform/templates/spec-package"
+            root_template.mkdir(parents=True)
+            selected_template.mkdir(parents=True)
+            (root_template / "requirements.md").write_text("root", encoding="utf-8")
+            (selected_template / "requirements.md").write_text("selected", encoding="utf-8")
+            (selected_template / "research.md").write_text("optional", encoding="utf-8")
+
+            payload = core.spec_creation_plan(repo, "nested", "docs/platform")
+
+            self.assertEqual("selected-docs-root", payload["template_authority"]["authority"])
+            self.assertEqual("docs/platform/templates/spec-package", payload["template_authority"]["path"])
+            self.assertEqual(["research.md"], payload["planned_optional_artifacts"])
+            self.assertEqual(["requirements.md", "design.md", "tasks.md"], payload["planned_core_artifacts"])
+
+    def test_changed_numbering_or_template_evidence_returns_stale_refresh(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            first = core.spec_creation_plan(repo, "fresh")
+            (repo / "docs/specs/000-claimed").mkdir(parents=True)
+
+            numbering_changed = core.spec_creation_plan(
+                repo, "fresh", expected_fingerprint=first["evidence_fingerprint"]
+            )
+            template = repo / "docs/templates/spec-package"
+            template.mkdir(parents=True)
+            (template / "requirements.md").write_text("template", encoding="utf-8")
+            template_changed = core.spec_creation_plan(
+                repo, "fresh", expected_fingerprint=numbering_changed["evidence_fingerprint"]
+            )
+
+            self.assertEqual("stale", numbering_changed["status"])
+            self.assertEqual("001-fresh", numbering_changed["proposed_spec_id"])
+            self.assertFalse(numbering_changed["fingerprint_valid"])
+            self.assertEqual("stale", template_changed["status"])
+            self.assertEqual("selected-docs-root", template_changed["template_authority"]["authority"])
+
+    def test_race_collision_never_claims_a_reservation(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            inventory = core.spec_id_inventory(repo)
+            (repo / "docs/specs/000-race").mkdir(parents=True)
+            with mock.patch.object(core, "spec_id_inventory", return_value=inventory):
+                payload = core.spec_creation_plan(repo, "race")
+
+            self.assertEqual("collision", payload["status"])
+            self.assertFalse(payload["reservation"])
+            self.assertIsNotNone(payload["refreshed_arguments"])
+            self.assertEqual("001-race", payload["fresh_proposal"]["proposed_spec_id"])
+            self.assertIn("SPEC_CREATION_PATH_COLLISION", {item["code"] for item in payload["diagnostics"]})
 
 
 if __name__ == "__main__":

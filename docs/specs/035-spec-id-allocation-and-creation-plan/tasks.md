@@ -29,7 +29,7 @@ last_reviewed: 2026-07-12
     behavior. Six focused fixtures and the 284-test full Python suite pass;
     source/Codex/Claude parity and `git diff --check` pass.
 
-- [ ] T002 Implement slug validation and provisional creation planning
+- [x] T002 Implement slug validation and provisional creation planning
   - Depends on: T001.
   - Files: shared lifecycle core, provenance helper, and focused fixtures.
   - Compose safe proposed paths, template authority, artifact sets,
@@ -37,7 +37,14 @@ last_reviewed: 2026-07-12
   - Acceptance: valid ASCII lower-kebab slugs produce repo-relative plans;
     invalid/traversal/confusable values produce no path; collisions and changed
     inputs return fresh proposals; repeated calls are read-only and stable.
-  - Evidence: Pending.
+  - Evidence: 2026-07-12, caller-agnostic creation planning validates strict
+    ASCII lower-kebab slugs, proves repo-relative path ancestry, applies
+    selected-root/repository/skill template precedence, inventories artifacts,
+    reports required values and future atomic-claim preconditions, and returns
+    provisional/non-reservation state. Stable, stale, template-change,
+    numbering-change, path-collision, fresh-proposal, privacy, and read-only
+    behavior pass 11 focused fixtures and the 289-test full Python suite;
+    source/Codex/Claude parity and `git diff --check` pass.
 
 ## Phase 2: Existing Workflow Integration
 

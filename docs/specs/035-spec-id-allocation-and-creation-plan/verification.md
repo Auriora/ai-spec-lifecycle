@@ -78,7 +78,13 @@ last_reviewed: 2026-07-12
   history diagnostics. V001-V012 pass with six focused fixtures; the complete
   Python suite passes 284 tests, source/Codex/Claude parity is synchronized,
   and `git diff --check` passes.
-- Pending implementation evidence for T002-T007.
+- **2026-07-12 — T002:** Added strict slug validation and preview-only creation
+  planning with safe repo-relative paths, deterministic template/artifact
+  planning, required values, explicit provisional/non-reservation semantics,
+  stale fingerprints, collision diagnostics, and fresh fallback proposals.
+  V013-V026 pass with 11 focused fixtures; the complete Python suite passes 289
+  tests, bundle parity is synchronized, and `git diff --check` passes.
+- Pending implementation evidence for T003-T007.
 
 ## Residual Risks
 

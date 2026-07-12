@@ -679,6 +679,216 @@ def spec_id_inventory(repo_root: Path, docs_root: str | None = None) -> dict[str
     }
 
 
+SPEC_SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$", re.ASCII)
+
+
+def _creation_template_authority(repo_root: Path, selected_docs: Path, selected_relative: str) -> dict[str, Any]:
+    root = repo_root.resolve()
+    selected_templates = selected_docs / "templates/spec-package"
+    repository_templates = root / "docs/templates/spec-package"
+    skill_templates = skill_spec_package_templates_dir()
+    chain: list[dict[str, Any]] = []
+    candidates = [
+        ("selected-docs-root", selected_templates, f"{selected_relative}/templates/spec-package"),
+    ]
+    if selected_templates.resolve() != repository_templates.resolve():
+        candidates.append(("repository-root", repository_templates, "docs/templates/spec-package"))
+    candidates.append(("skill-fallback", skill_templates, "skill://spec-package"))
+    selected: tuple[str, Path, str] | None = None
+    for authority, path, display_path in candidates:
+        exists = path.is_dir()
+        chain.append({"authority": authority, "path": display_path, "available": exists})
+        if selected is None and exists:
+            selected = (authority, path, display_path)
+    if selected is None:
+        return {"authority": "missing", "path": None, "fallback_chain": chain, "artifacts": []}
+    authority, path, display_path = selected
+    artifacts = sorted(item.name for item in path.iterdir() if item.is_file() and item.suffix == ".md")
+    return {
+        "authority": authority,
+        "path": display_path,
+        "fallback_chain": chain,
+        "artifacts": artifacts,
+    }
+
+
+def _creation_plan_fingerprint_inputs(
+    inventory: dict[str, Any],
+    template: dict[str, Any],
+    slug: str,
+    proposed_spec_id: str,
+    proposed_path: str,
+    core_artifacts: list[str],
+    optional_artifacts: list[str],
+    preconditions: list[dict[str, Any]],
+    proposed_path_claimed: bool,
+) -> dict[str, Any]:
+    return {
+        "numbering_scope": inventory["numbering_scope"],
+        "evidence": [
+            {
+                "source_kind": item["source_kind"],
+                "source_path": item["source_path"],
+                "spec_id": item["spec_id"],
+                "numeric_prefix": item["numeric_prefix"],
+                "status": item["status"],
+            }
+            for item in inventory["evidence"]
+        ],
+        "legacy_upper_bound": inventory["legacy_upper_bound"],
+        "diagnostics": [
+            {key: item.get(key) for key in ("severity", "code", "path") if item.get(key) is not None}
+            for item in inventory["diagnostics"]
+        ],
+        "template_authority": {
+            "authority": template["authority"],
+            "path": template["path"],
+            "artifacts": template["artifacts"],
+        },
+        "slug": slug,
+        "proposed_spec_id": proposed_spec_id,
+        "proposed_path": proposed_path,
+        "core_artifacts": core_artifacts,
+        "optional_artifacts": optional_artifacts,
+        "preconditions": preconditions,
+        "proposed_path_claimed": proposed_path_claimed,
+    }
+
+
+def spec_creation_plan(
+    repo_root: Path,
+    slug: str,
+    docs_root: str | None = None,
+    expected_fingerprint: str | None = None,
+) -> dict[str, Any]:
+    """Preview a provisional spec package allocation without writing files."""
+    root = repo_root.resolve()
+    selected_docs, selected_relative = _selected_docs_root(root, docs_root)
+    inventory = spec_id_inventory(root, selected_relative)
+    invalid_slug = not isinstance(slug, str) or not slug.isascii() or not SPEC_SLUG_PATTERN.fullmatch(slug)
+    if invalid_slug:
+        return {
+            "schema_version": "1",
+            "status": "invalid",
+            "provisional": True,
+            "reservation": False,
+            "numbering_scope": inventory["numbering_scope"],
+            "next_available_spec_number": inventory["next_available_spec_number"],
+            "proposed_spec_id": None,
+            "proposed_path": None,
+            "template_authority": None,
+            "planned_core_artifacts": [],
+            "planned_optional_artifacts": [],
+            "required_user_values": [],
+            "preconditions": [],
+            "validation_commands": [],
+            "evidence_fingerprint": None,
+            "diagnostics": [
+                {
+                    "severity": "error",
+                    "code": "SPEC_CREATION_SLUG_INVALID",
+                    "message": "Slug must be ASCII lower-kebab text with single hyphens.",
+                    "waivable": False,
+                }
+            ],
+        }
+
+    proposed_spec_id = f"{inventory['next_available_spec_number']}-{slug}"
+    specs_root = (selected_docs / "specs").resolve()
+    proposed = (specs_root / proposed_spec_id).resolve()
+    try:
+        proposed.relative_to(specs_root)
+    except ValueError as exc:
+        raise ValueError("proposed spec path must remain beneath the selected specs root") from exc
+    proposed_path = repo_display_path(proposed, root)
+    template = _creation_template_authority(root, selected_docs, selected_relative)
+    template_artifacts = set(template["artifacts"])
+    core_artifacts = list(CORE_ARTIFACTS)
+    optional_artifacts = sorted(template_artifacts - set(CORE_ARTIFACTS))
+    preconditions = [
+        {"code": "REVALIDATE_EVIDENCE_FINGERPRINT", "required": True},
+        {"code": "PROPOSED_PATH_ABSENT", "path": proposed_path, "required": True},
+        {"code": "ATOMIC_DIRECTORY_CLAIM_REQUIRED_FOR_FUTURE_WRITER", "required": True},
+    ]
+    collision = proposed.exists()
+    fingerprint = evidence_fingerprint(
+        _creation_plan_fingerprint_inputs(
+            inventory,
+            template,
+            slug,
+            proposed_spec_id,
+            proposed_path,
+            core_artifacts,
+            optional_artifacts,
+            preconditions,
+            collision,
+        ),
+        domain="spec-creation-plan-v1",
+    )
+    stale = expected_fingerprint is not None and expected_fingerprint != fingerprint
+    status = "collision" if collision else "stale" if stale else "ready"
+    diagnostics = list(inventory["diagnostics"])
+    if collision:
+        diagnostics.append(
+            {
+                "severity": "error",
+                "code": "SPEC_CREATION_PATH_COLLISION",
+                "path": proposed_path,
+                "message": "The proposed spec path is already claimed; calculate a fresh proposal.",
+                "waivable": False,
+            }
+        )
+    fresh_proposal = None
+    if collision:
+        refreshed_inventory = spec_id_inventory(root, selected_relative)
+        refreshed_number = int(refreshed_inventory["next_available_spec_number"])
+        if refreshed_number <= int(inventory["next_available_spec_number"]):
+            refreshed_number = int(inventory["next_available_spec_number"]) + 1
+        refreshed_width = max(3, len(str(refreshed_number)))
+        fresh_spec_id = f"{refreshed_number:0{refreshed_width}d}-{slug}"
+        fresh_proposal = {
+            "next_available_spec_number": f"{refreshed_number:0{refreshed_width}d}",
+            "proposed_spec_id": fresh_spec_id,
+            "proposed_path": repo_display_path(specs_root / fresh_spec_id, root),
+        }
+    return {
+        "schema_version": "1",
+        "status": status,
+        "provisional": True,
+        "reservation": False,
+        "numbering_scope": inventory["numbering_scope"],
+        "allocation_confidence": inventory["confidence"],
+        "next_available_spec_number": inventory["next_available_spec_number"],
+        "proposed_spec_id": proposed_spec_id,
+        "proposed_path": proposed_path,
+        "path_within_specs_root": True,
+        "template_authority": template,
+        "planned_core_artifacts": core_artifacts,
+        "planned_optional_artifacts": optional_artifacts,
+        "required_user_values": [
+            {"name": "project_purpose", "reason": "Requirements intent must be user-confirmed before authoring."}
+        ],
+        "preconditions": preconditions,
+        "validation_commands": [
+            "MCP tool: spec_id_inventory",
+            f"MCP tool: spec_creation_plan slug={slug}",
+            f"PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py spec-creation-plan {slug} --docs-root {selected_relative}",
+            "git diff --check",
+        ],
+        "evidence_fingerprint": fingerprint,
+        "fingerprint_valid": expected_fingerprint is None or not stale,
+        "refreshed_arguments": {
+            "slug": slug,
+            "docs_root": selected_relative,
+            "expected_fingerprint": fingerprint,
+        }
+        if stale or collision
+        else None,
+        "fresh_proposal": fresh_proposal,
+        "diagnostics": diagnostics,
+    }
+
+
 def skill_spec_package_templates_dir() -> Path:
     return Path(__file__).resolve().parents[2] / "references" / "spec-package"
 
