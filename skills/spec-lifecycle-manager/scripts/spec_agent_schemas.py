@@ -5,6 +5,82 @@ from __future__ import annotations
 from typing import Any
 
 
+def detail_selector_schema() -> dict[str, Any]:
+    """Input fragment for the v1 compact/full/section detail contract."""
+
+    return {
+        "type": "object",
+        "properties": {
+            "detail": {
+                "type": "string",
+                "enum": ["compact", "full", "section"],
+                "default": "compact",
+            },
+            "section": {"type": "string", "minLength": 1},
+        },
+        "allOf": [
+            {
+                "if": {
+                    "required": ["detail"],
+                    "properties": {"detail": {"const": "section"}},
+                },
+                "then": {"required": ["section"]},
+                "else": {"not": {"required": ["section"]}},
+            }
+        ],
+        "additionalProperties": False,
+    }
+
+
+def evidence_fingerprint_schema() -> dict[str, Any]:
+    """Fingerprint produced from canonical, decision-relevant evidence."""
+
+    return {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+
+
+def expansion_follow_up_schema() -> dict[str, Any]:
+    """Deterministic same-tool follow-up call for omitted current detail."""
+
+    return {
+        "type": "object",
+        "required": ["tool", "arguments"],
+        "properties": {
+            "tool": {"type": "string", "minLength": 1},
+            "arguments": {"type": "object"},
+        },
+        "additionalProperties": False,
+    }
+
+
+def compact_limit_state_schema() -> dict[str, Any]:
+    """Explicit truncation and size-target state for a compact result."""
+
+    def counter(limit: int) -> dict[str, Any]:
+        return {
+            "type": "object",
+            "required": ["returned", "total", "limit", "truncated"],
+            "properties": {
+                "returned": {"type": "integer", "minimum": 0, "maximum": limit},
+                "total": {"type": "integer", "minimum": 0},
+                "limit": {"type": "integer", "const": limit},
+                "truncated": {"type": "boolean"},
+            },
+            "additionalProperties": False,
+        }
+
+    return {
+        "type": "object",
+        "required": ["findings", "next_actions", "payload_target_bytes", "limit_exceeded"],
+        "properties": {
+            "findings": counter(20),
+            "next_actions": counter(10),
+            "payload_target_bytes": {"type": "integer", "const": 32768},
+            "limit_exceeded": {"type": "boolean"},
+        },
+        "additionalProperties": False,
+    }
+
+
 def lifecycle_metadata_schema() -> dict[str, Any]:
     """Reusable v1 provenance schema for additive adapter metadata."""
 
@@ -56,6 +132,70 @@ def lifecycle_metadata_schema() -> dict[str, Any]:
                     "none",
                 ],
             },
+        },
+        "additionalProperties": False,
+    }
+
+
+def compact_aggregate_envelope_schema() -> dict[str, Any]:
+    """Reusable output schema for new aggregate tools in compact mode."""
+
+    return {
+        "type": "object",
+        "required": [
+            "detail",
+            "schema_version",
+            "decision",
+            "findings",
+            "next_actions",
+            "limits",
+            "evidence_fingerprint",
+            "expansion",
+            "lifecycle_metadata",
+        ],
+        "properties": {
+            "detail": {"type": "string", "const": "compact"},
+            "schema_version": {"type": "string", "const": "1"},
+            "decision": {"type": "object"},
+            "findings": {
+                "type": "array",
+                "maxItems": 20,
+                "items": {"type": "object"},
+            },
+            "next_actions": {
+                "type": "array",
+                "maxItems": 10,
+                "items": {"type": "object"},
+            },
+            "limits": compact_limit_state_schema(),
+            "evidence_fingerprint": evidence_fingerprint_schema(),
+            "expansion": expansion_follow_up_schema(),
+            "lifecycle_metadata": lifecycle_metadata_schema(),
+        },
+        "additionalProperties": False,
+    }
+
+
+def stale_expansion_response_schema() -> dict[str, Any]:
+    """Response returned when requested evidence no longer matches the repo."""
+
+    return {
+        "type": "object",
+        "required": [
+            "status",
+            "schema_version",
+            "requested_fingerprint",
+            "current_evidence_fingerprint",
+            "expansion",
+            "lifecycle_metadata",
+        ],
+        "properties": {
+            "status": {"type": "string", "const": "stale"},
+            "schema_version": {"type": "string", "const": "1"},
+            "requested_fingerprint": evidence_fingerprint_schema(),
+            "current_evidence_fingerprint": evidence_fingerprint_schema(),
+            "expansion": expansion_follow_up_schema(),
+            "lifecycle_metadata": lifecycle_metadata_schema(),
         },
         "additionalProperties": False,
     }

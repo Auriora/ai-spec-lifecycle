@@ -75,6 +75,12 @@ last_reviewed: 2026-07-12
   identity, ordinary checkout/legacy identity remains explicitly `unknown`, and
   mismatch/malformed fixtures fail closed. `npm run validate` passed with 250
   Python and 25 Node tests, package contract, parity, dry-run pack, and diff checks.
+- **2026-07-12 — T005:** Published reusable schemas for compact/full/section
+  selection, deterministic expansion, evidence fingerprints, 20-finding and
+  10-action bounds, 32-KiB limit state, compact aggregate output, stale
+  expansion, and strict lifecycle metadata. V018-V021 schema fixtures accept
+  supported modes and reject invalid selectors, fingerprints, bounds, and
+  provenance. Full validation passed with 256 Python and 25 Node tests.
 
 ## Quality Gates
 

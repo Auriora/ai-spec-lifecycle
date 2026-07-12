@@ -61,13 +61,17 @@ last_reviewed: 2026-07-12
     postpack restored deterministic `unknown` baselines. Full `npm run validate`
     passed with 250 Python and 25 Node tests.
 
-- [ ] T005 Publish reusable compact-envelope schemas
+- [x] T005 Publish reusable compact-envelope schemas
   - Depends on: T001
   - Files: `spec_agent_schemas.py`, schema tests
   - Encode bounds, detail modes, expansion arguments, fingerprint, stale state,
     and metadata enums without tightening existing tool schemas.
   - Acceptance: schema fixtures accept all supported modes and reject invalid
     enums, missing section selectors, and malformed fingerprints.
+  - Evidence: 2026-07-12, valid compact/full/section selectors, compact and
+    stale envelopes pass; invalid modes, conditional sections, fingerprints,
+    bounds, and provenance fail schema validation. Full `npm run validate`
+    passed with 256 Python and 25 Node tests.
 
 - [ ] T006 Apply the accepted contract to Specs 033 and 035
   - Depends on: T003, T005 and accepted designs for Specs 033/035
