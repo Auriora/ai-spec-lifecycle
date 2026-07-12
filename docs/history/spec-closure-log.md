@@ -14,6 +14,33 @@ requires visible archived docs.
 
 ## Entries
 
+### 2026-07-12 - 036-compact-output-and-invocation-telemetry
+
+- **Spec:** `docs/specs/036-compact-output-and-invocation-telemetry/`
+- **Title:** Compact lifecycle output and invocation provenance requirements
+- **Final spec commit:** `4c7da1e`
+- **Closure cleanup commit:** `pending-cleanup-commit`
+- **Closure action:** removed
+- **Durable docs updated:**
+  - `docs/backlog/README.md`
+  - `docs/roadmap/README.md`
+  - `docs/reference/spec-lifecycle-runtime.md`
+  - `skills/spec-lifecycle-manager/SKILL.md`
+  - `docs/design/spec-lifecycle-management.md`
+- **Verification summary:** All eight tasks are complete and verified. MCP
+  `closure_check` reported ready with no blockers and complete coverage for all
+  four must-have requirements. `npm run validate` passed with 303 Python and
+  25 Node tests plus lifecycle scan, archive/prompt/package/sync validation,
+  npm dry-pack, and `git diff --check`. Source, Codex, and Claude bundles are
+  in sync.
+- **Residual risks:**
+  - Git-derived repository identity is intentionally correlatable with known
+    repository history. Legacy packages without build data report `unknown`.
+    Running Codex or Claude sessions require reinstall/reload to consume the
+    refreshed plugin cache.
+- **Follow-up:** B025 remains the owner of emitted telemetry and remote
+  observability; no implementation scope remains in Spec 036.
+
 ### 2026-07-12 - 035-spec-id-allocation-and-creation-plan
 
 - **Spec:** `docs/specs/035-spec-id-allocation-and-creation-plan/`
