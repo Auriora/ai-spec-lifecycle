@@ -852,6 +852,14 @@ class SpecRuntimeTests(unittest.TestCase):
                 closure_action="archived",
             )
 
+            records = spec_runtime.closure_apply(
+                spec,
+                repo_root=repo,
+                plan=plan,
+                action_id="render_records",
+                dry_run=False,
+                write_intent=True,
+            )
             applied = spec_runtime.closure_apply(
                 spec,
                 repo_root=repo,
@@ -864,6 +872,7 @@ class SpecRuntimeTests(unittest.TestCase):
             source_exists = (repo / "docs/specs/030-mcp-first-runtime-migration").exists()
             archived_requirements_exists = (archived_spec / "requirements.md").is_file()
 
+        self.assertEqual("updated", records["status"])
         self.assertEqual("updated", applied["status"])
         self.assertFalse(source_exists)
         self.assertTrue(archived_requirements_exists)

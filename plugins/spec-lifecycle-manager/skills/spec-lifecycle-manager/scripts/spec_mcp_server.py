@@ -441,11 +441,14 @@ def tool_definitions() -> list[dict[str, Any]]:
         tool_schema("closure_check", "Check closure readiness and blockers.", SPEC_PATH_PROPERTIES, ["spec_path"]),
         tool_schema(
             "closure_plan",
-            "Preview closure metadata, blockers, planned edits, scriptable actions, and validation commands.",
+            "Return an agent-usable closure manifest or one targeted section; file replacement content is never returned.",
             {
                 **SPEC_PATH_PROPERTIES,
                 "final_spec_commit": "Optional final spec commit hash.",
                 "closure_action": "Closure action. Defaults to removed.",
+                "plan_id": "Expected plan fingerprint for stale-plan protection during targeted expansion.",
+                "detail": {"type": "string", "enum": ["summary", "section"], "default": "summary"},
+                "section": {"type": "string", "enum": ["references", "edits", "validation"]},
                 "include_reference_scan": {
                     "type": ["boolean", "string"],
                     "description": "Set false to skip active-reference scanning. Defaults to true.",
@@ -459,12 +462,14 @@ def tool_definitions() -> list[dict[str, Any]]:
             "Preview or apply one closure planned action. Defaults to dry-run and requires write_intent for writes.",
             {
                 **SPEC_PATH_PROPERTIES,
-                "plan": {"type": "object", "description": "Closure plan payload returned by closure_plan."},
+                "plan_id": "Closure plan ID returned by closure_plan.",
+                "final_spec_commit": "Final spec commit returned by closure_plan.",
+                "closure_action": "Closure action returned by closure_plan. Defaults to removed.",
                 "action_id": "Planned action ID to apply.",
                 "dry_run": {"type": ["boolean", "string"], "description": "Preview without writing. Defaults to true.", "default": True},
                 "write_intent": {"type": ["boolean", "string"], "description": "Required true when dry_run is false.", "default": False},
             },
-            ["spec_path", "plan", "action_id"],
+            ["spec_path", "plan_id", "final_spec_commit", "action_id"],
         ),
         tool_schema(
             "closure_resolve",
@@ -738,33 +743,60 @@ def call_tool(
     if name == "closure_check":
         return lifecycle_core.closure_check(spec_path_arg(arguments, default_root)), root
     if name == "closure_plan":
+        detail = str(arguments.get("detail") or "summary")
+        section = str(arguments["section"]) if arguments.get("section") is not None else None
+        requested_plan_id = arguments.get("plan_id")
         include_reference_scan = True
         if "include_reference_scan" in arguments:
             include_reference_scan = bool_arg(arguments, "include_reference_scan")
-        return lifecycle_core.closure_plan(
+        full_plan = lifecycle_core.closure_plan(
             spec_path_arg(arguments, default_root),
             repo_root=root,
             final_spec_commit=arguments.get("final_spec_commit"),
             closure_action=arguments.get("closure_action") or "removed",
             include_reference_scan=include_reference_scan,
-        ), root
+        )
+        if requested_plan_id and str(requested_plan_id) != str(full_plan["plan_id"]):
+            raise ValueError("CLOSURE_PLAN_STALE: repository state or closure inputs changed; request a new manifest")
+        payload = lifecycle_core.closure_plan_manifest(full_plan, detail=detail, section=section)
+        payload["lifecycle_metadata"] = assemble_lifecycle_metadata(
+            root,
+            invocation_surface="mcp",
+            root_source="argument" if arguments.get("repo_root") else default_root_source,
+            runtime_start_path=Path(__file__),
+        )
+        return payload, root
     if name == "closure_apply":
-        plan = arguments.get("plan")
+        plan_id = arguments.get("plan_id")
         action_id = arguments.get("action_id")
-        if not isinstance(plan, dict):
-            raise ValueError("plan must be an object")
+        if not plan_id:
+            raise ValueError("plan_id is required")
         if not action_id:
             raise ValueError("action_id is required")
-        dry_run_value = arguments.get("dry_run")
-        dry_run = True if dry_run_value is None else bool_arg(arguments, "dry_run")
-        return lifecycle_core.closure_apply(
+        final_spec_commit = arguments.get("final_spec_commit")
+        if not final_spec_commit:
+            raise ValueError("final_spec_commit is required")
+        regenerated = lifecycle_core.closure_plan(
             spec_path_arg(arguments, default_root),
             repo_root=root,
-            plan=plan,
+            final_spec_commit=str(final_spec_commit),
+            closure_action=arguments.get("closure_action") or "removed",
+            include_reference_scan=False,
+        )
+        if str(plan_id) != str(regenerated["plan_id"]):
+            raise ValueError("CLOSURE_PLAN_STALE: repository state or closure inputs changed; request a new manifest")
+        dry_run_value = arguments.get("dry_run")
+        dry_run = True if dry_run_value is None else bool_arg(arguments, "dry_run")
+        result = lifecycle_core.closure_apply(
+            spec_path_arg(arguments, default_root),
+            repo_root=root,
+            plan=regenerated,
             action_id=str(action_id),
             dry_run=dry_run,
             write_intent=bool_arg(arguments, "write_intent"),
-        ), root
+        )
+        result["plan_id"] = plan_id
+        return result, root
     if name == "closure_resolve":
         spec_id = arguments.get("spec_id")
         if not spec_id:

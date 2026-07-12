@@ -29,6 +29,7 @@ from lifecycle import traceability
 from lifecycle.closure import (
     build_validation_plan as closure_validation_plan,
     classify_spec_references as closure_classify_spec_references,
+    closure_plan_manifest,
     closure_apply,
     closure_plan,
     closure_resolve,

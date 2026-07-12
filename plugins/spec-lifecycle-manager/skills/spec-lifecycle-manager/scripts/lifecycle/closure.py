@@ -43,6 +43,22 @@ KNOWN_ACTIVE_REFERENCE_PATHS = {
 }
 DEFAULT_ARCHIVED_SPEC_ROOT = "docs/history/archived-specs"
 ROOT_IGNORE_FILE_NAMES = (".gitignore", ".aiignore")
+DEFAULT_REFERENCE_EXCLUDED_DIRS = {".cache", ".git", "__pycache__"}
+DEFAULT_REFERENCE_EXCLUDED_SUFFIXES = {
+    ".db",
+    ".db-shm",
+    ".db-wal",
+    ".sqlite",
+    ".sqlite-shm",
+    ".sqlite-wal",
+    ".sqlite3",
+}
+CLOSURE_PLAN_FINDING_LIMIT = 20
+CLOSURE_PLAN_ACTION_LIMIT = 10
+CLOSURE_PLAN_REFERENCE_SAMPLE_LIMIT = 20
+CLOSURE_PLAN_PREVIEW_LIMIT = 500
+CLOSURE_PLAN_PAYLOAD_TARGET_BYTES = 32768
+CLOSURE_PLAN_SECTIONS = {"references", "edits", "validation"}
 
 
 @dataclass(frozen=True)
@@ -307,6 +323,18 @@ def _path_hash(path: Path) -> str | None:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _tree_hash(path: Path) -> str | None:
+    if not path.exists() or not path.is_dir():
+        return None
+    digest = hashlib.sha256()
+    for child in sorted(item for item in path.rglob("*") if item.is_file()):
+        digest.update(child.relative_to(path).as_posix().encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(child.read_bytes())
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
 def _precondition(repo_root: Path, relative_path: str, required_snippet: str | None = None) -> FilePrecondition:
     path = repo_root / relative_path
     return FilePrecondition(
@@ -546,7 +574,9 @@ def classify_spec_references(repo_root: Path, spec_id: str, package_path: str) -
             continue
         if _is_ignored_path(rel, path.is_dir(), ignore_rules):
             continue
-        if not path.is_file() or ".git" in path.parts or "__pycache__" in path.parts:
+        if any(part in DEFAULT_REFERENCE_EXCLUDED_DIRS for part in path.parts):
+            continue
+        if not path.is_file() or any(rel.endswith(suffix) for suffix in DEFAULT_REFERENCE_EXCLUDED_SUFFIXES):
             continue
         try:
             raw = path.read_bytes()
@@ -583,6 +613,125 @@ def classify_spec_references(repo_root: Path, spec_id: str, package_path: str) -
     return results
 
 
+def _bounded_text(value: str, limit: int = CLOSURE_PLAN_PREVIEW_LIMIT) -> str:
+    return value if len(value) <= limit else value[: limit - 3] + "..."
+
+
+def _edit_summary(edit: dict[str, Any]) -> dict[str, Any]:
+    content = edit.get("content")
+    precondition = edit.get("precondition") or {}
+    return {
+        "edit_id": edit.get("edit_id"),
+        "path": edit.get("path"),
+        "action": edit.get("action"),
+        "reason": edit.get("reason"),
+        "preview": _bounded_text(str(edit.get("preview") or "")),
+        "content_hash": hashlib.sha256(str(content or "").encode("utf-8")).hexdigest() if content is not None else None,
+        "content_bytes": len(str(content).encode("utf-8")) if content is not None else 0,
+        "precondition": {
+            "exists": precondition.get("exists"),
+            "content_hash": precondition.get("content_hash"),
+        },
+        "destination_path": edit.get("destination_path"),
+    }
+
+
+def closure_plan_manifest(
+    plan: dict[str, Any],
+    *,
+    detail: str = "summary",
+    section: str | None = None,
+) -> dict[str, Any]:
+    """Return only agent-usable closure decisions, summaries, and action handles."""
+    if detail not in {"summary", "section"}:
+        raise ValueError("detail must be one of: summary, section")
+    if detail == "section" and section not in CLOSURE_PLAN_SECTIONS:
+        raise ValueError("section must be one of: references, edits, validation")
+    if detail != "section" and section is not None:
+        raise ValueError("section is only valid when detail='section'")
+
+    references = plan.get("references", {})
+    reference_counts = {key: len(value) for key, value in references.items() if isinstance(value, list)}
+    reference_samples: list[dict[str, Any]] = []
+    for category in ("active_stale", "review", "historical_or_validation", "historical"):
+        for item in references.get(category, []):
+            if len(reference_samples) >= CLOSURE_PLAN_REFERENCE_SAMPLE_LIMIT:
+                break
+            reference_samples.append({"category": category, **item})
+    edit_summaries = [_edit_summary(item) for item in plan.get("planned_edits", [])]
+    validation = plan.get("validation_commands", [])
+    if detail == "section":
+        content = {
+            "references": {"counts": reference_counts, "samples": reference_samples},
+            "edits": {"items": edit_summaries},
+            "validation": {"commands": validation[:CLOSURE_PLAN_ACTION_LIMIT]},
+        }[str(section)]
+        return {
+            "detail": "section",
+            "schema_version": "1",
+            "plan_id": plan["plan_id"],
+            "section": section,
+            "content": content,
+        }
+
+    diagnostics = list(plan.get("diagnostics", []))
+    active_references = [
+        {"severity": "warn", "code": "CLOSURE_ACTIVE_REFERENCE", **item}
+        for item in references.get("active_stale", [])
+    ]
+    findings = (diagnostics + active_references)[:CLOSURE_PLAN_FINDING_LIMIT]
+    action_dependencies = {"cleanup_package": ["render_records"]}
+    edit_paths = {item.get("edit_id"): item.get("path") for item in edit_summaries}
+    actions = [
+        {
+            **item,
+            "depends_on": action_dependencies.get(str(item.get("action_id")), []),
+            "affected_paths": [
+                edit_paths[edit_id]
+                for edit_id in item.get("planned_edit_ids", [])
+                if edit_id in edit_paths
+            ],
+        }
+        for item in plan.get("actions", [])[:CLOSURE_PLAN_ACTION_LIMIT]
+    ]
+    result = {
+        "detail": "summary",
+        "schema_version": "1",
+        "plan_id": plan["plan_id"],
+        "decision": {
+            "ready": bool(plan.get("ready")),
+            "spec_path": plan.get("spec_path"),
+            "spec_id": plan.get("metadata", {}).get("spec_id"),
+            "closure_action": plan.get("metadata", {}).get("closure_action"),
+            "final_spec_commit": plan.get("metadata", {}).get("final_spec_commit"),
+        },
+        "findings": findings,
+        "next_actions": actions,
+        "limits": {
+            "findings": {"returned": len(findings), "total": len(diagnostics) + len(active_references), "limit": CLOSURE_PLAN_FINDING_LIMIT, "truncated": len(findings) < len(diagnostics) + len(active_references)},
+            "next_actions": {"returned": len(actions), "total": len(plan.get("actions", [])), "limit": CLOSURE_PLAN_ACTION_LIMIT, "truncated": len(actions) < len(plan.get("actions", []))},
+            "payload_target_bytes": CLOSURE_PLAN_PAYLOAD_TARGET_BYTES,
+            "limit_exceeded": False,
+        },
+        "reference_summary": {"counts": reference_counts, "sample_count": len(reference_samples)},
+        "edit_summaries": edit_summaries,
+        "expansion": {
+            "tool": "closure_plan",
+            "sections": sorted(CLOSURE_PLAN_SECTIONS),
+            "arguments": {
+                "spec_path": plan.get("spec_path"),
+                "final_spec_commit": plan.get("metadata", {}).get("final_spec_commit"),
+                "closure_action": plan.get("metadata", {}).get("closure_action"),
+                "detail": "section",
+                "plan_id": plan["plan_id"],
+            },
+        },
+    }
+    if len(json.dumps(result, sort_keys=True).encode("utf-8")) > CLOSURE_PLAN_PAYLOAD_TARGET_BYTES:
+        result["limits"]["limit_exceeded"] = True
+    return result
+
+
 def render_closure_log_entry(metadata: ClosureMetadata) -> str:
     return "\n".join(
         [
@@ -617,6 +766,14 @@ def render_archive_index_row(metadata: ClosureMetadata) -> str:
 def _insert_closure_log(existing: str, entry: str) -> str:
     if not existing.strip():
         return "# Spec Closure Log\n\n## Entries\n\n" + entry
+    heading = entry.splitlines()[0]
+    spec_id = heading.rsplit(" - ", 1)[-1]
+    existing_match = re.search(
+        rf"(?ms)^### [^\n]+ - {re.escape(spec_id)}\n.*?(?=^### |\Z)",
+        existing,
+    )
+    if existing_match:
+        return existing[: existing_match.start()] + entry.rstrip() + "\n\n" + existing[existing_match.end():].lstrip("\n")
     marker = "## Entries"
     if marker not in existing:
         return existing.rstrip() + "\n\n" + marker + "\n\n" + entry
@@ -639,6 +796,12 @@ def _insert_archive_row(existing: str, row: str) -> str:
             ]
         )
     lines = existing.splitlines()
+    spec_id = row.split("|", 2)[1].strip()
+    for idx, line in enumerate(lines):
+        cells = line.split("|")
+        if len(cells) > 2 and cells[1].strip() == spec_id:
+            lines[idx] = row
+            return "\n".join(lines) + "\n"
     for idx, line in enumerate(lines):
         if line.strip().startswith("|---------"):
             lines.insert(idx + 1, row)
@@ -818,7 +981,7 @@ def closure_plan(
     edits = _planned_record_edits(root, metadata) + [_cleanup_edit(root, metadata, rel_spec)]
     actions = [
         ClosureAction("render_records", "render_records", "preview", True, ["render_closure_log", "render_archive_index"]),
-        ClosureAction("cleanup_package", "cleanup_package", "preview", True, [edit.edit_id for edit in edits]),
+        ClosureAction("cleanup_package", "cleanup_package", "preview", True, ["cleanup_package"]),
         ClosureAction("run_validation", "run_validation", "preview", False, [], None),
     ]
     steps = [
@@ -829,7 +992,11 @@ def closure_plan(
         _step("references", "Active-state reference review", not references.get("active_stale"), action_kind="preview_only"),
         _step("validation", "Validation command planning", True, action_kind="scriptable"),
     ]
-    plan_id = hashlib.sha256(json.dumps(metadata.to_dict(), sort_keys=True).encode("utf-8")).hexdigest()[:12]
+    plan_fingerprint = {
+        "metadata": metadata.to_dict(),
+        "spec_package_hash": _tree_hash(spec),
+    }
+    plan_id = hashlib.sha256(json.dumps(plan_fingerprint, sort_keys=True).encode("utf-8")).hexdigest()[:12]
     commands = build_validation_plan(root, [edit.path for edit in edits], "cleanup")
     plan = ClosurePlan(
         plan_id=plan_id,
@@ -869,6 +1036,38 @@ def _select_edits(plan: ClosurePlan, action_id: str) -> tuple[ClosureAction | No
     return action, [edit for edit in plan.planned_edits if edit.edit_id in wanted]
 
 
+def _closure_records_match(repo_root: Path, metadata: ClosureMetadata) -> bool:
+    log = _read(repo_root / "docs/history/spec-closure-log.md")
+    index = _read(repo_root / "docs/history/spec-archive-index.md")
+    log_match = re.search(
+        rf"(?ms)^### [^\n]+ - {re.escape(metadata.spec_id)}\n.*?(?=^### |\Z)",
+        log,
+    )
+    index_match = re.search(
+        rf"(?m)^\|\s*{re.escape(metadata.spec_id)}\s*\|.*$",
+        index,
+    )
+    if not log_match or not index_match:
+        return False
+    required = (
+        metadata.final_spec_commit,
+        metadata.cleanup_commit,
+        metadata.closure_action,
+    )
+    return all(value in log_match.group(0) and value in index_match.group(0) for value in required)
+
+
+def _edit_already_applied(repo_root: Path, edit: PlannedEdit) -> bool:
+    target = repo_root / _repo_relative(repo_root, edit.path)
+    if edit.action in {"add", "update"}:
+        return target.is_file() and _read(target) == (edit.content or "")
+    if edit.action == "delete":
+        return not target.exists()
+    if edit.action == "move" and edit.destination_path:
+        return not target.exists() and (repo_root / edit.destination_path).exists()
+    return False
+
+
 def _write_edit(repo_root: Path, edit: PlannedEdit) -> None:
     target = repo_root / _repo_relative(repo_root, edit.path)
     if edit.action in {"add", "update"}:
@@ -906,6 +1105,14 @@ def closure_apply(
         diagnostics.append(Diagnostic("error", "CLOSURE_ACTION_UNKNOWN", f"Unknown action_id: {action_id}."))
     elif action.requires_write_intent and not write_intent and not dry_run:
         diagnostics.append(Diagnostic("error", "CLOSURE_WRITE_INTENT_MISSING", f"{action_id} requires write_intent."))
+    if action_id == "cleanup_package" and not _closure_records_match(root, parsed.metadata):
+        diagnostics.append(
+            Diagnostic(
+                "error",
+                "CLOSURE_RECORDS_NOT_APPLIED",
+                "Matching closure-log and archive-index records must exist before package cleanup.",
+            )
+        )
     for edit in edits:
         try:
             _repo_relative(root, edit.path)
@@ -924,6 +1131,17 @@ def closure_apply(
             "changed_files": [],
             "planned_files": [edit.path for edit in edits],
             "diagnostics": [item.to_dict() for item in diagnostics],
+            "validation_commands": [item.to_dict() for item in parsed.validation_commands],
+            "mutates_files": False,
+        }
+    if edits and all(_edit_already_applied(root, edit) for edit in edits):
+        return {
+            "status": "already_applied",
+            "dry_run": dry_run,
+            "action_id": action_id,
+            "changed_files": [],
+            "planned_files": [edit.path for edit in edits],
+            "diagnostics": [],
             "validation_commands": [item.to_dict() for item in parsed.validation_commands],
             "mutates_files": False,
         }

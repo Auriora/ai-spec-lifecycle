@@ -535,7 +535,8 @@ class SpecMcpServerTests(unittest.TestCase):
                         "arguments": {
                             "repo_root": str(repo),
                             "spec_path": "030-mcp-first-runtime-migration",
-                            "plan": plan,
+                            "plan_id": plan["plan_id"],
+                            "final_spec_commit": "de3aa4f",
                             "action_id": "render_records",
                             "dry_run": False,
                         },
@@ -545,10 +546,103 @@ class SpecMcpServerTests(unittest.TestCase):
             )
 
         apply_payload = apply_response["result"]["structuredContent"]
-        self.assertEqual("030-mcp-first-runtime-migration", plan["metadata"]["spec_id"])
-        self.assertFalse(plan["mutates_files"])
+        self.assertEqual("030-mcp-first-runtime-migration", plan["decision"]["spec_id"])
+        self.assertEqual("summary", plan["detail"])
+        self.assertLessEqual(len(json.dumps(plan).encode("utf-8")), 32768)
         self.assertEqual("rejected", apply_payload["status"])
         self.assertIn("CLOSURE_WRITE_INTENT_MISSING", {item["code"] for item in apply_payload["diagnostics"]})
+
+    def test_closure_mcp_plan_is_bounded_and_actions_are_sequential_and_idempotent(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / ".git").mkdir()
+            (repo / ".gitignore").write_text(".cache/\n", encoding="utf-8")
+            (repo / ".cache").mkdir()
+            (repo / ".cache/graph.sqlite-wal").write_text("030-mcp-first-runtime-migration" * 5000, encoding="utf-8")
+            source = ROOT / "tests/fixtures/spec-closure-helper/spec-030-closure-scenario/before-cleanup"
+            shutil.copytree(source, repo, dirs_exist_ok=True)
+            history = repo / "docs/history/spec-closure-log.md"
+            history.write_text(history.read_text(encoding="utf-8") + ("historical noise\n" * 10000), encoding="utf-8")
+            spec = repo / "docs/specs/030-mcp-first-runtime-migration"
+            compact, _ = spec_mcp_server.call_tool(
+                "closure_plan",
+                {"repo_root": str(repo), "spec_path": str(spec), "final_spec_commit": "de3aa4f"},
+                repo,
+                "cwd",
+            )
+            plan_id = compact["plan_id"]
+            edits, _ = spec_mcp_server.call_tool(
+                "closure_plan",
+                {"repo_root": str(repo), "spec_path": str(spec), "final_spec_commit": "de3aa4f", "plan_id": plan_id, "detail": "section", "section": "edits"},
+                repo,
+                "cwd",
+            )
+            premature, _ = spec_mcp_server.call_tool(
+                "closure_apply",
+                {"repo_root": str(repo), "spec_path": str(spec), "plan_id": plan_id, "final_spec_commit": "de3aa4f", "action_id": "cleanup_package", "dry_run": False, "write_intent": True},
+                repo,
+                "cwd",
+            )
+            rendered, _ = spec_mcp_server.call_tool(
+                "closure_apply",
+                {"repo_root": str(repo), "spec_path": str(spec), "plan_id": plan_id, "final_spec_commit": "de3aa4f", "action_id": "render_records", "dry_run": False, "write_intent": True},
+                repo,
+                "cwd",
+            )
+            repeated, _ = spec_mcp_server.call_tool(
+                "closure_apply",
+                {"repo_root": str(repo), "spec_path": str(spec), "plan_id": plan_id, "final_spec_commit": "de3aa4f", "action_id": "render_records", "dry_run": False, "write_intent": True},
+                repo,
+                "cwd",
+            )
+            cleaned, _ = spec_mcp_server.call_tool(
+                "closure_apply",
+                {"repo_root": str(repo), "spec_path": str(spec), "plan_id": plan_id, "final_spec_commit": "de3aa4f", "action_id": "cleanup_package", "dry_run": False, "write_intent": True},
+                repo,
+                "cwd",
+            )
+            package_exists = spec.exists()
+            log = (repo / "docs/history/spec-closure-log.md").read_text(encoding="utf-8")
+
+        self.assertLessEqual(len(json.dumps(compact).encode("utf-8")), 32768)
+        self.assertTrue(all("content" not in item for item in compact["edit_summaries"]))
+        self.assertTrue(all(item["content_bytes"] >= 0 for item in edits["content"]["items"]))
+        self.assertEqual("rejected", premature["status"])
+        self.assertEqual("updated", rendered["status"])
+        self.assertEqual("already_applied", repeated["status"])
+        self.assertEqual("updated", cleaned["status"])
+        self.assertFalse(package_exists)
+        self.assertEqual(1, log.count(" - 030-mcp-first-runtime-migration"))
+
+    def test_closure_mcp_rejects_stale_manifest_after_spec_change(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / ".git").mkdir()
+            source = ROOT / "tests/fixtures/spec-closure-helper/spec-030-closure-scenario/before-cleanup"
+            shutil.copytree(source, repo, dirs_exist_ok=True)
+            spec = repo / "docs/specs/030-mcp-first-runtime-migration"
+            manifest, _ = spec_mcp_server.call_tool(
+                "closure_plan",
+                {"repo_root": str(repo), "spec_path": str(spec), "final_spec_commit": "de3aa4f"},
+                repo,
+                "cwd",
+            )
+            requirements = spec / "requirements.md"
+            requirements.write_text(requirements.read_text(encoding="utf-8") + "\nChanged after planning.\n", encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "CLOSURE_PLAN_STALE"):
+                spec_mcp_server.call_tool(
+                    "closure_apply",
+                    {
+                        "repo_root": str(repo),
+                        "spec_path": str(spec),
+                        "plan_id": manifest["plan_id"],
+                        "final_spec_commit": "de3aa4f",
+                        "action_id": "render_records",
+                    },
+                    repo,
+                    "cwd",
+                )
 
     def test_closure_mcp_resolve_previews_without_writing(self):
         with tempfile.TemporaryDirectory() as tmp:
