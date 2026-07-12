@@ -19,15 +19,16 @@ requires visible archived docs.
 - **Spec:** `docs/specs/037-closure-response-contract/`
 - **Title:** Closure Response Contract
 - **Final spec commit:** `c9be2cf`
-- **Closure cleanup commit:** `pending-cleanup-commit`
+- **Closure cleanup commit:** `60d0098`
 - **Closure action:** removed
 - **Durable docs updated:**
-  - `docs/reference/spec-lifecycle-runtime.md#closure-helper-tools`
+  - `docs/reference/spec-lifecycle-runtime.md`
   - `docs/backlog/README.md`
-- **Verification summary:** Closure validation not yet executed.
+- **Verification summary:** Full validation passed with 307 Python and 25 Node tests; package, bundle, runtime, pack, diff, installed MCP sequence, stale-plan, and non-duplicating envelope checks passed.
 - **Residual risks:**
-  - none
+  - Retained CLI plan-file recovery still contains complete planned file content; the agent-facing MCP boundary does not return it.
 - **Follow-up:** none
+
 ### 2026-07-12 - 036-compact-output-and-invocation-telemetry
 
 - **Spec:** `docs/specs/036-compact-output-and-invocation-telemetry/`
