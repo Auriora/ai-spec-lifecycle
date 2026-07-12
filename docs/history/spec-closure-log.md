@@ -19,7 +19,7 @@ requires visible archived docs.
 - **Spec:** `docs/specs/035-spec-id-allocation-and-creation-plan/`
 - **Title:** Spec ID allocation and creation plan requirements
 - **Final spec commit:** `0efc405`
-- **Closure cleanup commit:** `pending-cleanup-commit`
+- **Closure cleanup commit:** `8213417`
 - **Closure action:** removed
 - **Durable docs updated:**
   - `docs/backlog/README.md`
