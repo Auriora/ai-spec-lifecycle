@@ -52,6 +52,14 @@ test("real install copies the plugin tree and registers the marketplace", async 
       path.join(mkt, "plugins", "spec-lifecycle-manager"),
     ]) {
       assert.ok(fs.existsSync(path.join(root, ".mcp.json")), `${root}/.mcp.json`);
+      assert.deepEqual(
+        JSON.parse(fs.readFileSync(path.join(root, "build-info.json"), "utf8")),
+        JSON.parse(fs.readFileSync(path.join(repoRoot, "plugins/spec-lifecycle-manager/build-info.json"), "utf8")),
+      );
+      assert.deepEqual(
+        JSON.parse(fs.readFileSync(path.join(root, "claude-plugin/build-info.json"), "utf8")),
+        JSON.parse(fs.readFileSync(path.join(repoRoot, "plugins/spec-lifecycle-manager/claude-plugin/build-info.json"), "utf8")),
+      );
       assert.ok(
         fs.existsSync(path.join(root, "skills/spec-lifecycle-manager/scripts/spec_mcp_server.py")),
         `${root} server script`,

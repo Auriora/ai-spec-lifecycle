@@ -180,13 +180,16 @@ class SpecPluginPackageTests(unittest.TestCase):
         self.assertIn("package.json", files)
         self.assertIn("packaging/spec-lifecycle-manager/npm-install.js", files)
         self.assertIn("packaging/spec-lifecycle-manager/npm-package.json", files)
+        self.assertIn("packaging/spec-lifecycle-manager/generate-build-info.mjs", files)
         # Spec 028: the bin entrypoint imports these at install time, so the
         # GitHub-release tarball must contain them or the install ERR_MODULE.
         self.assertIn("packaging/spec-lifecycle-manager/installer.mjs", files)
         self.assertIn("packaging/spec-lifecycle-manager/resolve-python.mjs", files)
         self.assertIn("scripts/install-spec-lifecycle-manager-package.sh", files)
         self.assertIn("plugins/spec-lifecycle-manager/.codex-plugin/plugin.json", files)
+        self.assertIn("plugins/spec-lifecycle-manager/build-info.json", files)
         self.assertIn("plugins/spec-lifecycle-manager/claude-plugin/.claude-plugin/plugin.json", files)
+        self.assertIn("plugins/spec-lifecycle-manager/claude-plugin/build-info.json", files)
         self.assertIn("plugins/spec-lifecycle-manager/claude-plugin/.mcp.json", files)
         self.assertIn("plugins/spec-lifecycle-manager/claude-plugin/mcp-launch.mjs", files)
         self.assertIn("plugins/spec-lifecycle-manager/claude-plugin/hooks/hooks.json", files)

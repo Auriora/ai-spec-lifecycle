@@ -29,12 +29,14 @@
     "packaging/spec-lifecycle-manager/npm-package.json",
     "packaging/spec-lifecycle-manager/npm-install.js",
     "packaging/spec-lifecycle-manager/installer.mjs",
+    "packaging/spec-lifecycle-manager/generate-build-info.mjs",
     "packaging/spec-lifecycle-manager/resolve-python.mjs",
     "plugins/spec-lifecycle-manager",
     "scripts/install-spec-lifecycle-manager-package.sh"
   ],
   "scripts": {
-    "prepack": "node packaging/spec-lifecycle-manager/clean-pycache.mjs",
+    "prepack": "node packaging/spec-lifecycle-manager/clean-pycache.mjs && node packaging/spec-lifecycle-manager/generate-build-info.mjs generate",
+    "postpack": "node packaging/spec-lifecycle-manager/generate-build-info.mjs reset",
     "pack:dry-run": "npm_config_cache=/tmp/spec-lifecycle-npm-cache npm pack --dry-run --json",
     "test:devcli": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_devcli_runner tests.runtime.test_devcli_cli",
     "test:node": "node --test tests/runtime/*.test.mjs",

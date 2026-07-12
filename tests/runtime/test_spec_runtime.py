@@ -56,9 +56,17 @@ def write_sync_guard_repo(repo: Path, codex_home: Path, include_cache: bool = Tr
     shutil.copytree(source, bundled_skill, dirs_exist_ok=True)
     shutil.copytree(source, claude_skill, dirs_exist_ok=True)
     (bundled / ".codex-plugin/plugin.json").write_text(
-        '{"name": "spec-lifecycle-manager", "version": "0.1.0+test"}\n',
+        '{"name": "spec-lifecycle-manager", "version": "0.1.0-test"}\n',
         encoding="utf-8",
     )
+    (bundled / "claude-plugin/.claude-plugin").mkdir(parents=True)
+    (bundled / "claude-plugin/.claude-plugin/plugin.json").write_text(
+        '{"name": "spec-lifecycle-manager", "version": "0.1.0-test"}\n',
+        encoding="utf-8",
+    )
+    build_info = '{"name": "spec-lifecycle-manager", "package_version": "0.1.0-test", "build_identity": "unknown"}\n'
+    (bundled / "build-info.json").write_text(build_info, encoding="utf-8")
+    (bundled / "claude-plugin/build-info.json").write_text(build_info, encoding="utf-8")
     (repo / "scripts/install-spec-lifecycle-manager-package.sh").write_text("#!/usr/bin/env bash\n", encoding="utf-8")
     (repo / "package.json").write_text(
         json.dumps(
@@ -82,7 +90,7 @@ def write_sync_guard_repo(repo: Path, codex_home: Path, include_cache: bool = Tr
         encoding="utf-8",
     )
     (repo / "packaging/spec-lifecycle-manager/package-manifest.json").write_text(
-        '{"name": "spec-lifecycle-manager", "version": "0.1.0+test"}\n',
+        '{"name": "spec-lifecycle-manager", "version": "0.1.0-test"}\n',
         encoding="utf-8",
     )
     (repo / "packaging/spec-lifecycle-manager/npm-install.js").write_text("#!/usr/bin/env node\n", encoding="utf-8")
@@ -101,6 +109,9 @@ def write_sync_guard_repo(repo: Path, codex_home: Path, include_cache: bool = Tr
                     "packaging/spec-lifecycle-manager/npm-package.json",
                     "packaging/spec-lifecycle-manager/npm-install.js",
                     "plugins/spec-lifecycle-manager/.codex-plugin/plugin.json",
+                    "plugins/spec-lifecycle-manager/build-info.json",
+                    "plugins/spec-lifecycle-manager/claude-plugin/.claude-plugin/plugin.json",
+                    "plugins/spec-lifecycle-manager/claude-plugin/build-info.json",
                     "plugins/spec-lifecycle-manager/.mcp.json",
                     "plugins/spec-lifecycle-manager/hooks/hooks.json",
                     "plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/SKILL.md",
@@ -1247,6 +1258,43 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertEqual("findings", payload["status"])
         self.assertGreater(payload["summary"]["error"], 0)
         self.assertTrue(any(item["code"] == "PACKAGE_REQUIRED_PATH_MISSING" for item in payload["diagnostics"]))
+
+    def test_package_contract_rejects_version_mismatch(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            repo.mkdir()
+            write_sync_guard_repo(repo, Path(tmp) / "codex")
+            build_path = repo / "plugins/spec-lifecycle-manager/build-info.json"
+            build = json.loads(build_path.read_text(encoding="utf-8"))
+            build["package_version"] = "9.9.9"
+            build_path.write_text(json.dumps(build), encoding="utf-8")
+
+            payload = spec_runtime.package_contract(repo)
+
+        self.assertTrue(any(item["code"] == "PACKAGE_VERSION_MISMATCH" for item in payload["diagnostics"]))
+        self.assertEqual(6, len(payload["provenance"]["version_evidence"]))
+
+    def test_package_contract_rejects_invalid_or_disagreeing_build_identity(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            repo.mkdir()
+            write_sync_guard_repo(repo, Path(tmp) / "codex")
+            codex_path = repo / "plugins/spec-lifecycle-manager/build-info.json"
+            claude_path = repo / "plugins/spec-lifecycle-manager/claude-plugin/build-info.json"
+            codex = json.loads(codex_path.read_text(encoding="utf-8"))
+            codex["build_identity"] = "git:short"
+            codex_path.write_text(json.dumps(codex), encoding="utf-8")
+            payload = spec_runtime.package_contract(repo)
+            self.assertTrue(any(item["code"] == "PACKAGE_BUILD_IDENTITY_INVALID" for item in payload["diagnostics"]))
+
+            codex["build_identity"] = f"git:{'a' * 40}"
+            codex_path.write_text(json.dumps(codex), encoding="utf-8")
+            claude = json.loads(claude_path.read_text(encoding="utf-8"))
+            claude["build_identity"] = f"git:{'b' * 40}"
+            claude_path.write_text(json.dumps(claude), encoding="utf-8")
+            payload = spec_runtime.package_contract(repo)
+
+        self.assertTrue(any(item["code"] == "PACKAGE_BUILD_IDENTITY_MISMATCH" for item in payload["diagnostics"]))
 
     def test_sync_guard_reports_clean_source_bundle_and_cache_parity(self):
         with tempfile.TemporaryDirectory() as tmp:

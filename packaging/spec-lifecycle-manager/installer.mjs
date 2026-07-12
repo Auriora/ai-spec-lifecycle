@@ -24,6 +24,9 @@ import { resolvePython } from "./resolve-python.mjs";
 
 const REQUIRED_PATHS = [
   "plugins/spec-lifecycle-manager/.codex-plugin/plugin.json",
+  "plugins/spec-lifecycle-manager/build-info.json",
+  "plugins/spec-lifecycle-manager/claude-plugin/.claude-plugin/plugin.json",
+  "plugins/spec-lifecycle-manager/claude-plugin/build-info.json",
   "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/SKILL.md",
   "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/spec_runtime.py",
   "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/spec_mcp_server.py",

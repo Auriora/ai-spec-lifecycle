@@ -2339,16 +2339,25 @@ def package_contract(repo_root: Path) -> dict[str, Any]:
     manifest_path = root / "packaging" / "spec-lifecycle-manager" / "package-manifest.json"
     npm_package_path = root / "package.json"
     plugin_manifest_path = root / "plugins" / "spec-lifecycle-manager" / ".codex-plugin" / "plugin.json"
+    claude_manifest_path = root / "plugins" / "spec-lifecycle-manager" / "claude-plugin" / ".claude-plugin" / "plugin.json"
+    codex_build_path = root / "plugins" / "spec-lifecycle-manager" / "build-info.json"
+    claude_build_path = root / "plugins" / "spec-lifecycle-manager" / "claude-plugin" / "build-info.json"
     diagnostics: list[dict[str, Any]] = []
 
     npm_contract, npm_contract_diagnostics = load_json_file(npm_contract_path, "npm package contract")
     manifest, manifest_diagnostics = load_json_file(manifest_path, "package manifest")
     npm_package, npm_package_diagnostics = load_json_file(npm_package_path, "npm package manifest")
     plugin_manifest, plugin_manifest_diagnostics = load_json_file(plugin_manifest_path, "plugin manifest")
+    claude_manifest, claude_manifest_diagnostics = load_json_file(claude_manifest_path, "Claude plugin manifest")
+    codex_build, codex_build_diagnostics = load_json_file(codex_build_path, "Codex build information")
+    claude_build, claude_build_diagnostics = load_json_file(claude_build_path, "Claude build information")
     diagnostics.extend(npm_contract_diagnostics)
     diagnostics.extend(manifest_diagnostics)
     diagnostics.extend(npm_package_diagnostics)
     diagnostics.extend(plugin_manifest_diagnostics)
+    diagnostics.extend(claude_manifest_diagnostics)
+    diagnostics.extend(codex_build_diagnostics)
+    diagnostics.extend(claude_build_diagnostics)
 
     required_paths: list[dict[str, Any]] = []
     required_values: list[str] = []
@@ -2397,6 +2406,9 @@ def package_contract(repo_root: Path) -> dict[str, Any]:
         "name": npm_info["package_name"],
         "manifest_version": manifest.get("version") if manifest else None,
         "plugin_version": plugin_manifest.get("version") if plugin_manifest else None,
+        "claude_plugin_version": claude_manifest.get("version") if claude_manifest else None,
+        "codex_build_version": codex_build.get("package_version") if codex_build else None,
+        "claude_build_version": claude_build.get("package_version") if claude_build else None,
         "npm": npm_info,
     }
     for field in ["package_name", "registry", "publish_status", "payload_root", "version_source", "install_command", "bin"]:
@@ -2418,10 +2430,41 @@ def package_contract(repo_root: Path) -> dict[str, Any]:
     if plugin_manifest is not None and not plugin_manifest.get("version"):
         diagnostics.append(diagnostic("error", "PACKAGE_PLUGIN_VERSION_MISSING", plugin_manifest_path, "Missing plugin manifest version.", lifecycle_gate="package", waivable=False))
 
+    version_evidence = [
+        {"source": "package.json", "package_version": npm_package.get("version") if npm_package else None},
+        {"source": "packaging/spec-lifecycle-manager/package-manifest.json", "package_version": manifest.get("version") if manifest else None},
+        {"source": "plugins/spec-lifecycle-manager/.codex-plugin/plugin.json", "package_version": plugin_manifest.get("version") if plugin_manifest else None},
+        {"source": "plugins/spec-lifecycle-manager/claude-plugin/.claude-plugin/plugin.json", "package_version": claude_manifest.get("version") if claude_manifest else None},
+        {"source": "plugins/spec-lifecycle-manager/build-info.json", "package_version": codex_build.get("package_version") if codex_build else None},
+        {"source": "plugins/spec-lifecycle-manager/claude-plugin/build-info.json", "package_version": claude_build.get("package_version") if claude_build else None},
+    ]
+    available_versions = [item["package_version"] for item in version_evidence if item["package_version"] is not None]
+    if len(available_versions) != len(version_evidence) or len(set(available_versions)) != 1:
+        diagnostics.append(diagnostic("error", "PACKAGE_VERSION_MISMATCH", root, "Package, plugin, and build-info versions must agree.", lifecycle_gate="package", waivable=False))
+
+    for build_info, source_path in [(codex_build, codex_build_path), (claude_build, claude_build_path)]:
+        if build_info is not None and build_info.get("name") != "spec-lifecycle-manager":
+            diagnostics.append(diagnostic("error", "PACKAGE_BUILD_NAME_INVALID", source_path, "Build information name must be spec-lifecycle-manager.", lifecycle_gate="package", waivable=False))
+
+    build_identity_pattern = re.compile(r"^(?:unknown|git:[0-9a-fA-F]{40}(?:[0-9a-fA-F]{24})?)$")
+    build_identity_evidence = [
+        {"source": "plugins/spec-lifecycle-manager/build-info.json", "build_identity": codex_build.get("build_identity") if codex_build else None},
+        {"source": "plugins/spec-lifecycle-manager/claude-plugin/build-info.json", "build_identity": claude_build.get("build_identity") if claude_build else None},
+    ]
+    for item, source_path in zip(build_identity_evidence, [codex_build_path, claude_build_path], strict=True):
+        identity = item["build_identity"]
+        if not isinstance(identity, str) or not build_identity_pattern.fullmatch(identity):
+            diagnostics.append(diagnostic("error", "PACKAGE_BUILD_IDENTITY_INVALID", source_path, "build_identity must be 'unknown' or git:<full 40- or 64-hex commit>.", lifecycle_gate="package", waivable=False))
+    identities = [item["build_identity"] for item in build_identity_evidence]
+    if all(isinstance(item, str) and build_identity_pattern.fullmatch(item) for item in identities) and len(set(identities)) != 1:
+        diagnostics.append(diagnostic("error", "PACKAGE_BUILD_IDENTITY_MISMATCH", root, "Codex and Claude build identities must agree.", lifecycle_gate="package", waivable=False))
+
     provenance = {
         "git": git_head_commit(root),
         "source_repository": npm_contract.get("provenance", {}).get("source_repository") if isinstance(npm_contract and npm_contract.get("provenance"), dict) else None,
         "source_path": npm_contract.get("provenance", {}).get("source_path") if isinstance(npm_contract and npm_contract.get("provenance"), dict) else None,
+        "version_evidence": version_evidence,
+        "build_identity_evidence": build_identity_evidence,
     }
 
     summary = diagnostic_summary(diagnostics)
@@ -2433,6 +2476,9 @@ def package_contract(repo_root: Path) -> dict[str, Any]:
         "npm_contract_path": str(npm_contract_path),
         "manifest_path": str(manifest_path),
         "npm_package_path": str(npm_package_path),
+        "claude_manifest_path": str(claude_manifest_path),
+        "codex_build_info_path": str(codex_build_path),
+        "claude_build_info_path": str(claude_build_path),
         "status": "pass" if not diagnostics else "findings",
         "package": package_info,
         "required_paths": required_paths,

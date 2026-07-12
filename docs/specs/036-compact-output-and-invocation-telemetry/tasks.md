@@ -50,12 +50,16 @@ last_reviewed: 2026-07-12
 
 ## Phase 2: Packaging And Aggregate Contract
 
-- [ ] T004 Materialize and validate packaged build identity
+- [x] T004 Materialize and validate packaged build identity
   - Depends on: T001
   - Files: packaging/release helpers, package contract tests, bundled build info
   - Generate immutable build identity and validate manifest/version agreement.
   - Acceptance: packed source, Codex manifest, Claude manifest, and build info
     report one package version and an immutable or explicitly unknown build ID.
+  - Evidence: 2026-07-12, six-source version agreement and two-build identity
+    validation pass; an actual npm artifact contained `git:<full SHA>` and
+    postpack restored deterministic `unknown` baselines. Full `npm run validate`
+    passed with 250 Python and 25 Node tests.
 
 - [ ] T005 Publish reusable compact-envelope schemas
   - Depends on: T001

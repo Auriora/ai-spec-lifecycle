@@ -68,6 +68,13 @@ last_reviewed: 2026-07-12
   package contract, 248 full tests, direct CLI smoke, and `git diff --check`
   passed. Hook provenance remains inapplicable because capabilities is not a
   hook-routable operation.
+- **2026-07-12 — T004:** Added deterministic Codex/Claude build-info baselines,
+  prepack Git identity generation, postpack reset, and strict package validation
+  across root package, legacy package manifest, both plugin manifests, and both
+  build-info files. V015-V017 passed: actual npm content carried the full commit
+  identity, ordinary checkout/legacy identity remains explicitly `unknown`, and
+  mismatch/malformed fixtures fail closed. `npm run validate` passed with 250
+  Python and 25 Node tests, package contract, parity, dry-run pack, and diff checks.
 
 ## Quality Gates
 
