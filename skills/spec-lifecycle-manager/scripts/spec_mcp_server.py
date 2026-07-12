@@ -256,6 +256,15 @@ def tool_definitions() -> list[dict[str, Any]]:
                 },
                 "docs_root": "Optional docs root. Defaults to docs.",
                 "expected_fingerprint": spec_agent_schemas.evidence_fingerprint_schema(),
+                "detail": {
+                    "type": "string",
+                    "enum": ["compact", "full", "section"],
+                    "default": "compact",
+                },
+                "section": {
+                    "type": "string",
+                    "enum": ["numbering", "template", "validation"],
+                },
             },
             ["slug"],
             output_schema=spec_agent_schemas.spec_creation_plan_output_schema(),
@@ -602,6 +611,8 @@ def call_tool(
             slug,
             arguments.get("docs_root"),
             arguments.get("expected_fingerprint"),
+            detail=str(arguments.get("detail") or "compact"),
+            section=str(arguments["section"]) if arguments.get("section") is not None else None,
         )
         payload["lifecycle_metadata"] = assemble_lifecycle_metadata(
             root,

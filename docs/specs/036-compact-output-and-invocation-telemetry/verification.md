@@ -81,6 +81,14 @@ last_reviewed: 2026-07-12
   expansion, and strict lifecycle metadata. V018-V021 schema fixtures accept
   supported modes and reject invalid selectors, fingerprints, bounds, and
   provenance. Full validation passed with 256 Python and 25 Node tests.
+- **2026-07-12 — T006:** Applied the compact envelope to the Spec 035
+  `spec_creation_plan` aggregate while preserving the already compliant Spec
+  033 `phase_gate_check` surface. Both aggregates default compact, support
+  bounded full and named-section expansion, preserve non-waivable blockers,
+  return stale fingerprints with refreshed same-tool arguments, and retain
+  MCP/CLI decision parity. V022-V025 passed in an 88-test focused runtime,
+  schema, phase-gate, and MCP run; direct compact and numbering-section CLI
+  smokes and `git diff --check` passed. Bundle synchronization remains T007.
 
 ## Quality Gates
 

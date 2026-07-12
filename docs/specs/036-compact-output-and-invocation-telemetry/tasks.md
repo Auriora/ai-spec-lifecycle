@@ -73,11 +73,17 @@ last_reviewed: 2026-07-12
     bounds, and provenance fail schema validation. Full `npm run validate`
     passed with 256 Python and 25 Node tests.
 
-- [ ] T006 Apply the accepted contract to Specs 033 and 035
+- [x] T006 Apply the accepted contract to Specs 033 and 035
   - Depends on: T003, T005 and accepted designs for Specs 033/035
   - New aggregate tools default compact; established tools remain unchanged.
   - Acceptance: both aggregates honor bounds, preserve blockers, expose stale
     expansion behavior, and return equivalent MCP/CLI decisions.
+  - Evidence: 2026-07-12, Spec 033 `phase_gate_check` was confirmed compliant;
+    Spec 035 `spec_creation_plan` now defaults compact with bounded
+    full/numbering/template/validation expansion, blocker preservation, stale
+    refresh, strict schemas, and MCP/CLI parity. V022-V025 passed in 88 focused
+    tests; direct CLI compact/section smokes and `git diff --check` passed.
+    Bundle sync remains T007.
 
 ## Phase 3: Promotion And Closure
 

@@ -190,11 +190,17 @@ class SpecIdInventoryTests(unittest.TestCase):
             (repo / "docs/specs/004-existing").mkdir(parents=True)
             before = sorted(path.relative_to(repo).as_posix() for path in repo.rglob("*"))
 
-            first = core.spec_creation_plan(repo, "new-capability")
+            compact = core.spec_creation_plan(repo, "new-capability")
+            first = core.spec_creation_plan(repo, "new-capability", detail="full")["plan"]
             second = core.spec_creation_plan(
-                repo, "new-capability", expected_fingerprint=first["evidence_fingerprint"]
-            )
+                repo,
+                "new-capability",
+                expected_fingerprint=compact["evidence_fingerprint"],
+                detail="full",
+            )["plan"]
 
+            self.assertEqual("compact", compact["detail"])
+            self.assertEqual("ready", compact["decision"]["status"])
             self.assertEqual("ready", first["status"])
             self.assertEqual("005-new-capability", first["proposed_spec_id"])
             self.assertEqual("docs/specs/005-new-capability", first["proposed_path"])
@@ -212,9 +218,9 @@ class SpecIdInventoryTests(unittest.TestCase):
             for slug in invalid:
                 with self.subTest(slug=slug):
                     payload = core.spec_creation_plan(repo, slug)
-                    self.assertEqual("invalid", payload["status"])
-                    self.assertIsNone(payload["proposed_path"])
-                    self.assertIsNone(payload["evidence_fingerprint"])
+                    self.assertEqual("invalid", payload["decision"]["status"])
+                    self.assertIsNone(payload["decision"]["proposed_path"])
+                    self.assertRegex(payload["evidence_fingerprint"], r"^sha256:[0-9a-f]{64}$")
 
     def test_selected_docs_template_precedence_and_artifact_inventory(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -227,7 +233,7 @@ class SpecIdInventoryTests(unittest.TestCase):
             (selected_template / "requirements.md").write_text("selected", encoding="utf-8")
             (selected_template / "research.md").write_text("optional", encoding="utf-8")
 
-            payload = core.spec_creation_plan(repo, "nested", "docs/platform")
+            payload = core.spec_creation_plan(repo, "nested", "docs/platform", detail="full")["plan"]
 
             self.assertEqual("selected-docs-root", payload["template_authority"]["authority"])
             self.assertEqual("docs/platform/templates/spec-package", payload["template_authority"]["path"])
@@ -247,14 +253,18 @@ class SpecIdInventoryTests(unittest.TestCase):
             template.mkdir(parents=True)
             (template / "requirements.md").write_text("template", encoding="utf-8")
             template_changed = core.spec_creation_plan(
-                repo, "fresh", expected_fingerprint=numbering_changed["evidence_fingerprint"]
+                repo,
+                "fresh",
+                expected_fingerprint=numbering_changed["current_evidence_fingerprint"],
             )
 
             self.assertEqual("stale", numbering_changed["status"])
-            self.assertEqual("001-fresh", numbering_changed["proposed_spec_id"])
-            self.assertFalse(numbering_changed["fingerprint_valid"])
+            self.assertEqual("fresh", numbering_changed["expansion"]["arguments"]["slug"])
+            self.assertEqual("compact", numbering_changed["expansion"]["arguments"]["detail"])
+            self.assertNotEqual(first["evidence_fingerprint"], numbering_changed["current_evidence_fingerprint"])
             self.assertEqual("stale", template_changed["status"])
-            self.assertEqual("selected-docs-root", template_changed["template_authority"]["authority"])
+            refreshed = core.spec_creation_plan(repo, "fresh", detail="section", section="template")
+            self.assertEqual("selected-docs-root", refreshed["content"]["template_authority"]["authority"])
 
     def test_race_collision_never_claims_a_reservation(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -262,13 +272,64 @@ class SpecIdInventoryTests(unittest.TestCase):
             inventory = core.spec_id_inventory(repo)
             (repo / "docs/specs/000-race").mkdir(parents=True)
             with mock.patch.object(core, "spec_id_inventory", return_value=inventory):
-                payload = core.spec_creation_plan(repo, "race")
+                payload = core.spec_creation_plan(repo, "race", detail="full")["plan"]
 
             self.assertEqual("collision", payload["status"])
             self.assertFalse(payload["reservation"])
             self.assertIsNotNone(payload["refreshed_arguments"])
             self.assertEqual("001-race", payload["fresh_proposal"]["proposed_spec_id"])
             self.assertIn("SPEC_CREATION_PATH_COLLISION", {item["code"] for item in payload["diagnostics"]})
+
+    def test_creation_plan_modes_bounds_and_blocker_preservation(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            compact = core.spec_creation_plan(repo, "bounded")
+            full = core.spec_creation_plan(repo, "bounded", detail="full")
+            sections = {
+                section: core.spec_creation_plan(repo, "bounded", detail="section", section=section)
+                for section in core.SPEC_CREATION_PLAN_SECTIONS
+            }
+
+            self.assertEqual(compact["evidence_fingerprint"], full["evidence_fingerprint"])
+            self.assertTrue(
+                all(item["evidence_fingerprint"] == compact["evidence_fingerprint"] for item in sections.values())
+            )
+            self.assertEqual(set(core.SPEC_CREATION_PLAN_SECTIONS), set(sections))
+
+            source = full["plan"]
+            source["diagnostics"] = [
+                {
+                    "severity": "warn",
+                    "code": f"ADVISORY_{index:02d}",
+                    "waivable": True,
+                }
+                for index in range(25)
+            ] + [
+                {
+                    "severity": "error",
+                    "code": "PATH_COLLISION",
+                    "waivable": False,
+                }
+            ]
+            with mock.patch.object(core, "_spec_creation_plan_full", return_value=source):
+                bounded = core.spec_creation_plan(repo, "bounded")
+
+            self.assertEqual(20, len(bounded["findings"]))
+            self.assertEqual("PATH_COLLISION", bounded["findings"][0]["code"])
+            self.assertTrue(bounded["limits"]["findings"]["truncated"])
+            self.assertFalse(bounded["limits"]["limit_exceeded"])
+
+    def test_creation_plan_rejects_invalid_detail_section_combinations(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            with self.assertRaises(ValueError):
+                core.spec_creation_plan(repo, "example", detail="verbose")
+            with self.assertRaises(ValueError):
+                core.spec_creation_plan(repo, "example", section="numbering")
+            with self.assertRaises(ValueError):
+                core.spec_creation_plan(repo, "example", detail="section")
+            with self.assertRaises(ValueError):
+                core.spec_creation_plan(repo, "example", detail="section", section="everything")
 
     def test_bootstrap_reuses_shared_allocator_for_empty_and_established_scopes(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -386,7 +447,7 @@ class SpecIdInventoryTests(unittest.TestCase):
             )
 
             self.assertEqual("stale", json.loads(stale.stdout)["status"])
-            self.assertEqual("invalid", json.loads(invalid.stdout)["status"])
+            self.assertEqual("invalid", json.loads(invalid.stdout)["decision"]["status"])
             self.assertNotIn(str(repo), stale.stdout)
             self.assertEqual(before, sorted(path.relative_to(repo).as_posix() for path in repo.rglob("*")))
 

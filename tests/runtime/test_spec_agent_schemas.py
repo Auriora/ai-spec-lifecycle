@@ -120,6 +120,31 @@ class CompactSchemaValidationTests(unittest.TestCase):
             with self.subTest(shape=fixture.get("detail", fixture.get("status"))):
                 self.assert_valid(fixture, schema)
 
+    def test_spec_creation_plan_union_accepts_each_closed_shape(self):
+        schema = spec_agent_schemas.spec_creation_plan_output_schema()
+        compact = compact_fixture()
+        compact["expansion"]["tool"] = "spec_creation_plan"
+        full = {
+            "detail": "full", "schema_version": "1", "decision": {},
+            "evidence_fingerprint": "sha256:" + "a" * 64,
+            "plan": {}, "lifecycle_metadata": metadata(),
+        }
+        section = {
+            "detail": "section", "schema_version": "1", "decision": {},
+            "evidence_fingerprint": "sha256:" + "a" * 64,
+            "section": "numbering", "content": {}, "lifecycle_metadata": metadata(),
+        }
+        stale = {
+            "status": "stale", "schema_version": "1",
+            "requested_fingerprint": "sha256:" + "a" * 64,
+            "current_evidence_fingerprint": "sha256:" + "b" * 64,
+            "expansion": {"tool": "spec_creation_plan", "arguments": {}},
+            "lifecycle_metadata": metadata(),
+        }
+        for fixture in (compact, full, section, stale):
+            with self.subTest(shape=fixture.get("detail", fixture.get("status"))):
+                self.assert_valid(fixture, schema)
+
     def test_compact_envelope_rejects_malformed_fingerprint_and_bounds(self):
         schema = spec_agent_schemas.compact_aggregate_envelope_schema()
         malformed = copy.deepcopy(compact_fixture())

@@ -19,7 +19,7 @@ last_reviewed: 2026-07-12
 | T003 | R2, R4.1, R4.4-R4.5 | CP-4, CP-6, CP-7 | Root And Invocation Provenance | V010-V014 |
 | T004 | R2.5, R4.5 | CP-3 | Runtime And Build Identity | V015-V017 |
 | T005 | R1, R4.3, R4.5 | CP-1, CP-2, CP-5 | Compact Envelope | V018-V021 |
-| T006 | R1, R4.3-R4.4 | CP-1, CP-2, CP-4, CP-5 | Compatibility And Rollout | V022-V025 |
+| T006 | Requirement 1 (AC 1-5); Requirement 4 (AC 3-5) | CP-001, CP-002, CP-004, CP-005 | Compatibility And Rollout | V022-V025 |
 | T007 | R2.5, R4.5 | CP-3, CP-4 | Component Boundaries | V026-V028 |
 | T008 | all | all | Durable Promotion Targets | V029-V031 |
 

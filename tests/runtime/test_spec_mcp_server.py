@@ -211,7 +211,11 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertFalse(spec_id_schema["outputSchema"]["additionalProperties"])
         self.assertEqual(["slug"], creation_schema["inputSchema"]["required"])
         self.assertFalse(creation_schema["inputSchema"]["additionalProperties"])
-        self.assertEqual(2, len(creation_schema["outputSchema"]["oneOf"]))
+        self.assertEqual(4, len(creation_schema["outputSchema"]["oneOf"]))
+        self.assertEqual(
+            ["numbering", "template", "validation"],
+            creation_schema["inputSchema"]["properties"]["section"]["enum"],
+        )
         self.assertTrue(all(not item["additionalProperties"] for item in creation_schema["outputSchema"]["oneOf"]))
         capabilities_schema = next(tool for tool in responses[0]["result"]["tools"] if tool["name"] == "lifecycle_capabilities")
         inventory_schema = next(tool for tool in responses[0]["result"]["tools"] if tool["name"] == "script_migration_inventory")
@@ -309,12 +313,40 @@ class SpecMcpServerTests(unittest.TestCase):
         stale = responses[0]["result"]["structuredContent"]
         invalid = responses[1]["result"]["structuredContent"]
         self.assertEqual("stale", stale["status"])
-        self.assertEqual("001-feature", stale["proposed_spec_id"])
+        self.assertEqual("feature", stale["expansion"]["arguments"]["slug"])
+        self.assertEqual("compact", stale["expansion"]["arguments"]["detail"])
         self.assertEqual("mcp", stale["lifecycle_metadata"]["invocation_surface"])
-        self.assertEqual("invalid", invalid["status"])
-        self.assertIsNone(invalid["proposed_path"])
+        self.assertEqual("invalid", invalid["decision"]["status"])
+        self.assertIsNone(invalid["decision"]["proposed_path"])
         self.assertEqual(-32602, responses[2]["error"]["code"])
         self.assertNotIn(str(repo), json.dumps(responses))
+
+    def test_spec_creation_plan_mcp_modes_and_cli_decision_parity(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            compact_response, full_response, section_response = self.send(
+                rpc(1, "tools/call", {"name": "spec_creation_plan", "arguments": {"repo_root": str(repo), "slug": "feature"}}),
+                rpc(2, "tools/call", {"name": "spec_creation_plan", "arguments": {"repo_root": str(repo), "slug": "feature", "detail": "full"}}),
+                rpc(3, "tools/call", {"name": "spec_creation_plan", "arguments": {"repo_root": str(repo), "slug": "feature", "detail": "section", "section": "numbering"}}),
+                root=repo,
+            )
+            compact = compact_response["result"]["structuredContent"]
+            cli = subprocess.run(
+                [sys.executable, str(RUNTIME_SCRIPT), "spec-creation-plan", "feature", "--repo-root", str(repo)],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+        cli_payload = json.loads(cli.stdout)
+        self.assertEqual("compact", compact["detail"])
+        self.assertEqual("full", full_response["result"]["structuredContent"]["detail"])
+        self.assertEqual("numbering", section_response["result"]["structuredContent"]["section"])
+        self.assertEqual("mcp", compact["lifecycle_metadata"]["invocation_surface"])
+        self.assertEqual("cli", cli_payload["lifecycle_metadata"]["invocation_surface"])
+        compact.pop("lifecycle_metadata")
+        cli_payload.pop("lifecycle_metadata")
+        self.assertEqual(compact, cli_payload)
 
     def test_lifecycle_capabilities_tool_returns_stable_surface_decision(self):
         with tempfile.TemporaryDirectory() as tmp:
