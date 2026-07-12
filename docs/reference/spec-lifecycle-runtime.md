@@ -239,6 +239,14 @@ legacy upper bounds, confidence, and diagnostics. The result is provisional:
 lower gaps are not reused, empty scopes return `000`, and another agent may
 claim the number after the call.
 
+Known historical prefix collisions may be recorded in
+`[docs-root]/history/spec-id-collision-acknowledgements.json`. An acknowledgement
+must name the exact set of colliding spec IDs and explain both the cause and
+disposition. A matching acknowledgement preserves a visible
+`SPEC_ID_PREFIX_DUPLICATE_ACKNOWLEDGED` informational diagnostic without
+reducing allocation confidence; missing, malformed, or stale acknowledgements
+remain warnings. Every colliding prefix remains consumed and is never reused.
+
 Use MCP `spec_creation_plan` with an ASCII lower-kebab `slug` to obtain the
 proposed ID/path, template fallback chain, artifact set, required values,
 preconditions, validation commands, and evidence fingerprint. `reservation` is

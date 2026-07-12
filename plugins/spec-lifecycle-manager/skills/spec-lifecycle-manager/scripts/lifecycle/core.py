@@ -542,6 +542,72 @@ def _legacy_range_upper_bound(rows: list[dict[str, str]]) -> int | None:
     return max(bounds) if bounds else None
 
 
+def _spec_id_collision_acknowledgements(
+    path: Path,
+    repo_root: Path,
+    diagnostics: list[dict[str, Any]],
+) -> dict[int, set[str]]:
+    """Return valid, explicitly acknowledged historical prefix collisions."""
+    if not path.exists():
+        return {}
+    try:
+        payload = json.loads(read_text(path))
+    except (json.JSONDecodeError, OSError) as exc:
+        diagnostics.append(
+            diagnostic(
+                "warn",
+                "SPEC_ID_COLLISION_ACKNOWLEDGEMENTS_INVALID",
+                path,
+                f"Collision acknowledgement file is not valid JSON: {exc}",
+                waivable=True,
+            )
+        )
+        return {}
+    if not isinstance(payload, dict) or payload.get("schema_version") != "1" or not isinstance(payload.get("entries"), list):
+        diagnostics.append(
+            diagnostic(
+                "warn",
+                "SPEC_ID_COLLISION_ACKNOWLEDGEMENTS_INVALID",
+                path,
+                "Collision acknowledgement file must contain schema_version '1' and an entries array.",
+                waivable=True,
+            )
+        )
+        return {}
+
+    acknowledgements: dict[int, set[str]] = {}
+    for entry in payload["entries"]:
+        if not isinstance(entry, dict):
+            continue
+        prefix = entry.get("prefix")
+        spec_ids = entry.get("spec_ids")
+        reason = entry.get("reason")
+        disposition = entry.get("disposition")
+        if (
+            not isinstance(prefix, str)
+            or not re.fullmatch(r"[0-9]{3,}", prefix)
+            or not isinstance(spec_ids, list)
+            or len(spec_ids) < 2
+            or any(not isinstance(spec_id, str) or not SPEC_ID_PATTERN.fullmatch(spec_id) for spec_id in spec_ids)
+            or not isinstance(reason, str)
+            or not reason.strip()
+            or not isinstance(disposition, str)
+            or not disposition.strip()
+        ):
+            diagnostics.append(
+                diagnostic(
+                    "warn",
+                    "SPEC_ID_COLLISION_ACKNOWLEDGEMENT_INVALID",
+                    path,
+                    f"Collision acknowledgement for prefix {prefix!r} is incomplete or malformed.",
+                    waivable=True,
+                )
+            )
+            continue
+        acknowledgements[int(prefix)] = set(spec_ids)
+    return acknowledgements
+
+
 def spec_id_inventory(repo_root: Path, docs_root: str | None = None) -> dict[str, Any]:
     """Return read-only, docs-root-scoped numbering evidence and next ID."""
     root = repo_root.resolve()
@@ -550,6 +616,7 @@ def spec_id_inventory(repo_root: Path, docs_root: str | None = None) -> dict[str
     history_root = selected / "history"
     archive_path = history_root / "spec-archive-index.md"
     closure_path = history_root / "spec-closure-log.md"
+    collision_acknowledgements_path = history_root / "spec-id-collision-acknowledgements.json"
     diagnostics: list[dict[str, Any]] = []
     evidence: list[dict[str, Any]] = []
 
@@ -628,17 +695,32 @@ def spec_id_inventory(repo_root: Path, docs_root: str | None = None) -> dict[str
         prefix = item["numeric_prefix"]
         if isinstance(prefix, int):
             ids_by_prefix.setdefault(prefix, set()).add(str(item["spec_id"]))
+    collision_acknowledgements = _spec_id_collision_acknowledgements(
+        collision_acknowledgements_path, root, diagnostics
+    )
     for prefix, spec_ids in sorted(ids_by_prefix.items()):
         if len(spec_ids) > 1:
-            diagnostics.append(
-                diagnostic(
-                    "warn",
-                    "SPEC_ID_PREFIX_DUPLICATE",
-                    specs_root,
-                    f"Numeric prefix {prefix:03d} is used by: {', '.join(sorted(spec_ids))}",
-                    waivable=True,
+            acknowledged_ids = collision_acknowledgements.get(prefix)
+            if acknowledged_ids == spec_ids:
+                diagnostics.append(
+                    diagnostic(
+                        "info",
+                        "SPEC_ID_PREFIX_DUPLICATE_ACKNOWLEDGED",
+                        collision_acknowledgements_path,
+                        f"Numeric prefix {prefix:03d} has an acknowledged historical collision: {', '.join(sorted(spec_ids))}",
+                        waivable=False,
+                    )
                 )
-            )
+            else:
+                diagnostics.append(
+                    diagnostic(
+                        "warn",
+                        "SPEC_ID_PREFIX_DUPLICATE",
+                        specs_root,
+                        f"Numeric prefix {prefix:03d} is used by: {', '.join(sorted(spec_ids))}",
+                        waivable=True,
+                    )
+                )
 
     legacy_upper_bound = _legacy_range_upper_bound(legacy_rows)
     parsed_numbers = sorted(ids_by_prefix)
@@ -664,7 +746,9 @@ def spec_id_inventory(repo_root: Path, docs_root: str | None = None) -> dict[str
             "docs_root": selected_relative,
             "specs_root": f"{selected_relative}/specs",
             "history_sources": [
-                repo_display_path(path, root) for path in (archive_path, closure_path) if path.exists()
+                repo_display_path(path, root)
+                for path in (archive_path, closure_path, collision_acknowledgements_path)
+                if path.exists()
             ],
         },
         "used_numbers": parsed_numbers,

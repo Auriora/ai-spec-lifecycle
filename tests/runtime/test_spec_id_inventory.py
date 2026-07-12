@@ -75,6 +75,74 @@ class SpecIdInventoryTests(unittest.TestCase):
             self.assertIn("SPEC_ID_HISTORY_MISSING", codes)
             self.assertEqual("reduced", payload["confidence"])
 
+    def test_acknowledged_historical_duplicate_preserves_number_and_confidence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            history = repo / "docs/history"
+            (repo / "docs/specs/036-current").mkdir(parents=True)
+            history.mkdir(parents=True)
+            (history / "spec-archive-index.md").write_text(
+                "# Archive\n\n## Entries\n\n"
+                "| Spec ID | Status |\n|---|---|\n"
+                "| 023-first | removed |\n| 023-second | removed |\n",
+                encoding="utf-8",
+            )
+            (history / "spec-id-collision-acknowledgements.json").write_text(
+                json.dumps(
+                    {
+                        "schema_version": "1",
+                        "entries": [
+                            {
+                                "prefix": "023",
+                                "spec_ids": ["023-first", "023-second"],
+                                "reason": "Legacy active-only allocation.",
+                                "disposition": "Preserve both IDs and never reuse the prefix.",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            payload = core.spec_id_inventory(repo)
+
+            self.assertEqual("037", payload["next_available_spec_number"])
+            self.assertEqual("high", payload["confidence"])
+            self.assertEqual([23, 36], payload["used_numbers"])
+            self.assertIn(
+                "SPEC_ID_PREFIX_DUPLICATE_ACKNOWLEDGED",
+                {item["code"] for item in payload["diagnostics"]},
+            )
+
+    def test_stale_collision_acknowledgement_does_not_suppress_duplicate(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            history = repo / "docs/history"
+            (repo / "docs/specs/023-first").mkdir(parents=True)
+            (repo / "docs/specs/023-second").mkdir()
+            history.mkdir(parents=True)
+            (history / "spec-id-collision-acknowledgements.json").write_text(
+                json.dumps(
+                    {
+                        "schema_version": "1",
+                        "entries": [
+                            {
+                                "prefix": "023",
+                                "spec_ids": ["023-first", "023-other"],
+                                "reason": "Stale record.",
+                                "disposition": "Preserve IDs.",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            payload = core.spec_id_inventory(repo)
+
+            self.assertEqual("reduced", payload["confidence"])
+            self.assertIn("SPEC_ID_PREFIX_DUPLICATE", {item["code"] for item in payload["diagnostics"]})
+
     def test_selected_docs_root_does_not_borrow_root_history(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)

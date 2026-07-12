@@ -1,0 +1,15 @@
+{
+  "schema_version": "1",
+  "entries": [
+    {
+      "prefix": "023",
+      "spec_ids": [
+        "023-hierarchical-spec-authoring-hooks",
+        "023-task-state-management-tools"
+      ],
+      "reason": "Legacy active-only allocation reused 023 after the first closed package was removed from the active spec tree.",
+      "disposition": "Preserve both historical identifiers, treat 023 as permanently consumed, and allocate subsequent specs above the highest used prefix.",
+      "acknowledged_on": "2026-07-12"
+    }
+  ]
+}
