@@ -982,8 +982,14 @@ def durable_source_refs(requirements_path: Path) -> list[str]:
         return []
     refs = []
     for line in match.group(1).splitlines():
-        if line.strip().startswith("- ") and ".md" in line:
-            refs.append(line.strip()[2:])
+        stripped = line.strip()
+        if stripped.startswith("- ") and ".md" in stripped:
+            refs.append(stripped[2:])
+            continue
+        if stripped.startswith("|") and ".md" in stripped:
+            cells = [cell.strip() for cell in stripped.strip("|").split("|")]
+            if cells and not re.fullmatch(r"[-: ]+", cells[0]):
+                refs.append(cells[0])
     return refs
 
 
@@ -4013,7 +4019,11 @@ def verification_evidence_records(spec_path: Path) -> list[dict[str, Any]]:
     lines = read_text(path).splitlines()
     in_log = False
     records: list[dict[str, Any]] = []
-    for idx, line in enumerate(lines, start=1):
+    idx = 0
+    while idx < len(lines):
+        line = lines[idx]
+        line_number = idx + 1
+        idx += 1
         if re.match(r"^##\s+Evidence Log\s*$", line, re.IGNORECASE):
             in_log = True
             continue
@@ -4030,13 +4040,31 @@ def verification_evidence_records(spec_path: Path) -> list[dict[str, Any]]:
             evidence = " | ".join(cell for cell in cells if cell)
         elif stripped.startswith("- "):
             evidence = stripped[2:].strip()
+            continuation: list[str] = []
+            while idx < len(lines):
+                following = lines[idx]
+                following_stripped = following.strip()
+                if (
+                    not following_stripped
+                    or following.startswith("## ")
+                    or following_stripped.startswith("- ")
+                    or following_stripped.startswith("|")
+                ):
+                    break
+                if following.startswith(("  ", "\t")):
+                    continuation.append(following_stripped)
+                    idx += 1
+                    continue
+                break
+            if continuation:
+                evidence = " ".join([evidence, *continuation])
         if not evidence:
             continue
         record = {
-            "id": f"verification:{idx}",
+            "id": f"verification:{line_number}",
             "source_type": "verification",
             "source_path": str(path),
-            "line": idx,
+            "line": line_number,
             "source_text": line,
             "evidence": evidence,
         }

@@ -3,7 +3,7 @@ title: Spec lifecycle management
 doc_type: design
 status: active
 owner: platform
-last_reviewed: 2026-06-13
+last_reviewed: 2026-07-12
 ---
 
 # Spec Lifecycle Management
@@ -129,6 +129,36 @@ review needs, context-budget gaps, correctness-property mappings, acceptance
 criteria coverage, and Agent Readiness Contract status. Requirements changed
 after design or tasks, or design changed after tasks, should trigger downstream
 review rather than silent artifact rewriting.
+
+`phase_gate_check` is the read-only decision facade across the full delivery
+lifecycle. It reports one of eight public phases: `requirements`, `design`,
+`tasks`, `implementation`, `verification`, `promotion`, `closure`, or
+`unknown`. The shared core remains caller-agnostic; MCP and CLI adapters add
+invocation provenance without changing the lifecycle decision. Existing lint,
+task, validation, promotion, and closure tools remain the authoritative
+diagnostic and expansion surfaces.
+
+Advancement is conservative. Missing or stale upstream review, unresolved
+blocking decisions, missing verification or promotion proof, and runnable
+implementation tasks keep `ready_to_advance` false. In particular, a runnable
+task produces `PHASE_GATE_TASK_REMAINS` and a `continue_task` action rather than
+allowing the presence of implementation evidence to imply readiness.
+
+Downstream artifacts may carry an `Upstream Fingerprints` table that records
+normalized content fingerprints for requirements or design inputs. The gate
+reports `current` when recorded and observed fingerprints match, `stale` when
+they differ, `review_required` when no usable record exists, and
+`not_applicable` before the downstream artifact is relevant. Modification time
+is never proof of semantic currency or staleness, and v1 does not write these
+records.
+
+The aggregate supports compact, full, and closed-section views plus
+fingerprint-guarded expansion. It orders mandatory blockers before advisory
+findings while bounding compact output to 20 findings, 10 actions, and a 32 KiB
+target; explicit truncation state and expansion expose omitted detail. An
+expansion whose expected fingerprint no longer matches returns a stale response
+with refreshed arguments instead of presenting new evidence as the referenced
+result.
 
 Correctness properties and acceptance criteria are part of readiness, not
 closure-only paperwork. Each stable correctness property should map to design

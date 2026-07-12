@@ -414,8 +414,27 @@ Use these gate names when reporting readiness:
   the active package can be removed after a final spec commit.
 
 If a gate is not ready, report concrete blockers and the evidence needed to
-clear them. Runtime-enforced gate fields are intentionally deferred until a
-focused spec defines schema and compatibility behavior.
+clear them. Use MCP `phase_gate_check` for a single read-only decision across
+the eight public phases: `requirements`, `design`, `tasks`, `implementation`,
+`verification`, `promotion`, `closure`, and `unknown`. Prefer MCP when it is
+available; use the retained `phase-gate-check` CLI only for validation, CI, MCP
+debugging, or explicit no-MCP recovery.
+
+Treat `ready_to_advance` conservatively. Runnable tasks, missing or stale
+upstream review, unresolved blocking decisions, missing verification proof, and
+incomplete durable promotion prevent advancement. The aggregate is a bounded
+facade, not a replacement for authoritative lint, task, validation, promotion,
+or closure tools: compact/full output and closed-section expansion preserve
+their severity and proof meaning. Compact output orders blockers first, returns
+at most 20 findings and 10 actions with a 32 KiB target, and reports truncation
+plus expansion arguments. Fingerprint-mismatched expansion reports `stale`.
+
+When downstream artifacts record an `Upstream Fingerprints` table, interpret
+matching evidence as `current`, changed content as `stale`, absent usable
+records as `review_required`, and not-yet-relevant artifacts as
+`not_applicable`. Never use file modification time as proof of semantic
+currency. The lifecycle core stays caller-agnostic; MCP and CLI adapters own
+invocation provenance.
 
 ### Spec Lifetime
 

@@ -68,10 +68,15 @@ last_reviewed: 2026-07-12
     Claude parity, strict package contract, sync guard, and npm pack passed after
     T001-T004; full validation contains 275 Python and 25 Node tests.
 
-- [ ] T006 Promote durable documentation and close B031
+- [x] T006 Promote durable documentation and close B031
   - Depends on: T001-T005.
   - Acceptance: durable design/reference/skill guidance describes shipped
     behavior, full validation passes, and closure records are reconciled.
+  - Evidence: 2026-07-12, current-state design, runtime reference, and skill
+    guidance document the shipped gate; B031 and roadmap R012 are delivered;
+    full validation passes with 278 Python and 25 Node tests plus lifecycle,
+    package, bundle-parity, dry-pack, and diff checks. The final package commit
+    is retained for the closure-plan and history-record workflow.
 
 ## Dependency Summary
 

@@ -1175,6 +1175,25 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertTrue(any(item["code"] == "EVIDENCE_MISSING" for item in payload["diagnostics"]))
         self.assertTrue(any(item["code"] == "EVIDENCE_NOT_RUN" for item in payload["diagnostics"]))
 
+    def test_evidence_quality_classifies_multiline_verification_bullets_as_one_record(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_evidence_quality_spec(Path(tmp))
+            verification = spec / "verification.md"
+            verification.write_text(
+                verification.read_text(encoding="utf-8").replace(
+                    "- Pending.",
+                    "- Full validation completed with\n"
+                    "  `python3 -m unittest` passing 12 tests.",
+                ),
+                encoding="utf-8",
+            )
+
+            payload = spec_runtime.evidence_quality_check(spec)
+
+        record = next(item for item in payload["records"] if item["id"] == "verification:18")
+        self.assertEqual("concrete", record["classification"])
+        self.assertIn("passing 12 tests", record["evidence"])
+
     def test_evidence_quality_prefers_concrete_proof_over_incidental_routing_language(self):
         cases = [
             "`vitest run` 459/459 pass. FOLLOW-UP: decide later whether legacy rows should be purged.",
@@ -3608,6 +3627,26 @@ class SpecRuntimeTests(unittest.TestCase):
 
         targets = {item["target"] for item in payload["targets"]}
         self.assertIn("docs/reference/current.md", targets)
+
+    def test_promotion_plan_reads_table_form_durable_source_baseline(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = write_complete_spec(Path(tmp))
+            requirements = spec / "requirements.md"
+            requirements.write_text(
+                requirements.read_text(encoding="utf-8").replace(
+                    "- `docs/reference/current.md`",
+                    "| Source | Current behavior |\n"
+                    "|---|---|\n"
+                    "| `docs/reference/current.md` | Durable runtime contract. |",
+                ),
+                encoding="utf-8",
+            )
+
+            payload = spec_runtime.promotion_plan(spec)
+
+        targets = {item["target"] for item in payload["targets"]}
+        self.assertIn("docs/reference/current.md", targets)
+        self.assertEqual([], payload["missing_targets"])
 
     def test_generate_review_packet_is_read_only_and_bounded(self):
         with tempfile.TemporaryDirectory() as tmp:

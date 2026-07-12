@@ -86,6 +86,7 @@ underlying workflow supports it.
 | `lifecycle-guide` | Return first-run repository classification, docs readiness, lifecycle tooling, active-spec readiness summaries, bootstrap recommendations, and next actions. |
 | `bootstrap-plan` | Preview minimal lifecycle docs/spec bootstrap writes for blank or near-blank repositories without mutating files. |
 | `stage-readiness` | Return staged artifact readiness, downstream review needs, context-budget gaps, correctness-property coverage, acceptance-criteria coverage, and Agent Readiness Contract status for one spec package. |
+| `phase-gate-check` | Return a bounded, read-only aggregate of the current lifecycle phase, advancement decision, blockers, next actions, source summaries, and fingerprint-guarded expansion state. |
 | `validation-plan` | Plan read-only validation checks from changed files and optional spec/task context, including check applicability, validation state, and a validation contract. |
 | `evidence-quality` | Review task and verification evidence quality, classify evidence strength, and return advisory diagnostics without mutating files. |
 | `closure-risk-review` | Aggregate closure readiness, promotion, validation, evidence, follow-up, decision, live-doc risk, and recovery signals into an advisory low/medium/high closure risk payload. |
@@ -154,6 +155,7 @@ Write-capable tools default to dry-run and require explicit `write_intent` when
 - `lifecycle_guide`
 - `bootstrap_plan`
 - `stage_readiness`
+- `phase_gate_check`
 - `validation_plan`
 - `evidence_quality_check`
 - `closure_risk_review`
@@ -181,6 +183,49 @@ Write-capable tools default to dry-run and require explicit `write_intent` when
 - `task_context`
 - `traceability_lookup`
 - `prompts_validate`
+
+### Phase Gate Check
+
+Use MCP `phase_gate_check` as the normal agent-facing decision facade. The
+retained CLI equivalent is available for validation, CI, MCP debugging, and
+explicit no-MCP recovery:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py phase-gate-check docs/specs/123-example
+```
+
+The result reports `requirements`, `design`, `tasks`, `implementation`,
+`verification`, `promotion`, `closure`, or `unknown`, with
+`ready_to_advance`, bounded findings and actions, applicable authoritative
+source summaries, and an evidence fingerprint. Runnable implementation work is
+a blocker: `PHASE_GATE_TASK_REMAINS` keeps advancement false and directs the
+caller to `continue_task`.
+
+`detail` accepts `compact`, `full`, or `section`. Section expansion uses the
+closed set `source_signals`, `coverage`, `validation`, `promotion`, and
+`closure` together with the expected evidence fingerprint. A mismatch returns
+`stale` and refreshed expansion arguments. Normal output is bounded to 20
+findings and 10 actions with a 32 KiB target; blockers are ordered before
+advisory findings, and truncation/limit state plus expansion expose omitted
+detail.
+
+Artifact freshness is content-based. An `Upstream Fingerprints` table can
+produce `current`, `stale`, `review_required`, or `not_applicable`; file
+modification time is not proof. The shared core is caller-agnostic, while the
+MCP and CLI adapters attach their own invocation provenance. The aggregate does
+not replace `lint_spec_package`, task context, validation, promotion, or closure
+tools as the authoritative detailed evidence surfaces.
+
+Record accepted upstream evidence in a downstream artifact using exact
+repo-relative paths and lowercase SHA-256 values:
+
+```markdown
+## Upstream Fingerprints
+
+| Upstream Artifact | Fingerprint |
+|---|---|
+| `docs/specs/123-example/requirements.md` | `sha256:<64 lowercase hex>` |
+```
 
 `scan_specs` accepts optional `repo_root`, `docs_root`, and
 `include_archived_lint` arguments. By default, archived packages remain visible

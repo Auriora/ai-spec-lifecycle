@@ -79,6 +79,23 @@ last_reviewed: 2026-07-12
   T006 remained runnable. Added non-waivable `PHASE_GATE_TASK_REMAINS` and a
   `continue_task` action. Requirements-stage readiness remains unaffected; 276
   full Python tests and bundle/package checks pass after remediation.
+- **2026-07-12 — T006:** Promoted current behavior into the durable lifecycle
+  design, runtime reference, and source/bundled skill guidance; closed B031 and
+  marked roadmap R012 delivered. Full `npm run validate` passes with 278 Python
+  and 25 Node tests, lifecycle/archive/prompt/package/sync checks, npm dry-pack,
+  and `git diff --check`. The final package commit is the immutable input to
+  closure-plan record rendering and package cleanup.
+- **2026-07-12 — multiline evidence correction:** Live closure dogfooding found
+  that verification bullets split over Markdown continuation lines lost their
+  concrete proof during classification. The shared parser now classifies each
+  complete bullet; a focused regression test and the 277-test full suite pass,
+  and the source gate now infers `closure` instead of incorrectly blocking at
+  `verification`.
+- **2026-07-12 — promotion baseline correction:** Closure preview found the
+  promotion planner ignored the template's table-form durable source baseline.
+  It now accepts bullet and table forms, returns the four concrete promotion
+  targets with no missing target, and passes focused plus 278-test full
+  validation with source/Codex/Claude parity.
 
 ## Quality Gates
 

@@ -35,6 +35,7 @@ for active implementation specs.
 | R009 | delivered | done | npm publish and release workflow | B044, B026, archive index entry `022-npm-publish-release-workflow` | GitHub Actions validates, packages, and gates npm publish/release artifacts with documented rollback and install verification. | platform | `docs/history/spec-archive-index.md`, `docs/history/spec-closure-log.md` |
 | R010 | delivered | done | Task state and implementation-readiness tools | B037, B038, archive index entry `023-task-state-management-tools` | Runtime and MCP can identify stale-open tasks, plan-only completion, blocked-output completion, broad-task splits, and required task context before implementation. | platform | `docs/history/spec-archive-index.md`, `docs/history/spec-closure-log.md` |
 | R011 | delivered | done | Guided documentation wizard | B049, archive index entry `026-guided-documentation-wizard` | Prompt-only wizard guides stage-specific questions, open-question routing, feedback dispositions, preview-first edit plans, and closure awareness by composing existing lifecycle surfaces. | platform | `docs/history/spec-archive-index.md`, `docs/history/spec-closure-log.md` |
+| R012 | delivered | done | Lifecycle phase gate check | B031, Spec 033 implementation evidence | MCP and retained CLI report eight-phase readiness, conservative blockers, bounded expansion, artifact freshness, and adapter provenance without replacing authoritative source tools. | platform | `docs/design/spec-lifecycle-management.md`, `docs/reference/spec-lifecycle-runtime.md` |
 
 ## Decision History
 
@@ -50,21 +51,19 @@ for active implementation specs.
 | 2026-06-13 | Prioritize runtime packets that reduce implementation loops before conversation-history mining. | Validation planning, task-state audit, evidence quality, closure risk, and staged preflight address observed agent inefficiency more directly than another history scan. | `docs/backlog/README.md`, archive entries for 019, 020, 021, and 023, active specs 022 and 024 |
 | 2026-06-13 | Treat misleading live documentation as higher risk than Git-history recoverability. | Closure risk must prefer removing or marking misleading live documents before cleanup. Git history and archive indexes provide recovery for removed package detail. | Archive index entry `021-closure-risk-review` |
 | 2026-07-12 | Separate business priority from dependency build order for Specs 033-036. | Spec 034 remains the P1 friction item, but its guarded writer follows the read-only gate contract. Spec 036's minimum envelope design must be accepted before Specs 033 and 035 freeze public response schemas. | B031, B050, B061, B062; active Specs 033-036 |
+| 2026-07-12 | Mark the read-only phase-gate dependency delivered. | Spec 033's MCP/CLI gate and the minimum Spec 036 envelope slice are shipped. Specs 035 and 036 remain active; this does not claim their broader work complete. | B031, Specs 033, 035, and 036 |
 
 ## Suggested Build Sequence
 
-1. Accept the minimum `036-compact-output-and-invocation-telemetry` envelope,
-   expansion, provenance, and compatibility design checkpoint before other new
-   aggregate response schemas are frozen; this is dependency order, not a
-   claim that B062 outranks the P1 phase-completion friction.
-2. Complete `033-phase-gate-check` design using that shared contract because its
-   bounded aggregate defines how existing lifecycle signals are composed.
-3. Complete `035-spec-id-allocation-and-creation-plan` using the same contract
-   so agents can open future specs without reconstructing numbering and template
-   authority.
-4. Continue `034-phase-completion-helper` after the read-only gate contract is
-   stable so guarded completion writes consume accepted gate semantics rather
-   than defining a competing readiness model.
+1. Continue `035-spec-id-allocation-and-creation-plan` using the shipped minimum
+   Spec 036 contract so agents can open future specs without reconstructing
+   numbering and template authority.
+2. Continue the remaining `036-compact-output-and-invocation-telemetry` work;
+   its minimum envelope and provenance slices are delivered, but the spec is
+   not complete.
+3. Continue `034-phase-completion-helper` now that the read-only Spec 033 gate
+   contract is stable, so guarded completion writes consume accepted gate
+   semantics rather than defining a competing readiness model.
 
 ## Routing Rules
 
