@@ -58,6 +58,12 @@ last_reviewed: 2026-07-12
   are stale with reconciliation actions, absent/malformed records require
   review, mtime-only changes are ignored, and repeated calls do not mutate
   files. Full validation passed with 263 Python and 25 Node tests.
+- **2026-07-12 — T003:** Added caller-agnostic compact, full, closed-section,
+  and stale phase-gate rendering. V016-V023 pass for deterministic source and
+  finding ordering, blocker-first bounds, overflow state, authority/proof
+  preservation, cross-mode fingerprints, wording/mtime stability, freshness-
+  driven stale expansion, and path/privacy exclusions. Full validation passed
+  with 271 Python and 25 Node tests.
 
 ## Quality Gates
 

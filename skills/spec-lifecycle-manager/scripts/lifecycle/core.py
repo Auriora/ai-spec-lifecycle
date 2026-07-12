@@ -41,7 +41,7 @@ from lifecycle.closure import (
     validate_owned_closure_records as closure_validate_owned_closure_records,
 )
 from lifecycle.migration import migrated_script_closure_check
-from lifecycle.provenance import evidence_fingerprint
+from lifecycle.provenance import canonical_json, evidence_fingerprint
 from spec_agent_schemas import (
     agent_unavailable_result_schema,
     review_packet_output_schema,
@@ -5645,6 +5645,11 @@ def _phase_gate_diagnostic(item: dict[str, Any]) -> dict[str, Any]:
     keys = (
         "severity",
         "code",
+        "source",
+        "authority",
+        "authoritative",
+        "blocking",
+        "advisory",
         "path",
         "line",
         "artifact",
@@ -5851,6 +5856,349 @@ def phase_gate_context(spec_path: Path) -> dict[str, Any]:
         "artifact_freshness": _phase_gate_artifact_freshness(spec),
         "sources": sources[:7],
     }
+
+
+PHASE_GATE_DETAILS = frozenset({"compact", "full", "section"})
+PHASE_GATE_SECTIONS = frozenset(
+    {"source_signals", "coverage", "validation", "promotion", "closure"}
+)
+PHASE_GATE_FINDING_LIMIT = 20
+PHASE_GATE_ACTION_LIMIT = 10
+PHASE_GATE_PAYLOAD_TARGET_BYTES = 32768
+PHASE_GATE_FULL_FINDING_LIMIT = 200
+PHASE_GATE_FULL_ACTION_LIMIT = 100
+PHASE_GATE_SOURCE_FINDING_LIMIT = 20
+
+
+def _phase_gate_relative_path(spec_path: Path, value: Any) -> Any:
+    """Normalize path-shaped evidence without leaking a host checkout path."""
+    if isinstance(value, Path):
+        value = str(value)
+    if not isinstance(value, str) or not value:
+        return value
+    root = repo_root_for(spec_path).resolve()
+    candidate = Path(value)
+    if candidate.is_absolute():
+        try:
+            return candidate.resolve().relative_to(root).as_posix()
+        except ValueError:
+            return candidate.name
+    return value.replace("\\", "/")
+
+
+def _phase_gate_normalize_finding(
+    spec_path: Path, source: str, finding: dict[str, Any]
+) -> dict[str, Any]:
+    normalized = dict(finding)
+    if "source" in normalized:
+        normalized["aggregate_source"] = source
+    else:
+        normalized["source"] = source
+    if "path" in normalized:
+        normalized["path"] = _phase_gate_relative_path(spec_path, normalized["path"])
+    if "reference" in normalized:
+        normalized["reference"] = _phase_gate_relative_path(
+            spec_path, normalized["reference"]
+        )
+    return normalized
+
+
+def _phase_gate_is_blocking(finding: dict[str, Any]) -> bool:
+    if finding.get("blocking") is True:
+        return True
+    return (
+        finding.get("severity") == "error"
+        and finding.get("waivable") is not True
+    )
+
+
+def _phase_gate_finding_sort_key(item: dict[str, Any]) -> tuple[Any, ...]:
+    severity_rank = {"error": 0, "warn": 1, "warning": 1, "info": 2}
+    return (
+        0 if _phase_gate_is_blocking(item) else 1,
+        severity_rank.get(str(item.get("severity", "info")), 3),
+        str(item.get("source", "")),
+        str(item.get("aggregate_source", "")),
+        str(item.get("code", "")),
+        str(item.get("reference", "")),
+    )
+
+
+def _phase_gate_decision_model(spec_path: Path, context: dict[str, Any]) -> dict[str, Any]:
+    findings: list[dict[str, Any]] = []
+    for source in context.get("sources", []):
+        name = str(source.get("source", "unknown"))
+        findings.extend(
+            _phase_gate_normalize_finding(spec_path, name, finding)
+            for finding in source.get("findings", [])
+        )
+
+    for missing in context.get("missing_evidence", []):
+        findings.append(
+            {
+                "severity": "error",
+                "code": "PHASE_GATE_EVIDENCE_MISSING",
+                "source": "stage_readiness",
+                "reference": missing,
+                "waivable": False,
+            }
+        )
+    for freshness in context.get("artifact_freshness", []):
+        status = freshness.get("status")
+        if status in {"stale", "review_required"}:
+            findings.append(
+                {
+                    "severity": "error" if status == "stale" else "warn",
+                    "code": (
+                        "PHASE_GATE_UPSTREAM_STALE"
+                        if status == "stale"
+                        else "PHASE_GATE_UPSTREAM_REVIEW_REQUIRED"
+                    ),
+                    "source": "artifact_freshness",
+                    "reference": freshness.get("artifact"),
+                    "waivable": status != "stale",
+                }
+            )
+
+    findings.sort(key=_phase_gate_finding_sort_key)
+    blockers = [item for item in findings if _phase_gate_is_blocking(item)]
+    actions = [
+        {
+            "action": "resolve_finding",
+            "source": item.get("source"),
+            "code": item.get("code"),
+            "reference": item.get("reference"),
+        }
+        for item in blockers
+    ]
+    if not blockers and context.get("next_phase"):
+        actions.append(
+            {"action": "advance_phase", "target_phase": context["next_phase"]}
+        )
+
+    decision = {
+        "applicability": context.get("applicability"),
+        "phase": context.get("phase"),
+        "next_phase": context.get("next_phase"),
+        "ready_to_advance": bool(
+            context.get("applicability") == "applicable"
+            and context.get("next_phase")
+            and not blockers
+        ),
+    }
+    return {"decision": decision, "findings": findings, "next_actions": actions}
+
+
+def _phase_gate_fingerprint_input(
+    spec_path: Path, context: dict[str, Any], model: dict[str, Any]
+) -> dict[str, Any]:
+    inventory = spec_summary(spec_path).get("artifacts", {}) if spec_path.is_dir() else {}
+    sources = []
+    for source in context.get("sources", []):
+        sources.append(
+            {
+                key: value
+                for key, value in source.items()
+                if key not in {"findings"} and not key.endswith("message")
+            }
+        )
+    freshness = [
+        {
+            "artifact": item.get("artifact"),
+            "status": item.get("status"),
+            "upstreams": [
+                {
+                    key: upstream.get(key)
+                    for key in (
+                        "artifact",
+                        "status",
+                    )
+                }
+                for upstream in item.get("upstreams", [])
+            ],
+        }
+        for item in context.get("artifact_freshness", [])
+    ]
+    fingerprint_findings = [
+        {
+            key: finding.get(key)
+            for key in (
+                "severity",
+                "code",
+                "source",
+                "aggregate_source",
+                "reference",
+                "waivable",
+                "blocking",
+                "lifecycle_gate",
+            )
+            if key in finding
+        }
+        for finding in model["findings"]
+    ]
+    return {
+        "spec_path": _phase_gate_relative_path(spec_path, spec_path),
+        "decision": model["decision"],
+        "artifact_presence": dict(sorted(inventory.items())),
+        "artifact_freshness": freshness,
+        "findings": fingerprint_findings,
+        "next_actions": model["next_actions"][:PHASE_GATE_ACTION_LIMIT],
+        "sources": sources,
+    }
+
+
+def _phase_gate_public_sources(
+    spec_path: Path, context: dict[str, Any]
+) -> list[dict[str, Any]]:
+    public: list[dict[str, Any]] = []
+    for source in context.get("sources", [])[:7]:
+        normalized = dict(source)
+        findings = [
+            _phase_gate_normalize_finding(
+                spec_path, str(source.get("source", "unknown")), finding
+            )
+            for finding in source.get("findings", [])
+        ]
+        findings.sort(key=_phase_gate_finding_sort_key)
+        normalized["findings"] = findings[:PHASE_GATE_SOURCE_FINDING_LIMIT]
+        normalized["finding_limits"] = {
+            "returned": len(normalized["findings"]),
+            "total": len(findings),
+            "limit": PHASE_GATE_SOURCE_FINDING_LIMIT,
+            "truncated": len(normalized["findings"]) < len(findings),
+        }
+        public.append(normalized)
+    return public
+
+
+def _phase_gate_expansion(
+    spec_path: Path, fingerprint: str, *, detail: str, section: str | None = None
+) -> dict[str, Any]:
+    arguments: dict[str, Any] = {
+        "spec_path": _phase_gate_relative_path(spec_path, spec_path),
+        "detail": detail,
+        "expected_fingerprint": fingerprint,
+    }
+    if section is not None:
+        arguments["section"] = section
+    return {"tool": "phase_gate_check", "arguments": arguments}
+
+
+def _phase_gate_section(
+    spec_path: Path, context: dict[str, Any], section: str
+) -> dict[str, Any]:
+    public_sources = _phase_gate_public_sources(spec_path, context)
+    source_names = {
+        "validation": {"validation_plan"},
+        "promotion": {"promotion_plan"},
+        "closure": {"closure_check"},
+    }
+    if section == "source_signals":
+        return {"sources": public_sources}
+    if section == "coverage":
+        return {
+            "missing_evidence": context.get("missing_evidence", []),
+            "artifact_freshness": context.get("artifact_freshness", []),
+        }
+    selected = source_names[section]
+    return {
+        "sources": [
+            source for source in public_sources if source.get("source") in selected
+        ]
+    }
+
+
+def phase_gate_check(
+    spec_path: Path,
+    detail: str = "compact",
+    section: str | None = None,
+    expected_fingerprint: str | None = None,
+) -> dict[str, Any]:
+    """Return the bounded, caller-agnostic phase-gate aggregate contract."""
+    if detail not in PHASE_GATE_DETAILS:
+        raise ValueError("detail must be one of: compact, full, section")
+    if detail == "section":
+        if section not in PHASE_GATE_SECTIONS:
+            raise ValueError(
+                "section must be one of: closure, coverage, promotion, source_signals, validation"
+            )
+    elif section is not None:
+        raise ValueError("section is only valid when detail='section'")
+    if expected_fingerprint is not None and not UPSTREAM_FINGERPRINT_RE.fullmatch(
+        expected_fingerprint
+    ):
+        raise ValueError("expected_fingerprint must be a sha256 fingerprint")
+
+    spec = spec_path.resolve()
+    context = phase_gate_context(spec)
+    model = _phase_gate_decision_model(spec, context)
+    fingerprint = evidence_fingerprint(
+        _phase_gate_fingerprint_input(spec, context, model),
+        domain="phase-gate-check-v1",
+    )
+    if expected_fingerprint is not None and expected_fingerprint != fingerprint:
+        return {
+            "status": "stale",
+            "schema_version": "1",
+            "requested_fingerprint": expected_fingerprint,
+            "current_evidence_fingerprint": fingerprint,
+            "expansion": _phase_gate_expansion(spec, fingerprint, detail=detail, section=section),
+        }
+
+    base = {
+        "detail": detail,
+        "schema_version": "1",
+        "decision": model["decision"],
+        "evidence_fingerprint": fingerprint,
+    }
+    if detail == "full":
+        return {
+            **base,
+            "findings": model["findings"][:PHASE_GATE_FULL_FINDING_LIMIT],
+            "next_actions": model["next_actions"][:PHASE_GATE_FULL_ACTION_LIMIT],
+            "context": {
+                "missing_evidence": context.get("missing_evidence", []),
+                "artifact_freshness": context.get("artifact_freshness", []),
+                "sources": _phase_gate_public_sources(spec, context),
+            },
+        }
+    if detail == "section":
+        assert section is not None
+        return {
+            **base,
+            "section": section,
+            "content": _phase_gate_section(spec, context, section),
+        }
+
+    findings = model["findings"][:PHASE_GATE_FINDING_LIMIT]
+    actions = model["next_actions"][:PHASE_GATE_ACTION_LIMIT]
+    limits = {
+        "findings": {
+            "returned": len(findings),
+            "total": len(model["findings"]),
+            "limit": PHASE_GATE_FINDING_LIMIT,
+            "truncated": len(findings) < len(model["findings"]),
+        },
+        "next_actions": {
+            "returned": len(actions),
+            "total": len(model["next_actions"]),
+            "limit": PHASE_GATE_ACTION_LIMIT,
+            "truncated": len(actions) < len(model["next_actions"]),
+        },
+        "payload_target_bytes": PHASE_GATE_PAYLOAD_TARGET_BYTES,
+        "limit_exceeded": len([item for item in model["findings"] if _phase_gate_is_blocking(item)])
+        > PHASE_GATE_FINDING_LIMIT,
+    }
+    result = {
+        **base,
+        "findings": findings,
+        "next_actions": actions,
+        "limits": limits,
+        "expansion": _phase_gate_expansion(spec, fingerprint, detail="full"),
+    }
+    if len(canonical_json(result).encode("utf-8")) > PHASE_GATE_PAYLOAD_TARGET_BYTES:
+        limits["limit_exceeded"] = True
+    return result
 
 
 def normalize_review_packet_type(review_type: str | None) -> tuple[str, dict[str, Any]]:

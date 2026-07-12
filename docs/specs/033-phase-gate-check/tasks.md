@@ -38,11 +38,15 @@ last_reviewed: 2026-07-12
 
 ## Phase 2: Aggregate Contract And Surfaces
 
-- [ ] T003 Render compact, full, section, and stale responses
+- [x] T003 Render compact, full, section, and stale responses
   - Depends on: T001, T002, Spec 036 T005
   - Apply bounds, deterministic fingerprints, closed sections, refreshed stale
     expansion arguments, and blocker-preservation rules.
   - Acceptance: bounds and stale fixtures pass; mandatory blockers remain visible.
+  - Evidence: 2026-07-12, compact/full/closed-section/stale fixtures pass with
+    deterministic decision fingerprints, blocker-first 20/10 bounds, explicit
+    limit state, same-tool expansion, authority preservation, and path privacy.
+    Full validation passed with 271 Python and 25 Node tests.
 
 - [ ] T004 Add MCP and retained CLI phase-gate surfaces
   - Depends on: T003

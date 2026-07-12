@@ -2,6 +2,7 @@ import os
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 
@@ -288,6 +289,205 @@ None.
                     ],
                     [upstream["artifact"] for upstream in item["upstreams"]],
                 )
+
+    def test_compact_is_deterministic_bounded_and_prioritizes_blockers(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = self.base_spec(Path(tmp))
+            context = core.phase_gate_context(spec)
+            context["sources"] = [
+                {
+                    "source": "lint_spec_package",
+                    "status": "findings",
+                    "finding_count": 26,
+                    "findings": [
+                        {
+                            "severity": "error" if index >= 5 else "warn",
+                            "code": f"CODE_{index:02d}",
+                            "path": str(spec / "requirements.md"),
+                            "reference": f"R{index:02d}",
+                            "waivable": index < 5,
+                        }
+                        for index in range(26)
+                    ],
+                }
+            ]
+            with mock.patch.object(core, "phase_gate_context", return_value=context):
+                first = core.phase_gate_check(spec)
+                second = core.phase_gate_check(spec)
+
+        self.assertEqual(first, second)
+        self.assertEqual(20, len(first["findings"]))
+        self.assertLessEqual(len(first["next_actions"]), 10)
+        self.assertTrue(first["limits"]["findings"]["truncated"])
+        self.assertTrue(first["limits"]["limit_exceeded"])
+        self.assertTrue(all(item["severity"] == "error" for item in first["findings"]))
+        self.assertNotIn(str(spec.parent.parent.parent), str(first))
+
+    def test_explicit_warning_blocker_is_preserved_and_precedes_source_advice(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = self.base_spec(Path(tmp))
+            context = core.phase_gate_context(spec)
+            advice = [
+                {
+                    "severity": "warn",
+                    "code": f"ADVISORY_{index:02d}",
+                    "advisory": True,
+                    "waivable": True,
+                }
+                for index in range(21)
+            ]
+            warning_blocker = {
+                "severity": "warn",
+                "code": "AUTHORITATIVE_WARNING_BLOCKER",
+                "source": "governance-policy",
+                "authority": "canonical",
+                "proof": "recorded",
+                "blocking": True,
+                "advisory": False,
+                "waivable": False,
+            }
+            context["sources"] = [
+                core._phase_gate_source(
+                    "lint_spec_package",
+                    status="findings",
+                    findings=[*advice, warning_blocker],
+                )
+            ]
+            with mock.patch.object(core, "phase_gate_context", return_value=context):
+                compact = core.phase_gate_check(spec)
+                section = core.phase_gate_check(
+                    spec, detail="section", section="source_signals"
+                )
+
+        surfaced = compact["findings"][0]
+        self.assertEqual("AUTHORITATIVE_WARNING_BLOCKER", surfaced["code"])
+        self.assertTrue(surfaced["blocking"])
+        self.assertEqual("canonical", surfaced["authority"])
+        self.assertEqual("recorded", surfaced["proof"])
+        self.assertFalse(compact["decision"]["ready_to_advance"])
+        source = section["content"]["sources"][0]
+        self.assertEqual("AUTHORITATIVE_WARNING_BLOCKER", source["findings"][0]["code"])
+        self.assertEqual(
+            {"returned": 20, "total": 22, "limit": 20, "truncated": True},
+            source["finding_limits"],
+        )
+
+    def test_render_modes_share_fingerprint_and_sections_are_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = self.base_spec(Path(tmp))
+            self.add_design(spec)
+            compact = core.phase_gate_check(spec)
+            full = core.phase_gate_check(spec, detail="full")
+            sections = {
+                section: core.phase_gate_check(spec, detail="section", section=section)
+                for section in core.PHASE_GATE_SECTIONS
+            }
+
+        self.assertEqual(compact["evidence_fingerprint"], full["evidence_fingerprint"])
+        self.assertTrue(
+            all(
+                payload["evidence_fingerprint"] == compact["evidence_fingerprint"]
+                for payload in sections.values()
+            )
+        )
+        self.assertLessEqual(len(full["context"]["sources"]), 7)
+        self.assertEqual(set(core.PHASE_GATE_SECTIONS), set(sections))
+
+    def test_invalid_detail_section_combinations_fail(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = self.base_spec(Path(tmp))
+            with self.assertRaises(ValueError):
+                core.phase_gate_check(spec, detail="verbose")
+            with self.assertRaises(ValueError):
+                core.phase_gate_check(spec, section="coverage")
+            with self.assertRaises(ValueError):
+                core.phase_gate_check(spec, detail="section")
+            with self.assertRaises(ValueError):
+                core.phase_gate_check(spec, detail="section", section="everything")
+
+    def test_wording_only_content_change_and_mtime_do_not_change_fingerprint(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = self.base_spec(Path(tmp))
+            before = core.phase_gate_check(spec)["evidence_fingerprint"]
+            requirements = spec / "requirements.md"
+            stat = requirements.stat()
+            os.utime(requirements, (stat.st_atime + 10, stat.st_mtime + 10))
+            self.assertEqual(before, core.phase_gate_check(spec)["evidence_fingerprint"])
+            requirements.write_text(
+                requirements.read_text(encoding="utf-8") + "\nAdditional explanatory wording.\n",
+                encoding="utf-8",
+            )
+            after = core.phase_gate_check(spec)["evidence_fingerprint"]
+        self.assertEqual(before, after)
+
+    def test_stale_expansion_returns_refreshed_same_tool_follow_up(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = self.base_spec(Path(tmp))
+            self.add_design(spec)
+            self.record_fingerprints(spec, "design.md", ["requirements.md"])
+            original = core.phase_gate_check(spec)
+            (spec / "requirements.md").write_text(
+                (spec / "requirements.md").read_text(encoding="utf-8") + "\nChanged.\n",
+                encoding="utf-8",
+            )
+            stale = core.phase_gate_check(
+                spec,
+                detail="section",
+                section="coverage",
+                expected_fingerprint=original["evidence_fingerprint"],
+            )
+
+        self.assertEqual("stale", stale["status"])
+        self.assertEqual(original["evidence_fingerprint"], stale["requested_fingerprint"])
+        self.assertNotEqual(
+            stale["requested_fingerprint"], stale["current_evidence_fingerprint"]
+        )
+        self.assertEqual("phase_gate_check", stale["expansion"]["tool"])
+        self.assertEqual(
+            stale["current_evidence_fingerprint"],
+            stale["expansion"]["arguments"]["expected_fingerprint"],
+        )
+        self.assertEqual("coverage", stale["expansion"]["arguments"]["section"])
+
+    def test_outputs_exclude_metadata_absolute_paths_commands_and_verbose_messages(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = self.base_spec(Path(tmp))
+            payloads = [
+                core.phase_gate_check(spec),
+                core.phase_gate_check(spec, detail="full"),
+                core.phase_gate_check(spec, detail="section", section="source_signals"),
+            ]
+            host_prefix = str(Path(tmp))
+
+        for payload in payloads:
+            rendered = str(payload)
+            self.assertNotIn("lifecycle_metadata", payload)
+            self.assertNotIn(host_prefix, rendered)
+            self.assertNotIn("host_command", rendered)
+            self.assertNotIn("message", rendered)
+
+    def test_ready_to_advance_is_conservative_for_stale_and_open_decisions(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            spec = self.base_spec(Path(tmp))
+            ready = core.phase_gate_check(spec)
+            self.assertTrue(ready["decision"]["ready_to_advance"])
+            self.add_design(spec)
+            self.record_fingerprints(spec, "design.md", ["requirements.md"])
+            (spec / "requirements.md").write_text(
+                (spec / "requirements.md").read_text(encoding="utf-8") + "\nChanged.\n",
+                encoding="utf-8",
+            )
+            stale = core.phase_gate_check(spec)
+            self.assertFalse(stale["decision"]["ready_to_advance"])
+            (spec / "open-decisions.md").write_text(
+                "| D001 | Choose policy | owner |\n", encoding="utf-8"
+            )
+            blocked = core.phase_gate_check(spec)
+        self.assertFalse(blocked["decision"]["ready_to_advance"])
+        self.assertIn(
+            "OPEN_DECISION_UNRESOLVED",
+            {item["code"] for item in blocked["findings"]},
+        )
 
 
 if __name__ == "__main__":
