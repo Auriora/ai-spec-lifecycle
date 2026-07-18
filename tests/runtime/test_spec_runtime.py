@@ -3206,8 +3206,45 @@ class SpecRuntimeTests(unittest.TestCase):
         payload = spec_runtime.load_prompt_definitions(ROOT)
 
         names = {prompt["name"] for prompt in payload["prompts"]}
-        self.assertTrue({"reconcile-spec", "choose-next-task", "task-context", "lint-spec", "developer-start", "documentation-wizard"} <= names)
+        self.assertTrue({"reconcile-spec", "choose-next-task", "task-context", "lint-spec", "developer-start", "documentation-wizard", "implementation-start"} <= names)
         self.assertEqual({"error": 0, "warn": 0, "info": 0}, payload["summary"])
+
+    def test_implementation_start_prompt_composes_read_only_task_readiness(self):
+        payload = spec_runtime.load_prompt_definitions(ROOT)
+        prompts = {prompt["name"]: prompt for prompt in payload["prompts"]}
+        prompt = prompts["implementation-start"]
+
+        self.assertEqual(
+            ["active_spec_preflight", "task_context", "traceability_lookup", "agent_readiness_packet", "stage_readiness", "validation_plan", "no_active_spec_context", "next_task"],
+            prompt["tools"],
+        )
+        self.assertEqual(
+            ["spec_id", "task_id", "repo_root"],
+            [argument["name"] for argument in prompt["arguments"]],
+        )
+        text = "\n".join(prompt["instructions"] + prompt["return_format"])
+        for expected in (
+            "Use developer-start for first-run repository orientation",
+            "Preserve every blocker",
+            "smallest concrete next action",
+            "Do not report ready to implement",
+            "If no active spec exists, use no_active_spec_context",
+            "If the selected task is not runnable, use next_task",
+            "Keep this prompt read-only",
+            "Do not mutate task state, edit lifecycle artifacts, or write evidence",
+            "planned validation, never completed evidence",
+            "MCP tools as the primary agent actions",
+            "validation_or_recovery_commands",
+            "source_provenance",
+            "expansion_guidance",
+        ):
+            with self.subTest(expected=expected):
+                self.assertIn(expected, text)
+
+        recovery = prompt["client_support_recovery"]
+        self.assertIn("MCP tools are unavailable", recovery)
+        self.assertIn("repo-relative", recovery)
+        self.assertIn("fallback_reason", recovery)
 
     def test_documentation_wizard_prompt_covers_guided_workflow_contract(self):
         payload = spec_runtime.load_prompt_definitions(ROOT)
@@ -3820,7 +3857,7 @@ class SpecRuntimeTests(unittest.TestCase):
         )
 
         payload = json.loads(completed.stdout)
-        self.assertEqual(10, len(payload["prompts"]))
+        self.assertEqual(11, len(payload["prompts"]))
 
     def test_cli_spec_close_hook_exits_nonzero_when_blocking(self):
         with tempfile.TemporaryDirectory() as tmp:

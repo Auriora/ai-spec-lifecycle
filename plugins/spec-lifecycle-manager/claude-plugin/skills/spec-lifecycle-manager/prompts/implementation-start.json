@@ -1,0 +1,64 @@
+{
+  "name": "implementation-start",
+  "description": "Prepare one selected active-spec task for implementation by composing authoritative lifecycle context without mutation.",
+  "arguments": [
+    {
+      "name": "spec_id",
+      "required": true,
+      "description": "Active spec package ID or path."
+    },
+    {
+      "name": "task_id",
+      "required": true,
+      "description": "Stable selected task ID, for example T003."
+    },
+    {
+      "name": "repo_root",
+      "required": false,
+      "description": "Optional repository root when it cannot be inferred from the session."
+    }
+  ],
+  "resources": [
+    "specs://{spec_id}/summary"
+  ],
+  "tools": [
+    "active_spec_preflight",
+    "task_context",
+    "traceability_lookup",
+    "agent_readiness_packet",
+    "stage_readiness",
+    "validation_plan",
+    "no_active_spec_context",
+    "next_task"
+  ],
+  "instructions": [
+    "Use the spec-lifecycle-manager skill and the selected spec and task as the bounded implementation slice.",
+    "Use developer-start for first-run repository orientation; this prompt prepares an already selected active-spec task for implementation.",
+    "Call active_spec_preflight first, then compose task_context and traceability_lookup so requirements, acceptance criteria, design sections, verification expectations, durable targets, open decisions, and dependency state remain independently inspectable.",
+    "Use agent_readiness_packet and stage_readiness as existing readiness authorities. Do not create a second readiness decision or a shared-core aggregate.",
+    "Treat validation_plan output as planned validation, never completed evidence.",
+    "Preserve every blocker reported by a source. Do not report ready to implement while any blocker remains; return the smallest concrete next action that can resolve or route each blocker.",
+    "If no active spec exists, use no_active_spec_context and do not invent a spec or task.",
+    "If the selected task is not runnable, use next_task to report a valid alternative or concrete blockers; do not invent a runnable task.",
+    "Keep this prompt read-only. Do not mutate task state, edit lifecycle artifacts, or write evidence.",
+    "Return MCP tools as the primary agent actions. Put repo-relative CLI equivalents only in validation_or_recovery_commands and include a fallback_reason.",
+    "Preserve the source tool and interface provenance for composed facts. Return identifiers and bounded summaries, not semantic source content."
+  ],
+  "return_format": [
+    "selected_repository",
+    "selected_spec",
+    "selected_task",
+    "preflight_and_dependencies",
+    "requirements_and_acceptance_criteria",
+    "design_verification_durable_targets_and_decisions",
+    "agent_readiness",
+    "validation_expectations",
+    "blockers",
+    "ordered_next_actions",
+    "mcp_primary_actions",
+    "validation_or_recovery_commands",
+    "source_provenance",
+    "expansion_guidance"
+  ],
+  "client_support_recovery": "Use MCP active_spec_preflight, task_context, traceability_lookup, agent_readiness_packet, stage_readiness, validation_plan, no_active_spec_context, and next_task when available. If MCP tools are unavailable, identify mcp_unavailable as the fallback_reason and use the repo-relative skills/spec-lifecycle-manager/scripts/spec_runtime.py equivalents for validation or explicit recovery; do not treat fallback execution or planned validation as completed evidence."
+}

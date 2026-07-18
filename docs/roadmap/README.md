@@ -37,6 +37,7 @@ for active implementation specs.
 | R011 | delivered | done | Guided documentation wizard | B049, archive index entry `026-guided-documentation-wizard` | Prompt-only wizard guides stage-specific questions, open-question routing, feedback dispositions, preview-first edit plans, and closure awareness by composing existing lifecycle surfaces. | platform | `docs/history/spec-archive-index.md`, `docs/history/spec-closure-log.md` |
 | R012 | delivered | done | Lifecycle phase gate check | B031, Spec 033 implementation evidence | MCP and retained CLI report eight-phase readiness, conservative blockers, bounded expansion, artifact freshness, and adapter provenance without replacing authoritative source tools. | platform | `docs/design/spec-lifecycle-management.md`, `docs/reference/spec-lifecycle-runtime.md` |
 | R013 | delivered | done | Provisional spec ID allocation and creation planning | B061, Spec 035 implementation evidence | Agents obtain docs-root-scoped next numbers and safe preview plans through MCP/orientation without manual arithmetic or false reservation claims. | platform | `docs/design/spec-lifecycle-management.md`, `docs/reference/spec-lifecycle-runtime.md` |
+| R014 | now | active | Lifecycle adoption workflow | B014, B015, B064; Spec 038; existing task-context, evidence-quality, promotion, capability, and advisory-hook surfaces | A declarative MCP-first start prompt composes full task context, evidence and promotion routing precede closure, source skill size falls by at least 30% without losing mandatory rules, ordinary write hooks neither run nor recommend full-package lint, explicit resume/closure/direct-validation boundaries remain available, and dogfood promotion preserves the external report's qualifications without importing analyser contracts. | platform | `docs/specs/038-lifecycle-adoption-workflow/`, `docs/reference/spec-lifecycle-dogfood-evaluation.md` |
 
 ## Decision History
 
@@ -60,6 +61,9 @@ for active implementation specs.
 1. Continue `034-phase-completion-helper` now that the read-only Spec 033 gate
    contract is stable, so guarded completion writes consume accepted gate
    semantics rather than defining a competing readiness model.
+2. Develop `038-lifecycle-adoption-workflow` as a separate read-only adoption
+   slice. It may compose Spec 034's eventual helper after that contract is
+   accepted, but it must not define or implement phase-completion mutation.
 
 ## Routing Rules
 

@@ -99,6 +99,14 @@ This path is for live delivery packages only. If `docs/specs/` is empty, use
 durable docs, backlog, roadmap, the closure log, and the archive index for
 current context and historical lookup.
 
+Current active packages:
+
+- `docs/specs/034-phase-completion-helper/`: guarded phase-completion evidence
+  and bookkeeping updates.
+- `docs/specs/038-lifecycle-adoption-workflow/`: declarative implementation-start,
+  evidence/promotion routing, measurable concise capability guidance, explicit
+  ordinary-write hook boundaries, and qualified external adoption evidence.
+
 When working inside a repository with its own documentation approach, lifecycle
 material may live under a named docs partition such as
 `docs/<name>/specs/[###-slug]/` to keep the target repository's documentation

@@ -3,7 +3,7 @@ title: Spec lifecycle MCP prompt definitions
 doc_type: reference
 status: draft
 owner: platform
-last_reviewed: 2026-06-05
+last_reviewed: 2026-07-18
 ---
 
 # Prompt Definitions
@@ -21,6 +21,7 @@ Implemented prompt definitions:
 - `choose-next-task`
 - `developer-start`
 - `documentation-wizard`
+- `implementation-start`
 - `lifecycle-complete`
 - `lifecycle-status`
 - `lifecycle-triage`
