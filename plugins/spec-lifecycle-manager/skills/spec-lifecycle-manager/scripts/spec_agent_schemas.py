@@ -374,7 +374,7 @@ def agent_unavailable_result_schema() -> dict[str, Any]:
 def lifecycle_capabilities_output_schema() -> dict[str, Any]:
     return {
         "type": "object",
-        "required": ["status", "server", "client", "dynamic_tools", "available_next_actions", "lifecycle_metadata"],
+        "required": ["status", "server", "client", "dynamic_tools", "available_next_actions", "validation_or_recovery", "lifecycle_metadata"],
         "properties": {
             "status": {"type": "string"},
             "server": {
@@ -398,6 +398,15 @@ def lifecycle_capabilities_output_schema() -> dict[str, Any]:
                 },
             },
             "available_next_actions": {"type": "array", "items": {"type": "object"}},
+            "validation_or_recovery": {
+                "type": "object",
+                "required": ["fallback_reason", "commands"],
+                "properties": {
+                    "fallback_reason": {"type": "string", "const": "mcp_unavailable"},
+                    "commands": {"type": "array", "items": {"type": "object"}},
+                },
+                "additionalProperties": False,
+            },
             "lifecycle_metadata": lifecycle_metadata_schema(),
         },
     }

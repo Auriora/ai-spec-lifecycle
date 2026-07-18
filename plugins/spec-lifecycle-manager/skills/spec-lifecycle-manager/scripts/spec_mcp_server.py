@@ -21,7 +21,7 @@ if str(SCRIPT_DIR) not in sys.path:
 from lifecycle import core as lifecycle_core
 import spec_agent_schemas
 from lifecycle import traceability
-from lifecycle.actions import lifecycle_next_actions
+from lifecycle.actions import lifecycle_action_presentation
 from lifecycle.capabilities import lifecycle_capabilities
 from lifecycle.migration import script_migration_inventory
 from lifecycle.provenance import assemble_lifecycle_metadata, resolve_runtime_identity
@@ -588,7 +588,7 @@ def tool_schema(
 
 def with_available_next_actions(payload: dict[str, Any], repo_root: Path, spec_path: Path | None = None) -> dict[str, Any]:
     enriched = dict(payload)
-    enriched["available_next_actions"] = lifecycle_next_actions(repo_root, spec_path)
+    enriched.update(lifecycle_action_presentation(repo_root, spec_path))
     return enriched
 
 

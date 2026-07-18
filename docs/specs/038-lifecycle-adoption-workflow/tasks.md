@@ -70,7 +70,7 @@ T009 + T010 -> T011 -> T012
 
 ## Phase 3: Next-Action And Interface Routing
 
-- [ ] T004 Add contract tests for evidence, promotion, and MCP/CLI action
+- [x] T004 Add contract tests for evidence, promotion, and MCP/CLI action
   routing.
   - Depends on: T001
   - Requirements: Requirement 3, Requirement 4
@@ -79,16 +79,24 @@ T009 + T010 -> T011 -> T012
     `tests/runtime/test_spec_mcp_server.py`
   - Acceptance: Pre-implementation fixtures cover R3, R4, CP-001, and CP-002 as
     specified in `verification.md`.
-  - Evidence: Pending.
+  - Evidence: 2026-07-18 runtime task context resolved R3, R4, CP-001, and
+    CP-002 with no gaps; three focused pre-implementation tests failed only
+    because shared presentation, MCP-primary action identity, and separated CLI
+    recovery did not yet exist.
 
-- [ ] T005 Implement shared next-action and interface presentation routing.
+- [x] T005 Implement shared next-action and interface presentation routing.
   - Depends on: T004
   - Requirements: Requirement 3, Requirement 4
   - Files: `skills/spec-lifecycle-manager/scripts/lifecycle/actions.py`,
     affected shared-core and adapter modules
   - Acceptance: T004 passes with existing authorities, adapter provenance, and
     bounded response contracts preserved.
-  - Evidence: Pending.
+  - Evidence: 2026-07-18 added shared MCP-primary action presentation with
+    repo-relative labelled CLI recovery; validation, evidence quality,
+    promotion, and closure are ordered through existing authorities; blockers
+    are preserved in a bounded 20-item view with source expansion. Four focused
+    contract tests and four supporting runtime/MCP/module checks passed, and
+    package parity reported both 62-file mirrors in sync.
 
 ## Phase 4: Advisory Hook Boundary
 

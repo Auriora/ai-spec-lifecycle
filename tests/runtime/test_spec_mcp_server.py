@@ -883,6 +883,30 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertIn("available_next_actions", stage)
         self.assertIn("Requirement 1", {item["id"] for item in readiness["required_review"]["requirements"]})
 
+    def test_active_spec_actions_are_mcp_primary_with_separate_cli_recovery(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / ".git").mkdir()
+            write_current_spec(repo)
+            responses = self.send(
+                rpc(1, "tools/call", {"name": "active_spec_preflight", "arguments": {"repo_root": str(repo)}}),
+                rpc(2, "tools/call", {"name": "lifecycle_capabilities", "arguments": {"repo_root": str(repo)}}),
+                root=repo,
+            )
+
+        payload = responses[0]["result"]["structuredContent"]
+        self.assertTrue(payload["available_next_actions"])
+        self.assertTrue(all(action["interface"] == "mcp" for action in payload["available_next_actions"]))
+        recovery = payload["validation_or_recovery"]
+        self.assertEqual("mcp_unavailable", recovery["fallback_reason"])
+        self.assertTrue(all(not item["command"].startswith("/") for item in recovery["commands"]))
+        capabilities = responses[1]["result"]["structuredContent"]
+        self.assertEqual("mcp", capabilities["lifecycle_metadata"]["invocation_surface"])
+        self.assertIn("validation_or_recovery", capabilities)
+        self.assertFalse(
+            any(item["command"].endswith("--spec-path ") for item in capabilities["validation_or_recovery"]["commands"])
+        )
+
     def test_mcp_context_tools_include_source_requirement_priority(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)

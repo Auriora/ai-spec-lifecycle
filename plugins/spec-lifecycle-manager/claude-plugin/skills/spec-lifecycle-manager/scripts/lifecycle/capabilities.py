@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from .actions import lifecycle_next_actions
+from .actions import lifecycle_action_presentation
 from .provenance import resolve_runtime_identity
 
 
@@ -30,6 +30,7 @@ def lifecycle_capabilities(
     client_capabilities = client.get("capabilities", UNKNOWN) if client else UNKNOWN
     status = "known" if client else "partial"
     resolved_server_version = server_version or resolve_runtime_identity(Path(__file__))["package_version"]
+    presentation = lifecycle_action_presentation(repo_root)
     return {
         "status": status,
         "server": {
@@ -53,5 +54,5 @@ def lifecycle_capabilities(
             "client_refresh_observed": state.get("client_refresh_observed", UNKNOWN),
             "decision": "stable_tool_surface",
         },
-        "available_next_actions": lifecycle_next_actions(repo_root),
+        **presentation,
     }

@@ -1281,6 +1281,63 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertEqual("findings", payload["status"])
         self.assertIn("by_classification", payload["summary"])
 
+    def test_next_action_routing_orders_validation_evidence_promotion_and_closure(self):
+        from lifecycle.actions import lifecycle_action_presentation
+
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            spec = write_closure_risk_ready_spec(repo)
+
+            presentation = lifecycle_action_presentation(repo, spec)
+
+        self.assertEqual(
+            ["plan_validation", "review_evidence", "plan_promotion", "check_closure"],
+            [action["id"] for action in presentation["available_next_actions"]],
+        )
+        self.assertTrue(all(action["interface"] == "mcp" for action in presentation["available_next_actions"]))
+        self.assertEqual("mcp_unavailable", presentation["validation_or_recovery"]["fallback_reason"])
+        self.assertTrue(
+            all(not command["command"].startswith("/") for command in presentation["validation_or_recovery"]["commands"])
+        )
+
+    def test_next_action_routing_preserves_evidence_blocker_before_closure(self):
+        from lifecycle.actions import lifecycle_action_presentation
+
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            spec = write_complete_spec(repo)
+
+            presentation = lifecycle_action_presentation(repo, spec)
+
+        actions = presentation["available_next_actions"]
+        self.assertEqual(["plan_validation", "review_evidence"], [action["id"] for action in actions])
+        self.assertTrue(actions[-1]["blockers"])
+        self.assertNotIn("check_closure", {action["id"] for action in actions})
+
+    def test_next_action_routing_bounds_blockers_with_source_expansion(self):
+        from lifecycle.actions import lifecycle_action_presentation
+
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            spec = write_complete_spec(repo)
+            tasks = spec / "tasks.md"
+            frontmatter, _ = tasks.read_text(encoding="utf-8").split("# Tasks", 1)
+            vague_tasks = "\n".join(
+                f"- [x] T{index:03d} Vague evidence.\n  - Evidence: Done."
+                for index in range(1, 26)
+            )
+            tasks.write_text(f"{frontmatter}# Tasks\n\n{vague_tasks}\n", encoding="utf-8")
+
+            presentation = lifecycle_action_presentation(repo, spec)
+
+        evidence_action = presentation["available_next_actions"][-1]
+        self.assertEqual(20, len(evidence_action["blockers"]))
+        self.assertEqual(
+            {"returned": 20, "total": 26, "truncated": True},
+            evidence_action["blocker_summary"],
+        )
+        self.assertEqual("evidence_quality_check", evidence_action["blocker_expansion"]["tool"])
+
     def test_package_contract_validates_required_shape(self):
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp) / "repo"
