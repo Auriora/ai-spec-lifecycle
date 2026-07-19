@@ -8,7 +8,6 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
-const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
@@ -25,15 +24,23 @@ function run(command, args, options = {}) {
   return result;
 }
 
+function runNpm(args, options = {}) {
+  if (process.platform === "win32") {
+    const npmCli = path.join(path.dirname(process.execPath), "node_modules", "npm", "bin", "npm-cli.js");
+    return run(process.execPath, [npmCli, ...args], options);
+  }
+  return run("npm", args, options);
+}
+
 const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "slm-package-smoke-"));
 try {
-  const pack = run(npmCommand, ["pack", "--json", "--pack-destination", tempRoot], {
+  const pack = runNpm(["pack", "--json", "--pack-destination", tempRoot], {
     env: { npm_config_cache: path.join(tempRoot, "npm-cache") },
   });
   const tarballName = JSON.parse(pack.stdout)[0].filename;
   const tarball = path.join(tempRoot, tarballName);
   const installRoot = path.join(tempRoot, "install");
-  run(npmCommand, ["install", "--prefix", installRoot, "--ignore-scripts", "--no-audit", "--no-fund", tarball], {
+  runNpm(["install", "--prefix", installRoot, "--ignore-scripts", "--no-audit", "--no-fund", tarball], {
     env: { npm_config_cache: path.join(tempRoot, "npm-cache") },
   });
 
