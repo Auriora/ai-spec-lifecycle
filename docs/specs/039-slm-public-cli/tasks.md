@@ -115,7 +115,7 @@ and machine output.
 **Purpose**: Make `slm` the sole release-package executable while preserving
 the package installer subcommand and repository-local `slc` separation.
 
-- [ ] T006 Implement the Node dispatcher and sole-bin package contract.
+- [x] T006 Implement the Node dispatcher and sole-bin package contract.
   - Depends on: T005
   - Requirement: Requirement 1, Requirement 8, Requirement 9
   - Files: `package.json`, `packaging/spec-lifecycle-manager/slm-cli.js`,
@@ -127,10 +127,11 @@ the package installer subcommand and repository-local `slc` separation.
     `slm install` retains installer behavior; read commands launch the bundled
     Python CLI through `resolve-python.mjs` without a shell; obsolete executable
     aliases are removed from package contracts and tests.
-  - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence mode: validation
+  - Evidence: Implemented packaging/spec-lifecycle-manager/slm-cli.js, sole package.json bin {slm: slm-cli.js}, in-process install routing, shell-free bundled Python query dispatch through resolve-python.mjs, child exit/signal forwarding, and strict package-contract bin_name/bin validation. Removed obsolete npm-install.js and long executable aliases. Updated package manifests, installer requirements/usage, package tests, and CI packaged-smoke step. Node syntax plus 16 dispatcher/resolver tests and 3 package-contract tests passed; git diff --check passed.
 
-- [ ] T007 Synchronize plugin bundles and validate packaged execution.
+  - Status: Node dispatcher and sole-bin contract complete; T007 bundle and packaged execution validation is ready.
+- [x] T007 Synchronize plugin bundles and validate packaged execution.
   - Depends on: T006
   - Requirement: Requirement 1, Requirement 7, Requirement 8, Requirement 9
   - Files: `plugins/spec-lifecycle-manager/`,
@@ -142,8 +143,9 @@ the package installer subcommand and repository-local `slc` separation.
   - Validation: Run source/bundle sync guard, package contract, npm pack
     dry-run, focused Node tests, and isolated tarball smoke.
   - Evidence mode: validation
-  - Evidence: Pending.
+  - Evidence: Synchronized the 65-file source skill to byte-equivalent Codex and Claude bundle trees with repo-local slc. Package contract passed with zero findings and sole slm bin. All 31 Node tests and 48 focused Python package/CLI/workflow tests passed. npm pack dry-run contained 158 files with every dispatcher and both bundled public runtimes. tests/runtime/slm_package_smoke.mjs built and installed the tarball in isolated roots, confirmed the npm slm shim and absence of legacy shims, and passed slm --help, slm specs --json, and slm install --help. Windows/macOS/Linux matrix workflow now runs the packaged smoke. git diff --check and MCP lint passed. Broader sync guard confirmed source bundle and Claude parity; its only cache finding is the intentionally unchanged user-wide 0.4.0 install, which checkout testing must not overwrite.
 
+  - Status: Phase 3 package dispatcher, bundles, and isolated packaged execution are complete; T008 durable documentation is next.
 ## Phase 4: Durable Documentation and Closure Readiness
 
 **Purpose**: Promote the accepted command contract and complete release-quality

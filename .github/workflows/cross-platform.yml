@@ -73,6 +73,9 @@ jobs:
       - name: Cross-platform install + MCP launch + hook smoke
         run: node tests/runtime/smoke_cross_platform.mjs
 
+      - name: Public slm built-package smoke
+        run: node tests/runtime/slm_package_smoke.mjs
+
       - name: Package payload (npm pack dry-run)
         run: npm pack --dry-run --json
 

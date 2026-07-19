@@ -51,8 +51,14 @@ class SpecPluginPackageTests(unittest.TestCase):
         self.assertTrue((PLUGIN / "skills" / "spec-lifecycle-manager" / "SKILL.md").is_file())
         self.assertTrue((PLUGIN / "skills" / "spec-lifecycle-manager" / "scripts" / "spec_mcp_server.py").is_file())
         self.assertTrue((PLUGIN / "skills" / "spec-lifecycle-manager" / "scripts" / "spec_runtime.py").is_file())
+        self.assertTrue((PLUGIN / "skills" / "spec-lifecycle-manager" / "scripts" / "slm_cli.py").is_file())
+        self.assertTrue((PLUGIN / "skills" / "spec-lifecycle-manager" / "scripts" / "lifecycle" / "public_cli.py").is_file())
+        self.assertTrue((PLUGIN / "skills" / "spec-lifecycle-manager" / "scripts" / "lifecycle" / "public_views.py").is_file())
         self.assertTrue((CLAUDE_PLUGIN / "skills" / "spec-lifecycle-manager" / "SKILL.md").is_file())
         self.assertTrue((CLAUDE_PLUGIN / "skills" / "spec-lifecycle-manager" / "scripts" / "spec_mcp_server.py").is_file())
+        self.assertTrue((CLAUDE_PLUGIN / "skills" / "spec-lifecycle-manager" / "scripts" / "slm_cli.py").is_file())
+        self.assertTrue((CLAUDE_PLUGIN / "skills" / "spec-lifecycle-manager" / "scripts" / "lifecycle" / "public_cli.py").is_file())
+        self.assertTrue((CLAUDE_PLUGIN / "skills" / "spec-lifecycle-manager" / "scripts" / "lifecycle" / "public_views.py").is_file())
         self.assertTrue((PLUGIN / "skills" / "spec-lifecycle-manager" / "prompts").is_dir())
         self.assertTrue((PLUGIN / "skills" / "spec-lifecycle-manager" / "references").is_dir())
 
@@ -210,18 +216,11 @@ class SpecPluginPackageTests(unittest.TestCase):
         for expansion in linked_expansions:
             self.assertIn(expansion, text)
 
-    def test_npm_package_exposes_installer_bin_and_payload(self):
+    def test_npm_package_exposes_sole_slm_bin_and_payload(self):
         package = json.loads(NPM_PACKAGE.read_text(encoding="utf-8"))
 
         self.assertEqual("@auriora/ai-spec-lifecycle", package["name"])
-        self.assertEqual(
-            "packaging/spec-lifecycle-manager/npm-install.js",
-            package["bin"]["ai-spec-lifecycle"],
-        )
-        self.assertEqual(
-            "packaging/spec-lifecycle-manager/npm-install.js",
-            package["bin"]["spec-lifecycle-manager"],
-        )
+        self.assertEqual({"slm": "packaging/spec-lifecycle-manager/slm-cli.js"}, package["bin"])
         self.assertIn("plugins/spec-lifecycle-manager", package["files"])
         self.assertIn("scripts/install-spec-lifecycle-manager-package.sh", package["files"])
         self.assertIn("packaging/spec-lifecycle-manager/npm-package.json", package["files"])
@@ -248,7 +247,7 @@ class SpecPluginPackageTests(unittest.TestCase):
         files = {item["path"] for item in payload["files"]}
 
         self.assertIn("package.json", files)
-        self.assertIn("packaging/spec-lifecycle-manager/npm-install.js", files)
+        self.assertIn("packaging/spec-lifecycle-manager/slm-cli.js", files)
         self.assertIn("packaging/spec-lifecycle-manager/npm-package.json", files)
         self.assertIn("packaging/spec-lifecycle-manager/generate-build-info.mjs", files)
         # Spec 028: the bin entrypoint imports these at install time, so the
@@ -266,6 +265,12 @@ class SpecPluginPackageTests(unittest.TestCase):
         self.assertIn("plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/SKILL.md", files)
         self.assertIn("plugins/spec-lifecycle-manager/mcp-launch.mjs", files)
         self.assertIn("plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/SKILL.md", files)
+        self.assertIn("plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/slm_cli.py", files)
+        self.assertIn("plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/lifecycle/public_cli.py", files)
+        self.assertIn("plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/lifecycle/public_views.py", files)
+        self.assertIn("plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/scripts/slm_cli.py", files)
+        self.assertIn("plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/scripts/lifecycle/public_cli.py", files)
+        self.assertIn("plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/scripts/lifecycle/public_views.py", files)
         self.assertFalse(any("__pycache__" in path for path in files))
         self.assertFalse(any(path.endswith((".pyc", ".pyo")) for path in files))
 

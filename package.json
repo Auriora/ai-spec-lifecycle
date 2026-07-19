@@ -17,8 +17,7 @@
     "lifecycle"
   ],
   "bin": {
-    "ai-spec-lifecycle": "packaging/spec-lifecycle-manager/npm-install.js",
-    "spec-lifecycle-manager": "packaging/spec-lifecycle-manager/npm-install.js"
+    "slm": "packaging/spec-lifecycle-manager/slm-cli.js"
   },
   "files": [
     "AGENTS.md",
@@ -27,7 +26,7 @@
     "docs/reference/spec-lifecycle-runtime.md",
     "packaging/spec-lifecycle-manager/package-manifest.json",
     "packaging/spec-lifecycle-manager/npm-package.json",
-    "packaging/spec-lifecycle-manager/npm-install.js",
+    "packaging/spec-lifecycle-manager/slm-cli.js",
     "packaging/spec-lifecycle-manager/installer.mjs",
     "packaging/spec-lifecycle-manager/generate-build-info.mjs",
     "packaging/spec-lifecycle-manager/resolve-python.mjs",
@@ -41,6 +40,7 @@
     "test:devcli": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_devcli_runner tests.runtime.test_devcli_cli",
     "test:node": "node --test tests/runtime/*.test.mjs",
     "smoke": "node tests/runtime/smoke_cross_platform.mjs",
+    "smoke:slm-package": "node tests/runtime/slm_package_smoke.mjs",
     "validate": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py' && node --test tests/runtime/*.test.mjs && PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py scan . && PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py archive-index . && PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py prompts && PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract . && PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py sync-guard . && npm_config_cache=/tmp/spec-lifecycle-npm-cache npm pack --dry-run --json && git diff --check"
   },
   "engines": {

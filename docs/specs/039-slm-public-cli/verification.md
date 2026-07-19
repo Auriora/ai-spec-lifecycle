@@ -24,10 +24,10 @@ and removal of unused executable aliases.
 | Shared public-view checkpoint passes | yes | passed | 2026-07-19: 22 focused public-view and shared-core regression tests passed; `git diff --check` and module compilation passed. |
 | Task evidence complete | yes | pending | |
 | Public CLI focused tests pass | yes | passed | 2026-07-19: 14 CLI tests and 17 shared-view tests passed; live checkout table/JSON smokes passed for all five query commands. |
-| Node dispatcher and Python resolver tests pass | yes | pending | |
-| Read-only worktree preservation passes | yes | passed for source CLI | 2026-07-19: isolated subprocess query preserved the complete repository fixture fingerprint; packaged proof remains T007. |
-| Source/Codex/Claude bundle parity passes | yes | pending | |
-| Package contract and tarball smoke pass | yes | pending | |
+| Node dispatcher and Python resolver tests pass | yes | passed | 2026-07-19: 31 Node tests passed, including shell-free query dispatch, install routing, resolver behavior, child exits, and signals. |
+| Read-only worktree preservation passes | yes | passed | Source fixture fingerprint passed and isolated installed-tarball `slm specs --json` completed without repository mutation. |
+| Source/Codex/Claude bundle parity passes | yes | passed | Source-to-Codex and source-to-Claude trees each contain 65 equivalent files. User-wide installed cache remains intentionally unchanged during checkout testing. |
+| Package contract and tarball smoke pass | yes | passed | Package contract has zero findings; 158-file dry-run contains all dispatcher/runtime files; isolated npm install passed `slm --help`, `slm specs --json`, and `slm install --help`. |
 | Windows, macOS, and Linux CI paths pass | yes | pending | |
 | Durable documentation promoted | yes | pending | |
 | Breaking executable rename reviewed and documented | yes | pending | |
@@ -41,28 +41,28 @@ and removal of unused executable aliases.
 | `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_public_views` | Shared view records, selection, filters, history, priority diagnostics, and read-only semantics | passed | 2026-07-19: 17 tests passed. |
 | `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_public_cli tests.runtime.test_public_views` | Public parsing, table/JSON parity, roots, errors, sanitization, read-only behavior, and shared record semantics | passed | 2026-07-19: 31 tests passed. |
 | Focused shared-core regression selection recorded in T003 evidence | Resolver, archive, priority, next-task, and grouped-task compatibility | passed | 2026-07-19: combined run passed 22 tests. |
-| `node --test tests/runtime/*.test.mjs` | Dispatcher, interpreter resolution, installer routing, and package behavior | pending | |
+| `node --test tests/runtime/*.test.mjs` | Dispatcher, interpreter resolution, installer routing, build identity, and MCP launch behavior | passed | 2026-07-19: 31 tests passed. |
 | `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'` | Full Python regression suite | pending | |
 | `npm run validate` | Full combined lifecycle, Node, package, sync, and whitespace validation | pending | |
-| `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .` | Package files and bin contract | pending | |
-| `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py sync-guard .` | Source/bundle/install/reload parity | pending | |
-| `npm_config_cache=/tmp/spec-lifecycle-npm-cache npm pack --dry-run --json` | Packed file inventory and bin metadata | pending | |
-| Isolated built-tarball smoke command defined by T007 | Verify `slm --help`, `slm specs --json`, and `slm install --help` from package artifact | pending | |
-| `git diff --check` | Whitespace and patch integrity | passed for Phase 2 | 2026-07-19 checkpoint. |
+| `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .` | Package files and bin contract | passed | Sole `slm` bin and source/Codex/Claude parity passed with zero findings. |
+| `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py sync-guard . --commits 0` | Source/bundle parity plus installed-cache advisory | passed for repository bundle scope | Both bundle trees are in sync; the unchanged user-wide 0.4.0 cache is correctly reported as drift and is not a checkout-test deployment target. |
+| `npm_config_cache=/tmp/spec-lifecycle-npm-cache npm pack --dry-run --json` | Packed file inventory and bin metadata | passed | 158 files; every dispatcher and Codex/Claude runtime file present. |
+| `node tests/runtime/slm_package_smoke.mjs` | Verify `slm --help`, `slm specs --json`, and `slm install --help` from an isolated installed tarball | passed | npm-created `slm` shim present; legacy bin shims absent; all three commands passed. |
+| `git diff --check` | Whitespace and patch integrity | passed through Phase 3 | 2026-07-19 checkpoints. |
 
 ## Requirement Coverage
 
 | Requirement | Acceptance criteria covered | Evidence | Residual risk |
 |-------------|-----------------------------|----------|---------------|
-| Requirement 1 | AC1-AC4 | pending | Public executable breaking change requires release communication. |
-| Requirement 2 | AC1-AC5 | Phase 2 source CLI passed; package pending | View reuses scan health and avoids repeated full lint through `spec_summary`. |
-| Requirement 3 | AC1-AC4 | Phase 2 source CLI passed; package pending | Ambiguity messages list sorted candidates. |
-| Requirement 4 | AC1-AC7 | Phase 2 source CLI passed; package pending | Open-state membership must remain aligned with future markers. |
-| Requirement 5 | AC1-AC5 | Phase 2 source CLI passed; package pending | Traceability may be absent in compatibility specs. |
-| Requirement 6 | AC1-AC5 | Phase 2 source CLI passed; package pending | Limit semantics follow newest-first durable archive order. |
-| Requirement 7 | AC1-AC5 | Phase 2 source CLI passed; package pending | Human table width varies across terminals. |
-| Requirement 8 | AC1-AC4 | Source paths passed; CI pending | Cross-platform packaged process behavior requires T007. |
-| Requirement 9 | AC1 | Source read-only fingerprint passed | AC2-AC4 require dispatcher, installer, bundle, and tarball proof. |
+| Requirement 1 | AC1-AC4 | Phase 3 package contract passed; docs pending | Public executable breaking change requires T008 release communication. |
+| Requirement 2 | AC1-AC5 | Source and packaged local paths passed; docs pending | View reuses scan health and avoids repeated full lint through `spec_summary`. |
+| Requirement 3 | AC1-AC4 | Source and packaged local paths passed; docs pending | Ambiguity messages list sorted candidates. |
+| Requirement 4 | AC1-AC7 | Source and packaged local paths passed; docs pending | Open-state membership must remain aligned with future markers. |
+| Requirement 5 | AC1-AC5 | Source and packaged local paths passed; docs pending | Traceability may be absent in compatibility specs. |
+| Requirement 6 | AC1-AC5 | Source and packaged local paths passed; docs pending | Limit semantics follow newest-first durable archive order. |
+| Requirement 7 | AC1-AC5 | Source and packaged local paths passed | Human table width varies across terminals. |
+| Requirement 8 | AC1-AC4 | Local packaged paths passed; matrix CI pending | Windows, macOS, and Linux workflow paths include the public packaged smoke. |
+| Requirement 9 | AC1-AC4 | Source/bundle/tarball paths passed | User-wide installation remains release-owned, not checkout-owned. |
 
 ## Correctness Property Coverage
 
@@ -70,8 +70,8 @@ and removal of unused executable aliases.
 |----------|------------|----------|---------------|
 | CP-001 | T001-T005 marker/filter tests | passed | none after exhaustive marker coverage |
 | CP-002 | T001-T005 next equivalence tests | passed | none after blocked/runnable fixtures |
-| CP-003 | T001, T004, T005 renderer parity tests | passed for source CLI | packaged parity remains T007 |
-| CP-004 | T001, T004, T005, T007 worktree fingerprint tests | passed for source CLI | install intentionally mutates user plugin state; packaged query proof remains T007 |
+| CP-003 | T001, T004, T005 renderer parity tests | passed | source and installed-tarball JSON paths passed |
+| CP-004 | T001, T004, T005, T007 worktree fingerprint tests | passed | install intentionally mutates only when explicitly selected |
 | CP-005 | T001-T005 ambiguity tests | passed | none |
 | CP-006 | T001-T005 removed/malformed history tests | passed | none |
 | CP-007 | T001-T005 priority parser/projection tests | passed | compatibility inputs remain allowed |
@@ -80,10 +80,10 @@ and removal of unused executable aliases.
 
 | Broad requirement, design target, or review finding | Implemented in this spec | Coverage state | Deferred or rejected work | Destination | Blocks closure? | Evidence |
 |-----------------------------------------------------|--------------------------|----------------|---------------------------|-------------|-----------------|----------|
-| Sole public `slm` executable and retained installer | none yet | not-covered | none | none | yes | pending |
-| Active, task, requirement, and history views | source Python CLI implemented | partial | Package dispatcher and bundle synchronization remain. | T006-T007 | yes | T004-T005 evidence |
-| Stable table/JSON output and selection semantics | source Python CLI implemented | partial | Packaged invocation proof remains. | T006-T007 | yes | 31 focused tests and live checkout smokes |
-| Read-only packaged cross-platform operation | source read-only behavior implemented | partial | Dispatcher, bundle, CI, and tarball proof remain. | T006-T007 | yes | fixture fingerprint passed |
+| Sole public `slm` executable and retained installer | implemented and packaged | partial | Durable migration and release communication remain. | T008 | yes | sole-bin contract and installed-tarball smoke |
+| Active, task, requirement, and history views | source and bundles implemented | partial | Durable runtime documentation remains. | T008 | yes | T004-T007 evidence |
+| Stable table/JSON output and selection semantics | source and packaged local paths implemented | partial | Durable interface documentation remains. | T008 | yes | focused tests and installed-tarball smoke |
+| Read-only packaged cross-platform operation | local package proof and matrix workflow implemented | partial | Matrix CI run and final full validation remain. | T009 | yes | source fingerprint, dispatcher tests, tarball smoke, workflow test |
 | Compatibility aliases | intentionally excluded | out-of-scope | Explicitly rejected; prior long executables are unused. | none | no | user decision, 2026-07-19 |
 | Write-capable lifecycle commands | intentionally excluded | out-of-scope | Future work requires a focused spec and explicit approval. | future backlog/spec if requested | no | Requirements non-goals |
 | Interactive TUI, colour, paging, and themes | intentionally excluded | out-of-scope | No demonstrated need in this slice. | backlog only if requested | no | Requirements non-goals |
@@ -92,7 +92,7 @@ and removal of unused executable aliases.
 
 | Field | Evidence | Residual risk |
 |-------|----------|---------------|
-| Scope and out-of-scope files | `requirements.md`, `design.md`, `change-impact.md` | Reconcile exact module names before T002/T004. |
+| Scope and out-of-scope files | `requirements.md`, `design.md`, `change-impact.md`; reconciled implementation files in T002/T004/T006/T007 | Durable promotion files remain T008. |
 | Must-read and optional context | `canonical-context.md`, all spec artifacts, package/runtime source | Source may evolve before implementation. |
 | Permissions and approval points | Read-only CLI; package bin removal approved; release/publish remains separately authorized | Publishing is not authorized merely by implementing this spec. |
 | Validation commands and expected signals | This file and task checkpoints | Focused command names finalized in T001. |

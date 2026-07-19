@@ -73,6 +73,10 @@ test("real install copies the plugin tree and registers the marketplace", async 
         fs.existsSync(path.join(root, "skills/spec-lifecycle-manager/scripts/spec_mcp_server.py")),
         `${root} server script`,
       );
+      assert.ok(
+        fs.existsSync(path.join(root, "skills/spec-lifecycle-manager/scripts/slm_cli.py")),
+        `${root} public CLI`,
+      );
     }
 
     // Marketplace registration written with our entry.

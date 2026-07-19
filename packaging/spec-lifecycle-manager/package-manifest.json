@@ -8,7 +8,12 @@
     "npm_publish_status": "published"
   },
   "installer": "packaging/spec-lifecycle-manager/installer.mjs",
-  "entrypoint": "plugin-bundled MCP launcher: plugins/spec-lifecycle-manager/mcp-launch.mjs via plugins/spec-lifecycle-manager/.mcp.json",
+  "entrypoint": "public CLI dispatcher: packaging/spec-lifecycle-manager/slm-cli.js; plugin-bundled MCP launcher: plugins/spec-lifecycle-manager/mcp-launch.mjs via plugins/spec-lifecycle-manager/.mcp.json",
+  "public_cli": {
+    "bin": "slm",
+    "dispatcher": "packaging/spec-lifecycle-manager/slm-cli.js",
+    "python_entrypoint": "plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/scripts/slm_cli.py"
+  },
   "dependency_install": {
     "python": ">=3.10",
     "install_command": "none",

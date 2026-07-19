@@ -18,6 +18,7 @@ class GitHubWorkflowTests(unittest.TestCase):
             "spec_runtime.py package-contract .",
             "spec_runtime.py sync-guard .",
             "npm pack --dry-run --json",
+            "node tests/runtime/slm_package_smoke.mjs",
             "git diff --check",
         ):
             with self.subTest(expected=expected):

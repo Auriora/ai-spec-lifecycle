@@ -75,13 +75,10 @@ def write_sync_guard_repo(repo: Path, codex_home: Path, include_cache: bool = Tr
             {
                 "name": "@auriora/ai-spec-lifecycle",
                 "version": "0.1.0-test",
-                "bin": {
-                    "ai-spec-lifecycle": "packaging/spec-lifecycle-manager/npm-install.js",
-                    "spec-lifecycle-manager": "packaging/spec-lifecycle-manager/npm-install.js",
-                },
+                "bin": {"slm": "packaging/spec-lifecycle-manager/slm-cli.js"},
                 "files": [
                     "packaging/spec-lifecycle-manager/npm-package.json",
-                    "packaging/spec-lifecycle-manager/npm-install.js",
+                    "packaging/spec-lifecycle-manager/slm-cli.js",
                     "plugins/spec-lifecycle-manager",
                     "scripts/install-spec-lifecycle-manager-package.sh",
                 ],
@@ -95,7 +92,7 @@ def write_sync_guard_repo(repo: Path, codex_home: Path, include_cache: bool = Tr
         '{"name": "spec-lifecycle-manager", "version": "0.1.0-test"}\n',
         encoding="utf-8",
     )
-    (repo / "packaging/spec-lifecycle-manager/npm-install.js").write_text("#!/usr/bin/env node\n", encoding="utf-8")
+    (repo / "packaging/spec-lifecycle-manager/slm-cli.js").write_text("#!/usr/bin/env node\n", encoding="utf-8")
     (repo / "packaging/spec-lifecycle-manager/npm-package.json").write_text(
         json.dumps(
             {
@@ -105,11 +102,12 @@ def write_sync_guard_repo(repo: Path, codex_home: Path, include_cache: bool = Tr
                 "version_source": "package.json#/version",
                 "install_command": "npx @auriora/ai-spec-lifecycle install",
                 "payload_root": "plugins/spec-lifecycle-manager",
-                "bin": "packaging/spec-lifecycle-manager/npm-install.js",
+                "bin_name": "slm",
+                "bin": "packaging/spec-lifecycle-manager/slm-cli.js",
                 "required_paths": [
                     "package.json",
                     "packaging/spec-lifecycle-manager/npm-package.json",
-                    "packaging/spec-lifecycle-manager/npm-install.js",
+                    "packaging/spec-lifecycle-manager/slm-cli.js",
                     "plugins/spec-lifecycle-manager/.codex-plugin/plugin.json",
                     "plugins/spec-lifecycle-manager/build-info.json",
                     "plugins/spec-lifecycle-manager/claude-plugin/.claude-plugin/plugin.json",
@@ -1356,10 +1354,26 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertEqual("@auriora/ai-spec-lifecycle", payload["package"]["name"])
         self.assertEqual("npm", payload["package"]["primary"])
         self.assertEqual("published", payload["package"]["npm"]["publish_status"])
+        self.assertEqual("slm", payload["package"]["npm"]["bin_name"])
         self.assertEqual("in_sync", payload["source_bundle_parity"]["status"])
         self.assertEqual("in_sync", payload["source_claude_parity"]["status"])
         self.assertTrue(all(item["exists"] for item in payload["required_paths"]))
         self.assertEqual(0, payload["summary"]["error"])
+
+    def test_package_contract_rejects_extra_or_legacy_bins(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            repo.mkdir()
+            write_sync_guard_repo(repo, Path(tmp) / "codex")
+            package_path = repo / "package.json"
+            package = json.loads(package_path.read_text(encoding="utf-8"))
+            package["bin"]["spec-lifecycle-manager"] = "packaging/spec-lifecycle-manager/slm-cli.js"
+            package_path.write_text(json.dumps(package), encoding="utf-8")
+
+            payload = spec_runtime.package_contract(repo)
+
+        self.assertEqual("findings", payload["status"])
+        self.assertIn("PACKAGE_NPM_BIN_MISMATCH", {item["code"] for item in payload["diagnostics"]})
 
     def test_package_contract_reports_missing_required_path(self):
         with tempfile.TemporaryDirectory() as tmp:

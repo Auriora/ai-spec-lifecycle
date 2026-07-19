@@ -3113,6 +3113,7 @@ def package_contract(repo_root: Path) -> dict[str, Any]:
         "publish_status": npm_contract.get("publish_status") if npm_contract else None,
         "version_source": npm_contract.get("version_source") if npm_contract else None,
         "install_command": npm_contract.get("install_command") if npm_contract else None,
+        "bin_name": npm_contract.get("bin_name") if npm_contract else None,
         "bin": npm_contract.get("bin") if npm_contract else None,
         "payload_root": npm_contract.get("payload_root") if npm_contract else None,
     }
@@ -3126,7 +3127,7 @@ def package_contract(repo_root: Path) -> dict[str, Any]:
         "claude_build_version": claude_build.get("package_version") if claude_build else None,
         "npm": npm_info,
     }
-    for field in ["package_name", "registry", "publish_status", "payload_root", "version_source", "install_command", "bin"]:
+    for field in ["package_name", "registry", "publish_status", "payload_root", "version_source", "install_command", "bin_name", "bin"]:
         if npm_contract is not None and not npm_contract.get(field):
             diagnostics.append(diagnostic("error", "PACKAGE_CONTRACT_FIELD_MISSING", npm_contract_path, f"Missing npm package contract field: {field}", lifecycle_gate="package", waivable=False))
     for field in ["name", "version", "bin", "files"]:
@@ -3137,9 +3138,19 @@ def package_contract(repo_root: Path) -> dict[str, Any]:
             diagnostics.append(diagnostic("error", "PACKAGE_NPM_NAME_MISMATCH", npm_package_path, "npm package contract name does not match package.json name.", lifecycle_gate="package", waivable=False))
         if npm_contract.get("bin"):
             bin_value = npm_package.get("bin")
-            bin_paths = list(bin_value.values()) if isinstance(bin_value, dict) else []
-            if npm_contract["bin"] not in bin_paths:
-                diagnostics.append(diagnostic("error", "PACKAGE_NPM_BIN_MISMATCH", npm_package_path, "npm package contract bin is not exposed by package.json.", lifecycle_gate="package", waivable=False))
+            expected_name = npm_contract.get("bin_name")
+            expected_path = npm_contract.get("bin")
+            if not isinstance(bin_value, dict) or bin_value != {expected_name: expected_path}:
+                diagnostics.append(
+                    diagnostic(
+                        "error",
+                        "PACKAGE_NPM_BIN_MISMATCH",
+                        npm_package_path,
+                        f"package.json must expose only the {expected_name!r} bin at {expected_path!r}.",
+                        lifecycle_gate="package",
+                        waivable=False,
+                    )
+                )
     if manifest is not None and not manifest.get("version"):
         diagnostics.append(diagnostic("error", "PACKAGE_MANIFEST_VERSION_MISSING", manifest_path, "Missing package manifest version.", lifecycle_gate="package", waivable=False))
     if plugin_manifest is not None and not plugin_manifest.get("version"):
