@@ -14,6 +14,39 @@ requires visible archived docs.
 
 ## Entries
 
+### 2026-07-19 - 038-lifecycle-adoption-workflow
+
+- **Spec:** `docs/specs/038-lifecycle-adoption-workflow/`
+- **Title:** Lifecycle adoption workflow requirements
+- **Final spec commit:** `3731ddb`
+- **Closure cleanup commit:** `pending-cleanup-commit`
+- **Closure action:** removed
+- **Durable docs updated:**
+  - `README.md`
+  - `docs/backlog/README.md`
+  - `docs/design/spec-lifecycle-management.md`
+  - `docs/reference/spec-lifecycle-dogfood-evaluation.md`
+  - `docs/reference/spec-lifecycle-manager-mcp-install.md`
+  - `docs/reference/spec-lifecycle-runtime.md`
+  - `docs/roadmap/README.md`
+  - `skills/spec-lifecycle-manager/`
+  - `plugins/spec-lifecycle-manager/skills/spec-lifecycle-manager/`
+  - `plugins/spec-lifecycle-manager/claude-plugin/skills/spec-lifecycle-manager/`
+- **Verification summary:** `npm run validate` passed 321 Python and 26 Node
+  tests plus scan, archive-index, prompt, package-contract, sync-guard, pack,
+  and whitespace checks. Final MCP package lint, evidence quality,
+  reconciliation, task-state audit, closure-risk review, and closure check had
+  no findings or blockers; closure risk was low.
+- **Residual risks:**
+  - Exact external operation distributions remain unavailable until the Chat
+    Analyser project resolves attribution and reconciliation defects.
+  - Client loaders can still reread the compact skill, and developers must use
+    the documented source-development launcher to avoid packaged duplication.
+- **Follow-up:** B014 and B015 retain future bounded discovery/friction studies;
+  B025 retains telemetry; Spec 034 retains phase-completion mutation; Chat
+  Analyser retains analysis defects; release notes remain with the next
+  packaged release workflow.
+
 ### 2026-07-12 - 037-closure-response-contract
 
 - **Spec:** `docs/specs/037-closure-response-contract/`
