@@ -4,6 +4,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest import mock
 
 
@@ -274,8 +275,8 @@ class HistoryAndSpecsViewTests(unittest.TestCase):
         filters = public_views.HistoryFilters(archived=True, removed=True, limit=2)
         with mock.patch.object(public_views.core, "archive_index", return_value=payload):
             view = public_views.build_history_view(Path("/repo"), filters=filters)
-        self.assertEqual(["002-b", "003-c"], [item["spec_id"] for item in view["records"]])
-        self.assertEqual(["removed", "archived"], [item["disposition"] for item in view["records"]])
+        self.assertEqual(["001-a", "002-b"], [item["spec_id"] for item in view["records"]])
+        self.assertEqual(["archived", "removed"], [item["disposition"] for item in view["records"]])
 
     def test_malformed_history_fails_closed_with_shared_diagnostics(self):
         payload = {"entries": [], "diagnostics": [{"severity": "error", "code": "ARCHIVE_BAD", "message": "bad row"}]}
@@ -297,13 +298,18 @@ class HistoryAndSpecsViewTests(unittest.TestCase):
                 }
             ]
         }
-        summary = {"tasks": {"total": 3, "complete": 1}}
         with (
             mock.patch.object(public_views.core, "scan_specs", return_value=scan),
-            mock.patch.object(public_views.core, "spec_summary", return_value=summary),
+            mock.patch.object(
+                public_views.core,
+                "parse_tasks",
+                return_value=[SimpleNamespace(complete=True), SimpleNamespace(complete=False), SimpleNamespace(complete=False)],
+            ),
             mock.patch.object(public_views.core, "next_task", return_value={"selected": {"task_id": "T002"}}),
+            mock.patch.object(public_views.core, "spec_summary") as repeated_lint,
         ):
             view = public_views.build_specs_view(Path("/repo"))
+        repeated_lint.assert_not_called()
         self.assertEqual(
             {
                 "spec_id": "001-one",

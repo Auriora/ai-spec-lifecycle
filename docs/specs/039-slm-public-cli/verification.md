@@ -23,9 +23,9 @@ and removal of unused executable aliases.
 | Requirements acceptance criteria reviewed | yes | passed | 2026-07-19 lifecycle review packet and traceability lookup; compatible-filter ambiguity resolved before commit. |
 | Shared public-view checkpoint passes | yes | passed | 2026-07-19: 22 focused public-view and shared-core regression tests passed; `git diff --check` and module compilation passed. |
 | Task evidence complete | yes | pending | |
-| Public CLI focused tests pass | yes | pending | |
+| Public CLI focused tests pass | yes | passed | 2026-07-19: 14 CLI tests and 17 shared-view tests passed; live checkout table/JSON smokes passed for all five query commands. |
 | Node dispatcher and Python resolver tests pass | yes | pending | |
-| Read-only worktree preservation passes | yes | pending | |
+| Read-only worktree preservation passes | yes | passed for source CLI | 2026-07-19: isolated subprocess query preserved the complete repository fixture fingerprint; packaged proof remains T007. |
 | Source/Codex/Claude bundle parity passes | yes | pending | |
 | Package contract and tarball smoke pass | yes | pending | |
 | Windows, macOS, and Linux CI paths pass | yes | pending | |
@@ -39,6 +39,7 @@ and removal of unused executable aliases.
 | Command | Purpose | Result | Evidence |
 |---------|---------|--------|----------|
 | `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_public_views` | Shared view records, selection, filters, history, priority diagnostics, and read-only semantics | passed | 2026-07-19: 17 tests passed. |
+| `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_public_cli tests.runtime.test_public_views` | Public parsing, table/JSON parity, roots, errors, sanitization, read-only behavior, and shared record semantics | passed | 2026-07-19: 31 tests passed. |
 | Focused shared-core regression selection recorded in T003 evidence | Resolver, archive, priority, next-task, and grouped-task compatibility | passed | 2026-07-19: combined run passed 22 tests. |
 | `node --test tests/runtime/*.test.mjs` | Dispatcher, interpreter resolution, installer routing, and package behavior | pending | |
 | `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'` | Full Python regression suite | pending | |
@@ -47,42 +48,42 @@ and removal of unused executable aliases.
 | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py sync-guard .` | Source/bundle/install/reload parity | pending | |
 | `npm_config_cache=/tmp/spec-lifecycle-npm-cache npm pack --dry-run --json` | Packed file inventory and bin metadata | pending | |
 | Isolated built-tarball smoke command defined by T007 | Verify `slm --help`, `slm specs --json`, and `slm install --help` from package artifact | pending | |
-| `git diff --check` | Whitespace and patch integrity | pending | |
+| `git diff --check` | Whitespace and patch integrity | passed for Phase 2 | 2026-07-19 checkpoint. |
 
 ## Requirement Coverage
 
 | Requirement | Acceptance criteria covered | Evidence | Residual risk |
 |-------------|-----------------------------|----------|---------------|
 | Requirement 1 | AC1-AC4 | pending | Public executable breaking change requires release communication. |
-| Requirement 2 | AC1-AC5 | pending | Task aggregation must remain responsive for many specs. |
-| Requirement 3 | AC1-AC4 | pending | Ambiguity messages must stay concise. |
-| Requirement 4 | AC1-AC7 | pending | Open-state membership and filter-union behavior must remain aligned with future markers. |
-| Requirement 5 | AC1-AC5 | pending | Traceability may be absent in compatibility specs. |
-| Requirement 6 | AC1-AC5 | pending | Historical ordering relies on durable record order. |
-| Requirement 7 | AC1-AC5 | pending | Human table width varies across terminals. |
-| Requirement 8 | AC1-AC4 | pending | Cross-platform root and process behavior requires CI. |
-| Requirement 9 | AC1-AC4 | pending | Tarball proof must not be substituted with checkout execution. |
+| Requirement 2 | AC1-AC5 | Phase 2 source CLI passed; package pending | View reuses scan health and avoids repeated full lint through `spec_summary`. |
+| Requirement 3 | AC1-AC4 | Phase 2 source CLI passed; package pending | Ambiguity messages list sorted candidates. |
+| Requirement 4 | AC1-AC7 | Phase 2 source CLI passed; package pending | Open-state membership must remain aligned with future markers. |
+| Requirement 5 | AC1-AC5 | Phase 2 source CLI passed; package pending | Traceability may be absent in compatibility specs. |
+| Requirement 6 | AC1-AC5 | Phase 2 source CLI passed; package pending | Limit semantics follow newest-first durable archive order. |
+| Requirement 7 | AC1-AC5 | Phase 2 source CLI passed; package pending | Human table width varies across terminals. |
+| Requirement 8 | AC1-AC4 | Source paths passed; CI pending | Cross-platform packaged process behavior requires T007. |
+| Requirement 9 | AC1 | Source read-only fingerprint passed | AC2-AC4 require dispatcher, installer, bundle, and tarball proof. |
 
 ## Correctness Property Coverage
 
 | Property | Covered by | Evidence | Residual risk |
 |----------|------------|----------|---------------|
-| CP-001 | T001-T005 marker/filter tests | pending | none after exhaustive marker coverage |
-| CP-002 | T001-T005 next equivalence tests | pending | none after blocked/runnable fixtures |
-| CP-003 | T001, T004, T005 renderer parity tests | pending | display truncation only |
-| CP-004 | T001, T004, T005, T007 worktree fingerprint tests | pending | install intentionally mutates user plugin state |
-| CP-005 | T001-T005 ambiguity tests | pending | none |
-| CP-006 | T001-T005 removed/malformed history tests | pending | none |
-| CP-007 | T001-T005 priority parser/projection tests | pending | compatibility inputs remain allowed |
+| CP-001 | T001-T005 marker/filter tests | passed | none after exhaustive marker coverage |
+| CP-002 | T001-T005 next equivalence tests | passed | none after blocked/runnable fixtures |
+| CP-003 | T001, T004, T005 renderer parity tests | passed for source CLI | packaged parity remains T007 |
+| CP-004 | T001, T004, T005, T007 worktree fingerprint tests | passed for source CLI | install intentionally mutates user plugin state; packaged query proof remains T007 |
+| CP-005 | T001-T005 ambiguity tests | passed | none |
+| CP-006 | T001-T005 removed/malformed history tests | passed | none |
+| CP-007 | T001-T005 priority parser/projection tests | passed | compatibility inputs remain allowed |
 
 ## Scope Reconciliation Before Closure
 
 | Broad requirement, design target, or review finding | Implemented in this spec | Coverage state | Deferred or rejected work | Destination | Blocks closure? | Evidence |
 |-----------------------------------------------------|--------------------------|----------------|---------------------------|-------------|-----------------|----------|
 | Sole public `slm` executable and retained installer | none yet | not-covered | none | none | yes | pending |
-| Active, task, requirement, and history views | none yet | not-covered | none | none | yes | pending |
-| Stable table/JSON output and selection semantics | none yet | not-covered | none | none | yes | pending |
-| Read-only packaged cross-platform operation | none yet | not-covered | none | none | yes | pending |
+| Active, task, requirement, and history views | source Python CLI implemented | partial | Package dispatcher and bundle synchronization remain. | T006-T007 | yes | T004-T005 evidence |
+| Stable table/JSON output and selection semantics | source Python CLI implemented | partial | Packaged invocation proof remains. | T006-T007 | yes | 31 focused tests and live checkout smokes |
+| Read-only packaged cross-platform operation | source read-only behavior implemented | partial | Dispatcher, bundle, CI, and tarball proof remain. | T006-T007 | yes | fixture fingerprint passed |
 | Compatibility aliases | intentionally excluded | out-of-scope | Explicitly rejected; prior long executables are unused. | none | no | user decision, 2026-07-19 |
 | Write-capable lifecycle commands | intentionally excluded | out-of-scope | Future work requires a focused spec and explicit approval. | future backlog/spec if requested | no | Requirements non-goals |
 | Interactive TUI, colour, paging, and themes | intentionally excluded | out-of-scope | No demonstrated need in this slice. | backlog only if requested | no | Requirements non-goals |

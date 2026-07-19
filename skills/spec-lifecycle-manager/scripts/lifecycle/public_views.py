@@ -123,10 +123,10 @@ def select_active_spec(repo_root: Path, reference: str | None = None, docs_root:
 
 def _active_spec_record(repo_root: Path, item: dict[str, Any]) -> dict[str, Any]:
     spec_path = Path(item["path"])
-    summary = core.spec_summary(spec_path)
+    tasks_path = spec_path / "tasks.md"
+    tasks = core.parse_tasks(tasks_path)
     next_payload = core.next_task(spec_path)
     selected = next_payload.get("selected")
-    tasks = summary.get("tasks", {})
     health = item.get("health", {})
     return {
         "spec_id": item.get("spec_id", spec_path.name),
@@ -135,8 +135,8 @@ def _active_spec_record(repo_root: Path, item: dict[str, Any]) -> dict[str, Any]
         "lifecycle": item.get("lifecycle"),
         "disposition": None,
         "health": health.get("severity", "unknown"),
-        "tasks_total": tasks.get("total", 0),
-        "tasks_complete": tasks.get("complete", 0),
+        "tasks_total": len(tasks),
+        "tasks_complete": sum(1 for task in tasks if task.complete),
         "next_task": selected.get("task_id") if isinstance(selected, dict) else None,
     }
 
@@ -351,7 +351,7 @@ def build_history_view(
         records = [record for record in records if record["disposition"] in dispositions]
     source_total = len(records)
     if selected_filters.limit is not None:
-        records = records[-selected_filters.limit :] if selected_filters.limit else []
+        records = records[: selected_filters.limit]
     return command_view(
         "history",
         root,

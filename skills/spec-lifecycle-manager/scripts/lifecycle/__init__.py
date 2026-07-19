@@ -10,6 +10,7 @@ __all__ = [
     "actions",
     "capabilities",
     "migration",
+    "public_cli",
     "public_views",
     "requirements",
     "traceability",

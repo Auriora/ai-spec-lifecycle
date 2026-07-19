@@ -82,7 +82,7 @@ the package executable.
 **Purpose**: Deliver the read-only Python command surface and consistent human
 and machine output.
 
-- [ ] T004 Implement the standard-library `slm` Python CLI and renderers.
+- [x] T004 Implement the standard-library `slm` Python CLI and renderers.
   - Depends on: T002
   - Requirement: Requirement 2, Requirement 3, Requirement 4, Requirement 5,
     Requirement 6, Requirement 7, Requirement 8, Requirement 9
@@ -93,10 +93,11 @@ and machine output.
   - Acceptance: `specs`, `tasks`, `next`, `requirements`, and `history` support
     the agreed selectors and filters, plain output, `--json`, root discovery,
     deterministic ordering, and documented error exits without mutation.
-  - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence mode: validation
+  - Evidence: Implemented scripts/slm_cli.py and lifecycle/public_cli.py with standard-library parsing, bare-specs defaulting, all five read-only query commands, compatible filters, deterministic selection, nested/-C repository resolution, shared normalized table/JSON rendering, control-sequence sanitization, and exit 0/1/2 mapping. Focused public CLI/view suite passed 31 tests. Live checkout smokes passed for specs, tasks/next, requirements, history, specs --all, table and JSON output; history limit was reconciled to the archive index's newest-first durable order. The specs view reuses scan health and does not call spec_summary, avoiding a repeated full lint per active spec.
 
-- [ ] T005 Checkpoint - Public command validation.
+  - Status: Public Python CLI and renderers complete; T005 checkpoint is ready.
+- [x] T005 Checkpoint - Public command validation.
   - Depends on: T003, T004
   - Requirement: Requirement 2, Requirement 3, Requirement 4, Requirement 5,
     Requirement 6, Requirement 7, Requirement 8, Requirement 9
@@ -106,8 +107,9 @@ and machine output.
     invalid filters, malformed history, and worktree preservation.
   - Validation: Run focused public CLI tests and `git diff --check`.
   - Evidence mode: validation
-  - Evidence: Pending.
+  - Evidence: Phase 2 checkpoint passed: 36 public CLI, shared-view, resolver, archive, priority, next-task, and grouped-task tests passed. Direct slm_cli.py --help succeeded; an invalid --next/--pending invocation exited 2, wrote no stdout, and reported the exclusive-filter error on stderr. Python module compilation and git diff --check passed. MCP lint reported 0 errors, 0 warnings, and 0 info findings. Focused fixtures verify table/JSON parity, nested discovery, explicit roots, valid empty repositories, ambiguity, invalid filters, malformed history, deterministic output, control-sequence sanitization, and complete worktree preservation.
 
+  - Status: Phase 2 public CLI and checkpoint complete; T006 package dispatcher is next.
 ## Phase 3: Packaging and Distribution
 
 **Purpose**: Make `slm` the sole release-package executable while preserving
