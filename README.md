@@ -46,7 +46,7 @@ The supported distribution is the npm package tarball attached to a GitHub
 release. Install the latest released package globally:
 
 ```bash
-npm install -g https://github.com/Auriora/ai-spec-lifecycle/releases/download/v0.3.0/auriora-ai-spec-lifecycle-0.3.0.tgz
+npm install -g https://github.com/Auriora/ai-spec-lifecycle/releases/download/v0.4.0/auriora-ai-spec-lifecycle-0.4.0.tgz
 ```
 
 ### Codex
@@ -90,7 +90,7 @@ For offline installation, download and unpack the release tarball, then use its
 bundled marketplace:
 
 ```bash
-tar -xzf auriora-ai-spec-lifecycle-0.3.0.tgz
+tar -xzf auriora-ai-spec-lifecycle-0.4.0.tgz
 claude plugin marketplace add ./package
 claude plugin install spec-lifecycle-manager@ai-spec-lifecycle
 ```

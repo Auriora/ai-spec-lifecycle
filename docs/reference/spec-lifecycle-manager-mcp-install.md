@@ -381,7 +381,7 @@ claude plugin marketplace add Auriora/ai-spec-lifecycle
 claude plugin install spec-lifecycle-manager@ai-spec-lifecycle
 ```
 
-To pin to a specific release, append the tag: `Auriora/ai-spec-lifecycle@v0.2.1`.
+To pin to a specific release, append the tag: `Auriora/ai-spec-lifecycle@v0.4.0`.
 For an offline install, download the release tarball, `tar -xzf` it, and
 `claude plugin marketplace add .\package` instead of the first line.
 

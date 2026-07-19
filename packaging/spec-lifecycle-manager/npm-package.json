@@ -1,7 +1,7 @@
 {
   "package_name": "@auriora/ai-spec-lifecycle",
   "registry": "npm",
-  "publish_status": "pack-ready-not-published",
+  "publish_status": "published",
   "version_source": "package.json#/version",
   "plugin_version_source": "plugins/spec-lifecycle-manager/.codex-plugin/plugin.json#/version",
   "install_command": "npx @auriora/ai-spec-lifecycle install",

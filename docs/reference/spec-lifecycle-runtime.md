@@ -760,7 +760,7 @@ The command checks:
   sync.
 - Git HEAD provenance is reported when available.
 
-The current npm status is `pack-ready-not-published`. CI validates the
+The current npm status is `published`. CI validates the
 candidate package with the same command family exposed by `npm run validate`:
 Python tests, Node tests, lifecycle scan, archive-index validation, prompt
 validation, package-contract, sync-guard, `npm pack --dry-run --json`, and

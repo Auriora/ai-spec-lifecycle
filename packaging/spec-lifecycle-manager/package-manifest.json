@@ -1,11 +1,11 @@
 {
   "name": "spec-lifecycle-manager",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "registry": "local",
   "distribution": {
     "npm_contract": "packaging/spec-lifecycle-manager/npm-package.json",
     "npm_package": "@auriora/ai-spec-lifecycle",
-    "npm_publish_status": "pack-ready-not-published"
+    "npm_publish_status": "published"
   },
   "installer": "packaging/spec-lifecycle-manager/installer.mjs",
   "entrypoint": "plugin-bundled MCP launcher: plugins/spec-lifecycle-manager/mcp-launch.mjs via plugins/spec-lifecycle-manager/.mcp.json",

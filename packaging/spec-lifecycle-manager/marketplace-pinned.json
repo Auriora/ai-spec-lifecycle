@@ -11,15 +11,15 @@
         "source": "git-subdir",
         "url": "https://github.com/Auriora/ai-spec-lifecycle.git",
         "path": "plugins/spec-lifecycle-manager/claude-plugin",
-        "ref": "v0.3.0"
+        "ref": "v0.4.0"
       },
       "displayName": "Spec Lifecycle Manager",
       "description": "Lifecycle guidance and read-only MCP tools for AI-assisted implementation specs.",
-      "version": "0.2.1",
+      "version": "0.4.0",
       "author": {
         "name": "Auriora"
       },
-      "homepage": "https://github.com/Auriora/ai-spec-lifecycle/tree/v0.3.0/plugins/spec-lifecycle-manager/claude-plugin",
+      "homepage": "https://github.com/Auriora/ai-spec-lifecycle/tree/v0.4.0/plugins/spec-lifecycle-manager/claude-plugin",
       "repository": "https://github.com/Auriora/ai-spec-lifecycle",
       "license": "GPL-3.0-or-later",
       "keywords": [

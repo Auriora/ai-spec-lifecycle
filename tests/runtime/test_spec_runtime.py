@@ -101,7 +101,7 @@ def write_sync_guard_repo(repo: Path, codex_home: Path, include_cache: bool = Tr
             {
                 "package_name": "@auriora/ai-spec-lifecycle",
                 "registry": "npm",
-                "publish_status": "pack-ready-not-published",
+                "publish_status": "published",
                 "version_source": "package.json#/version",
                 "install_command": "npx @auriora/ai-spec-lifecycle install",
                 "payload_root": "plugins/spec-lifecycle-manager",
@@ -1355,7 +1355,7 @@ class SpecRuntimeTests(unittest.TestCase):
         self.assertEqual("pass", payload["status"])
         self.assertEqual("@auriora/ai-spec-lifecycle", payload["package"]["name"])
         self.assertEqual("npm", payload["package"]["primary"])
-        self.assertEqual("pack-ready-not-published", payload["package"]["npm"]["publish_status"])
+        self.assertEqual("published", payload["package"]["npm"]["publish_status"])
         self.assertEqual("in_sync", payload["source_bundle_parity"]["status"])
         self.assertEqual("in_sync", payload["source_claude_parity"]["status"])
         self.assertTrue(all(item["exists"] for item in payload["required_paths"]))
