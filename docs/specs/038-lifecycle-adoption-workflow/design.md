@@ -71,8 +71,15 @@ project rather than this runtime.
 3. **Interface presentation**
    - Present MCP tool calls as primary agent actions when MCP is visible.
    - Put CLI equivalents in a separate `validation_or_recovery` section with a
-     fallback reason.
+     condition describing when they apply; do not label the current MCP result
+     as unavailable merely because recovery commands are present.
    - Preserve existing invocation provenance and bounded response contracts.
+   - Report lifecycle capability status as `ready` when the server can provide
+     its stable tool surface and state-based next actions. Treat missing client
+     identity as informational rather than partial functionality.
+   - Retain only standard initialization name, version, negotiated protocol,
+     and allowlisted structural capabilities in process memory when supplied.
+     Never persist, infer, or use client identity to select lifecycle actions.
 
 4. **Skill and capability guidance**
    - Keep core rules, lifecycle gates, access order, evidence semantics,

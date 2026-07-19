@@ -23,16 +23,18 @@ def lifecycle_capabilities(
     """Build an advisory MCP capability report.
 
     Missing client/session fields are reported as ``unknown`` instead of being
-    inferred from client names or private runtime details.
+    inferred from client names or private runtime details. Client observation
+    is informational and never changes lifecycle readiness or next actions.
     """
     state = session_state or {}
     client = state.get("client") if isinstance(state.get("client"), dict) else {}
     client_capabilities = client.get("capabilities", UNKNOWN) if client else UNKNOWN
-    status = "known" if client else "partial"
+    client_metadata_status = "observed" if client else "not_observed"
     resolved_server_version = server_version or resolve_runtime_identity(Path(__file__))["package_version"]
     presentation = lifecycle_action_presentation(repo_root)
     return {
-        "status": status,
+        "status": "ready",
+        "client_metadata_status": client_metadata_status,
         "server": {
             "name": server_name,
             "version": resolved_server_version,
@@ -54,5 +56,17 @@ def lifecycle_capabilities(
             "client_refresh_observed": state.get("client_refresh_observed", UNKNOWN),
             "decision": "stable_tool_surface",
         },
+        "limitations": (
+            []
+            if client
+            else [
+                {
+                    "code": "CLIENT_METADATA_NOT_OBSERVED",
+                    "severity": "info",
+                    "impact": "none",
+                    "message": "Client identity was not observed; lifecycle actions remain fully available and repository-state-based.",
+                }
+            ]
+        ),
         **presentation,
     }

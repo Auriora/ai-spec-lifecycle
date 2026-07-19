@@ -597,11 +597,13 @@ def call_tool(
     arguments: dict[str, Any],
     default_root: Path,
     default_root_source: str = "unknown",
+    session_state: dict[str, Any] | None = None,
 ) -> tuple[dict[str, Any], Path]:
     root = repo_root_arg(arguments, default_root)
     if name == "lifecycle_capabilities":
         payload = lifecycle_capabilities(
             root,
+            session_state=session_state,
             server_name=SERVER_NAME,
             server_version=SERVER_VERSION,
             protocol_version=PROTOCOL_VERSION,
@@ -1041,6 +1043,7 @@ def handle_request(
     message: dict[str, Any],
     repo_root: Path,
     root_source: str = "unknown",
+    session_state: dict[str, Any] | None = None,
 ) -> dict[str, Any] | None:
     request_id = message.get("id")
     method = message.get("method")
@@ -1049,6 +1052,22 @@ def handle_request(
         return None
     try:
         if method == "initialize":
+            if session_state is not None:
+                session_state["protocol_version"] = params.get("protocolVersion") or PROTOCOL_VERSION
+                client_info = params.get("clientInfo") if isinstance(params.get("clientInfo"), dict) else {}
+                raw_capabilities = params.get("capabilities") if isinstance(params.get("capabilities"), dict) else {}
+                capabilities = {
+                    key: raw_capabilities[key]
+                    for key in ("roots", "sampling", "elicitation")
+                    if key in raw_capabilities
+                }
+                if client_info or capabilities:
+                    session_state["client"] = {
+                        "name": client_info.get("name", "unknown"),
+                        "version": client_info.get("version", "unknown"),
+                        "protocol_version": session_state["protocol_version"],
+                        "capabilities": capabilities,
+                    }
             return response(
                 request_id,
                 {
@@ -1072,6 +1091,7 @@ def handle_request(
                 params.get("arguments") or {},
                 repo_root,
                 root_source,
+                session_state,
             )
             return response(request_id, tool_result(payload, target_root))
         if method == "resources/list":
@@ -1089,6 +1109,7 @@ def handle_request(
 
 def serve(repo_root: Path | None = None) -> int:
     root, root_source = default_repo_root_with_source(repo_root)
+    session_state: dict[str, Any] = {}
     for line in sys.stdin:
         if not line.strip():
             continue
@@ -1097,7 +1118,7 @@ def serve(repo_root: Path | None = None) -> int:
         except json.JSONDecodeError as exc:
             print(json.dumps(error_response(None, -32700, f"Parse error: {exc}")), flush=True)
             continue
-        result = handle_request(message, root, root_source)
+        result = handle_request(message, root, root_source, session_state)
         if result is not None:
             print(json.dumps(result, separators=(",", ":")), flush=True)
     return 0

@@ -180,10 +180,35 @@ T009 + T010 -> T011 -> T012
     attribution defect, and the prohibition on correctness, preference,
     usefulness, or causal claims.
 
+- [x] T009.1 Clarify capability status and retain bounded MCP client metadata.
+  - Depends on: T009
+  - Requirements: Requirement 4, Requirement 5
+  - Properties: CP-002, CP-005
+  - Files: capability core, MCP session adapter, schemas, bundle mirrors, and
+    focused runtime/MCP tests
+  - Acceptance: Missing client metadata is informational rather than a partial
+    lifecycle result; standard initialization identity is retained in memory
+    when supplied; lifecycle decisions remain repository-state-based; CLI
+    recovery is labelled as a hypothetical condition rather than current MCP
+    failure.
+  - Evidence mode: validation
+  - Evidence: 2026-07-19 changed the capability result to `ready` regardless
+    of optional client observation, added explicit `observed`/`not_observed`
+    metadata status and a zero-impact informational limitation, retained
+    allowlisted standard initialization metadata in process memory, and
+    labelled CLI recovery with `applies_when: mcp_unavailable`. Six
+    pre-implementation contracts failed on the former behavior and passed after
+    implementation; 222 affected tests and all 318 repository tests passed;
+    prompt, package, installed-cache, and source/Codex/Claude parity checks
+    passed with zero findings. After reload, the live MCP result reported
+    `status=ready`, `client_metadata_status=observed`, Codex client version
+    `0.144.6`, no limitations, and recovery commands labelled
+    `applies_when=mcp_unavailable`.
+
 ## Phase 7: Promotion And Closure
 
 - [ ] T011 Promote validated behavior and record residual destinations.
-  - Depends on: T009, T010
+  - Depends on: T009, T009.1, T010
   - Requirements: Requirement 1, Requirement 2, Requirement 3, Requirement 4,
     Requirement 5, Requirement 6
   - Files: durable promotion targets listed in `change-impact.md`

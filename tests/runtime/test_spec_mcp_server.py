@@ -358,7 +358,8 @@ class SpecMcpServerTests(unittest.TestCase):
             )
 
         payload = response["result"]["structuredContent"]
-        self.assertEqual("partial", payload["status"])
+        self.assertEqual("ready", payload["status"])
+        self.assertEqual("not_observed", payload["client_metadata_status"])
         self.assertEqual("spec-lifecycle-manager", payload["server"]["name"])
         self.assertEqual("0.3.0", payload["server"]["version"])
         self.assertFalse(payload["server"]["capabilities"]["tools"]["listChanged"])
@@ -370,6 +371,33 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertEqual("argument", metadata["root_source"])
         self.assertEqual(".", metadata["repo_root"])
         self.assertNotIn(str(repo), json.dumps(metadata))
+
+    def test_lifecycle_capabilities_retains_standard_initialize_client_metadata_in_memory(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            (repo / ".git").mkdir()
+            responses = self.send(
+                rpc(
+                    1,
+                    "initialize",
+                    {
+                        "protocolVersion": "2025-06-18",
+                        "clientInfo": {"name": "ExampleClient", "version": "1.2.3"},
+                        "capabilities": {"roots": {"listChanged": True}},
+                    },
+                ),
+                rpc(2, "tools/call", {"name": "lifecycle_capabilities", "arguments": {"repo_root": str(repo)}}),
+                root=repo,
+            )
+
+        payload = responses[1]["result"]["structuredContent"]
+        self.assertEqual("ready", payload["status"])
+        self.assertEqual("observed", payload["client_metadata_status"])
+        self.assertEqual("ExampleClient", payload["client"]["name"])
+        self.assertEqual("1.2.3", payload["client"]["version"])
+        self.assertEqual("2025-06-18", payload["client"]["protocol_version"])
+        self.assertEqual({"roots": {"listChanged": True}}, payload["client"]["capabilities"])
+        self.assertEqual([], payload["limitations"])
 
     def test_lifecycle_capabilities_retains_mcp_default_root_source(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -898,7 +926,8 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertTrue(payload["available_next_actions"])
         self.assertTrue(all(action["interface"] == "mcp" for action in payload["available_next_actions"]))
         recovery = payload["validation_or_recovery"]
-        self.assertEqual("mcp_unavailable", recovery["fallback_reason"])
+        self.assertEqual("mcp_unavailable", recovery["applies_when"])
+        self.assertNotIn("fallback_reason", recovery)
         self.assertTrue(all(not item["command"].startswith("/") for item in recovery["commands"]))
         capabilities = responses[1]["result"]["structuredContent"]
         self.assertEqual("mcp", capabilities["lifecycle_metadata"]["invocation_surface"])

@@ -40,6 +40,7 @@ closure destinations.
 | Implementation-start composition | add | existing lifecycle source tools | runtime reference and lifecycle design | yes |
 | Evidence/promotion next-action ordering | modify | shared lifecycle actions | runtime reference and lifecycle design | yes |
 | MCP-primary recovery separation | clarify | MCP-first runtime contract | runtime reference and skill | yes |
+| Capability readiness and bounded client observation | clarify | MCP initialization and capability contract | runtime reference | yes |
 | Concise skill entrypoint | modify | source skill and references | source skill and plugin bundles | yes |
 | Explicit ordinary-write versus lifecycle-boundary hook guidance | modify | hook runtime and lifecycle state | runtime reference and dogfood evaluation | yes, after T009 validation |
 | Qualified external adoption finding | consume | reviewed external report | dogfood evaluation | yes |

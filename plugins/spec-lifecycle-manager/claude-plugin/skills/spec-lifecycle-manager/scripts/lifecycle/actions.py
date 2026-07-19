@@ -85,7 +85,7 @@ def _recovery_command(action: dict[str, Any], repo_root: Path, spec_path: Path |
     return {
         "action_id": str(action["id"]),
         "command": commands[tool],
-        "fallback_reason": "mcp_unavailable",
+        "applies_when": "mcp_unavailable",
     }
 
 
@@ -279,7 +279,7 @@ def lifecycle_action_presentation(repo_root: Path, spec_path: Path | None = None
     return {
         "available_next_actions": actions,
         "validation_or_recovery": {
-            "fallback_reason": "mcp_unavailable",
+            "applies_when": "mcp_unavailable",
             "commands": [_recovery_command(action, repo_root, spec_path) for action in actions],
         },
     }

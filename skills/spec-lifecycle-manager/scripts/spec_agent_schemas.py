@@ -374,9 +374,10 @@ def agent_unavailable_result_schema() -> dict[str, Any]:
 def lifecycle_capabilities_output_schema() -> dict[str, Any]:
     return {
         "type": "object",
-        "required": ["status", "server", "client", "dynamic_tools", "available_next_actions", "validation_or_recovery", "lifecycle_metadata"],
+        "required": ["status", "client_metadata_status", "server", "client", "dynamic_tools", "limitations", "available_next_actions", "validation_or_recovery", "lifecycle_metadata"],
         "properties": {
-            "status": {"type": "string"},
+            "status": {"type": "string", "const": "ready"},
+            "client_metadata_status": {"type": "string", "enum": ["observed", "not_observed"]},
             "server": {
                 "type": "object",
                 "required": ["name", "version", "protocol_version", "capabilities"],
@@ -397,12 +398,26 @@ def lifecycle_capabilities_output_schema() -> dict[str, Any]:
                     "decision": {"type": "string"},
                 },
             },
+            "limitations": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "required": ["code", "severity", "impact", "message"],
+                    "properties": {
+                        "code": {"type": "string"},
+                        "severity": {"type": "string", "enum": ["info", "warn", "error"]},
+                        "impact": {"type": "string"},
+                        "message": {"type": "string"},
+                    },
+                    "additionalProperties": False,
+                },
+            },
             "available_next_actions": {"type": "array", "items": {"type": "object"}},
             "validation_or_recovery": {
                 "type": "object",
-                "required": ["fallback_reason", "commands"],
+                "required": ["applies_when", "commands"],
                 "properties": {
-                    "fallback_reason": {"type": "string", "const": "mcp_unavailable"},
+                    "applies_when": {"type": "string", "const": "mcp_unavailable"},
                     "commands": {"type": "array", "items": {"type": "object"}},
                 },
                 "additionalProperties": False,

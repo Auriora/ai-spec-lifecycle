@@ -1297,7 +1297,8 @@ class SpecRuntimeTests(unittest.TestCase):
             [action["id"] for action in presentation["available_next_actions"]],
         )
         self.assertTrue(all(action["interface"] == "mcp" for action in presentation["available_next_actions"]))
-        self.assertEqual("mcp_unavailable", presentation["validation_or_recovery"]["fallback_reason"])
+        self.assertEqual("mcp_unavailable", presentation["validation_or_recovery"]["applies_when"])
+        self.assertNotIn("fallback_reason", presentation["validation_or_recovery"])
         self.assertTrue(
             all(not command["command"].startswith("/") for command in presentation["validation_or_recovery"]["commands"])
         )

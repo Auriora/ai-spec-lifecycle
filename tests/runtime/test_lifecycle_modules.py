@@ -30,12 +30,15 @@ class LifecycleModuleTests(unittest.TestCase):
             )
             report = lifecycle_capabilities(repo)
 
-        self.assertEqual("partial", report["status"])
+        self.assertEqual("ready", report["status"])
+        self.assertEqual("not_observed", report["client_metadata_status"])
         self.assertEqual("spec-lifecycle-manager", report["server"]["name"])
         self.assertEqual("0.3.0", report["server"]["version"])
         self.assertFalse(report["server"]["capabilities"]["tools"]["listChanged"])
         self.assertEqual("unknown", report["client"]["name"])
         self.assertEqual("stable_tool_surface", report["dynamic_tools"]["decision"])
+        self.assertEqual("CLIENT_METADATA_NOT_OBSERVED", report["limitations"][0]["code"])
+        self.assertEqual("none", report["limitations"][0]["impact"])
         self.assertIn("available_next_actions", report)
 
     def test_capability_report_preserves_documented_session_state(self):
@@ -55,10 +58,12 @@ class LifecycleModuleTests(unittest.TestCase):
                 },
             )
 
-        self.assertEqual("known", report["status"])
+        self.assertEqual("ready", report["status"])
+        self.assertEqual("observed", report["client_metadata_status"])
         self.assertEqual("ExampleClient", report["client"]["name"])
         self.assertEqual({"roots": {"listChanged": True}}, report["client"]["capabilities"])
         self.assertEqual("unknown", report["dynamic_tools"]["client_refresh_observed"])
+        self.assertEqual([], report["limitations"])
 
     def test_capability_report_allows_an_explicit_server_version(self):
         with tempfile.TemporaryDirectory() as tmp:
