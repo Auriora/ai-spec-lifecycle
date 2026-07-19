@@ -201,8 +201,8 @@ class PublicCliRepositoryTests(unittest.TestCase):
             stderr = io.StringIO()
             with mock.patch.object(public_cli.public_views, "build_specs_view", return_value=view("specs", [])) as build:
                 code = public_cli.main(["specs", "--json"], stdout=stdout, stderr=stderr, cwd=nested)
+            self.assertTrue(root.samefile(build.call_args.args[0]))
         self.assertEqual(0, code)
-        self.assertEqual(root, build.call_args.args[0])
 
     def test_missing_explicit_repository_is_usage_error(self):
         stdout = io.StringIO()

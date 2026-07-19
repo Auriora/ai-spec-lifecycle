@@ -126,7 +126,10 @@ test("pins the resolved interpreter into installed configs (override = py -3)", 
     const codexMcp = JSON.parse(fs.readFileSync(path.join(root, ".mcp.json"), "utf8"));
     const codexServer = codexMcp.mcpServers["spec-lifecycle-manager"];
     assert.equal(codexServer.command, "node");
-    assert.deepEqual(codexServer.args, [path.join(root, "mcp-launch.mjs")]);
+    assert.deepEqual(
+      codexServer.args.map((value) => fs.realpathSync(value)),
+      [fs.realpathSync(path.join(root, "mcp-launch.mjs"))],
+    );
     assert.equal(codexServer.env.SPEC_LIFECYCLE_PYTHON, "py -3");
     assert.equal(codexServer.cwd, undefined);
 
