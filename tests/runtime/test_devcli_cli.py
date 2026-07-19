@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import sys
 import subprocess
 import tempfile
@@ -32,6 +33,9 @@ from auriora_dev.commands.release import (
 from auriora_dev.commands.release_notes import collect_release_notes_evidence, render_release_notes
 from auriora_dev.commands.spec import build_spec_plan
 from auriora_dev.commands.sync import build_bundles_plan, build_guard_plan
+
+
+ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 
 
 class DevCliSurfaceTests(unittest.TestCase):
@@ -117,7 +121,8 @@ class DevCliPlanTests(unittest.TestCase):
         )
 
         self.assertNotEqual(0, result.exit_code)
-        self.assertIn("--codex-home and --marketplace-root are required", result.output)
+        plain_output = ANSI_ESCAPE_RE.sub("", result.output)
+        self.assertIn("--codex-home and --marketplace-root are required", plain_output)
 
     def test_plugin_and_spec_plans_use_authoritative_commands(self) -> None:
         self.assertEqual(
