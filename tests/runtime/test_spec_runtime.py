@@ -7,6 +7,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT_DIR = ROOT / "skills/spec-lifecycle-manager/scripts"
@@ -16,6 +17,7 @@ sys.path.insert(0, str(SCRIPT_DIR))
 
 import spec_runtime
 from lifecycle import closure as closure_core
+from lifecycle import core as lifecycle_core
 
 
 GIT_ENV = {
@@ -3738,6 +3740,48 @@ class SpecRuntimeTests(unittest.TestCase):
 
         self.assertFalse(payload["blocked"])
         self.assertIn("OLD_FORMAT_MIGRATION_DECISION_NEEDED", {item["code"] for item in payload["diagnostics"]})
+
+    def test_ordinary_write_hooks_do_not_execute_or_recommend_full_package_lint(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            spec = write_complete_spec(repo)
+            template = repo / "docs/templates/spec-package/tasks.md"
+            template.parent.mkdir(parents=True)
+            template.write_text("# Tasks template\n", encoding="utf-8")
+            tasks_before = (spec / "tasks.md").read_text(encoding="utf-8")
+
+            hook_inputs = (
+                ("spec-file-changed", {"changed_files": ["docs/specs/001-current/verification.md"]}),
+                ("task-checkbox-changed", {"changed_files": ["docs/specs/001-current/tasks.md"]}),
+                ("template-changed", {"changed_files": ["docs/templates/spec-package/tasks.md"]}),
+                ("verification-updated", {"spec_path": spec}),
+            )
+            with mock.patch.object(lifecycle_core, "lint_spec_package", side_effect=AssertionError("full lint called")):
+                payloads = [
+                    spec_runtime.run_hook(repo, hook_name, severity_profile="advisory", **arguments)
+                    for hook_name, arguments in hook_inputs
+                ]
+            tasks_after = (spec / "tasks.md").read_text(encoding="utf-8")
+
+        for payload in payloads:
+            with self.subTest(hook=payload["hook"]):
+                self.assertTrue(payload["advisory"])
+                self.assertFalse(payload["blocked"])
+                self.assertNotIn("lint_spec_package", json.dumps(payload))
+        self.assertEqual(tasks_before, tasks_after)
+
+    def test_explicit_resume_and_close_hooks_retain_full_package_validation(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            spec = write_complete_spec(repo)
+            original = lifecycle_core.lint_spec_package
+            with mock.patch.object(lifecycle_core, "lint_spec_package", wraps=original) as lint:
+                resume = spec_runtime.run_hook(repo, "spec-resumed", spec_path=spec, severity_profile="advisory")
+                close = spec_runtime.run_hook(repo, "spec-close-check", spec_path=spec, severity_profile="advisory")
+
+        self.assertGreaterEqual(lint.call_count, 2)
+        self.assertFalse(resume["blocked"])
+        self.assertFalse(close["blocked"])
 
     def test_hook_spec_close_check_blocks_incomplete_spec(self):
         with tempfile.TemporaryDirectory() as tmp:

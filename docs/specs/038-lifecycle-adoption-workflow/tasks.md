@@ -4,7 +4,7 @@ doc_type: spec
 artifact_type: tasks
 status: draft
 owner: platform
-last_reviewed: 2026-07-18
+last_reviewed: 2026-07-19
 ---
 
 # Lifecycle Adoption Workflow Tasks
@@ -100,7 +100,7 @@ T009 + T010 -> T011 -> T012
 
 ## Phase 4: Advisory Hook Boundary
 
-- [ ] T006 Add focused tests for ordinary-write and lifecycle-boundary hooks.
+- [x] T006 Add focused tests for ordinary-write and lifecycle-boundary hooks.
   - Depends on: T001
   - Requirement: Requirement 6
   - Property: CP-003
@@ -108,9 +108,13 @@ T009 + T010 -> T011 -> T012
     `tests/runtime/test_codex_spec_lifecycle_hook.py`
   - Acceptance: Pre-implementation fixtures cover every R6 boundary and CP-003
     invariant specified in `verification.md`.
-  - Evidence: Pending.
+  - Evidence: 2026-07-19 runtime task context resolved Requirement 6 and
+    CP-003 with no gaps; five focused checks preserved resume/closure lint,
+    debounce, and advisory failure handling while failing only because ordinary
+    verification guidance named full lint and the wrapper omitted the narrow
+    verification hook.
 
-- [ ] T007 Implement the explicit hook recommendation boundary.
+- [x] T007 Implement the explicit hook recommendation boundary.
   - Depends on: T006
   - Requirement: Requirement 6
   - Files: `skills/spec-lifecycle-manager/scripts/lifecycle/core.py`,
@@ -118,7 +122,11 @@ T009 + T010 -> T011 -> T012
     wrapper behavior must change
   - Acceptance: T006 passes without new persistent state, mutation, or blocking
     behavior.
-  - Evidence: Pending.
+  - Evidence: 2026-07-19 replaced ordinary verification full-lint guidance
+    with validation-plan and evidence-quality actions and routed verification
+    writes through the narrow `verification-updated` hook. Eighteen focused
+    runtime/wrapper checks passed without new persistence, mutation, or blocking
+    behavior; source, Codex, and Claude copies were synchronized.
 
 ## Phase 5: Concise Skill And Capability Context
 

@@ -5544,7 +5544,7 @@ def recommended_tools_for_artifact(artifact: str | None, mode: str) -> list[str]
     elif artifact == "traceability.md":
         tools.extend(["task_context", "traceability_lookup"])
     elif artifact == "verification.md":
-        tools.extend(["lifecycle-validate prompt", "lint_spec_package"])
+        tools.extend(["validation_plan", "evidence_quality_check"])
     elif mode == "closure_check":
         tools.extend(["closure_check", "promotion_plan", "archive_index"])
     else:

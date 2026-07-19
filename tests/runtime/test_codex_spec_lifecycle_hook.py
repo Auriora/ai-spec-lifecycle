@@ -341,6 +341,33 @@ class CodexSpecLifecycleHookTests(unittest.TestCase):
                 )
                 self.assertEqual(["docs/specs/001-new/tasks.md"], paths)
 
+    def test_hook_routes_verification_writes_to_narrow_verification_check(self):
+        commands = hook_module.hook_commands(
+            ["docs/specs/001-valid/verification.md"]
+        )
+
+        self.assertIn(
+            ("verification-updated", ["docs/specs/001-valid/verification.md"]),
+            commands,
+        )
+
+    def test_hook_is_quiet_for_non_lifecycle_writes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repo"
+            repo.mkdir()
+            (repo / ".git").mkdir()
+            payload = {
+                "hook_event_name": "PostToolUse",
+                "cwd": str(repo),
+                "tool_name": "write_file",
+                "tool_input": {"path": "src/example.py"},
+            }
+
+            result = run_hook(payload)
+
+        self.assertEqual("", result.stdout)
+        self.assertEqual("", result.stderr)
+
     def test_hook_wrapper_logs_unexpected_errors_without_failing_codex(self):
         def fail() -> int:
             raise RuntimeError("forced hook failure")

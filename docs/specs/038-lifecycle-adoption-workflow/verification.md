@@ -4,7 +4,7 @@ doc_type: spec
 artifact_type: verification
 status: draft
 owner: platform
-last_reviewed: 2026-07-18
+last_reviewed: 2026-07-19
 ---
 
 # Lifecycle Adoption Workflow Verification
@@ -26,7 +26,7 @@ consumption of a qualified external dogfood report.
 | Explicit task-context lookup has no requirement or AC gaps | yes | passed | 2026-07-18 T002 and T006 runtime lookups returned linked requirements with no gaps |
 | Stage readiness has no contract or downstream-review gaps | yes | passed | 2026-07-18 runtime reported `ready_for_agent=true`, `ready_to_implement=true`, and zero summarized gaps |
 | Prompt/runtime tests pass | yes | passed | Five Phase 2 prompt checks and four Phase 3 routing contracts passed; supporting runtime/MCP/module checks also passed |
-| Ordinary-write and lifecycle-boundary hook fixtures pass | yes | pending | Ordinary writes exclude full lint; resume/closure retain explicit checks |
+| Ordinary-write and lifecycle-boundary hook fixtures pass | yes | passed | 18 focused runtime/wrapper checks: ordinary writes exclude full lint, verification uses its narrow hook, resume/closure retain full checks, debounce/quiet/advisory/no-mutation behavior preserved |
 | Mandatory skill-rule inventory and 37,399-byte ceiling pass | yes | pending | Baseline: 53,427 bytes |
 | Source and plugin bundles synchronized | yes | passed | 2026-07-18 package contract reported source/Codex and source/Claude parity in sync at 62 files each |
 | Qualified external dogfood evidence reviewed | yes | pending | Analysis implementation is not a gate in this repository |
@@ -42,9 +42,9 @@ consumption of a qualified external dogfood report.
 | MCP `stage_readiness` for Spec 038 | Check implementation readiness | passed via CLI recovery | `ready_for_agent=true`, `ready_to_implement=true`, zero summarized gaps; T004 selected |
 | MCP `prompts_validate` | Validate prompt definitions | passed via CLI recovery | `spec_runtime.py prompts .` returned 11 prompts and zero diagnostics; MCP was unavailable in this session |
 | Focused prompt and routing tests in `tests/runtime/test_spec_runtime.py` and `tests/runtime/test_spec_mcp_server.py` | Validate SC-001 through SC-003 | passed | Phase 2 prompt checks and four Phase 3 routing contracts passed, including ordering, blocker bounds/expansion, MCP-primary identity, CLI recovery, and provenance preservation |
-| Focused hook tests in `tests/runtime/test_spec_runtime.py` and `tests/runtime/test_codex_spec_lifecycle_hook.py` | Validate SC-005 and CP-003 | pending | |
+| Focused hook tests in `tests/runtime/test_spec_runtime.py` and `tests/runtime/test_codex_spec_lifecycle_hook.py` | Validate SC-005 and CP-003 | passed | 18 focused checks passed on 2026-07-19 |
 | `wc -c skills/spec-lifecycle-manager/SKILL.md` plus mandatory-rule inventory review | Validate SC-004 and CP-005 | pending | Must report no more than 37,399 bytes and all eight categories |
-| `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'` | Full regression suite | findings | 311 passed; the existing archive-count expectation remains the only failure (36 expected, 37 valid entries found) |
+| `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'` | Full regression suite | findings | 315 passed; the existing archive-count expectation remains the only failure (36 expected, 37 valid entries found) |
 | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py package-contract .` | Validate distribution contract | passed | Zero diagnostics; source/Codex and source/Claude mirrors in sync |
 | `PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py sync-guard .` | Validate source, bundles, installed cache, and reload evidence | findings | Source bundles in sync; installed 0.2.1 cache drift and reload remain deferred to T009 |
 | `git diff --check` | Validate whitespace | passed | 2026-07-18 Phase 2 worktree check returned no findings |
@@ -81,7 +81,9 @@ consumption of a qualified external dogfood report.
 | T003 | complete | Declarative prompt plus Codex/Claude mirrors added; five focused tests passed; prompt validation found 11 valid definitions; package source mirrors passed parity | No shared-core aggregate or mutation path added |
 | T004 | complete | Three pre-implementation contracts failed only on the absent shared presentation, MCP identity, and separated recovery contract; a fourth fixture covers bounded blocker expansion | Covers R3, R4, CP-001, and CP-002 |
 | T005 | complete | Shared action presentation composes existing validation, evidence, promotion, and closure authorities; four contract tests and supporting runtime/MCP/module checks passed; package mirrors are in sync | No competing readiness model added |
-| T006-T012 | pending | | |
+| T006 | complete | Five pre-implementation boundary checks preserved existing resume/closure, debounce, and advisory behavior and failed only on ordinary verification lint guidance and missing narrow wrapper dispatch | Covers R6 and CP-003 |
+| T007 | complete | Ordinary verification guidance now names validation/evidence checks; wrapper dispatches `verification-updated`; 18 focused checks passed with mirrors synchronized | No persistent state, mutation, or blocking behavior added |
+| T008-T012 | pending | | |
 
 ## Evidence Log
 
@@ -102,6 +104,9 @@ consumption of a qualified external dogfood report.
 | 2026-07-18 | Phase 3 package and focused regression validation | findings recorded | Package contract and whitespace passed with source/Codex/Claude parity; 210 of 211 focused module/runtime/MCP tests passed, with only the existing 36-versus-37 archive-count expectation failing. |
 | 2026-07-18 | Full repository `unittest` discovery after Phase 3 | 311 passed, 1 unrelated baseline failure | The only failure remains `test_archive_index_validates_current_index`: its fixture expects 36 entries while the valid archive index contains 37. |
 | 2026-07-18 | Post-Phase 3 package and lifecycle gates | passed | Package contract reported zero diagnostics and exact 62-file source/Codex/Claude parity; direct archive validation reported 37 valid entries with zero diagnostics; Spec 038 lint and task-state audit returned zero findings; stage readiness selected T006 with no gaps. |
+| 2026-07-19 | T006 pre-implementation hook boundary | failed as expected | Resume/closure full validation, debounce, and advisory error handling passed; ordinary verification authoring still recommended `lint_spec_package`, and the wrapper did not dispatch `verification-updated`. |
+| 2026-07-19 | T007 focused hook validation | passed | 18 runtime/wrapper checks covered ordinary spec, task, template, and verification writes; explicit resume and closure; debounce; quiet non-lifecycle writes; advisory failure behavior; and unchanged task content. |
+| 2026-07-19 | Post-Phase 4 regression, package, and lifecycle gates | findings recorded | Full discovery passed 315 of 316 tests with only the existing archive-count expectation; package contract reported exact 62-file source/Codex/Claude parity; Spec 038 lint and task-state audit returned zero findings; stage readiness selected T008 with no gaps; whitespace passed. |
 
 ## Review Reconciliation
 
@@ -117,7 +122,7 @@ remains pending from T002 onward.
 | Declarative implementation-start prompt | implemented | covered | shared-core aggregate if prompt acceptance fails | follow-up decision only if evidenced | no | T002-T003 focused tests and prompt/package validation |
 | Evidence, promotion, and MCP/CLI routing | implemented | covered | remote telemetry | B025 | no | T004-T005 focused tests and package parity |
 | Concise skill/capability guidance | pending | planned | client loader internals if still material | backlog or vendor | yes | T008-T009 |
-| Explicit advisory hook boundary | pending | planned | blocking hooks or automatic ordinary-write validation | none | yes | T006-T007 |
+| Explicit advisory hook boundary | implemented | covered | blocking hooks or automatic ordinary-write validation | none | no | T006-T007 focused runtime and wrapper tests |
 | Qualified external dogfood consumption | pending | planned | extraction, attribution, reconciliation, and report generation | Chat Analyser backlog | only an unavailable report blocks the dogfood claim | T010 |
 | Phase-completion writer | none | out-of-scope | all mutation behavior | Spec 034 | no | requirements boundary |
 
@@ -168,8 +173,8 @@ remains pending from T002 onward.
 
 ## Readiness Decision
 
-- **Ready to implement:** yes; Phases 2 and 3 are complete and T006 is the next
-  dependency-complete slice
+- **Ready to implement:** yes; Phases 2 through 4 are complete and T008 is the
+  next dependency-complete slice
 - **Ready for promotion:** no
 - **Ready for release:** no
 - **Ready for closure:** no

@@ -260,11 +260,14 @@ def hook_commands(changed_files: list[str]) -> list[tuple[str, list[str]]]:
     commands: list[tuple[str, list[str]]] = []
     spec_files = [path for path in changed_files if is_spec_file(path)]
     task_files = [path for path in changed_files if is_task_file(path)]
+    verification_files = [path for path in spec_files if Path(path).name == "verification.md"]
     template_files = [path for path in changed_files if is_template_file(path)]
     if spec_files:
         commands.append(("spec-file-changed", spec_files))
     if task_files:
         commands.append(("task-checkbox-changed", task_files))
+    if verification_files:
+        commands.append(("verification-updated", verification_files))
     if template_files:
         commands.append(("template-changed", template_files))
     return commands

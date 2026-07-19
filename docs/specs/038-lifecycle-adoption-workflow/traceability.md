@@ -4,7 +4,7 @@ doc_type: spec
 artifact_type: traceability
 status: draft
 owner: platform
-last_reviewed: 2026-07-18
+last_reviewed: 2026-07-19
 ---
 
 # Lifecycle Adoption Workflow Traceability
@@ -66,7 +66,7 @@ last_reviewed: 2026-07-18
 | Implementation-start prompt and composition | Requirement 2; Requirement 4 | T002, T003, T009 | prompt definitions and mirrors | Prompt and runtime tests | implemented; integrated validation pending T009 | Spec 038 |
 | Shared next-action routing | Requirement 3; Requirement 4 | T004, T005, T009 | lifecycle action builder, adapters, fixtures | Transition and interface fixtures | implemented; integrated validation pending T009 | Spec 038 |
 | Skill and capability guidance | Requirement 5 | T008, T009 | skill, references, capability output, bundle mirrors | Inventory, byte, skill, and parity checks | planned | Spec 038 |
-| Advisory hook routing | Requirement 6 | T006, T007, T009 | hook runtime, wrapper, and fixtures | Hook-state tests | planned | Spec 038 |
+| Advisory hook routing | Requirement 6 | T006, T007, T009 | hook runtime, wrapper, and fixtures | Hook-state tests | implemented; integrated validation pending T009 | Spec 038 |
 | External dogfood evidence | Requirement 1 | T010, T011 | reviewed report receipt and durable dogfood doc | Qualification review | planned | Spec 038 |
 | Durable promotion | Requirement 1; Requirement 2; Requirement 3; Requirement 4; Requirement 5; Requirement 6 | T011, T012 | design, runtime, dogfood, backlog, roadmap | Promotion and closure checks | planned | Spec 038 |
 
