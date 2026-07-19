@@ -18,7 +18,7 @@ import sys
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable
 
 SCRIPT_DIR = Path(__file__).resolve().parents[1]
 if str(SCRIPT_DIR) not in sys.path:
@@ -157,6 +157,7 @@ REVIEW_PACKET_ALIASES = {
 FRONTMATTER_RE = re.compile(r"\A---\n(.*?)\n---\n", re.DOTALL)
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$", re.MULTILINE)
 TASK_RE = re.compile(r"\bT\d{3}(?:\.\d+)?\b")
+TASK_REF_RE = re.compile(r"\b(T\d{3}(?:\.\d+)?)\b(?:\s*-\s*\b(T\d{3}(?:\.\d+)?)\b)?")
 REQ_RE = re.compile(r"\bRequirement\s+\d+[A-Z]?\b", re.IGNORECASE)
 TASK_STATUS_MARKERS = {
     " ": "pending",
@@ -193,6 +194,29 @@ UNRESOLVED_EVIDENCE_RE = re.compile(
     re.IGNORECASE,
 )
 COMPLETION_LIMITED_EVIDENCE_MODES = {"planner", "dry_run", "routing", "no_op", "blocked_output", "contract", "contract_only"}
+
+
+def task_ids_from_value(value: str, available_ids: Iterable[str] | None = None) -> list[str]:
+    """Parse explicit task IDs and compact top-level ranges in source order."""
+    available = list(available_ids) if available_ids is not None else None
+    allowed = set(available) if available is not None else None
+    parsed: list[str] = []
+    for match in TASK_REF_RE.finditer(value):
+        start, end = match.groups()
+        candidates = [start]
+        if end:
+            start_number = int(start[1:]) if "." not in start else None
+            end_number = int(end[1:]) if "." not in end else None
+            if start_number is not None and end_number is not None and start_number <= end_number:
+                candidates = [f"T{number:03d}" for number in range(start_number, end_number + 1)]
+            else:
+                candidates.append(end)
+        parsed.extend(candidate for candidate in candidates if allowed is None or candidate in allowed)
+    ordered = list(dict.fromkeys(parsed))
+    if available is None:
+        return ordered
+    selected = set(ordered)
+    return [task_id for task_id in available if task_id in selected]
 EVIDENCE_MISSING_VALUES = {"", "pending", "pending."}
 EVIDENCE_ISSUE_CLASSIFICATIONS = {"missing", "vague", "weak", "not_run"}
 EVIDENCE_WAIVER_RE = re.compile(r"\b(waiv(?:e|ed|er)|explicitly waived|accepted risk)\b", re.IGNORECASE)
@@ -2336,7 +2360,22 @@ def _archive_entry_matches(entry: dict[str, Any], value: str) -> bool:
     spec_id = _reference_key(str(entry.get("spec_id") or ""))
     package_name = Path(package_path).name.lower() if package_path else ""
     numeric_prefix = spec_id.split("-", 1)[0] if spec_id else ""
-    return key in {spec_id, package_path, package_name, numeric_prefix}
+    slug = spec_id.split("-", 1)[1] if "-" in spec_id else ""
+    return key in {spec_id, package_path, package_name, numeric_prefix, slug}
+
+
+def _active_spec_matches(repo_root: Path, spec_path: Path, value: str) -> bool:
+    key = _reference_key(value)
+    spec_id = _reference_key(spec_path.name)
+    numeric_prefix, separator, slug = spec_id.partition("-")
+    try:
+        relative = _reference_key(spec_path.relative_to(repo_root).as_posix())
+    except ValueError:
+        relative = _reference_key(str(spec_path))
+    candidates = {spec_id, relative, _reference_key(str(spec_path)), numeric_prefix}
+    if separator:
+        candidates.add(slug)
+    return key in candidates
 
 
 def resolve_spec_reference(repo_root: Path, value: str | None, docs_root: str | None = None) -> dict[str, Any]:
@@ -2365,11 +2404,7 @@ def resolve_spec_reference(repo_root: Path, value: str | None, docs_root: str | 
 
     discovered = discover_spec_paths(root, docs_root)
     for spec_path in discovered:
-        try:
-            relative = spec_path.relative_to(root).as_posix()
-        except ValueError:
-            relative = str(spec_path)
-        if requested in {spec_path.name, relative, spec_path.as_posix(), str(spec_path)}:
+        if _active_spec_matches(root, spec_path, requested):
             active_matches.append(spec_path.resolve())
 
     unique_active = sorted({match for match in active_matches})

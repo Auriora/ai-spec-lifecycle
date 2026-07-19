@@ -21,6 +21,7 @@ and removal of unused executable aliases.
 | Gate | Required? | Status | Evidence |
 |------|-----------|--------|----------|
 | Requirements acceptance criteria reviewed | yes | passed | 2026-07-19 lifecycle review packet and traceability lookup; compatible-filter ambiguity resolved before commit. |
+| Shared public-view checkpoint passes | yes | passed | 2026-07-19: 22 focused public-view and shared-core regression tests passed; `git diff --check` and module compilation passed. |
 | Task evidence complete | yes | pending | |
 | Public CLI focused tests pass | yes | pending | |
 | Node dispatcher and Python resolver tests pass | yes | pending | |
@@ -37,7 +38,8 @@ and removal of unused executable aliases.
 
 | Command | Purpose | Result | Evidence |
 |---------|---------|--------|----------|
-| Focused Python test command selected during T001 | View records, selection, filters, renderers, history, and read-only semantics | pending | |
+| `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_public_views` | Shared view records, selection, filters, history, priority diagnostics, and read-only semantics | passed | 2026-07-19: 17 tests passed. |
+| Focused shared-core regression selection recorded in T003 evidence | Resolver, archive, priority, next-task, and grouped-task compatibility | passed | 2026-07-19: combined run passed 22 tests. |
 | `node --test tests/runtime/*.test.mjs` | Dispatcher, interpreter resolution, installer routing, and package behavior | pending | |
 | `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py'` | Full Python regression suite | pending | |
 | `npm run validate` | Full combined lifecycle, Node, package, sync, and whitespace validation | pending | |

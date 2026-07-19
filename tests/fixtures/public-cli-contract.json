@@ -1,0 +1,69 @@
+{
+  "schema_version": "1",
+  "public_executable": "slm",
+  "maintainer_executable": "slc",
+  "package_bins": [
+    "slm"
+  ],
+  "commands": [
+    "specs",
+    "tasks",
+    "next",
+    "requirements",
+    "history",
+    "install"
+  ],
+  "query_commands": [
+    "specs",
+    "tasks",
+    "next",
+    "requirements",
+    "history"
+  ],
+  "task_states": [
+    "pending",
+    "complete",
+    "in_progress",
+    "partial",
+    "follow_up",
+    "no_op",
+    "review_needed",
+    "attention"
+  ],
+  "open_task_states": [
+    "pending",
+    "in_progress",
+    "partial",
+    "review_needed",
+    "attention"
+  ],
+  "requirement_priorities": [
+    "must-have",
+    "should-have",
+    "could-have"
+  ],
+  "history_dispositions": [
+    "archived",
+    "removed"
+  ],
+  "json_envelope_fields": [
+    "schema_version",
+    "command",
+    "repo_root",
+    "records",
+    "summary"
+  ],
+  "exit_codes": {
+    "success": 0,
+    "runtime": 1,
+    "usage": 2
+  },
+  "default_command": "specs",
+  "read_only_commands": [
+    "specs",
+    "tasks",
+    "next",
+    "requirements",
+    "history"
+  ]
+}

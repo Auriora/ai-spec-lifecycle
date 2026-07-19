@@ -33,7 +33,7 @@ T008 -> T009
 **Purpose**: Freeze public behavior and shared record semantics before changing
 the package executable.
 
-- [ ] T001 Add public CLI contract fixtures and focused failing tests.
+- [x] T001 Add public CLI contract fixtures and focused failing tests.
   - Depends on: none
   - Requirement: Requirement 1, Requirement 2, Requirement 3, Requirement 4,
     Requirement 5, Requirement 6, Requirement 7, Requirement 8, Requirement 9
@@ -44,10 +44,11 @@ the package executable.
     next-task equivalence,
     requirement priorities, durable history, JSON parity, repository discovery,
     exit codes, and read-only behavior.
-  - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence mode: validation
+  - Evidence: Added tests/fixtures/public-cli-contract.json and tests/runtime/test_public_views.py covering executable/help/install contract metadata, normalized envelopes, inventory and selection, task-state unions/exclusions and next equivalence, requirement priority semantics, durable history validation, repo-relative output, and read-only projection. Contract-first red run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_public_views failed at import because lifecycle.public_views was intentionally not yet implemented.
 
-- [ ] T002 Implement normalized shared lifecycle view records.
+  - Status: Contract fixture and focused red tests complete; T002 may implement the shared view layer.
+- [x] T002 Implement normalized shared lifecycle view records.
   - Depends on: T001
   - Requirement: Requirement 2, Requirement 3, Requirement 4, Requirement 5,
     Requirement 6
@@ -59,10 +60,11 @@ the package executable.
     projected from shared core semantics; requirement inventory exposes
     canonical priorities and linked tasks; no Markdown parser is duplicated in
     the presentation layer.
-  - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence mode: validation
+  - Evidence: Implemented lifecycle/public_views.py and extended the shared resolver for active and historic numeric-prefix/slug references. Shared records compose scan_specs, spec_summary, task_list, next_task, archive_index, requirement_blocks, and traceability parsers. Focused plus shared-core regression run passed 21 tests.
 
-- [ ] T003 Checkpoint - Shared record and filter validation.
+  - Status: Normalized active-spec, task, requirement, and history records are complete.
+- [x] T003 Checkpoint - Shared record and filter validation.
   - Depends on: T002
   - Requirement: Requirement 2, Requirement 3, Requirement 4, Requirement 5,
     Requirement 6
@@ -72,8 +74,9 @@ the package executable.
     before renderers or package bins are implemented.
   - Validation: Run the focused Python public-view/core test module.
   - Evidence mode: validation
-  - Evidence: Pending.
+  - Evidence: Phase 1 checkpoint passed: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_public_views plus focused resolver/archive/priority/next/task-list regressions ran 22 tests successfully; git diff --check passed; MCP lint reported 0 errors, 0 warnings, and 0 info findings. Tests cover successful empty inventory, all normalized marker partitions, filter unions and exclusivity, exact next_task equivalence, absent/ambiguous/historic selection, numeric-prefix and slug resolution, canonical/missing/diagnostic priority semantics, compact linked-task ranges, durable history ordering/filtering/fail-closed diagnostics, repo-relative paths, and read-only projection.
 
+  - Status: Phase 1 contract foundation and shared-record checkpoint complete; T004 is the next implementation task.
 ## Phase 2: Public CLI
 
 **Purpose**: Deliver the read-only Python command surface and consistent human
