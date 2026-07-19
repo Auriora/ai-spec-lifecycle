@@ -19,7 +19,7 @@ requires visible archived docs.
 - **Spec:** `docs/specs/038-lifecycle-adoption-workflow/`
 - **Title:** Lifecycle adoption workflow requirements
 - **Final spec commit:** `3731ddb`
-- **Closure cleanup commit:** `pending-cleanup-commit`
+- **Closure cleanup commit:** `2a15ec2`
 - **Closure action:** removed
 - **Durable docs updated:**
   - `README.md`

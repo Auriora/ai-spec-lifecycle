@@ -1820,6 +1820,7 @@ class SpecRuntimeTests(unittest.TestCase):
             "035-spec-id-allocation-and-creation-plan",
             "036-compact-output-and-invocation-telemetry",
             "037-closure-response-contract",
+            "038-lifecycle-adoption-workflow",
         }
 
         self.assertEqual(0, payload["summary"]["error"])
