@@ -145,7 +145,7 @@ T009 + T010 -> T011 -> T012
 
 ## Phase 6: Integrated Validation And Dogfood
 
-- [ ] T009 Validate prompts, runtime routing, hooks, skill, bundles, and the
+- [x] T009 Validate prompts, runtime routing, hooks, skill, bundles, and the
   installed package.
   - Depends on: T003, T005, T007, T008
   - Requirements: Requirement 2, Requirement 3, Requirement 4, Requirement 5,
@@ -155,9 +155,16 @@ T009 + T010 -> T011 -> T012
   - Acceptance: All focused, full, prompt, byte, inventory, package, and sync
     checks pass with residual risks recorded.
   - Evidence mode: validation
-  - Evidence: Pending.
+  - Evidence: 2026-07-19 all 230 focused tests and all 317 repository tests
+    passed; source and installed prompt validation returned 11 definitions with
+    zero diagnostics; package contract, sync guard, archive validation,
+    mandatory inventory, byte ceiling, exact-copy, and whitespace checks
+    passed. The repository installer installed and enabled version 0.3.0; all
+    138 installed files match the bundle. This already-running session retained
+    its former 0.2.1 advisory-hook path until reload, recorded as a non-blocking
+    session-lifetime residual.
 
-- [ ] T010 Review the qualified external adoption report.
+- [x] T010 Review the qualified external adoption report.
   - Depends on: T009
   - Requirement: Requirement 1
   - Property: CP-004
@@ -165,7 +172,13 @@ T009 + T010 -> T011 -> T012
   - Acceptance: The qualified receipt satisfies R1 and CP-004 without analyser
     implementation or causal claims.
   - Evidence mode: validation
-  - Evidence: Pending.
+  - Evidence: 2026-07-19 reviewed the Chat Analyser 2026-07-18 report evidence
+    at producer revision `9db3f5f7cbdbfd01ecd1a6d23d50cb8714339ea5`.
+    The metadata-only receipt preserves its bounded 22-history/174 MB completed
+    cohort, non-contributing larger attempts, confirmed structured Codex/Claude
+    use, the producer's fail-closed exact-distribution qualification after an
+    attribution defect, and the prohibition on correctness, preference,
+    usefulness, or causal claims.
 
 ## Phase 7: Promotion And Closure
 

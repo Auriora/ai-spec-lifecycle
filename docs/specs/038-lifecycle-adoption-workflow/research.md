@@ -31,6 +31,25 @@ native-to-normalized reconciliation, resource-bound, and report-confidence
 contracts have been routed to the Chat Analyser project backlog. This spec does
 not reproduce those contracts or attempt to repair the external dataset.
 
+## External Report Receipt
+
+| Field | Reviewed value |
+|-------|----------------|
+| Producer | Chat Analyser project |
+| Analysis date | 2026-07-18 |
+| Evidence identity | Producer Git revision `9db3f5f7cbdbfd01ecd1a6d23d50cb8714339ea5`, especially `docs/backlog/analysis-product.md` lines introduced by that revision |
+| Bounded scope | A stratified 22-history/174 MB request completed; a 242-source/approximately 1.83 GB request ended with exit 137 and a reduced 69-source request did not complete within more than 15 minutes |
+| Qualified conclusion | Genuine structured `spec-lifecycle-manager` use occurred in Codex and Claude Code histories; the observed operation mix suggested lifecycle workflow improvements |
+| Count status | Exact affected operation distributions are **unavailable**, not zero: Claude normalized capability attribution was shown to misattribute operations, and unexplained native-to-normalized mismatches fail the aggregate closed |
+| Known limitations | The completed cohort was bounded and stratified; invocation origin was not fully classified; incomplete larger runs do not contribute counts; the evidence does not establish necessity, preference, correctness, usefulness, outcome success, or causal improvement |
+| Privacy boundary | Receipt retains metadata, bounds, status, revision, and conclusions only; it imports no semantic session content or private history |
+
+Review disposition: accepted as qualified observational adoption evidence for
+Requirement 1 and CP-004. It supports the product response in this spec but not
+an exact frequency baseline or an effectiveness claim. Analysis extraction,
+attribution correction, reconciliation, and report generation remain owned by
+the Chat Analyser project.
+
 ## Review Findings
 
 - Both Codex and Claude Code emitted genuine structured lifecycle-manager calls

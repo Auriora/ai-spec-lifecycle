@@ -1818,6 +1818,7 @@ class SpecRuntimeTests(unittest.TestCase):
             "033-phase-gate-check",
             "035-spec-id-allocation-and-creation-plan",
             "036-compact-output-and-invocation-telemetry",
+            "037-closure-response-contract",
         }
 
         self.assertEqual(0, payload["summary"]["error"])

@@ -67,7 +67,7 @@ last_reviewed: 2026-07-19
 | Shared next-action routing | Requirement 3; Requirement 4 | T004, T005, T009 | lifecycle action builder, adapters, fixtures | Transition and interface fixtures | implemented; integrated validation pending T009 | Spec 038 |
 | Skill and capability guidance | Requirement 5 | T008, T009 | skill, references, capability output, bundle mirrors | Inventory, byte, skill, and parity checks | planned | Spec 038 |
 | Advisory hook routing | Requirement 6 | T006, T007, T009 | hook runtime, wrapper, and fixtures | Hook-state tests | implemented; integrated validation pending T009 | Spec 038 |
-| External dogfood evidence | Requirement 1 | T010, T011 | reviewed report receipt and durable dogfood doc | Qualification review | planned | Spec 038 |
+| External dogfood evidence | Requirement 1 | T010, T011 | reviewed report receipt and durable dogfood doc | Qualification review | reviewed; durable promotion pending T011 | Spec 038 |
 | Durable promotion | Requirement 1; Requirement 2; Requirement 3; Requirement 4; Requirement 5; Requirement 6 | T011, T012 | design, runtime, dogfood, backlog, roadmap | Promotion and closure checks | planned | Spec 038 |
 
 ## Open Decision Impact
@@ -84,7 +84,7 @@ last_reviewed: 2026-07-19
 |--------------|----------------|-----------------------|------|--------|
 | Implementation-start and action ordering | requirements/design | `docs/design/spec-lifecycle-management.md` | T011 | pending validation |
 | MCP/CLI, hook, and capability contract | requirements/design | `docs/reference/spec-lifecycle-runtime.md` | T011 | pending validation |
-| Qualified external findings | research/verification | `docs/reference/spec-lifecycle-dogfood-evaluation.md` | T010, T011 | pending validation |
+| Qualified external findings | research/verification | `docs/reference/spec-lifecycle-dogfood-evaluation.md` | T010, T011 | reviewed; promotion pending T011 |
 | Delivery and residual routing | change impact/verification | `docs/backlog/README.md`, `docs/roadmap/README.md` | T011 | pending validation |
 | Mandatory skill behavior | requirements/design | source skill, references, Codex and Claude bundles | T008, T009 | implemented; integrated validation pending T009 |
 
