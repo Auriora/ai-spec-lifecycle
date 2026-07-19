@@ -3,7 +3,7 @@ title: Spec lifecycle dogfood evaluation
 doc_type: reference
 status: active
 owner: platform
-last_reviewed: 2026-06-06
+last_reviewed: 2026-07-19
 ---
 
 # Spec Lifecycle Dogfood Evaluation
@@ -130,3 +130,47 @@ Follow-up implications:
   explicit skill sync or install hygiene pass.
 - Keep root `AGENTS.md` aligned with governance entry points and no-active-spec
   behavior as the skill evolves.
+
+## 2026-07-18 Qualified Chat Analyser Study
+
+Scope and evidence receipt:
+
+- **Producer:** Chat Analyser project.
+- **Evidence identity:** producer revision
+  `9db3f5f7cbdbfd01ecd1a6d23d50cb8714339ea5`.
+- **Completed bound:** one stratified 22-history, 174 MB request.
+- **Incomplete bounds:** a 242-source, approximately 1.83 GB request ended with
+  exit 137; a reduced 69-source request did not complete within more than 15
+  minutes. Neither incomplete run contributes counts.
+- **Privacy:** only metadata, bounds, qualifications, and conclusions were
+  reviewed here; no semantic session content or private history was imported.
+
+Qualified result:
+
+- Genuine structured lifecycle-manager calls occurred in both Codex and Claude
+  Code histories.
+- The bounded observation suggested a validation-heavy workflow and motivated
+  a composed implementation-start prompt, evidence-before-promotion routing,
+  and a smaller skill entrypoint.
+- Exact operation distributions are unavailable, not zero. The producer found
+  a normalized Claude capability-attribution defect and unexplained
+  native-to-normalized mismatches.
+- The evidence does not establish necessity, independent preference,
+  correctness, usefulness, outcome success, or causal improvement.
+
+Hook review clarified the product boundary. Ordinary write hooks do not execute
+MCP `lint_spec_package`, but earlier advisory output could recommend it and an
+agent could call lint next. Ordinary spec, task, template, and verification
+writes now stay on narrow checks and do not recommend full-package lint;
+explicit resume, closure, and direct-validation boundaries retain it. Hooks
+remain advisory, quiet on success, debounced, and non-mutating. Packaged hook
+launchers also treat a removed versioned cache script as a quiet successful
+no-op so live sessions do not report a blocked `PostToolUse` after local cache
+replacement.
+
+Product changes are owned here. Session import, native extraction, invocation
+origin, capability attribution, native-to-normalized reconciliation,
+resource-bounded analysis, and exact/provisional/unavailable report semantics
+remain in the Chat Analyser project backlog. B014 and B015 remain candidate
+owners for future bounded history discovery and friction reporting; this study
+is one qualified input, not completion of those broader backlog items.

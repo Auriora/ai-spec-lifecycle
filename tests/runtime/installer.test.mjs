@@ -35,6 +35,15 @@ test("unknown option returns 2", async () => {
   assert.equal(await install(["--bogus"]), 2);
 });
 
+test("checkout source is refused for the user-wide Codex home", async () => {
+  const defaultHome = process.env.CODEX_HOME || path.join(os.homedir(), ".codex");
+  assert.equal(await install([
+    "--source", repoRoot,
+    "--codex-home", defaultHome,
+    "--dry-run",
+  ]), 1);
+});
+
 test("real install copies the plugin tree and registers the marketplace", async () => {
   const { base, home, mkt } = tempHomes();
   try {
@@ -124,12 +133,16 @@ test("pins the resolved interpreter into installed configs (override = py -3)", 
     const claudeCmd = claudeHook.hooks.PostToolUse[0].hooks[0];
     assert.equal(claudeCmd.command, "py");
     assert.equal(claudeCmd.args[0], "-3");
+    assert.equal(claudeCmd.args[1], "-c");
+    assert.match(claudeCmd.args[2], /os\.path\.isfile\(p\)/);
     assert.match(claudeCmd.args.at(-1), /codex_spec_lifecycle_hook\.py$/);
 
     // Codex hook: shell form retained (OQ4) but interpreter resolved.
     const codexHook = JSON.parse(fs.readFileSync(path.join(root, "hooks", "hooks.json"), "utf8"));
     const codexCmd = codexHook.hooks.PostToolUse[0].hooks[0].command;
-    assert.match(codexCmd, /^py -3 "\$\{PLUGIN_ROOT\}.*codex_spec_lifecycle_hook\.py"$/);
+    assert.match(codexCmd, /^py -3 -c /);
+    assert.match(codexCmd, /os\.path\.isfile\(p\)/);
+    assert.match(codexCmd, /"\$\{PLUGIN_ROOT\}.*codex_spec_lifecycle_hook\.py"$/);
   } finally {
     if (prev === undefined) delete process.env.SPEC_LIFECYCLE_PYTHON;
     else process.env.SPEC_LIFECYCLE_PYTHON = prev;

@@ -1,0 +1,7 @@
+# Development sessions launched through scripts/codex-spec-lifecycle-dev.sh
+# use this source-owned MCP server. The launcher disables packaged plugins for
+# that session because plugin enablement is user state, not a project override.
+[mcp_servers.spec-lifecycle-manager]
+command = "node"
+args = ["plugins/spec-lifecycle-manager/mcp-launch.mjs"]
+startup_timeout_sec = 30.0

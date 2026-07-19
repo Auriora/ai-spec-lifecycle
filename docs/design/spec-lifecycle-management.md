@@ -3,7 +3,7 @@ title: Spec lifecycle management
 doc_type: design
 status: active
 owner: platform
-last_reviewed: 2026-07-12
+last_reviewed: 2026-07-19
 ---
 
 # Spec Lifecycle Management
@@ -114,6 +114,14 @@ Design-first work is allowed only as an explicit exception: record partial
 requirements and require a later requirements completion step before
 implementation readiness.
 
+For an already selected active-spec task, the declarative
+`implementation-start` MCP prompt is the concise entry point. It composes
+active preflight, task context, traceability, agent and stage readiness, and
+validation planning from their existing authoritative tools. It is read-only:
+it preserves every source blocker, does not change task state, and does not
+treat planned validation as completed evidence. `developer-start` remains the
+first-run repository-orientation prompt.
+
 First-run guidance starts with `lifecycle_guide` through MCP or the
 `lifecycle-guide` CLI command. It reports repository classification, docs
 readiness, template authority, available lifecycle tooling, active-spec
@@ -159,6 +167,21 @@ target; explicit truncation state and expansion expose omitted detail. An
 expansion whose expected fingerprint no longer matches returns a stale response
 with refreshed arguments instead of presenting new evidence as the referenced
 result.
+
+Shared next-action presentation follows the lifecycle order rather than
+inferring completion from implementation evidence: plan and execute validation,
+review evidence quality, route durable promotion, then run closure checks.
+Agent-facing actions name MCP tools first. Direct runtime commands are kept in
+a separately labelled validation-or-recovery branch for CI, hooks, debugging,
+or explicit recovery when MCP is unavailable.
+
+Capability reporting describes server availability independently from optional
+client observation. A server with its stable tool surface available reports
+`ready`; absent client identity is informational and has no lifecycle impact.
+When supplied during MCP initialization, only the standard client name,
+version, negotiated protocol, and allowlisted structural capabilities are held
+in process memory. Client identity is neither persisted nor used to select
+lifecycle actions.
 
 `spec_creation_plan` uses the same aggregate contract for provisional creation
 decisions. Its compact default preserves allocation status, confidence, proposed

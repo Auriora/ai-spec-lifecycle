@@ -34,6 +34,7 @@ project rather than this runtime.
 | R4 | MCP-primary and labelled CLI recovery sections | MCP/CLI contract tests and snapshot assertions |
 | R5 | Slim skill entrypoint, mandatory-rule inventory, byte ceiling, and compact capability guidance | Inventory review, byte measurement, skill validation, and bundle parity |
 | R6 | Explicit ordinary-write versus lifecycle-boundary hook routing and debounce behavior | Hook fixtures and focused runtime/wrapper tests |
+| R7 | Repository skill/MCP/hook discovery, session-local packaged-plugin suppression, and checkout install guard | Config/launcher contracts, isolated installer tests, and live Codex discovery checks |
 
 ## Correctness Property Coverage
 
@@ -45,6 +46,7 @@ project rather than this runtime.
 | CP-004 | External report qualifications are retained without stronger claims | Dogfood evidence review |
 | CP-005 | Mandatory-rule inventory maps skill text to linked references | Skill review and parity test |
 | CP-006 | Start composition has no writer dependency or mutation path | Repeatability and unchanged-worktree tests |
+| CP-007 | Development launches from repository source while user installs originate from package roots | Checkout refusal and source-discovery tests |
 
 ## High-Level Design
 
@@ -104,7 +106,16 @@ project rather than this runtime.
    - Preserve provisional or unavailable findings exactly as qualified by the
      producer.
    - Promote only the product-relevant conclusion and evidence receipt; do not
-     embed the analyser's parser, dataset, or reporting contracts.
+   embed the analyser's parser, dataset, or reporting contracts.
+
+7. **Development and package isolation**
+   - Expose the source skill through a repository `.agents/skills` link and the
+     source MCP server and hook through the trusted project `.codex` layer.
+   - Launch source-backed Codex testing with packaged plugins disabled for that
+     process only; do not mutate the user's installed-plugin state.
+   - Refuse checkout-source installation into the default user Codex home while
+     retaining explicit isolated roots for installer tests.
+   - Keep normal user-wide installation on the npm/GitHub packaged artifact.
 
 ### Data Flow
 
@@ -124,6 +135,17 @@ ordinary spec write
   -> narrow runtime hook
   -> state-specific advisory
   -> full-package lint recommendation only when package validation is required
+```
+
+```text
+repository development launcher
+  -> packaged plugins disabled for this process
+  -> repository skill + MCP + hook
+  -> no user cache refresh
+
+packaged artifact
+  -> installer
+  -> user-wide plugin cache
 ```
 
 No new persistent runtime data model is introduced. Prompt definitions remain
@@ -193,6 +215,19 @@ inventory with no missing category, and exact source/Codex/Claude bundle parity.
 - An unchanged advisory state does not repeatedly emit the same lint advice.
 - Hook results remain advisory, quiet when no guidance is needed, non-blocking,
   and free of lifecycle mutation.
+- A hook command retained by an older running session checks that its cached
+  script still exists before execution; a missing script returns success with
+  no feedback.
+
+### Development Isolation Contract
+
+- `.agents/skills/spec-lifecycle-manager` resolves to the source skill.
+- `.codex/config.toml` launches the bundled source MCP wrapper and
+  `.codex/hooks.json` invokes the source advisory hook.
+- `scripts/codex-spec-lifecycle-dev.sh` disables packaged plugins for that
+  process so packaged lifecycle hooks and skills are not duplicated.
+- The package installer rejects a checkout source targeting the default user
+  Codex home. Explicit non-user roots remain available for CI and smoke tests.
 
 ### Error Handling
 
@@ -202,6 +237,8 @@ inventory with no missing category, and exact source/Codex/Claude bundle parity.
 - Truncation identifies omitted sections and an explicit expansion action.
 - Hook runtime failure remains a classified advisory diagnostic and does not
   invent a lint recommendation.
+- A missing versioned hook script is handled before wrapper execution and is a
+  silent successful no-op.
 - An unavailable external report remains unavailable and cannot satisfy the
   dogfood evidence gate.
 
@@ -273,7 +310,7 @@ rather than expanding this slice.
 
 ## Review Reconciliation
 
-Reviewed against the current Requirements 1-6 and SC-001 through SC-006 on
+Reviewed against the current Requirements 1-7 and SC-001 through SC-007 on
 2026-07-18. DR-001 through DR-003 resolve the earlier composition, skill-budget,
 and hook-boundary questions; no downstream design gap remains.
 

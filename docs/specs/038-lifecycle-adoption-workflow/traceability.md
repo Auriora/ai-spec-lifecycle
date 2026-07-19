@@ -24,8 +24,9 @@ last_reviewed: 2026-07-19
 | T009 | Requirement 2; Requirement 3; Requirement 4; Requirement 5; Requirement 6 | Requirement 2 AC1; Requirement 2 AC2; Requirement 2 AC3; Requirement 2 AC4; Requirement 3 AC1; Requirement 3 AC2; Requirement 3 AC3; Requirement 3 AC4; Requirement 4 AC1; Requirement 4 AC2; Requirement 4 AC3; Requirement 4 AC4; Requirement 5 AC1; Requirement 5 AC2; Requirement 5 AC3; Requirement 5 AC4; Requirement 5 AC5; Requirement 6 AC1; Requirement 6 AC2; Requirement 6 AC3; Requirement 6 AC4 | Validation strategy; compatibility | All implementation changes | Validation commands and quality gates | verification record | none |
 | T010 | Requirement 1 | Requirement 1 AC1; Requirement 1 AC2; Requirement 1 AC3 | External dogfood evidence; security, trust, and privacy | Qualified external adoption finding | External report review | dogfood evaluation | none |
 | T009.1 | Requirement 4; Requirement 5 | Requirement 4 AC1; Requirement 4 AC2; Requirement 4 AC3; Requirement 5 AC2; Requirement 5 AC3; Requirement 5 AC4 | Interface presentation; skill and capability guidance; compatibility | Capability status and bounded client metadata | Focused runtime/MCP/schema tests; full regression; package and sync checks | runtime reference and skill bundles | none |
-| T011 | Requirement 1; Requirement 2; Requirement 3; Requirement 4; Requirement 5; Requirement 6 | Requirement 1 AC1; Requirement 1 AC2; Requirement 1 AC3; Requirement 2 AC1; Requirement 2 AC2; Requirement 2 AC3; Requirement 2 AC4; Requirement 3 AC1; Requirement 3 AC2; Requirement 3 AC3; Requirement 3 AC4; Requirement 4 AC1; Requirement 4 AC2; Requirement 4 AC3; Requirement 4 AC4; Requirement 5 AC1; Requirement 5 AC2; Requirement 5 AC3; Requirement 5 AC4; Requirement 5 AC5; Requirement 6 AC1; Requirement 6 AC2; Requirement 6 AC3; Requirement 6 AC4 | Slice boundary; operational considerations | Promotion targets and unchanged areas | Durable promotion checks | design, runtime, dogfood, backlog, roadmap | none |
-| T012 | Requirement 1; Requirement 2; Requirement 3; Requirement 4; Requirement 5; Requirement 6 | Requirement-level closure reconciliation | Entire accepted design | Promotion targets and unchanged areas | Closure and cleanup | closure log, archive index | none |
+| T013 | Requirement 6; Requirement 7 | Requirement 6 AC4; Requirement 6 AC5; Requirement 7 AC1; Requirement 7 AC2; Requirement 7 AC3; Requirement 7 AC4 | Advisory hook contract; development isolation contract; error handling | Quiet cache-safe hook launcher and repository-local development | Hook package, isolated installer, dev-launcher, and live discovery checks | install reference, runtime reference, README | none |
+| T011 | Requirement 1; Requirement 2; Requirement 3; Requirement 4; Requirement 5; Requirement 6; Requirement 7 | Requirement 1 AC1; Requirement 1 AC2; Requirement 1 AC3; Requirement 2 AC1; Requirement 2 AC2; Requirement 2 AC3; Requirement 2 AC4; Requirement 3 AC1; Requirement 3 AC2; Requirement 3 AC3; Requirement 3 AC4; Requirement 4 AC1; Requirement 4 AC2; Requirement 4 AC3; Requirement 4 AC4; Requirement 5 AC1; Requirement 5 AC2; Requirement 5 AC3; Requirement 5 AC4; Requirement 5 AC5; Requirement 6 AC1; Requirement 6 AC2; Requirement 6 AC3; Requirement 6 AC4; Requirement 6 AC5; Requirement 7 AC1; Requirement 7 AC2; Requirement 7 AC3; Requirement 7 AC4 | Slice boundary; operational considerations | Promotion targets and unchanged areas | Durable promotion checks | design, runtime, dogfood, backlog, roadmap | none |
+| T012 | Requirement 1; Requirement 2; Requirement 3; Requirement 4; Requirement 5; Requirement 6; Requirement 7 | Requirement-level closure reconciliation | Entire accepted design | Promotion targets and unchanged areas | Closure and cleanup | closure log, archive index | none |
 
 ## Requirement To Delivery Matrix
 
@@ -36,7 +37,8 @@ last_reviewed: 2026-07-19
 | Requirement 3 | must-have | Requirement 3 AC1; Requirement 3 AC2; Requirement 3 AC3; Requirement 3 AC4 | Shared next-action routing; next-action ordering | T001, T004, T005, T009, T011, T012 | Transition fixtures | lifecycle design, runtime reference | covered | none |
 | Requirement 4 | must-have | Requirement 4 AC1; Requirement 4 AC2; Requirement 4 AC3; Requirement 4 AC4 | Interface presentation; error handling | T001, T002, T003, T004, T005, T009, T009.1, T011, T012 | MCP-visible/no-MCP tests | runtime reference, skill | covered | none |
 | Requirement 5 | must-have | Requirement 5 AC1; Requirement 5 AC2; Requirement 5 AC3; Requirement 5 AC4; Requirement 5 AC5 | Skill/capability guidance; mandatory skill rule inventory; compatibility | T001, T008, T009, T009.1, T011, T012 | Inventory, byte, skill, capability-status, and parity checks | skill, references, plugin bundles | covered | none |
-| Requirement 6 | must-have | Requirement 6 AC1; Requirement 6 AC2; Requirement 6 AC3; Requirement 6 AC4 | Advisory hook routing; advisory hook contract | T001, T006, T007, T009, T011, T012 | Hook-state fixtures | runtime reference, hook runtime | covered | none |
+| Requirement 6 | must-have | Requirement 6 AC1; Requirement 6 AC2; Requirement 6 AC3; Requirement 6 AC4; Requirement 6 AC5 | Advisory hook routing; advisory hook contract | T001, T006, T007, T009, T013, T011, T012 | Hook-state and missing-cache fixtures | runtime reference, hook runtime | covered | none |
+| Requirement 7 | must-have | Requirement 7 AC1; Requirement 7 AC2; Requirement 7 AC3; Requirement 7 AC4 | Development isolation contract; error handling | T013, T011, T012 | Repository discovery, isolated installer, and checkout-refusal checks | install reference, runtime reference, README | covered | none |
 
 ## Correctness Property Coverage
 
@@ -44,10 +46,11 @@ last_reviewed: 2026-07-19
 |----------|--------------|-----------------|-------|-----------------------|---------------|
 | CP-001 | Requirement 2; Requirement 3 | Composition contract; next-action ordering | T002, T004, T009 | Table-driven blocking fixtures | Semantic correctness remains reviewed |
 | CP-002 | Requirement 4 | Interface presentation | T002, T004, T009, T009.1 | MCP-visible/no-MCP and initialization-metadata assertions | Host configuration may differ |
-| CP-003 | Requirement 6 | Advisory hook contract | T006, T007, T009 | Ordinary-write, resume, closure, debounce, and quiet-state fixtures | Client hook delivery may differ |
+| CP-003 | Requirement 6 | Advisory hook contract | T006, T007, T009, T013 | Ordinary-write, resume, closure, debounce, quiet-state, and missing-cache fixtures | Client hook delivery may differ |
 | CP-004 | Requirement 1 | External dogfood evidence | T010, T011 | External qualification and claim review | Exact findings may remain provisional |
 | CP-005 | Requirement 5 | Mandatory skill rule inventory | T008, T009, T009.1 | Inventory, byte ceiling, skill validation, capability status, and bundle parity | Client loader behavior varies |
 | CP-006 | Requirement 2 | Composition contract | T002, T003, T009 | Repeatability and unchanged-worktree checks | External tools may change evidence |
+| CP-007 | Requirement 7 | Development isolation contract | T013 | Repo skill/MCP discovery, packaged-plugin suppression, and checkout install refusal | Developers must use the documented launcher |
 
 ## Success Criterion Coverage
 
@@ -57,20 +60,22 @@ last_reviewed: 2026-07-19
 | SC-002 | Requirement 3 | T004, T005, T009 | Evidence/promotion/closure transition fixtures |
 | SC-003 | Requirement 4 | T002, T003, T004, T005, T009, T009.1 | MCP-visible, no-MCP, and initialization-state adapter assertions |
 | SC-004 | Requirement 5 | T008, T009, T009.1 | Mandatory inventory, `wc -c`, capability-status, skill validation, and bundle parity |
-| SC-005 | Requirement 6 | T006, T007, T009 | Ordinary-write, resume, closure, debounce, and quiet-hook fixtures |
+| SC-005 | Requirement 6 | T006, T007, T009, T013 | Ordinary-write, resume, closure, debounce, quiet-hook, and missing-cache fixtures |
 | SC-006 | Requirement 1 | T010, T011 | External report qualification and durable dogfood review |
+| SC-007 | Requirement 7 | T013 | Repository development discovery and isolated installer checks |
 
 ## Design To Implementation Matrix
 
 | Design Section | Requirements | Tasks | Interfaces Or Files | Verification | Coverage State | Residual Destination |
 |----------------|--------------|-------|---------------------|--------------|----------------|----------------------|
-| Implementation-start prompt and composition | Requirement 2; Requirement 4 | T002, T003, T009 | prompt definitions and mirrors | Prompt and runtime tests | implemented; integrated validation pending T009 | Spec 038 |
-| Shared next-action routing | Requirement 3; Requirement 4 | T004, T005, T009 | lifecycle action builder, adapters, fixtures | Transition and interface fixtures | implemented; integrated validation pending T009 | Spec 038 |
-| Skill and capability guidance | Requirement 5 | T008, T009, T009.1 | skill, references, capability output, bundle mirrors | Inventory, byte, capability-status, skill, and parity checks | implemented; promotion pending T011 | Spec 038 |
-| Capability status and client observation | Requirement 4; Requirement 5 | T009.1 | capability core, MCP session adapter, schema, mirrors | Initialization retention, missing-client, action-authority, and recovery-label tests | implemented; promotion pending T011 | Spec 038 |
-| Advisory hook routing | Requirement 6 | T006, T007, T009 | hook runtime, wrapper, and fixtures | Hook-state tests | implemented; integrated validation pending T009 | Spec 038 |
-| External dogfood evidence | Requirement 1 | T010, T011 | reviewed report receipt and durable dogfood doc | Qualification review | reviewed; durable promotion pending T011 | Spec 038 |
-| Durable promotion | Requirement 1; Requirement 2; Requirement 3; Requirement 4; Requirement 5; Requirement 6 | T011, T012 | design, runtime, dogfood, backlog, roadmap | Promotion and closure checks | planned | Spec 038 |
+| Implementation-start prompt and composition | Requirement 2; Requirement 4 | T002, T003, T009 | prompt definitions and mirrors | Prompt and runtime tests | implemented, validated, and promoted | lifecycle design and runtime reference |
+| Shared next-action routing | Requirement 3; Requirement 4 | T004, T005, T009 | lifecycle action builder, adapters, fixtures | Transition and interface fixtures | implemented, validated, and promoted | lifecycle design and runtime reference |
+| Skill and capability guidance | Requirement 5 | T008, T009, T009.1 | skill, references, capability output, bundle mirrors | Inventory, byte, capability-status, skill, and parity checks | implemented and promoted | lifecycle design and runtime reference |
+| Capability status and client observation | Requirement 4; Requirement 5 | T009.1 | capability core, MCP session adapter, schema, mirrors | Initialization retention, missing-client, action-authority, and recovery-label tests | implemented and promoted | runtime reference |
+| Advisory hook routing | Requirement 6 | T006, T007, T009, T013 | hook runtime, wrapper, packaged launchers, and fixtures | Hook-state and missing-cache tests | implemented, validated, and promoted | runtime reference and dogfood evaluation |
+| Development and package isolation | Requirement 7 | T013 | project config, repo skill link, dev launcher, installer, developer CLI | Source discovery, checkout refusal, and isolated installer tests | implemented, validated, and promoted | README and install/runtime references |
+| External dogfood evidence | Requirement 1 | T010, T011 | reviewed report receipt and durable dogfood doc | Qualification review | reviewed and promoted | dogfood evaluation |
+| Durable promotion | Requirement 1; Requirement 2; Requirement 3; Requirement 4; Requirement 5; Requirement 6; Requirement 7 | T011, T012 | design, runtime, dogfood, backlog, roadmap | Promotion and closure checks | complete | durable docs and closure history |
 
 ## Open Decision Impact
 
@@ -84,18 +89,19 @@ last_reviewed: 2026-07-19
 
 | Spec content | Current source | Promotion destination | Task | Status |
 |--------------|----------------|-----------------------|------|--------|
-| Implementation-start and action ordering | requirements/design | `docs/design/spec-lifecycle-management.md` | T011 | pending validation |
-| MCP/CLI, hook, and capability contract | requirements/design | `docs/reference/spec-lifecycle-runtime.md` | T011 | pending validation |
-| Qualified external findings | research/verification | `docs/reference/spec-lifecycle-dogfood-evaluation.md` | T010, T011 | reviewed; promotion pending T011 |
-| Delivery and residual routing | change impact/verification | `docs/backlog/README.md`, `docs/roadmap/README.md` | T011 | pending validation |
-| Mandatory skill behavior | requirements/design | source skill, references, Codex and Claude bundles | T008, T009 | implemented; integrated validation pending T009 |
+| Implementation-start and action ordering | requirements/design | `docs/design/spec-lifecycle-management.md` | T011 | promoted |
+| MCP/CLI, hook, and capability contract | requirements/design | `docs/reference/spec-lifecycle-runtime.md` | T011 | promoted |
+| Qualified external findings | research/verification | `docs/reference/spec-lifecycle-dogfood-evaluation.md` | T010, T011 | promoted with qualifications |
+| Delivery and residual routing | change impact/verification | `docs/backlog/README.md`, `docs/roadmap/README.md` | T011 | promoted |
+| Mandatory skill behavior | requirements/design | source skill, references, Codex and Claude bundles | T008, T009 | implemented and validated |
 
 ## Review Reconciliation
 
-Reviewed against the current requirements, resolved design decisions, resliced
-tasks, and verification plan on 2026-07-18. Explicit identifiers resolve through
-runtime task context, all must-have requirements are covered by planned
-delivery, and SC-001 through SC-006 have direct task and verification mappings.
+Reviewed against the current requirements, resolved design decisions, delivered
+implementation, durable promotion, and verification evidence on 2026-07-19.
+Explicit identifiers resolve through runtime task context, all must-have
+requirements are covered, and SC-001 through SC-007 have direct task,
+verification, and durable-destination mappings.
 
 ## Related Artifacts
 

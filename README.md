@@ -96,8 +96,21 @@ claude plugin install spec-lifecycle-manager@ai-spec-lifecycle
 ```
 
 See the [installation reference](docs/reference/spec-lifecycle-manager-mcp-install.md)
-for interpreter selection, package boundaries, local development installs, and
+for interpreter selection, package boundaries, repository-local development, and
 troubleshooting.
+
+### Develop from this checkout
+
+Start a source-backed Codex session without replacing the user-wide packaged
+plugin:
+
+```bash
+scripts/codex-spec-lifecycle-dev.sh
+```
+
+That session disables packaged plugins, discovers the lifecycle skill from
+`.agents/skills`, and loads the MCP server and advisory hook from `.codex/`.
+User-wide installation is reserved for npm or GitHub release artifacts.
 
 ## Use It as a Person
 

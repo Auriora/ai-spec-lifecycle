@@ -142,8 +142,12 @@ def package_install_local(
     skip_plugin_add: bool = typer.Option(False, "--skip-plugin-add", help="Do not run codex plugin add."),
     dry_run: bool = DryRunOption,
 ) -> None:
-    """Invoke the authoritative local installer."""
+    """Test the installer against explicit isolated roots."""
     root = _root(repo_root)
+    if not codex_home or not marketplace_root:
+        raise typer.BadParameter(
+            "--codex-home and --marketplace-root are required so checkout testing cannot overwrite user-wide plugin state"
+        )
     print_or_run(
         build_install_local_plan(
             root,
@@ -159,7 +163,7 @@ def package_install_local(
         dry_run=False,
     )
     if not dry_run:
-        typer.echo("Next verification: slc sync guard")
+        typer.echo("Isolated installer test complete; user-wide installs must use a packaged artifact.")
 
 
 @plugin_app.command("status")

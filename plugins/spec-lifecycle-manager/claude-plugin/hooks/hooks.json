@@ -8,6 +8,8 @@
             "type": "command",
             "command": "python",
             "args": [
+              "-c",
+              "import os,runpy,sys;p=sys.argv[1];os.path.isfile(p) and runpy.run_path(p,run_name='__main__')",
               "${CLAUDE_PLUGIN_ROOT}/skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py"
             ],
             "timeout": 10

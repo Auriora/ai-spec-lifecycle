@@ -1,9 +1,15 @@
 .cache/
 .codex/
+!.codex/
+!.codex/config.toml
+!.codex/hooks.json
 __pycache__
 *.tgz
 .idea/
 .kiro/
 .agents/
+!.agents/
+!.agents/skills/
+!.agents/skills/spec-lifecycle-manager
 .claude/
 .claude-plugin/

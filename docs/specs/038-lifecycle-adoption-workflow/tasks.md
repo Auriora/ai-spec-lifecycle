@@ -40,7 +40,7 @@ T009 + T010 -> T011 -> T012
     T006 task-context lookups resolved every linked requirement with no gaps;
     DR-001 through DR-003, explicit AC/CP/SC mappings, measurable skill
     acceptance, post-validation promotion, and bounded task families were
-    reviewed across the package.
+    reviewed across `docs/specs/038-lifecycle-adoption-workflow/`.
 
 ## Phase 2: Implementation-Start Composition
 
@@ -82,7 +82,8 @@ T009 + T010 -> T011 -> T012
   - Evidence: 2026-07-18 runtime task context resolved R3, R4, CP-001, and
     CP-002 with no gaps; three focused pre-implementation tests failed only
     because shared presentation, MCP-primary action identity, and separated CLI
-    recovery did not yet exist.
+    recovery did not yet exist in `tests/runtime/test_spec_runtime.py` and
+    `tests/runtime/test_spec_mcp_server.py`.
 
 - [x] T005 Implement shared next-action and interface presentation routing.
   - Depends on: T004
@@ -95,8 +96,9 @@ T009 + T010 -> T011 -> T012
     repo-relative labelled CLI recovery; validation, evidence quality,
     promotion, and closure are ordered through existing authorities; blockers
     are preserved in a bounded 20-item view with source expansion. Four focused
-    contract tests and four supporting runtime/MCP/module checks passed, and
-    package parity reported both 62-file mirrors in sync.
+    contract tests in `tests/runtime/test_spec_runtime.py` and four supporting
+    runtime/MCP/module checks passed, and package parity reported both 62-file
+    mirrors in sync.
 
 ## Phase 4: Advisory Hook Boundary
 
@@ -112,7 +114,7 @@ T009 + T010 -> T011 -> T012
     CP-003 with no gaps; five focused checks preserved resume/closure lint,
     debounce, and advisory failure handling while failing only because ordinary
     verification guidance named full lint and the wrapper omitted the narrow
-    verification hook.
+    verification hook in `tests/runtime/test_codex_spec_lifecycle_hook.py`.
 
 - [x] T007 Implement the explicit hook recommendation boundary.
   - Depends on: T006
@@ -205,28 +207,48 @@ T009 + T010 -> T011 -> T012
     `0.144.6`, no limitations, and recovery commands labelled
     `applies_when=mcp_unavailable`.
 
+- [x] T013 Isolate checkout development and quiet removed-cache hooks.
+  - Depends on: T009
+  - Requirements: Requirement 6, Requirement 7
+  - Properties: CP-003, CP-007
+  - Files: packaged hook definitions, installer, repository development config,
+    developer CLI, tests, and install/runtime documentation
+  - Acceptance: Removed versioned hook scripts exit quietly; source-backed
+    Codex testing loads only repository lifecycle surfaces; checkout deployment
+    to the default user Codex home is refused; isolated installer validation
+    remains available.
+  - Evidence mode: validation
+  - Evidence: 2026-07-19 both packaged hook launchers returned zero with empty
+    output when their versioned script path was absent; the repository launcher
+    exposed only the source skill and source MCP with packaged plugins disabled;
+    checkout-to-user-home installation was refused while isolated installer and
+    cross-platform smoke tests passed. All 321 Python tests, 26 Node tests, the
+    full `npm run validate` pipeline, package/sync checks, spec lint, JSON/shell
+    syntax checks, and whitespace validation passed without redeploying the
+    checkout user-wide.
+
 ## Phase 7: Promotion And Closure
 
-- [ ] T011 Promote validated behavior and record residual destinations.
-  - Depends on: T009, T009.1, T010
+- [x] T011 Promote validated behavior and record residual destinations.
+  - Depends on: T009, T009.1, T010, T013
   - Requirements: Requirement 1, Requirement 2, Requirement 3, Requirement 4,
-    Requirement 5, Requirement 6
+    Requirement 5, Requirement 6, Requirement 7
   - Files: durable promotion targets listed in `change-impact.md`
   - Acceptance: Validated behavior is promoted and every residual has one
     owning destination.
   - Evidence mode: validation
-  - Evidence: Pending.
+  - Evidence: MCP promotion_plan reported zero missing targets. Validated behavior was promoted to lifecycle design, runtime/install references, README, dogfood evaluation, backlog, and roadmap; unchanged durable areas were reviewed, and every residual was assigned one owner.
 
-- [ ] T012 Run final reconciliation and closure gates.
+- [x] T012 Run final reconciliation and closure gates.
   - Depends on: T011
   - Requirements: Requirement 1, Requirement 2, Requirement 3, Requirement 4,
-    Requirement 5, Requirement 6
+    Requirement 5, Requirement 6, Requirement 7
   - Files: `docs/specs/038-lifecycle-adoption-workflow/`, closure log and archive
     index planning evidence
   - Acceptance: Reconciliation and closure gates pass with final spec and
     cleanup commits recorded before removal.
   - Evidence mode: validation
-  - Evidence: Pending.
+  - Evidence: Final reconciliation found only the expected in-progress T012 state; npm run validate passed 321 Python and 26 Node tests plus scan, archive, prompts, package, sync, pack, and whitespace gates. Spec lint and evidence-quality checks returned zero diagnostics; closure gates are rerun after this state update before the final-spec commit.
 
 ## Execution Rules
 

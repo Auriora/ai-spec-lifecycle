@@ -129,15 +129,18 @@ npm/installer path does not need this — it pins the host-resolved interpreter.
 
 ## Install Flow
 
-Use the cross-platform installer from this repository (Node, no shell):
+The cross-platform installer is the package-owned user installation path:
 
 ```bash
-node packaging/spec-lifecycle-manager/installer.mjs
+spec-lifecycle-manager install
 ```
 
 `scripts/install-spec-lifecycle-manager-package.sh` is retained for existing
 Unix workflows but is now a thin delegator that `exec`s the Node installer, so
-the two cannot diverge.
+the two cannot diverge. The installer refuses to copy a Git checkout into the
+default user-wide Codex home. User-wide installs must originate from an npm or
+GitHub release artifact; checkout sources are accepted only with explicit
+non-user Codex and marketplace roots for isolated installer tests.
 
 The installer:
 
@@ -168,17 +171,38 @@ them:
 pip install --no-build-isolation -e tools/devcli
 slc package check
 slc package pack
-slc package install-local --dry-run
+slc package install-local --codex-home /tmp/slm-codex --marketplace-root /tmp/slm-marketplace --dry-run
 slc sync guard
 slc plugin status
 ```
 
 `slc package install-local` invokes
 `scripts/install-spec-lifecycle-manager-package.sh` and passes supported
-installer options through. Use `--dry-run` first when checking local install
-behavior. The authoritative install logic remains
+installer options through. It requires explicit isolated Codex and marketplace
+roots and is an installer test, not a development deployment command. The
+authoritative install logic remains
 `packaging/spec-lifecycle-manager/installer.mjs`; `slc` is only a repeatable
 developer interface around that flow.
+
+### Repository-local Codex development
+
+Use the checked-in launcher for source-backed testing:
+
+```bash
+scripts/codex-spec-lifecycle-dev.sh
+```
+
+The launcher applies `--disable plugins` to that Codex process only. This is
+necessary because installed plugin enablement is user state rather than a
+project override. With packaged plugins disabled for the development session:
+
+- `.agents/skills/spec-lifecycle-manager` resolves to the source skill;
+- `.codex/config.toml` starts the bundled source MCP launcher; and
+- `.codex/hooks.json` runs the source advisory hook.
+
+The development launcher does not add a marketplace, call `codex plugin add`,
+or modify `~/.codex`. Start Codex from the normal entrypoint when validating the
+packaged user-wide release instead.
 
 ## npm Distribution Package
 
@@ -206,9 +230,9 @@ npx @auriora/ai-spec-lifecycle install
 The npm bin resolves the unpacked package root and calls
 `packaging/spec-lifecycle-manager/installer.mjs` in-process (no shell, no
 spawned `.sh`) with `--source <package-root>`. A `prepack` step strips any
-Python bytecode caches so the tarball is clean. Local marketplace install
-remains supported for checkout-based development. Docker/GHCR image distribution
-is not the supported package path.
+Python bytecode caches so the tarball is clean. Repository development uses the
+source-backed launcher above; it does not refresh the user cache. Docker/GHCR
+image distribution is not the supported package path.
 
 ### Release and npm publish workflow
 

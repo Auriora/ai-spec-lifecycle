@@ -17,12 +17,28 @@ SOURCE_SKILL = ROOT / "skills" / "spec-lifecycle-manager"
 BUNDLED_SKILL = PLUGIN / "skills" / "spec-lifecycle-manager"
 CLAUDE_SKILL = CLAUDE_PLUGIN / "skills" / "spec-lifecycle-manager"
 SCRIPT_DIR = SOURCE_SKILL / "scripts"
+DEV_LAUNCHER = ROOT / "scripts" / "codex-spec-lifecycle-dev.sh"
 sys.path.insert(0, str(SCRIPT_DIR))
 
 import spec_runtime
 
 
 class SpecPluginPackageTests(unittest.TestCase):
+    def test_repository_development_surfaces_do_not_require_plugin_install(self):
+        project_config = (ROOT / ".codex" / "config.toml").read_text(encoding="utf-8")
+        project_hooks = json.loads((ROOT / ".codex" / "hooks.json").read_text(encoding="utf-8"))
+        repo_skill = ROOT / ".agents" / "skills" / "spec-lifecycle-manager"
+        launcher = DEV_LAUNCHER.read_text(encoding="utf-8")
+
+        self.assertTrue(repo_skill.is_symlink())
+        self.assertEqual((ROOT / "skills" / "spec-lifecycle-manager").resolve(), repo_skill.resolve())
+        self.assertIn("[mcp_servers.spec-lifecycle-manager]", project_config)
+        self.assertIn("plugins/spec-lifecycle-manager/mcp-launch.mjs", project_config)
+        self.assertNotIn("[plugins.", project_config)
+        self.assertIn("os.path.isfile(p)", project_hooks["hooks"]["PostToolUse"][0]["hooks"][0]["command"])
+        self.assertIn("exec codex --disable plugins", launcher)
+        self.assertNotIn("plugin add", launcher)
+
     def test_plugin_bundles_runtime_components(self):
         self.assertTrue((PLUGIN / ".codex-plugin" / "plugin.json").is_file())
         self.assertTrue((PLUGIN / ".mcp.json").is_file())
@@ -56,14 +72,14 @@ class SpecPluginPackageTests(unittest.TestCase):
         self.assertEqual("node", server["command"])
         self.assertEqual(["${PLUGIN_ROOT}/mcp-launch.mjs"], server["args"])
 
-        # Codex hook keeps exec-via-shell-string form (OQ4) with the portable
-        # default interpreter and the runtime-expanded ${PLUGIN_ROOT} token.
+        # Codex hook keeps shell-string form (OQ4), but the embedded launcher
+        # treats a removed cache script as a successful no-op. This protects
+        # sessions that retained an older versioned PLUGIN_ROOT after upgrade.
         hooks = json.loads((PLUGIN / "hooks" / "hooks.json").read_text(encoding="utf-8"))
         post_tool = hooks["hooks"]["PostToolUse"][0]["hooks"][0]
-        self.assertEqual(
-            'python "${PLUGIN_ROOT}/skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py"',
-            post_tool["command"],
-        )
+        self.assertTrue(post_tool["command"].startswith('python -c '))
+        self.assertIn("os.path.isfile(p)", post_tool["command"])
+        self.assertIn("${PLUGIN_ROOT}/skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py", post_tool["command"])
 
     def test_claude_plugin_manifest_mcp_and_hooks_use_bundled_runtime(self):
         manifest = json.loads((CLAUDE_PLUGIN / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8"))
@@ -87,10 +103,36 @@ class SpecPluginPackageTests(unittest.TestCase):
         hooks = json.loads((CLAUDE_PLUGIN / "hooks" / "hooks.json").read_text(encoding="utf-8"))
         post_tool = hooks["hooks"]["PostToolUse"][0]["hooks"][0]
         self.assertEqual("python", post_tool["command"])
+        self.assertEqual("-c", post_tool["args"][0])
+        self.assertIn("os.path.isfile(p)", post_tool["args"][1])
         self.assertIn(
             "${CLAUDE_PLUGIN_ROOT}/skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py",
             post_tool["args"],
         )
+
+    def test_claude_hook_launcher_is_quiet_when_cached_script_is_missing(self):
+        hooks = json.loads((CLAUDE_PLUGIN / "hooks" / "hooks.json").read_text(encoding="utf-8"))
+        post_tool = hooks["hooks"]["PostToolUse"][0]["hooks"][0]
+        args = [
+            value.replace(
+                "${CLAUDE_PLUGIN_ROOT}",
+                str(ROOT / "does-not-exist"),
+            )
+            for value in post_tool["args"]
+        ]
+
+        result = subprocess.run(
+            [sys.executable, *args],
+            input="{}",
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+
+        self.assertEqual(0, result.returncode)
+        self.assertEqual("", result.stdout)
+        self.assertEqual("", result.stderr)
 
     def test_claude_marketplace_lists_claude_plugin_source(self):
         marketplace = json.loads(MARKETPLACE.read_text(encoding="utf-8"))

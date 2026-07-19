@@ -63,6 +63,21 @@ function fireHook(command, args, payload, cwd) {
   });
 }
 
+function fireShellHook(command, payload, cwd) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, { cwd, shell: true, stdio: ["pipe", "pipe", "pipe"] });
+    let out = "";
+    let stderr = "";
+    const timer = setTimeout(() => { child.kill(); reject(new Error("hook timed out")); }, 20000);
+    child.stdout.on("data", (c) => { out += c; });
+    child.stderr.on("data", (c) => { stderr += c; });
+    child.on("error", (err) => { clearTimeout(timer); reject(err); });
+    child.on("close", (code) => { clearTimeout(timer); resolve({ code, out, stderr }); });
+    child.stdin.write(JSON.stringify(payload));
+    child.stdin.end();
+  });
+}
+
 async function main() {
   const base = fs.mkdtempSync(path.join(os.tmpdir(), "slm-smoke-"));
   const home = path.join(base, "home");
@@ -117,21 +132,24 @@ async function main() {
       const isExec = Array.isArray(hookCmd.args);
       if (cfg.expectExec && !isExec) fail(`${cfg.label} hook is not exec form (regressed to shell-form): ${JSON.stringify(hookCmd)}`);
       const subst = (s) => s.replace("${PLUGIN_ROOT}", cfg.tokenRoot).replace("${CLAUDE_PLUGIN_ROOT}", cfg.tokenRoot);
-      let command;
-      let args;
+      let result;
       if (isExec) {
-        command = hookCmd.command;
-        args = hookCmd.args.map(subst);
+        result = await fireHook(hookCmd.command, hookCmd.args.map(subst), payload, repoRoot);
       } else {
-        const m = hookCmd.command.match(/^(.*?)\s+"([^"]+)"\s*$/);
-        if (!m) fail(`cannot parse shell-form hook command: ${hookCmd.command}`);
-        const interp = m[1].split(/\s+/);
-        command = interp[0];
-        args = [...interp.slice(1), subst(m[2])];
+        result = await fireShellHook(subst(hookCmd.command), payload, repoRoot);
       }
-      const result = await fireHook(command, args, payload, repoRoot);
       if (result.code !== 0) fail(`${cfg.label} hook exited ${result.code}. stderr:\n${result.stderr}`);
       ok(`${cfg.label} hook executed (exit 0, ${result.out.trim() ? "advisory output emitted" : "no advisory output"})`);
+
+      const missingRoot = path.join(base, "removed-cache-version", cfg.label.replace(/\s+/g, "-"));
+      const missingSubst = (s) => s.replace("${PLUGIN_ROOT}", missingRoot).replace("${CLAUDE_PLUGIN_ROOT}", missingRoot);
+      const missingResult = isExec
+        ? await fireHook(hookCmd.command, hookCmd.args.map(missingSubst), payload, repoRoot)
+        : await fireShellHook(missingSubst(hookCmd.command), payload, repoRoot);
+      if (missingResult.code !== 0 || missingResult.out || missingResult.stderr) {
+        fail(`${cfg.label} missing-cache hook was not quiet: ${JSON.stringify(missingResult)}`);
+      }
+      ok(`${cfg.label} missing-cache hook exited quietly`);
     }
 
     process.stdout.write("SMOKE PASS\n");

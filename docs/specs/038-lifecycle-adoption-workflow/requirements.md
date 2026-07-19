@@ -38,6 +38,8 @@ classification, reconciliation, or reporting behavior.
   rules discoverable and authoritative.
 - Make advisory hook recommendations proportional to lifecycle state and avoid
   redundant full-package lint recommendations after ordinary writes.
+- Keep checkout development repository-local, keep user-wide deployment on
+  packaged artifacts, and make removed-cache hook entrypoints quiet.
 
 ## Non-Goals
 
@@ -204,6 +206,34 @@ full-package validation advice.
 4. Hooks SHALL remain advisory, SHALL be quiet when no guidance or diagnostics
    are needed, and SHALL NOT mutate lifecycle state or block the underlying
    write.
+5. GIVEN a running session retains a versioned plugin hook path whose script has
+   been removed, WHEN the hook entrypoint runs, THEN THE SYSTEM SHALL return
+   success without feedback rather than report a blocked post-tool hook.
+
+### Requirement 7: Development And Package Isolation
+
+**User Story:** As a lifecycle maintainer, I want checkout testing isolated to
+the owning repository, so that active agents and user-wide packaged installs are
+not disrupted by development refreshes.
+
+**Priority:** must-have
+
+#### Acceptance Criteria
+
+1. GIVEN a Codex development session for this repository, WHEN it starts through
+   the supported development entrypoint, THEN THE SYSTEM SHALL load the skill,
+   MCP server, and advisory hook from repository-owned source surfaces without
+   calling plugin installation or modifying user-wide Codex state.
+2. GIVEN a packaged lifecycle plugin is installed user-wide, WHEN a source-backed
+   development session starts, THEN THE SYSTEM SHALL prevent packaged plugin
+   components from running alongside the repository-owned lifecycle surfaces.
+3. GIVEN the installer source is a Git checkout and the destination is the
+   default user-wide Codex home, WHEN installation is requested, THEN THE SYSTEM
+   SHALL refuse the deployment and direct the maintainer to repository-local
+   development or a packaged artifact.
+4. GIVEN installer behavior needs local validation, WHEN explicit non-user Codex
+   and marketplace roots are supplied, THEN THE SYSTEM SHALL retain isolated
+   dry-run and smoke-test support.
 
 ## Correctness Properties
 
@@ -219,6 +249,8 @@ full-package validation advice.
   lifecycle constraint through inline text or an explicit linked expansion.
 - **CP-006:** The implementation-start workflow is deterministic and read-only
   for the same repository and task evidence.
+- **CP-007:** Source-backed development and packaged user deployment never share
+  a mutable plugin-cache refresh operation.
 
 ## Durable Source Baseline
 
@@ -296,6 +328,10 @@ discovered later.
   their defined package-validation behavior.
 - **SC-006:** Promoted dogfood documentation preserves the external producer's
   qualifications without importing analyser implementation requirements.
+- **SC-007:** A source-backed Codex development session exposes only the
+  repository lifecycle skill, MCP server, and hook; checkout installation to
+  the default user Codex home is refused; packaged user installation remains
+  unchanged.
 
 ## Related Artifacts
 

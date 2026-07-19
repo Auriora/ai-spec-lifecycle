@@ -62,7 +62,7 @@ def build_install_local_plan(
         argv.append("--dry-run")
     return [
         CommandSpec.from_argv(
-            "install local plugin",
+            "test installer in isolated roots",
             argv,
             cwd=repo_root,
             mutates=not dry_run,

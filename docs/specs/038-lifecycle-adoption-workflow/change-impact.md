@@ -4,7 +4,7 @@ doc_type: spec
 artifact_type: change-impact
 status: draft
 owner: platform
-last_reviewed: 2026-07-18
+last_reviewed: 2026-07-19
 ---
 
 # Lifecycle Adoption Workflow Change Impact
@@ -43,16 +43,18 @@ closure destinations.
 | Capability readiness and bounded client observation | clarify | MCP initialization and capability contract | runtime reference | yes |
 | Concise skill entrypoint | modify | source skill and references | source skill and plugin bundles | yes |
 | Explicit ordinary-write versus lifecycle-boundary hook guidance | modify | hook runtime and lifecycle state | runtime reference and dogfood evaluation | yes, after T009 validation |
+| Quiet cache-safe hook launcher and repository-local development | modify | packaged hooks, project config, and installer | install and runtime references | yes, after T013 validation |
 | Qualified external adoption finding | consume | reviewed external report | dogfood evaluation | yes |
 
 ## Promotion Targets
 
 | Spec content | Durable destination | Promotion status | Notes |
 |--------------|---------------------|------------------|-------|
-| Accepted workflow and action ordering | `docs/design/spec-lifecycle-management.md` | pending T009 validation | Describe current delivered behavior only. |
-| Runtime, prompt, hook, and capability contract | `docs/reference/spec-lifecycle-runtime.md` | pending T009 validation | Include MCP, CLI, and advisory-hook boundaries. |
-| Qualified external finding and hook outcome | `docs/reference/spec-lifecycle-dogfood-evaluation.md` | pending T010 review | Keep producer qualifications explicit. |
-| Delivery status and residuals | `docs/backlog/README.md`, `docs/roadmap/README.md` | pending | Route each residual once. |
+| Accepted workflow and action ordering | `docs/design/spec-lifecycle-management.md` | promoted | Current implementation-start composition and evidence-before-promotion ordering documented. |
+| Runtime, prompt, hook, and capability contract | `docs/reference/spec-lifecycle-runtime.md` | promoted | MCP/CLI boundary, bounded client observation, narrow hooks, and quiet removed-cache behavior documented. |
+| Development/package isolation | `docs/reference/spec-lifecycle-manager-mcp-install.md`, `README.md` | promoted | Source testing and packaged user deployment are separated. |
+| Qualified external finding and hook outcome | `docs/reference/spec-lifecycle-dogfood-evaluation.md` | promoted | Producer scope, revision, incomplete bounds, unavailable counts, limitations, and ownership are explicit. |
+| Delivery status and residuals | `docs/backlog/README.md`, `docs/roadmap/README.md` | promoted | B064 and R014 are done; residuals remain with B014, B015, B025, Spec 034, Chat Analyser, or the documented development launcher. |
 
 ## Unchanged Durable Areas
 
@@ -68,9 +70,16 @@ closure destinations.
 
 - DR-001 through DR-003 in `design.md` resolve prompt composition, measurable
   skill concision, and the ordinary-write versus explicit-boundary hook policy.
-- B014 and B015 disposition is evaluated during T011 after validated behavior
-  and qualified dogfood evidence exist; the disposition does not change the
-  implementation contract.
+- B014 and B015 remain candidate owners for future bounded history discovery
+  and workflow-friction reports. The qualified study consumed by this spec is
+  one input and does not complete their broader contracts.
+- B025 remains the sole owner of emitted telemetry and remote observability.
+- Spec 034 remains the sole owner of phase-completion mutation.
+- Chat Analyser owns session import, attribution, reconciliation, bounded
+  analysis performance, and report-confidence behavior.
+- Automatic project-scoped enablement of one packaged Codex plugin is not an
+  available client surface; the checked-in source development launcher is the
+  single operational destination for this limitation.
 
 ## Related Artifacts
 

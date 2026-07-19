@@ -110,6 +110,15 @@ class DevCliPlanTests(unittest.TestCase):
         self.assertIn("--skip-plugin-add", install_commands[0].argv)
         self.assertFalse(install_commands[0].mutates)
 
+    def test_install_local_requires_isolated_roots(self) -> None:
+        result = CliRunner().invoke(
+            app,
+            ["package", "install-local", "--repo-root", str(REPO_ROOT), "--dry-run"],
+        )
+
+        self.assertNotEqual(0, result.exit_code)
+        self.assertIn("--codex-home and --marketplace-root are required", result.output)
+
     def test_plugin_and_spec_plans_use_authoritative_commands(self) -> None:
         self.assertEqual(
             build_plugin_status_plan(REPO_ROOT)[0].argv,

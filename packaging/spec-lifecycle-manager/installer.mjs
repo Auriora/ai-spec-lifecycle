@@ -335,13 +335,10 @@ function pinHookFile(file, pythonCmd) {
     for (const hook of group.hooks || []) {
       if (hook.type !== "command") continue;
       if (Array.isArray(hook.args)) {
-        const scriptArg = hook.args.find((arg) => String(arg).endsWith(".py")) ?? hook.args.at(-1);
         hook.command = pythonCmd[0];
-        hook.args = [...pythonCmd.slice(1), scriptArg];
+        hook.args = [...pythonCmd.slice(1), ...hook.args];
       } else if (typeof hook.command === "string") {
-        const quote = hook.command.indexOf('"');
-        const tail = quote >= 0 ? hook.command.slice(quote) : `"${hook.command.split(/\s+/).pop()}"`;
-        hook.command = `${pythonCmd.join(" ")} ${tail}`;
+        hook.command = hook.command.replace(/^python(?=\s)/, pythonCmd.join(" "));
       }
     }
   }
@@ -396,6 +393,16 @@ export async function install(argv = []) {
 
   try {
     const sourceRoot = fs.realpathSync(opts.source ? opts.source : process.cwd());
+    const defaultCodexHome = path.resolve(process.env.CODEX_HOME || path.join(os.homedir(), ".codex"));
+    const requestedCodexHome = path.resolve(opts.codexHome);
+    if (fs.existsSync(path.join(sourceRoot, ".git")) && requestedCodexHome === defaultCodexHome) {
+      throw new InstallError(
+        "Refusing to install a development checkout into the user-wide Codex home. "
+          + "Use the repository-local .agents/skills and .codex development configuration, "
+          + "or install a packaged npm/GitHub release artifact. For isolated installer tests, "
+          + "pass a non-user --codex-home and --marketplace-root.",
+      );
+    }
     const codexHome = ensureDirResolved(opts.codexHome);
     const marketplaceRoot = ensureDirResolved(opts.marketplaceRoot);
 

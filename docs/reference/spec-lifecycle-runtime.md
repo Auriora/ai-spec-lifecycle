@@ -3,7 +3,7 @@ title: Spec lifecycle runtime
 doc_type: reference
 status: active
 owner: platform
-last_reviewed: 2026-07-05
+last_reviewed: 2026-07-19
 ---
 
 # Spec Lifecycle Runtime
@@ -153,6 +153,7 @@ Write-capable tools default to dry-run and require explicit `write_intent` when
 `dry_run` is false.
 
 - `scan_specs`
+- `lifecycle_capabilities`
 - `spec_id_inventory`
 - `spec_creation_plan`
 - `active_spec_preflight`
@@ -187,6 +188,22 @@ Write-capable tools default to dry-run and require explicit `write_intent` when
 - `task_context`
 - `traceability_lookup`
 - `prompts_validate`
+
+### Lifecycle Capabilities
+
+`lifecycle_capabilities` reports the stable server surface and current
+repository-state actions. Its top-level status is `ready` when those lifecycle
+actions are available. Client identity is optional observation, not a readiness
+input: when initialization metadata was not supplied, the response uses
+`client_metadata_status: not_observed` plus an informational, zero-impact
+limitation instead of reporting partial lifecycle support.
+
+When a client supplies standard MCP initialization metadata, the server retains
+only its name, version, negotiated protocol, and allowlisted `roots`,
+`sampling`, or `elicitation` capability shapes in process memory. The metadata
+is not persisted, inferred, or used to alter lifecycle decisions. Available
+next actions are MCP-primary; direct commands appear only under the labelled
+`validation_or_recovery` branch with `applies_when: mcp_unavailable`.
 
 ### Phase Gate Check
 
@@ -808,6 +825,7 @@ Prompt contracts live under `skills/spec-lifecycle-manager/prompts/`.
 
 Implemented definitions:
 
+- `implementation-start`
 - `reconcile-spec`
 - `choose-next-task`
 - `task-context`
@@ -825,6 +843,11 @@ guidance. The stdio MCP server exposes these definitions through
 
 Lifecycle prompts are convenience aliases:
 
+- `implementation-start` prepares one selected runnable task by composing
+  active preflight, task context, traceability, agent and stage readiness, and
+  validation planning. It preserves source blockers and provenance, remains
+  read-only, and routes missing specs or unrunnable tasks without invention.
+  Planned validation is never returned as completed evidence.
 - `documentation-wizard` guides stage-aware documentation authoring over the
   existing read-only lifecycle tools. It asks one bounded question at a time by
   default, classifies open questions and feedback, keeps edit application
@@ -997,6 +1020,17 @@ For ordinary spec authoring writes, the wrapper can also emit concise
 next-action guidance even when there are no lint errors. It does not block
 edits, modify files, update task evidence, or install itself.
 
+Packaged Codex and Claude hook definitions launch the wrapper through a small
+interpreter-level existence check. If a running session retains a versioned
+plugin-cache path after that cache version is removed, the missing script is a
+quiet successful no-op rather than a blocked `PostToolUse` failure. Runtime
+diagnostics from an existing wrapper retain their normal advisory behavior.
+
+In this repository, source-backed hook testing uses `.codex/hooks.json` and
+`scripts/codex-spec-lifecycle-dev.sh`. The launcher disables packaged plugins
+for that process so the source hook is not duplicated by the user-wide release.
+It does not mutate user plugin state.
+
 To avoid repeating the same advisory output when a client emits duplicate
 post-write events, the wrapper keeps a short debounce cache for identical
 post-write file states. The default window is 45 seconds. The cache key includes
@@ -1011,35 +1045,11 @@ Debounce settings:
 | `SPEC_LIFECYCLE_HOOK_DEBOUNCE_SECONDS` | `45` | Set to `0` to disable duplicate-event debounce. |
 | `SPEC_LIFECYCLE_HOOK_DEBOUNCE_PATH` | Next to the hook log | Override the JSON cache path used for duplicate-event suppression. |
 
-Recommended global Codex hook entry:
-
-```json
-{
-  "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "^(apply_patch|write_file|create_file)$",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 /home/bcherrington/.codex/skills/spec-lifecycle-manager/scripts/codex_spec_lifecycle_hook.py",
-            "statusMessage": "running spec lifecycle advisory hook"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
-Replace `python3` with the interpreter that exists on your OS — `py -3` on
-Windows, `python3` on macOS/Linux — or whatever `SPEC_LIFECYCLE_PYTHON` names.
-The bundled plugin hook resolves this automatically at install time; this global
-example is hand-authored, so pick the interpreter present on the host.
-
-If another `PostToolUse` entry already matches write tools, append this hook to
-that entry's `hooks` list or add a second matching entry. Keep the hook
-advisory until false-positive behavior has been dogfooded.
+Do not add a separate global hook for a normal user install. The packaged
+plugin owns its hook definition and pins the host interpreter during install;
+an additional `~/.codex/hooks.json` entry would run alongside it. Maintainers
+testing this checkout should use the repository development launcher and its
+checked-in project hook instead.
 
 ## Archived Spec Scan Behavior
 
