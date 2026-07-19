@@ -179,11 +179,11 @@ validation.
     dispositions; every Must requirement and public-interface design target is
     complete or routed with one owner before closure.
   - Evidence mode: validation
-  - Evidence: Phase 4 full validation passed after correcting two archive/closure destinations made stale by the intentional npm-install.js replacement. npm run validate passed 353 Python tests, 31 Node tests, lifecycle scan, archive index, prompt validation, package contract, sync guard, a 158-file npm pack dry-run, and git diff --check. The isolated installed-tarball smoke repassed, and MCP scan/lint/prompts/archive checks reported healthy output with zero package lint or archive findings. Package/public-interface review passed the sole-bin migration, installer/query separation, shell-free dispatch, shared semantic, read-only, durable-doc, bundle, and package boundaries. The breaking rename is documented in docs/release-notes/v0.5.0.md; a green Windows/macOS/Linux matrix run remains routed to the release maintainer before publish; no implementation backlog was identified.
+  - Evidence: Phase 4 full validation passed after correcting two archive/closure destinations made stale by the intentional npm-install.js replacement. npm run validate passed 353 Python tests, 32 Node tests, lifecycle scan, archive index, prompt validation, package contract, sync guard, a 158-file npm pack dry-run, and git diff --check. The isolated installed-tarball smoke repassed, and MCP scan/lint/prompts/archive checks reported healthy output with zero package lint or archive findings. Package/public-interface review passed the sole-bin migration, installer/query separation, shell-free dispatch, shared semantic, read-only, durable-doc, bundle, and package boundaries. The breaking rename is documented in docs/release-notes/v0.5.0.md. GitHub Actions run 29683557635 then passed all six Linux/macOS/Windows jobs on Python 3.10 and 3.12, including the installed-package smoke; no implementation backlog remains.
 
   - Status: Phase 4 implementation, promotion, full validation, and semantic review complete; actual spec closure remains separate.
-  - Destination: release workflow for platform CI
-  - Decision owner: release maintainer
+  - Destination: none
+  - Decision owner: none
 ## Execution Rules
 
 - Do not implement from this file alone. Read all linked artifacts and current

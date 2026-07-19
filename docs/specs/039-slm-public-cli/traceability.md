@@ -41,8 +41,8 @@ public contract from `tasks.md` alone.
 | Requirement 5 | must-have | AC1, AC2, AC3, AC4, AC5 | Components and Changes; Data Models | T001-T005, T008, T009 | Requirement parser/projection gates | README; runtime reference | complete | none |
 | Requirement 6 | must-have | AC1, AC2, AC3, AC4, AC5 | Algorithms and Logic; Error Handling | T001-T005, T008, T009 | Archive/history gates | README; runtime reference | complete | none |
 | Requirement 7 | must-have | AC1, AC2, AC3, AC4, AC5 | Data Models; Data Flow; Interfaces | T001, T004-T009 | Table/JSON parity and path gates | runtime/design references | complete | none |
-| Requirement 8 | should-have | AC1, AC2, AC3, AC4 | Data Flow; Error Handling | T001, T004-T009 | Root discovery and exit-code gates | runtime/install references | partial-routed | Release maintainer must obtain the configured Windows/macOS/Linux CI run before publish. |
-| Requirement 9 | must-have | AC1, AC2, AC3, AC4 | Security; Migration; Operational Considerations | T001, T004-T009 | Read-only, interpreter, bundle, tarball gates | README; install/runtime references | partial-routed | Release maintainer must obtain the configured Windows/macOS/Linux installed-tarball smoke before publish. |
+| Requirement 8 | should-have | AC1, AC2, AC3, AC4 | Data Flow; Error Handling | T001, T004-T009 | Root discovery, exit-code, and cross-platform CI gates | runtime/install references | complete | none |
+| Requirement 9 | must-have | AC1, AC2, AC3, AC4 | Security; Migration; Operational Considerations | T001, T004-T009 | Read-only, interpreter, bundle, tarball, and installed-package matrix gates | README; install/runtime references | complete | none |
 
 ## Correctness Property Coverage
 
@@ -66,7 +66,7 @@ public contract from `tasks.md` alone.
 | Algorithms and Logic | Requirements 3-6 | T002-T005 | selection, filters, history projection | focused Python tests | complete | none |
 | Error Handling | Requirements 3, 6, 8 | T001, T004, T005, T007 | CLI and dispatcher | exit/stderr tests | complete | none |
 | Security, Trust, and Access | Requirement 9 | T001, T004-T007, T009 | argument-vector launch and read-only queries | injection/read-only tests and review | complete | none |
-| Migration and Compatibility | Requirements 1, 9 | T006-T009 | bin map and durable docs | package metadata and release review | complete | Platform CI remains a release gate, not an implementation gap. |
+| Migration and Compatibility | Requirements 1, 9 | T006-T009 | bin map and durable docs | package metadata, release review, and green cross-platform matrix | complete | none |
 
 ## Open Decision Impact
 
