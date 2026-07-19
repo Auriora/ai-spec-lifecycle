@@ -1,0 +1,204 @@
+---
+title: Public slm CLI tasks
+doc_type: spec
+artifact_type: tasks
+status: draft
+owner: platform
+last_reviewed: 2026-07-19
+---
+
+# Tasks
+
+**Input**: `requirements.md`, `design.md`, `change-impact.md`,
+`canonical-context.md`, `traceability.md`, and `verification.md`
+
+**Prerequisites**: The user-approved decisions recorded in `requirements.md`
+and the public/package boundary in `design.md`.
+
+## Task Dependency Graph
+
+```text
+T001 -> T002
+T002 -> T003
+T002 -> T004
+T003 + T004 -> T005
+T005 -> T006
+T006 -> T007
+T007 -> T008
+T008 -> T009
+```
+
+## Phase 1: Contract Foundation
+
+**Purpose**: Freeze public behavior and shared record semantics before changing
+the package executable.
+
+- [ ] T001 Add public CLI contract fixtures and focused failing tests.
+  - Depends on: none
+  - Requirement: Requirement 1, Requirement 2, Requirement 3, Requirement 4,
+    Requirement 5, Requirement 6, Requirement 7, Requirement 8, Requirement 9
+  - Properties: CP-001, CP-002, CP-003, CP-004, CP-005, CP-006, CP-007
+  - Files: `tests/runtime/`, `tests/fixtures/`
+  - Acceptance: Tests define the sole `slm` bin, help and install behavior,
+    active inventory, selection ambiguity, task filter unions and exclusions,
+    next-task equivalence,
+    requirement priorities, durable history, JSON parity, repository discovery,
+    exit codes, and read-only behavior.
+  - Evidence mode: implementation
+  - Evidence: Pending.
+
+- [ ] T002 Implement normalized shared lifecycle view records.
+  - Depends on: T001
+  - Requirement: Requirement 2, Requirement 3, Requirement 4, Requirement 5,
+    Requirement 6
+  - Properties: CP-001, CP-002, CP-005, CP-006, CP-007
+  - Files: `skills/spec-lifecycle-manager/scripts/lifecycle/core.py`,
+    `skills/spec-lifecycle-manager/scripts/lifecycle/requirements.py`, new
+    public-view module as accepted by implementation
+  - Acceptance: Active specs, tasks, requirements, and historic entries are
+    projected from shared core semantics; requirement inventory exposes
+    canonical priorities and linked tasks; no Markdown parser is duplicated in
+    the presentation layer.
+  - Evidence mode: implementation
+  - Evidence: Pending.
+
+- [ ] T003 Checkpoint - Shared record and filter validation.
+  - Depends on: T002
+  - Requirement: Requirement 2, Requirement 3, Requirement 4, Requirement 5,
+    Requirement 6
+  - Files: `tests/runtime/`, `docs/specs/039-slm-public-cli/verification.md`
+  - Acceptance: Focused tests prove exact marker/state partitions, next-task
+    equivalence, ambiguity handling, priority semantics, and history sourcing
+    before renderers or package bins are implemented.
+  - Validation: Run the focused Python public-view/core test module.
+  - Evidence mode: validation
+  - Evidence: Pending.
+
+## Phase 2: Public CLI
+
+**Purpose**: Deliver the read-only Python command surface and consistent human
+and machine output.
+
+- [ ] T004 Implement the standard-library `slm` Python CLI and renderers.
+  - Depends on: T002
+  - Requirement: Requirement 2, Requirement 3, Requirement 4, Requirement 5,
+    Requirement 6, Requirement 7, Requirement 8, Requirement 9
+  - Properties: CP-001, CP-002, CP-003, CP-004, CP-005, CP-006, CP-007
+  - Files: `skills/spec-lifecycle-manager/scripts/slm_cli.py`,
+    `skills/spec-lifecycle-manager/scripts/lifecycle/public_cli.py`,
+    `tests/runtime/`
+  - Acceptance: `specs`, `tasks`, `next`, `requirements`, and `history` support
+    the agreed selectors and filters, plain output, `--json`, root discovery,
+    deterministic ordering, and documented error exits without mutation.
+  - Evidence mode: implementation
+  - Evidence: Pending.
+
+- [ ] T005 Checkpoint - Public command validation.
+  - Depends on: T003, T004
+  - Requirement: Requirement 2, Requirement 3, Requirement 4, Requirement 5,
+    Requirement 6, Requirement 7, Requirement 8, Requirement 9
+  - Files: `tests/runtime/`, `docs/specs/039-slm-public-cli/verification.md`
+  - Acceptance: Focused CLI tests pass for table and JSON output, nested
+    working directories, explicit roots, valid empty repositories, ambiguity,
+    invalid filters, malformed history, and worktree preservation.
+  - Validation: Run focused public CLI tests and `git diff --check`.
+  - Evidence mode: validation
+  - Evidence: Pending.
+
+## Phase 3: Packaging and Distribution
+
+**Purpose**: Make `slm` the sole release-package executable while preserving
+the package installer subcommand and repository-local `slc` separation.
+
+- [ ] T006 Implement the Node dispatcher and sole-bin package contract.
+  - Depends on: T005
+  - Requirement: Requirement 1, Requirement 8, Requirement 9
+  - Files: `package.json`, `packaging/spec-lifecycle-manager/slm-cli.js`,
+    `packaging/spec-lifecycle-manager/npm-install.js`,
+    `packaging/spec-lifecycle-manager/package-manifest.json`,
+    `packaging/spec-lifecycle-manager/npm-package.json`, package-contract code,
+    `tests/runtime/*.test.mjs`
+  - Acceptance: `slm` is the only npm bin; bare `slm` routes to `specs`;
+    `slm install` retains installer behavior; read commands launch the bundled
+    Python CLI through `resolve-python.mjs` without a shell; obsolete executable
+    aliases are removed from package contracts and tests.
+  - Evidence mode: implementation
+  - Evidence: Pending.
+
+- [ ] T007 Synchronize plugin bundles and validate packaged execution.
+  - Depends on: T006
+  - Requirement: Requirement 1, Requirement 7, Requirement 8, Requirement 9
+  - Files: `plugins/spec-lifecycle-manager/`,
+    `plugins/spec-lifecycle-manager/claude-plugin/`, package tests and fixtures
+  - Acceptance: Source and Codex/Claude bundles are equivalent; npm dry-run
+    includes every dispatcher/runtime file; an isolated built-tarball smoke
+    proves `slm --help`, `slm specs --json`, and `slm install --help`; Windows,
+    macOS, and Linux CI paths are represented.
+  - Validation: Run source/bundle sync guard, package contract, npm pack
+    dry-run, focused Node tests, and isolated tarball smoke.
+  - Evidence mode: validation
+  - Evidence: Pending.
+
+## Phase 4: Durable Documentation and Closure Readiness
+
+**Purpose**: Promote the accepted command contract and complete release-quality
+validation.
+
+- [ ] T008 Update durable public CLI, runtime, design, and install docs.
+  - Depends on: T007
+  - Requirement: Requirement 1, Requirement 2, Requirement 3, Requirement 4,
+    Requirement 5, Requirement 6, Requirement 7, Requirement 8, Requirement 9
+  - Files: `README.md`, `docs/design/spec-lifecycle-management.md`,
+    `docs/reference/spec-lifecycle-runtime.md`,
+    `docs/reference/spec-lifecycle-manager-mcp-install.md`, release notes if a
+    release is prepared
+  - Acceptance: Durable docs use `slm`, distinguish public CLI from `slc` and
+    MCP, explain filters and state semantics, document the executable breaking
+    change, and contain a validated user path from package installation to each
+    read-only view.
+  - Evidence mode: implementation
+  - Evidence: Pending.
+
+- [ ] T009 Run full validation, package review, and semantic closure review.
+  - Depends on: T008
+  - Requirement: Requirement 1, Requirement 2, Requirement 3, Requirement 4,
+    Requirement 5, Requirement 6, Requirement 7, Requirement 8, Requirement 9
+  - Properties: CP-001, CP-002, CP-003, CP-004, CP-005, CP-006, CP-007
+  - Files: `docs/specs/039-slm-public-cli/verification.md`, durable follow-up
+    destinations if needed
+  - Acceptance: Full tests, lifecycle scan/lint, prompt validation, package
+    contract, sync guard, npm pack dry-run, whitespace checks, isolated
+    packaged smoke, and package/release review pass or have explicit bounded
+    dispositions; every Must requirement and public-interface design target is
+    complete or routed with one owner before closure.
+  - Evidence mode: validation
+  - Evidence: Pending.
+
+## Execution Rules
+
+- Do not implement from this file alone. Read all linked artifacts and current
+  package/runtime source before starting a task.
+- Mark one selected task `[~]` before implementation and use the guarded task
+  state tool when available.
+- Keep `slm` read-only except for its explicitly selected `install` subcommand.
+- Do not introduce compatibility aliases that contradict Requirement 1.
+- Do not copy the Typer-based `slc` implementation into the release package.
+- Do not add a CLI-only interpretation of task state, next-task selection,
+  requirement priority, spec resolution, or history validity.
+- Run focused tests at each checkpoint; do not wait until T009 to discover a
+  public-contract or packaging mismatch.
+- Verify the built tarball in isolated roots. A checkout invocation alone is
+  not distribution evidence.
+- Preserve unrelated worktree changes and keep generated package artifacts out
+  of commits unless repository policy explicitly requires them.
+- Before closure, promote all accepted CLI behavior and migration guidance to
+  the durable targets in `change-impact.md`.
+
+## Related Artifacts
+
+- Requirements: `requirements.md`
+- Change Impact: `change-impact.md`
+- Design: `design.md`
+- Traceability: `traceability.md`
+- Verification: `verification.md`
+- Quickstart: `quickstart.md`
