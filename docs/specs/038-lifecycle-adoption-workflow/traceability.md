@@ -86,7 +86,7 @@ last_reviewed: 2026-07-19
 | MCP/CLI, hook, and capability contract | requirements/design | `docs/reference/spec-lifecycle-runtime.md` | T011 | pending validation |
 | Qualified external findings | research/verification | `docs/reference/spec-lifecycle-dogfood-evaluation.md` | T010, T011 | pending validation |
 | Delivery and residual routing | change impact/verification | `docs/backlog/README.md`, `docs/roadmap/README.md` | T011 | pending validation |
-| Mandatory skill behavior | requirements/design | source skill, references, Codex and Claude bundles | T008, T009 | pending implementation |
+| Mandatory skill behavior | requirements/design | source skill, references, Codex and Claude bundles | T008, T009 | implemented; integrated validation pending T009 |
 
 ## Review Reconciliation
 

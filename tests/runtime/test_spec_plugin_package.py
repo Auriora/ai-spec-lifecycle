@@ -140,6 +140,34 @@ class SpecPluginPackageTests(unittest.TestCase):
         self.assertIn("compatibility:", frontmatter)
         self.assertIn("metadata:", frontmatter)
 
+    def test_skill_entrypoint_is_compact_and_preserves_mandatory_rule_inventory(self):
+        skill_path = SOURCE_SKILL / "SKILL.md"
+        text = skill_path.read_text(encoding="utf-8")
+
+        self.assertLessEqual(len(skill_path.read_bytes()), 37_399)
+        mandatory_categories = {
+            "lifecycle chain": "durable docs -> active spec -> code/tests/config -> durable docs -> close spec",
+            "repository discovery": "Repository and template discovery",
+            "stages and gates": "Lifecycle stages and gates",
+            "artifact semantics": "Artifact, task, traceability, and evidence semantics",
+            "runtime access": "MCP-first access and CLI recovery",
+            "agent readiness": "Agent Readiness Contract and context budget",
+            "completion": "Verification, expert review, promotion, and closure",
+            "safety": "Write, privacy, safety, and approval boundaries",
+        }
+        for category, marker in mandatory_categories.items():
+            self.assertIn(marker, text, f"Missing mandatory rule category: {category}")
+
+        linked_expansions = (
+            "references/migration-guide.md",
+            "references/document-routing-and-expert-review.md",
+            "references/durable-document-contract.md",
+            "references/agent-workbench-evidence-boundary.md",
+            "references/spec-package/",
+        )
+        for expansion in linked_expansions:
+            self.assertIn(expansion, text)
+
     def test_npm_package_exposes_installer_bin_and_payload(self):
         package = json.loads(NPM_PACKAGE.read_text(encoding="utf-8"))
 

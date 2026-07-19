@@ -130,14 +130,18 @@ T009 + T010 -> T011 -> T012
 
 ## Phase 5: Concise Skill And Capability Context
 
-- [ ] T008 Reduce the skill entrypoint against the mandatory-rule inventory.
+- [x] T008 Reduce the skill entrypoint against the mandatory-rule inventory.
   - Depends on: T001
   - Requirement: Requirement 5
   - Property: CP-005
   - Files: source and package skill trees
   - Acceptance: The inventory, 37,399-byte ceiling, linked expansions, and
     source/package parity checks pass.
-  - Evidence: Pending.
+  - Evidence: 2026-07-19 reduced the source entrypoint from 53,427 to
+    16,452 bytes (69.2%), retained all eight mandatory-rule categories with
+    direct named expansions, and added a focused regression contract. Eleven
+    package tests passed; package-contract validation reported exact 62-file
+    source/Codex/Claude parity with zero diagnostics.
 
 ## Phase 6: Integrated Validation And Dogfood
 
