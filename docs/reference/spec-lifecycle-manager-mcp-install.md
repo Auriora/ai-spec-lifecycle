@@ -132,7 +132,7 @@ npm/installer path does not need this — it pins the host-resolved interpreter.
 The cross-platform installer is the package-owned user installation path:
 
 ```bash
-spec-lifecycle-manager install
+slm install
 ```
 
 `scripts/install-spec-lifecycle-manager-package.sh` is retained for existing
@@ -211,28 +211,44 @@ The repository defines an npm package contract:
 ```text
 package.json
 packaging/spec-lifecycle-manager/npm-package.json
-packaging/spec-lifecycle-manager/npm-install.js
+packaging/spec-lifecycle-manager/slm-cli.js
 packaging/spec-lifecycle-manager/installer.mjs
 packaging/spec-lifecycle-manager/resolve-python.mjs
 ```
 
 The package name is `@auriora/ai-spec-lifecycle`. It packages the plugin
 bundle, package metadata, and the cross-platform Node installer. It is
-**marketplace-ready but not published** to the npm registry; the package is
-distributed as the `npm pack` tarball attached to **GitHub releases** until a
-guarded npm publish is explicitly run. Install from a downloaded/unpacked
-tarball with its bin:
+published to the npm registry and also distributed as the `npm pack` tarball
+attached to GitHub releases. Install from a downloaded/unpacked tarball with
+its bin:
 
 ```bash
 npx @auriora/ai-spec-lifecycle install
 ```
 
-The npm bin resolves the unpacked package root and calls
+The package exposes `slm` as its sole npm bin. The former
+`spec-lifecycle-manager` and `ai-spec-lifecycle` executable aliases were
+removed; scripts must migrate to `slm`. The dispatcher resolves the unpacked
+package root and routes `slm install` to
 `packaging/spec-lifecycle-manager/installer.mjs` in-process (no shell, no
-spawned `.sh`) with `--source <package-root>`. A `prepack` step strips any
-Python bytecode caches so the tarball is clean. Repository development uses the
-source-backed launcher above; it does not refresh the user cache. Docker/GHCR
-image distribution is not the supported package path.
+spawned `.sh`) with `--source <package-root>`. Inspection commands resolve the
+supported Python interpreter and spawn the bundled `slm_cli.py` with
+`shell: false`. A `prepack` step strips Python bytecode caches so the tarball is
+clean. Repository development uses the source-backed launcher above; it does
+not refresh the user cache. Docker/GHCR image distribution is not the supported
+package path.
+
+Validate the installed executable from a built tarball, not from the checkout:
+
+```bash
+node tests/runtime/slm_package_smoke.mjs
+```
+
+The smoke creates isolated npm, Codex, marketplace, and repository roots; it
+requires the `slm` shim, rejects legacy shims, and exercises `slm --help`,
+`slm specs --json`, and `slm install --help`. The cross-platform workflow runs
+this smoke on Windows, macOS, and Linux. Checkout testing must not overwrite a
+user-wide packaged Codex or Claude installation.
 
 ### Release and npm publish workflow
 
@@ -381,7 +397,7 @@ claude plugin marketplace add Auriora/ai-spec-lifecycle
 claude plugin install spec-lifecycle-manager@ai-spec-lifecycle
 ```
 
-To pin to a specific release, append the tag: `Auriora/ai-spec-lifecycle@v0.4.0`.
+To pin to a specific release, append the tag: `Auriora/ai-spec-lifecycle@v0.5.0`.
 For an offline install, download the release tarball, `tar -xzf` it, and
 `claude plugin marketplace add .\package` instead of the first line.
 

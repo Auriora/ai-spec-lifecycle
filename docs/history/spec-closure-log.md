@@ -416,7 +416,7 @@ requires visible archived docs.
   - `packaging/spec-lifecycle-manager/installer.mjs`
   - `packaging/spec-lifecycle-manager/resolve-python.mjs`
   - `packaging/spec-lifecycle-manager/clean-pycache.mjs`
-  - `packaging/spec-lifecycle-manager/npm-install.js`
+  - `packaging/spec-lifecycle-manager/slm-cli.js`
   - `packaging/spec-lifecycle-manager/npm-package.json`
   - `packaging/spec-lifecycle-manager/package-manifest.json`
   - `package.json`
@@ -667,7 +667,7 @@ requires visible archived docs.
 - **Durable docs updated:**
   - `package.json`
   - `packaging/spec-lifecycle-manager/npm-package.json`
-  - `packaging/spec-lifecycle-manager/npm-install.js`
+  - `packaging/spec-lifecycle-manager/slm-cli.js`
   - `packaging/spec-lifecycle-manager/package-manifest.json`
   - `plugins/spec-lifecycle-manager/claude-plugin/`
   - `docs/reference/spec-lifecycle-manager-mcp-install.md`

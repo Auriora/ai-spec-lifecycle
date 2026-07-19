@@ -428,6 +428,37 @@ audit mode.
 See [Spec lifecycle runtime](../reference/spec-lifecycle-runtime.md) for the
 current command surface and hook modes.
 
+### Public inspection CLI boundary
+
+The release package exposes `slm` as its sole executable. The Node dispatcher
+owns package-level routing: `slm install` calls the package installer in-process,
+while every inspection command resolves Python through the package interpreter
+contract and launches the bundled standard-library `slm_cli.py` with an argument
+vector and no shell. Bare `slm` routes to `specs`.
+
+The public query surface is `specs`, `tasks`, `next`, `requirements`, and
+`history`. These commands are read-only projections over shared lifecycle
+parsers and selectors. Shared projection functions produce normalized records
+first; plain-text tables and the versioned JSON envelope render those same
+records so filtering, ordering, identity, and state cannot diverge by output
+mode. Historic records come from the validated closure log and archive index,
+including removed packages.
+
+Keep the three command boundaries distinct:
+
+- `slm` is the public, packaged, read-only lifecycle inspection surface plus
+  the explicit `install` action.
+- `slc` is checkout-only maintainer orchestration for validation, bundle sync,
+  package, install-test, and release workflows. It is not an npm bin.
+- MCP is the preferred structured agent interface for context, lifecycle
+  judgment, guarded state changes, promotion, and closure.
+
+The public CLI must not introduce independent meanings for task markers,
+requirements priorities, spec resolution, next-task selection, archive
+validity, or lifecycle health. Changes to those contracts start in shared
+lifecycle code and must update CLI tests, the bundled Codex and Claude copies,
+the runtime reference, package contract, and installed-tarball smoke.
+
 ## Implementation Rules
 
 - Implement one coherent task slice at a time, usually one phase or checkpoint from `tasks.md`.

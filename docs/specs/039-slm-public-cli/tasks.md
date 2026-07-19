@@ -151,7 +151,7 @@ the package installer subcommand and repository-local `slc` separation.
 **Purpose**: Promote the accepted command contract and complete release-quality
 validation.
 
-- [ ] T008 Update durable public CLI, runtime, design, and install docs.
+- [x] T008 Update durable public CLI, runtime, design, and install docs.
   - Depends on: T007
   - Requirement: Requirement 1, Requirement 2, Requirement 3, Requirement 4,
     Requirement 5, Requirement 6, Requirement 7, Requirement 8, Requirement 9
@@ -164,9 +164,9 @@ validation.
     change, and contain a validated user path from package installation to each
     read-only view.
   - Evidence mode: implementation
-  - Evidence: Pending.
+  - Evidence: Promoted the accepted public CLI contract to README.md, docs/design/spec-lifecycle-management.md, docs/reference/spec-lifecycle-runtime.md, docs/reference/spec-lifecycle-manager-mcp-install.md, and docs/release-notes/v0.5.0.md. The docs distinguish public slm, checkout-only slc, and agent MCP; define selection, filter/state, JSON, failure, read-only, and history semantics; document the sole-bin breaking rename and isolated tarball path. Every documented query example passed against the checkout dispatcher.
 
-- [ ] T009 Run full validation, package review, and semantic closure review.
+- [x] T009 Run full validation, package review, and semantic closure review.
   - Depends on: T008
   - Requirement: Requirement 1, Requirement 2, Requirement 3, Requirement 4,
     Requirement 5, Requirement 6, Requirement 7, Requirement 8, Requirement 9
@@ -179,8 +179,11 @@ validation.
     dispositions; every Must requirement and public-interface design target is
     complete or routed with one owner before closure.
   - Evidence mode: validation
-  - Evidence: Pending.
+  - Evidence: Phase 4 full validation passed after correcting two archive/closure destinations made stale by the intentional npm-install.js replacement. npm run validate passed 353 Python tests, 31 Node tests, lifecycle scan, archive index, prompt validation, package contract, sync guard, a 158-file npm pack dry-run, and git diff --check. The isolated installed-tarball smoke repassed, and MCP scan/lint/prompts/archive checks reported healthy output with zero package lint or archive findings. Package/public-interface review passed the sole-bin migration, installer/query separation, shell-free dispatch, shared semantic, read-only, durable-doc, bundle, and package boundaries. The breaking rename is documented in docs/release-notes/v0.5.0.md; a green Windows/macOS/Linux matrix run remains routed to the release maintainer before publish; no implementation backlog was identified.
 
+  - Status: Phase 4 implementation, promotion, full validation, and semantic review complete; actual spec closure remains separate.
+  - Destination: release workflow for platform CI
+  - Decision owner: release maintainer
 ## Execution Rules
 
 - Do not implement from this file alone. Read all linked artifacts and current

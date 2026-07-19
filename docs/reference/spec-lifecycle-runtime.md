@@ -39,6 +39,59 @@ Shell out to scripts only for CI, repository validation, MCP debugging,
 install/package checks, hook execution, or explicit recovery when MCP tools are
 not available.
 
+## Public `slm` Inspection CLI
+
+The release package exposes `slm` as its sole executable. It is the human- and
+automation-facing read-only query surface; `slm install` is the one explicit
+mutating package action. Bare `slm` is equivalent to `slm specs`.
+
+In this repository, the executable root-level `./slm` launcher delegates to the
+same package dispatcher and bundled Python CLI for source-backed testing. It is
+not included as a second npm bin and does not require a local npm install.
+
+- `slm specs` reports active spec ID, declared status, structural health,
+  completed/total task progress, and next runnable task. `--all` adds historic
+  records with lifecycle/disposition.
+- `slm tasks [SPEC]` reports task ID, marker, normalized state, dependencies,
+  linked requirements, and summary. Its filters are `--complete`, `--pending`,
+  `--open`, repeatable `--state STATE`, or exclusive `--next`.
+- `slm next [SPEC]` is an alias for `slm tasks [SPEC] --next` and uses the
+  shared dependency-aware selector.
+- `slm requirements [SPEC]` reports requirement ID, canonical priority, title,
+  and linked tasks. It accepts repeatable `--priority
+  must-have|should-have|could-have` and `--missing-priority`.
+- `slm history` reports closed spec ID, title, disposition, final spec commit,
+  and cleanup commit from validated durable history. It accepts `--archived`,
+  `--removed`, and `--limit N`.
+
+Task filters form a union and never duplicate records. `--pending` means only
+literal `[ ]` tasks. `--open` means pending, in-progress, partial,
+review-needed, and attention; it excludes complete, routed/follow-up, no-op,
+and deferred outcomes. `--next` cannot be combined with a state filter.
+History disposition filters also form a union. Limits apply to the newest-first
+durable archive order.
+
+Commands taking `SPEC` accept a full active ID, unique numeric prefix, slug, or
+package path through the shared resolver. With no argument, exactly one active
+spec is selected; multiple candidates produce an actionable error without
+guessing. Historic-only, missing, and ambiguous references remain distinct
+errors.
+
+Use `-C PATH` or `--repo PATH` to override nested-directory repository
+discovery. Use `--json` for one deterministic document containing
+`schema_version`, `command`, repo-relative repository identity, normalized
+`records`, and `summary`. Tables and JSON render the same records. Successful
+results, including valid empty inventories, exit 0; command/input errors exit
+2; repository, interpreter, selection, archive-validity, and execution failures
+exit non-zero with concise stderr diagnostics. Inspection commands do not write
+specs, docs, configuration, plugin state, caches inside the repository, or Git
+state.
+
+`slm` is not the agent control plane and does not expose guarded lifecycle
+writes. Agents should prefer MCP. Repository maintainers should use the
+checkout-only `slc` wrapper below for repeatable development workflows; `slc`
+is deliberately absent from the npm bin map.
+
 ## Developer CLI Convenience Wrapper
 
 This repository also ships a maintainer convenience CLI under `tools/devcli/`.
@@ -746,16 +799,16 @@ PYTHONDONTWRITEBYTECODE=1 skills/spec-lifecycle-manager/scripts/spec_runtime.py 
 
 The command checks:
 
-- `package.json` is valid JSON and exposes the `ai-spec-lifecycle` bin, plus
-  the `spec-lifecycle-manager` compatibility bin.
+- `package.json` is valid JSON and exposes `slm` as the sole bin, pointing to
+  `packaging/spec-lifecycle-manager/slm-cli.js`.
 - `packaging/spec-lifecycle-manager/npm-package.json` is valid JSON and
   includes package name, install command, bin path, registry, publish status,
   payload root, and required path list.
 - `packaging/spec-lifecycle-manager/package-manifest.json` and
   `plugins/spec-lifecycle-manager/.codex-plugin/plugin.json` are readable.
-- every required package input exists, including the plugin manifest, MCP
-  config, hook config, skill scripts, prompts, references, package manifest,
-  npm package contract, npm bin, and installer script.
+- every required package input exists, including the public dispatcher and
+  bundled Python CLI, plugin manifest, MCP config, hook config, skill scripts,
+  prompts, references, package manifest, npm package contract, and installer.
 - source skill, bundled plugin skill, and Claude plugin skill contents are in
   sync.
 - Git HEAD provenance is reported when available.
@@ -769,6 +822,16 @@ validation, package-contract, sync-guard, `npm pack --dry-run --json`, and
 ```bash
 npm pack --dry-run --json
 ```
+
+Validate executable behavior from an isolated installed tarball with:
+
+```bash
+node tests/runtime/slm_package_smoke.mjs
+```
+
+This requires the `slm` shim, rejects the removed `spec-lifecycle-manager` and
+`ai-spec-lifecycle` shims, and checks help, read-only JSON inspection, and
+installer help without changing user-wide plugin state.
 
 The release workflow builds the real tarball with `npm pack`, uploads the
 tarball plus `npm-pack.json` and `release-summary.md` as GitHub Actions

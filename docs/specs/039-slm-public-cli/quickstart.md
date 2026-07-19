@@ -11,9 +11,7 @@ last_reviewed: 2026-07-19
 
 ## Purpose
 
-Define the intended user journey and packaged smoke scenarios for `slm`. These
-commands are proposed behavior until the corresponding implementation tasks and
-verification evidence are complete.
+Record the implemented user journey and packaged smoke scenarios for `slm`.
 
 ## Prerequisites
 
@@ -91,13 +89,13 @@ verification evidence are complete.
 
 | Step Or Scenario | Evidence | Result | Residual Risk |
 |------------------|----------|--------|---------------|
-| Help and install routing | Isolated tarball smoke | pending | Must prove sole-bin npm behavior. |
-| Active spec human/JSON views | Focused CLI test and manual terminal check | pending | Table width differs by terminal. |
-| Task filters and next equivalence | Table-driven tests and core comparison | pending | Future markers require test updates. |
-| Requirement priorities | Canonical/missing/invalid priority fixtures | pending | Traceability may be absent. |
-| Removed history | Archive fixture with absent package directory | pending | Malformed records must fail closed. |
-| Explicit/nested root selection | Temporary repository fixture | pending | Cross-platform path behavior requires CI. |
-| Read-only guarantee | Before/after worktree fingerprint | pending | `install` is excluded by design. |
+| Help and install routing | Isolated tarball smoke | passed | Sole `slm` shim present; legacy shims absent. |
+| Active spec human/JSON views | Focused CLI test and terminal command pass | passed | Table width differs by terminal. |
+| Task filters and next equivalence | Table-driven tests and core comparison | passed | Future markers require test updates. |
+| Requirement priorities | Canonical/missing/invalid priority fixtures | passed | Traceability may be absent. |
+| Removed history | Archive fixture with absent package directory | passed | Malformed records fail closed. |
+| Explicit/nested root selection | Temporary repository fixture | passed locally | Windows/macOS/Linux workflow run remains a release gate. |
+| Read-only guarantee | Before/after worktree fingerprint | passed | `install` is excluded by design. |
 
 ## Cleanup
 

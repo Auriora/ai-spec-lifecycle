@@ -46,7 +46,7 @@ The supported distribution is the npm package tarball attached to a GitHub
 release. Install the latest released package globally:
 
 ```bash
-npm install -g https://github.com/Auriora/ai-spec-lifecycle/releases/download/v0.4.0/auriora-ai-spec-lifecycle-0.4.0.tgz
+npm install -g https://github.com/Auriora/ai-spec-lifecycle/releases/download/v0.5.0/auriora-ai-spec-lifecycle-0.5.0.tgz
 ```
 
 ### Codex
@@ -54,7 +54,7 @@ npm install -g https://github.com/Auriora/ai-spec-lifecycle/releases/download/v0
 Install or refresh the plugin:
 
 ```bash
-spec-lifecycle-manager install
+slm install
 ```
 
 Confirm that Codex can see it:
@@ -68,7 +68,7 @@ self-contained plugin, and removes older managed standalone skill, MCP, and
 hook entries. To target a different Codex home, run:
 
 ```bash
-spec-lifecycle-manager install --codex-home ~/.codex
+slm install --codex-home ~/.codex
 ```
 
 ### Claude Code
@@ -90,7 +90,7 @@ For offline installation, download and unpack the release tarball, then use its
 bundled marketplace:
 
 ```bash
-tar -xzf auriora-ai-spec-lifecycle-0.4.0.tgz
+tar -xzf auriora-ai-spec-lifecycle-0.5.0.tgz
 claude plugin marketplace add ./package
 claude plugin install spec-lifecycle-manager@ai-spec-lifecycle
 ```
@@ -100,6 +100,27 @@ for interpreter selection, package boundaries, repository-local development, and
 troubleshooting.
 
 ### Develop from this checkout
+
+Run the public CLI directly from source without installing or changing the
+user-wide package:
+
+```bash
+./slm --help
+./slm specs
+./slm tasks 039
+./slm -C /path/to/another-repository specs
+```
+
+The root launcher delegates to the same Node dispatcher and bundled Python CLI
+as the package. It needs only the documented Node and Python prerequisites; no
+virtual environment or npm install is required. To use `slm` without `./` for
+the current shell:
+
+```bash
+export SLM_SOURCE_ROOT="$PWD"
+export PATH="$SLM_SOURCE_ROOT:$PATH"
+slm specs
+```
 
 Start a source-backed Codex session without replacing the user-wide packaged
 plugin:
@@ -111,6 +132,48 @@ scripts/codex-spec-lifecycle-dev.sh
 That session disables packaged plugins, discovers the lifecycle skill from
 `.agents/skills`, and loads the MCP server and advisory hook from `.codex/`.
 User-wide installation is reserved for npm or GitHub release artifacts.
+
+## Inspect Lifecycle State With `slm`
+
+The installed package exposes one public executable, `slm`. Its inspection
+commands are read-only; `slm install` is the explicit package-install action.
+Bare `slm` is equivalent to `slm specs`.
+
+```bash
+slm                         # active specs, health, task progress, and next task
+slm specs --all             # active and historic specs
+slm tasks 039               # tasks for one active spec
+slm tasks 039 --pending     # literal [ ] tasks only
+slm tasks 039 --open        # every non-terminal open task state
+slm tasks 039 --complete
+slm tasks 039 --next        # dependency-aware next task
+slm next 039                # equivalent next-task form
+slm requirements 039
+slm requirements 039 --priority must-have
+slm requirements 039 --missing-priority
+slm history --removed --limit 10
+```
+
+Use a full ID, unique numeric prefix, slug, or package path where a command
+accepts `SPEC`. If the argument is omitted, `slm` selects the only active spec;
+when several are active it lists candidates and asks you to choose. Filters are
+unions: task selectors and repeatable `--state STATE` may be combined, except
+that `--next` is exclusive. `--pending` means literal pending, while `--open`
+also includes in-progress, partial, review-needed, and attention states.
+
+Add `--json` for one deterministic, versioned JSON document, and use `-C PATH`
+or `--repo PATH` to inspect a repository explicitly:
+
+```bash
+slm -C ../example-repository specs --json
+```
+
+The package no longer exposes the unused `spec-lifecycle-manager` or
+`ai-spec-lifecycle` executable aliases. Update scripts to call `slm`. The
+checkout-only `slc` command remains a separate maintainer wrapper for tests,
+bundle synchronization, packaging, release checks, and other development
+operations. Coding agents should continue to prefer the plugin's structured
+MCP tools for lifecycle context and decisions.
 
 ## Use It as a Person
 

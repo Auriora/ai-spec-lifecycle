@@ -1,0 +1,11 @@
+#!/usr/bin/env node
+"use strict";
+
+const { main } = require("./packaging/spec-lifecycle-manager/slm-cli.js");
+
+main()
+  .then((code) => process.exit(code))
+  .catch((error) => {
+    process.stderr.write(`slm: ${error?.stack || error}\n`);
+    process.exit(1);
+  });

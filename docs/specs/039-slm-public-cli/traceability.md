@@ -34,15 +34,15 @@ public contract from `tasks.md` alone.
 
 | Requirement | Priority | Acceptance Criteria | Design Sections | Tasks | Verification | Durable Targets | Coverage State | Residual Destination |
 |-------------|----------|---------------------|-----------------|-------|--------------|-----------------|----------------|----------------------|
-| Requirement 1 | must-have | AC1, AC2, AC3, AC4 | Overview; System Architecture; Migration and Compatibility | T001, T006, T007, T008, T009 | Bin identity, dispatcher, package, tarball gates | README; install reference; release notes | not-covered | none - implementation pending |
-| Requirement 2 | must-have | AC1, AC2, AC3, AC4, AC5 | Data Models; Data Flow; Algorithms and Logic | T001-T005, T008, T009 | Spec inventory and empty-state gates | README; runtime reference | not-covered | none - implementation pending |
-| Requirement 3 | must-have | AC1, AC2, AC3, AC4 | Algorithms and Logic; Error Handling | T001-T005, T008, T009 | Resolution and ambiguity gates | runtime reference | not-covered | none - implementation pending |
-| Requirement 4 | must-have | AC1, AC2, AC3, AC4, AC5, AC6, AC7 | Data Models; Algorithms and Logic; Interfaces | T001-T005, T008, T009 | Task filter and next equivalence gates | README; runtime reference | not-covered | none - implementation pending |
-| Requirement 5 | must-have | AC1, AC2, AC3, AC4, AC5 | Components and Changes; Data Models | T001-T005, T008, T009 | Requirement parser/projection gates | README; runtime reference | not-covered | none - implementation pending |
-| Requirement 6 | must-have | AC1, AC2, AC3, AC4, AC5 | Algorithms and Logic; Error Handling | T001-T005, T008, T009 | Archive/history gates | README; runtime reference | not-covered | none - implementation pending |
-| Requirement 7 | must-have | AC1, AC2, AC3, AC4, AC5 | Data Models; Data Flow; Interfaces | T001, T004-T009 | Table/JSON parity and path gates | runtime/design references | not-covered | none - implementation pending |
-| Requirement 8 | should-have | AC1, AC2, AC3, AC4 | Data Flow; Error Handling | T001, T004-T009 | Root discovery and exit-code gates | runtime/install references | not-covered | none - implementation pending |
-| Requirement 9 | must-have | AC1, AC2, AC3, AC4 | Security; Migration; Operational Considerations | T001, T004-T009 | Read-only, interpreter, bundle, tarball gates | README; install/runtime references | not-covered | none - implementation pending |
+| Requirement 1 | must-have | AC1, AC2, AC3, AC4 | Overview; System Architecture; Migration and Compatibility | T001, T006, T007, T008, T009 | Bin identity, dispatcher, package, tarball gates | README; install reference; `docs/release-notes/v0.5.0.md` | complete | none |
+| Requirement 2 | must-have | AC1, AC2, AC3, AC4, AC5 | Data Models; Data Flow; Algorithms and Logic | T001-T005, T008, T009 | Spec inventory and empty-state gates | README; runtime reference | complete | none |
+| Requirement 3 | must-have | AC1, AC2, AC3, AC4 | Algorithms and Logic; Error Handling | T001-T005, T008, T009 | Resolution and ambiguity gates | runtime reference | complete | none |
+| Requirement 4 | must-have | AC1, AC2, AC3, AC4, AC5, AC6, AC7 | Data Models; Algorithms and Logic; Interfaces | T001-T005, T008, T009 | Task filter and next equivalence gates | README; runtime reference | complete | none |
+| Requirement 5 | must-have | AC1, AC2, AC3, AC4, AC5 | Components and Changes; Data Models | T001-T005, T008, T009 | Requirement parser/projection gates | README; runtime reference | complete | none |
+| Requirement 6 | must-have | AC1, AC2, AC3, AC4, AC5 | Algorithms and Logic; Error Handling | T001-T005, T008, T009 | Archive/history gates | README; runtime reference | complete | none |
+| Requirement 7 | must-have | AC1, AC2, AC3, AC4, AC5 | Data Models; Data Flow; Interfaces | T001, T004-T009 | Table/JSON parity and path gates | runtime/design references | complete | none |
+| Requirement 8 | should-have | AC1, AC2, AC3, AC4 | Data Flow; Error Handling | T001, T004-T009 | Root discovery and exit-code gates | runtime/install references | partial-routed | Release maintainer must obtain the configured Windows/macOS/Linux CI run before publish. |
+| Requirement 9 | must-have | AC1, AC2, AC3, AC4 | Security; Migration; Operational Considerations | T001, T004-T009 | Read-only, interpreter, bundle, tarball gates | README; install/runtime references | partial-routed | Release maintainer must obtain the configured Windows/macOS/Linux installed-tarball smoke before publish. |
 
 ## Correctness Property Coverage
 
@@ -60,13 +60,13 @@ public contract from `tasks.md` alone.
 
 | Design Section | Requirements | Tasks | Interfaces Or Files | Verification | Coverage State | Residual Destination |
 |----------------|--------------|-------|---------------------|--------------|----------------|----------------------|
-| System Architecture | Requirements 1, 9 | T006, T007 | package dispatcher, Python entrypoint, shared lifecycle modules | Node/package/tarball gates | not-covered | none - implementation pending |
-| Components and Changes | Requirements 1-9 | T002, T004, T006-T008 | package, source, bundles, tests, durable docs | focused and full suites | not-covered | none - implementation pending |
-| Data Models | Requirements 2, 4-7 | T001-T005 | normalized command records and envelope | structural and parity tests | not-covered | none - implementation pending |
-| Algorithms and Logic | Requirements 3-6 | T002-T005 | selection, filters, history projection | focused Python tests | not-covered | none - implementation pending |
-| Error Handling | Requirements 3, 6, 8 | T001, T004, T005, T007 | CLI and dispatcher | exit/stderr tests | not-covered | none - implementation pending |
-| Security, Trust, and Access | Requirement 9 | T001, T004-T007, T009 | argument-vector launch and read-only queries | injection/read-only tests and review | not-covered | none - implementation pending |
-| Migration and Compatibility | Requirements 1, 9 | T006-T009 | bin map and durable docs | package metadata and release review | not-covered | none - implementation pending |
+| System Architecture | Requirements 1, 9 | T006, T007 | package dispatcher, Python entrypoint, shared lifecycle modules | Node/package/tarball gates | complete | none |
+| Components and Changes | Requirements 1-9 | T002, T004, T006-T008 | package, source, bundles, tests, durable docs | focused and full suites | complete | none |
+| Data Models | Requirements 2, 4-7 | T001-T005 | normalized command records and envelope | structural and parity tests | complete | none |
+| Algorithms and Logic | Requirements 3-6 | T002-T005 | selection, filters, history projection | focused Python tests | complete | none |
+| Error Handling | Requirements 3, 6, 8 | T001, T004, T005, T007 | CLI and dispatcher | exit/stderr tests | complete | none |
+| Security, Trust, and Access | Requirement 9 | T001, T004-T007, T009 | argument-vector launch and read-only queries | injection/read-only tests and review | complete | none |
+| Migration and Compatibility | Requirements 1, 9 | T006-T009 | bin map and durable docs | package metadata and release review | complete | Platform CI remains a release gate, not an implementation gap. |
 
 ## Open Decision Impact
 
