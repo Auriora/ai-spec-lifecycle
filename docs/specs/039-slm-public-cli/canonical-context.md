@@ -4,7 +4,7 @@ doc_type: spec
 artifact_type: canonical-context
 status: draft
 owner: platform
-last_reviewed: 2026-07-19
+last_reviewed: 2026-07-22
 ---
 
 # Canonical Context
@@ -53,6 +53,8 @@ contract.
 | Spec path | Source path | Source revision or date | Status | Canonical scope | Promotion target |
 |-----------|-------------|-------------------------|--------|-----------------|------------------|
 | `requirements.md`, `design.md` | User decisions in the 2026-07-19 discussion | 2026-07-19 | adapted | Public name, commands, filters, read-only boundary, and no compatibility alias | README and runtime/install references |
+| `requirements.md`, `design.md` | User request for singular `spec` navigation | 2026-07-22 | adapted | `spec` inventory selectors, per-spec actions, and defaults | README and runtime/design references |
+| `requirements.md`, `design.md` | User request for phase progress in spec inventory | 2026-07-22 | adapted | task-derived phase completion, current phase, state, and no-phase behavior | README and runtime/design references |
 | all artifacts | `README.md` | commit `225e2f2` baseline | background | Current packaged installation language | `README.md` |
 | all artifacts | `docs/reference/spec-lifecycle-runtime.md` | 2026-07-19 working tree | summarized | Existing runtime/state/history semantics | same file |
 | all artifacts | `docs/reference/spec-lifecycle-manager-mcp-install.md` | 2026-07-19 working tree | summarized | Current package and interpreter contract | same file |

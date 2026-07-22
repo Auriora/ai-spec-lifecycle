@@ -33,7 +33,7 @@ class LifecycleModuleTests(unittest.TestCase):
         self.assertEqual("ready", report["status"])
         self.assertEqual("not_observed", report["client_metadata_status"])
         self.assertEqual("spec-lifecycle-manager", report["server"]["name"])
-        self.assertEqual("0.5.0", report["server"]["version"])
+        self.assertEqual("0.6.0", report["server"]["version"])
         self.assertFalse(report["server"]["capabilities"]["tools"]["listChanged"])
         self.assertEqual("unknown", report["client"]["name"])
         self.assertEqual("stable_tool_surface", report["dynamic_tools"]["decision"])

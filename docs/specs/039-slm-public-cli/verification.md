@@ -4,7 +4,7 @@ doc_type: spec
 artifact_type: verification
 status: draft
 owner: platform
-last_reviewed: 2026-07-19
+last_reviewed: 2026-07-22
 ---
 
 # Verification
@@ -22,7 +22,7 @@ and removal of unused executable aliases.
 |------|-----------|--------|----------|
 | Requirements acceptance criteria reviewed | yes | passed | 2026-07-19 lifecycle review packet and traceability lookup; compatible-filter ambiguity resolved before commit. |
 | Shared public-view checkpoint passes | yes | passed | 2026-07-19: 22 focused public-view and shared-core regression tests passed; `git diff --check` and module compilation passed. |
-| Task evidence complete | yes | passed | T001-T009 contain concrete implementation or validation evidence. |
+| Task evidence complete | yes | passed | T001-T011 contain concrete implementation or validation evidence. |
 | Public CLI focused tests pass | yes | passed | 2026-07-19: 14 CLI tests and 17 shared-view tests passed; live checkout table/JSON smokes passed for all five query commands. |
 | Node dispatcher and Python resolver tests pass | yes | passed | 2026-07-19: 32 Node tests passed, including shell-free query dispatch, install routing, resolver behavior, child exits, signals, and the repository launcher. |
 | Read-only worktree preservation passes | yes | passed | Source fixture fingerprint passed and isolated installed-tarball `slm specs --json` completed without repository mutation. |
@@ -33,6 +33,8 @@ and removal of unused executable aliases.
 | Breaking executable rename reviewed and documented | yes | passed | README and install/runtime references direct users from both removed aliases to the sole `slm` bin; release notes remain a release-preparation obligation. |
 | Full repository validation passes | yes | passed | `npm run validate` passed after replacing two stale historic `npm-install.js` destinations with `slm-cli.js`. |
 | Spec cleanup decision recorded | yes | passed | Remove after final spec commit and closure metadata; closure execution remains a separate lifecycle action. |
+| Singular `spec` route extension passes | yes | passed | Focused route-equivalence tests, source/Codex/Claude bundle parity, isolated package smoke, and full validation passed on 2026-07-22. |
+| Task-derived phase progress passes | yes | passed | Mixed-state precedence, progress, all-complete, no-phase, table/JSON, singular/plural, bundle, package, and full validation passed on 2026-07-22. |
 
 ## Validation Commands
 
@@ -50,6 +52,13 @@ and removal of unused executable aliases.
 | `node tests/runtime/slm_package_smoke.mjs` | Verify `slm --help`, `slm specs --json`, and `slm install --help` from an isolated installed tarball | passed | Repassed in Phase 4: npm-created `slm` shim present; legacy bin shims absent; all three commands passed. |
 | `./slm --help` and `./slm specs --json` | Verify the repo-root source-backed developer launcher | passed | Root launcher delegates to the package dispatcher without npm or user-wide installation; focused Node regression covers help discovery. |
 | `git diff --check` | Whitespace and patch integrity | passed | Phase 4 full validation. |
+| `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_public_cli tests.runtime.test_public_views` | Singular inventory and per-spec routes, defaults, filters, invalid forms, and shared-view regressions | passed | 2026-07-22: 34 tests passed. |
+| `node --test tests/runtime/slm-cli.test.mjs` | Singular dispatcher forwarding and existing dispatcher behavior | passed | 2026-07-22: 7 tests passed. |
+| `node tests/runtime/slm_package_smoke.mjs` | Installed-tarball help and singular/plural inventory equivalence | passed | 2026-07-22: isolated package smoke passed. |
+| `SPEC_LIFECYCLE_PYTHON=python3 npm run validate` | Full regression, lifecycle, package, bundle, dry-run, and whitespace validation after T010 | passed | 2026-07-22: 356 Python and 33 Node tests passed with scan, archive index, prompts, package contract, sync guard, npm dry-run, and `git diff --check`. |
+| `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.runtime.test_public_views tests.runtime.test_public_cli` | Phase grouping, completion, precedence, no-phase behavior, table/JSON projection, and existing public CLI regressions | passed | 2026-07-22: 38 tests passed. |
+| `node tests/runtime/slm_package_smoke.mjs` | Installed-tarball phase fields and singular/plural inventory equivalence | passed | 2026-07-22: isolated phased-spec package smoke passed. |
+| `SPEC_LIFECYCLE_PYTHON=python3 npm run validate` | Full regression, lifecycle, package, bundle, dry-run, and whitespace validation after T011 | passed | 2026-07-22: 360 Python and 33 Node tests passed with scan, archive index, prompts, package contract, source/bundle sync, npm dry-run, and `git diff --check`. |
 
 ## Requirement Coverage
 
@@ -64,6 +73,8 @@ and removal of unused executable aliases.
 | Requirement 7 | AC1-AC5 | Source and packaged local paths passed | Human table width varies across terminals. |
 | Requirement 8 | AC1-AC4 | Local packaged paths and six-job Linux/macOS/Windows matrix passed | none |
 | Requirement 9 | AC1-AC4 | Source, bundle, tarball, and cross-platform installed-tarball paths passed | User-wide installation remains release-owned, not checkout-owned. |
+| Requirement 10 | AC1-AC8 | Focused parser and route-equivalence tests, live source comparisons, bundle parity, installed-package smoke, and full validation passed | Existing plural commands remain supported compatibility surfaces. |
+| Requirement 11 | AC1-AC7 | Focused phase aggregation tests, live human/JSON output, source/Codex/Claude parity, installed-package smoke, durable docs, and full validation passed | Future normalized task states require explicit precedence review. |
 
 ## Correctness Property Coverage
 
@@ -76,6 +87,8 @@ and removal of unused executable aliases.
 | CP-005 | T001-T005 ambiguity tests | passed | none |
 | CP-006 | T001-T005 removed/malformed history tests | passed | none |
 | CP-007 | T001-T005 priority parser/projection tests | passed | compatibility inputs remain allowed |
+| CP-008 | T010 singular/plural route equivalence tests | passed | singular routes delegate to the existing normalized view builders |
+| CP-009 | T011 phase grouping, completion, precedence, no-phase, and route-equivalence tests | passed | phase fields are projections of shared task grouping and normalized task state |
 
 ## Scope Reconciliation Before Closure
 
@@ -114,6 +127,8 @@ and removal of unused executable aliases.
 | T007 | complete | Bundles, package contract, dry-run, CI path, and isolated tarball smoke passed. | T007 task evidence. |
 | T008 | complete | Durable README, design, runtime, install, and v0.5.0 release references updated; every documented query path passed against the checkout dispatcher. | none |
 | T009 | complete | Full validation passed: 353 Python tests, 32 Node tests, scan, archive, prompts, package, sync, npm dry-run, whitespace, isolated tarball smoke, MCP lint, package/public-interface review, and six-job platform matrix. | none |
+| T010 | complete | Added unified singular inventory and per-spec routing, retained compatible plural commands, synchronized both bundles, promoted durable guidance, and passed focused, package, and full validation. | none |
+| T011 | complete | Added task-derived phase progress/current-state fields and table columns, preserved explicit no-phase absence, synchronized both bundles, promoted durable guidance, and passed focused, package, and full validation. | Future task states require explicit precedence review. |
 
 ## Evidence Log
 
@@ -126,6 +141,10 @@ and removal of unused executable aliases.
 | 2026-07-19 | Package and public-interface semantic review | 0 implementation findings; 1 external gate routed | Inspected `package.json`, `packaging/spec-lifecycle-manager/slm-cli.js`, shared public runtime, package tests, durable docs, history migration, and `docs/release-notes/v0.5.0.md`. The release maintainer owns platform CI before publish. |
 | 2026-07-19 | v0.5.0 release-candidate validation | passed | After the version bump and source launcher addition, `npm run test:devcli` passed 17 tests, `npm run validate` passed 353 Python and 32 Node tests plus all lifecycle/package checks, and the isolated installed-tarball smoke passed. |
 | 2026-07-19 | GitHub Actions cross-platform run 29683557635 | passed | All six Linux, macOS, and Windows jobs passed on Python 3.10 and 3.12, including the public `slm` built-package smoke. |
+| 2026-07-22 | T010 singular `spec` implementation | passed | All seven live singular/plural JSON route pairs matched exactly; 34 focused Python tests, 7 dispatcher tests, isolated tarball smoke, source/Codex/Claude parity, and durable documentation checks passed. |
+| 2026-07-22 | T010 full repository validation | passed | `npm run validate` passed 356 Python tests, 33 Node tests, lifecycle/archive/prompt/package/sync checks, npm dry-run, and whitespace checks. |
+| 2026-07-22 | T011 task-derived phase projection | passed | Live output showed Spec 039 at tasks 10/11, phases 5/6, state in_progress, and Spec 034 with absent phase fields; 38 focused tests and installed-tarball smoke passed. |
+| 2026-07-22 | T011 full repository validation | passed | `npm run validate` passed 360 Python tests, 33 Node tests, lifecycle/archive/prompt/package checks, source/Codex/Claude parity, npm dry-run, and whitespace checks. User-wide cache drift remains expected for this unreleased checkout. |
 
 ## Package And Public Interface Review
 
@@ -202,9 +221,9 @@ required before release.
 ## Readiness Decision
 
 - **Ready for implementation:** yes, after package lint and T001 selection
-- **Ready for promotion:** yes
-- **Ready for release:** yes
-- **Ready for closure:** yes
+- **Ready for promotion:** yes - phase progress/state semantics are present in all durable targets
+- **Ready for release:** yes - focused, bundle, installed-package, and full validation passed
+- **Ready for closure:** yes - T001-T011 are complete; closure remains a separately authorized lifecycle action
 
 ## Related Artifacts
 

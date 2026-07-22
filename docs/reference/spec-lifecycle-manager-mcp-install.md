@@ -246,9 +246,10 @@ node tests/runtime/slm_package_smoke.mjs
 
 The smoke creates isolated npm, Codex, marketplace, and repository roots; it
 requires the `slm` shim, rejects legacy shims, and exercises `slm --help`,
-`slm specs --json`, and `slm install --help`. The cross-platform workflow runs
-this smoke on Windows, macOS, and Linux. Checkout testing must not overwrite a
-user-wide packaged Codex or Claude installation.
+equivalent `slm spec --json` and `slm specs --json` inventory routes, and `slm
+install --help`. The cross-platform workflow runs this smoke on Windows, macOS,
+and Linux. Checkout testing must not overwrite a user-wide packaged Codex or
+Claude installation.
 
 ### Release and npm publish workflow
 
@@ -397,7 +398,7 @@ claude plugin marketplace add Auriora/ai-spec-lifecycle
 claude plugin install spec-lifecycle-manager@ai-spec-lifecycle
 ```
 
-To pin to a specific release, append the tag: `Auriora/ai-spec-lifecycle@v0.5.0`.
+To pin to a specific release, append the tag: `Auriora/ai-spec-lifecycle@v0.6.0`.
 For an offline install, download the release tarball, `tar -xzf` it, and
 `claude plugin marketplace add .\package` instead of the first line.
 

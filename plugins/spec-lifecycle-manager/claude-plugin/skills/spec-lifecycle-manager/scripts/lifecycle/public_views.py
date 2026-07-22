@@ -16,11 +16,21 @@ from lifecycle import traceability
 
 
 SCHEMA_VERSION = "1"
-PUBLIC_COMMANDS = ("specs", "tasks", "next", "requirements", "history", "install")
+PUBLIC_COMMANDS = ("spec", "specs", "tasks", "next", "requirements", "history", "install")
 QUERY_COMMANDS = PUBLIC_COMMANDS[:-1]
 ENVELOPE_FIELDS = ("schema_version", "command", "repo_root", "records", "summary")
 OPEN_TASK_STATES = frozenset({"pending", "in_progress", "partial", "review_needed", "attention"})
 CANONICAL_PRIORITIES = frozenset(requirements_parser.CANONICAL_PRIORITIES)
+PHASE_STATE_PRECEDENCE = (
+    "attention",
+    "review_needed",
+    "in_progress",
+    "partial",
+    "pending",
+    "follow_up",
+    "no_op",
+    "complete",
+)
 
 
 class PublicViewError(ValueError):
@@ -125,6 +135,7 @@ def _active_spec_record(repo_root: Path, item: dict[str, Any]) -> dict[str, Any]
     spec_path = Path(item["path"])
     tasks_path = spec_path / "tasks.md"
     tasks = core.parse_tasks(tasks_path)
+    phase_fields = _phase_progress(tasks_path, tasks)
     next_payload = core.next_task(spec_path)
     selected = next_payload.get("selected")
     health = item.get("health", {})
@@ -138,6 +149,40 @@ def _active_spec_record(repo_root: Path, item: dict[str, Any]) -> dict[str, Any]
         "tasks_total": len(tasks),
         "tasks_complete": sum(1 for task in tasks if task.complete),
         "next_task": selected.get("task_id") if isinstance(selected, dict) else None,
+        **phase_fields,
+    }
+
+
+def _phase_progress(tasks_path: Path, tasks: list[core.Task]) -> dict[str, Any]:
+    phase_by_task = core.task_phase_map(tasks_path)
+    phases: dict[str, list[core.Task]] = {}
+    for task in tasks:
+        phase = phase_by_task.get(task.task_id, "Unphased")
+        if phase == "Unphased":
+            continue
+        phases.setdefault(phase, []).append(task)
+
+    if not phases:
+        return {
+            "phases_total": None,
+            "phases_complete": None,
+            "current_phase": None,
+            "phase_state": None,
+        }
+
+    phase_items = list(phases.items())
+    complete_count = sum(1 for _name, phase_tasks in phase_items if all(task.complete for task in phase_tasks))
+    current_name, current_tasks = next(
+        ((name, phase_tasks) for name, phase_tasks in phase_items if not all(task.complete for task in phase_tasks)),
+        phase_items[-1],
+    )
+    current_states = {task.status for task in current_tasks}
+    phase_state = next(state for state in PHASE_STATE_PRECEDENCE if state in current_states)
+    return {
+        "phases_total": len(phase_items),
+        "phases_complete": complete_count,
+        "current_phase": current_name,
+        "phase_state": phase_state,
     }
 
 

@@ -55,16 +55,40 @@ try {
   }
   const queryRepo = path.join(tempRoot, "query-repo");
   fs.mkdirSync(path.join(queryRepo, ".git"), { recursive: true });
+  const specRoot = path.join(queryRepo, "docs", "specs", "001-example");
+  fs.mkdirSync(specRoot, { recursive: true });
+  fs.writeFileSync(
+    path.join(specRoot, "requirements.md"),
+    "---\nstatus: draft\n---\n# Requirements\n\n### Requirement 1: Example\n\n**Priority:** must-have\n",
+  );
+  fs.writeFileSync(
+    path.join(specRoot, "tasks.md"),
+    "# Tasks\n\n## Phase 1: Foundation\n\n- [x] T001 Complete setup.\n  - Evidence: passed\n\n## Phase 2: Delivery\n\n- [~] T002 Deliver behavior.\n  - Depends on: T001\n  - Evidence: in progress\n",
+  );
 
   const help = run(process.execPath, [dispatcher, "--help"]);
-  for (const command of ["specs", "tasks", "next", "requirements", "history", "install"]) {
+  for (const command of ["spec", "specs", "tasks", "next", "requirements", "history", "install"]) {
     if (!help.stdout.includes(command)) throw new Error(`slm --help omitted ${command}`);
   }
 
   const specs = run(process.execPath, [dispatcher, "specs", "--json", "-C", queryRepo]);
   const payload = JSON.parse(specs.stdout);
-  if (payload.command !== "specs" || payload.repo_root !== "." || payload.records.length !== 0) {
+  if (payload.command !== "specs" || payload.repo_root !== "." || payload.records.length !== 1) {
     throw new Error(`unexpected slm specs payload: ${specs.stdout}`);
+  }
+  const record = payload.records[0];
+  if (
+    record.phases_complete !== 1 ||
+    record.phases_total !== 2 ||
+    record.current_phase !== "Phase 2: Delivery" ||
+    record.phase_state !== "in_progress"
+  ) {
+    throw new Error(`unexpected slm phase progress: ${specs.stdout}`);
+  }
+
+  const singular = run(process.execPath, [dispatcher, "spec", "--json", "-C", queryRepo]);
+  if (singular.stdout !== specs.stdout) {
+    throw new Error("slm spec did not match slm specs for active inventory");
   }
 
   const installHelp = run(process.execPath, [dispatcher, "install", "--help"]);

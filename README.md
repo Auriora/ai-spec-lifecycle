@@ -46,7 +46,7 @@ The supported distribution is the npm package tarball attached to a GitHub
 release. Install the latest released package globally:
 
 ```bash
-npm install -g https://github.com/Auriora/ai-spec-lifecycle/releases/download/v0.5.0/auriora-ai-spec-lifecycle-0.5.0.tgz
+npm install -g https://github.com/Auriora/ai-spec-lifecycle/releases/download/v0.6.0/auriora-ai-spec-lifecycle-0.6.0.tgz
 ```
 
 ### Codex
@@ -90,7 +90,7 @@ For offline installation, download and unpack the release tarball, then use its
 bundled marketplace:
 
 ```bash
-tar -xzf auriora-ai-spec-lifecycle-0.5.0.tgz
+tar -xzf auriora-ai-spec-lifecycle-0.6.0.tgz
 claude plugin marketplace add ./package
 claude plugin install spec-lifecycle-manager@ai-spec-lifecycle
 ```
@@ -106,9 +106,9 @@ user-wide package:
 
 ```bash
 ./slm --help
-./slm specs
-./slm tasks 039
-./slm -C /path/to/another-repository specs
+./slm spec
+./slm spec 039
+./slm -C /path/to/another-repository spec
 ```
 
 The root launcher delegates to the same Node dispatcher and bundled Python CLI
@@ -119,7 +119,7 @@ the current shell:
 ```bash
 export SLM_SOURCE_ROOT="$PWD"
 export PATH="$SLM_SOURCE_ROOT:$PATH"
-slm specs
+slm spec
 ```
 
 Start a source-backed Codex session without replacing the user-wide packaged
@@ -137,21 +137,17 @@ User-wide installation is reserved for npm or GitHub release artifacts.
 
 The installed package exposes one public executable, `slm`. Its inspection
 commands are read-only; `slm install` is the explicit package-install action.
-Bare `slm` is equivalent to `slm specs`.
+Bare `slm`, `slm spec`, `slm spec open`, and `slm specs` all show active specs.
 
 ```bash
-slm                         # active specs, health, task progress, and next task
-slm specs --all             # active and historic specs
-slm tasks 039               # tasks for one active spec
-slm tasks 039 --pending     # literal [ ] tasks only
-slm tasks 039 --open        # every non-terminal open task state
-slm tasks 039 --complete
-slm tasks 039 --next        # dependency-aware next task
-slm next 039                # equivalent next-task form
-slm requirements 039
-slm requirements 039 --priority must-have
-slm requirements 039 --missing-priority
-slm history --removed --limit 10
+slm                         # active specs, task/phase progress, phase state, and next task
+slm spec all                # active and historic specs
+slm spec closed             # closed and historic specs
+slm spec 039                # tasks for one active spec (default action)
+slm spec 039 tasks --open   # every non-terminal open task state
+slm spec 039 next           # dependency-aware next task
+slm spec 039 requirements
+slm spec 039 requirements --priority must-have
 ```
 
 Use a full ID, unique numeric prefix, slug, or package path where a command
@@ -161,11 +157,21 @@ unions: task selectors and repeatable `--state STATE` may be combined, except
 that `--next` is exclusive. `--pending` means literal pending, while `--open`
 also includes in-progress, partial, review-needed, and attention states.
 
+The original plural commands remain compatible aliases for scripts and
+established workflows: `slm specs --all`, `slm tasks 039`, `slm next 039`,
+`slm requirements 039`, and `slm history --removed --limit 10` use the same
+normalized view builders as their singular equivalents.
+
+For specs with explicit task-backed phases, inventory shows `PHASES` as
+completed/total and `PHASE STATE` as the normalized state of the first
+incomplete phase. Phase completion and state come only from the tasks assigned
+to that phase. Specs without task-backed phases show `-` for both fields.
+
 Add `--json` for one deterministic, versioned JSON document, and use `-C PATH`
 or `--repo PATH` to inspect a repository explicitly:
 
 ```bash
-slm -C ../example-repository specs --json
+slm -C ../example-repository spec --json
 ```
 
 The package no longer exposes the unused `spec-lifecycle-manager` or

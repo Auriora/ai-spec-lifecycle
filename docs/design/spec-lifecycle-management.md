@@ -436,13 +436,25 @@ while every inspection command resolves Python through the package interpreter
 contract and launches the bundled standard-library `slm_cli.py` with an argument
 vector and no shell. Bare `slm` routes to `specs`.
 
-The public query surface is `specs`, `tasks`, `next`, `requirements`, and
-`history`. These commands are read-only projections over shared lifecycle
-parsers and selectors. Shared projection functions produce normalized records
-first; plain-text tables and the versioned JSON envelope render those same
-records so filtering, ordering, identity, and state cannot diverge by output
-mode. Historic records come from the validated closure log and archive index,
+The preferred public query vocabulary is `spec`: `slm spec` defaults to active
+inventory; the `all`, `open`, and `closed` selectors choose an inventory scope;
+and the `tasks`, `next`, and `requirements` actions inspect one active spec. The
+plural `specs`, `tasks`, `next`, `requirements`, and `history` commands remain
+compatible routes. All forms are read-only projections over the same lifecycle
+parsers and selectors. The singular parser normalizes to existing builders;
+shared projection functions produce normalized records first, and plain-text
+tables and the versioned JSON envelope render those same records so filtering,
+ordering, identity, and state cannot diverge by vocabulary or output mode.
+Historic records come from the validated closure log and archive index,
 including removed packages.
+
+Active spec records also project task-backed phase progress. The public view
+uses the shared task parser and task-to-phase mapping, counts a phase complete
+only when all assigned tasks are complete, and selects the first incomplete
+phase in document order as current. Phase state is one of the existing
+normalized task states, chosen by a documented deterministic precedence; it is
+not a second persisted lifecycle model. Specs without explicit task-backed
+phases expose no phase progress or state.
 
 Keep the three command boundaries distinct:
 

@@ -4,7 +4,7 @@ doc_type: spec
 artifact_type: design
 status: draft
 owner: platform
-last_reviewed: 2026-07-19
+last_reviewed: 2026-07-22
 ---
 
 # Technical Design
@@ -35,6 +35,8 @@ explicit recovery surface. MCP remains the preferred agent interface.
 | Requirement 7 | AC1-AC5 | Shared normalized records with table and JSON renderers | Golden/structural output tests |
 | Requirement 8 | AC1-AC4 | Root discovery, `-C`/`--repo`, concise error mapping | Nested-cwd and failure tests |
 | Requirement 9 | AC1-AC4 | Read-only composition, interpreter resolver, tarball packaging | Worktree fingerprint and packaged smoke tests |
+| Requirement 10 | AC1-AC8 | Singular `spec` parser and routing adapter over existing normalized views | Route-equivalence, defaults, filters, help, and invalid-form tests |
+| Requirement 11 | AC1-AC7 | Phase aggregation over shared task parsing and task-to-phase mapping | Mixed-state precedence, progress, no-phase, table/JSON, and route-equivalence tests |
 
 ## Correctness Property Coverage
 
@@ -47,6 +49,8 @@ explicit recovery surface. MCP remains the preferred agent interface.
 | CP-005 | Selection helper returns an ambiguity error before any spec-specific query | Multiple-active fixtures | Candidate ordering is deterministic. |
 | CP-006 | History builder consumes validated closure records only | Removed-package fixture with absent spec directory | Invalid archive diagnostics produce failure. |
 | CP-007 | Requirement view consumes the shared priority parser | Canonical, shorthand, invalid, and missing-priority fixtures | `unspecified` is presentation only. |
+| CP-008 | Singular routes normalize to existing command/view arguments | Compare singular and plural JSON payloads and builder calls | No second inventory, selection, filter, or rendering implementation is permitted. |
+| CP-009 | Phase fields aggregate shared normalized task states within shared phase assignments | Table-driven phase-state precedence and progress tests | `Unphased` and empty headings remain presentation absence, not synthetic progress. |
 
 ## High-Level Design
 
@@ -122,7 +126,8 @@ Minimum record shapes:
 ```text
 SpecRecord:
   spec_id, path, status, lifecycle, health,
-  tasks_total, tasks_complete, next_task
+  tasks_total, tasks_complete, next_task,
+  phases_total, phases_complete, current_phase, phase_state
 
 TaskRecord:
   task_id, marker, state, summary,
@@ -192,6 +197,31 @@ function history_records(repo):
     return normalized records in durable archive order
 ```
 
+```text
+function route_singular_spec(optional_selector, optional_action):
+    if selector is absent or selector == "open": return specs(active_only)
+    if selector == "all": return specs(include_history)
+    if selector == "closed": return history(all_dispositions)
+    action = action or "tasks"
+    require action in {tasks, next, requirements}
+    return existing_view(action, selected_active_spec(selector))
+```
+
+```text
+function phase_progress(tasks, shared_phase_by_task):
+    explicit_phases = task groups in document order excluding Unphased
+    if explicit_phases is empty: return null phase fields
+    complete = count(groups where every normalized task state is complete)
+    current = first group not complete, otherwise final group
+    state = first state present in current by precedence:
+            attention, review_needed, in_progress, partial, pending,
+            follow_up, no_op, complete
+    return complete, total, current.name, state
+```
+
+The aggregation consumes `core.parse_tasks` and `core.task_phase_map`; it does
+not parse task markers or phase headings independently in the public CLI.
+
 ### Function Signatures and Interfaces
 
 Provisional internal interfaces:
@@ -209,6 +239,8 @@ def render_json(view: CommandView, stream: TextIO) -> None: ...
 Public commands:
 
 ```text
+slm spec [all|open|closed] [--json] [-C PATH|--repo PATH]
+slm spec SPEC [tasks|next|requirements] [command-specific filters] [--json]
 slm [specs] [--all] [--json] [-C PATH|--repo PATH]
 slm tasks [SPEC] [--complete] [--pending] [--open] [--state STATE...] [--next] [--json]
 slm next [SPEC] [--json]
@@ -221,6 +253,13 @@ Compatible task-state filters form a union, as do `--archived` and `--removed`;
 duplicate selectors do not duplicate records. `--next` remains exclusive with
 every task-state filter, and `--missing-priority` remains exclusive with
 `--priority`.
+
+The singular router is an additive parsing layer. Inventory selectors are
+reserved only in the selector position, while all other selector values retain
+the shared full-ID, numeric-prefix, slug, or package-path resolution contract.
+The resulting view keeps its underlying command identity (`specs`, `tasks`,
+`next`, `requirements`, or `history`) so JSON and table rendering stay
+byte-equivalent to compatible plural forms.
 
 ### Error Handling
 
@@ -259,6 +298,8 @@ every task-state filter, and `--missing-priority` remains exclusive with
 - The change is release-note-worthy and should be called out as a command-line
   breaking change even if package versioning remains pre-1.0.
 - MCP names, prompt names, hooks, spec formats, and task markers are unchanged.
+- Existing plural public commands remain supported; the singular `spec`
+  vocabulary is the preferred discoverable grouping, not a breaking rename.
 
 ### Slice Boundary And Residual Architecture
 
@@ -278,6 +319,7 @@ every task-state filter, and `--missing-priority` remains exclusive with
 | Package contract and tarball smoke | Requirements 1 and 9 | `verification.md`, npm pack metadata | Must avoid validating from a checkout-only path. |
 | Existing full validation | Regression across runtime, MCP, hooks, bundles, docs, and packaging | `verification.md` | None beyond documented skipped CI platforms. |
 | Read-only worktree fingerprint | Requirement 9 and CP-004 | focused integration test | Installer command is excluded by design. |
+| Phase aggregation tests | Requirement 11 and CP-009 | `tests/runtime/test_public_views.py`, `tests/runtime/test_public_cli.py` | Future normalized task states require an explicit precedence update. |
 
 ## Downstream Task Guidance
 

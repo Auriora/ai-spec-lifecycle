@@ -4,7 +4,7 @@ doc_type: spec
 artifact_type: tasks
 status: draft
 owner: platform
-last_reviewed: 2026-07-19
+last_reviewed: 2026-07-22
 ---
 
 # Tasks
@@ -26,6 +26,8 @@ T005 -> T006
 T006 -> T007
 T007 -> T008
 T008 -> T009
+T009 -> T010
+T010 -> T011
 ```
 
 ## Phase 1: Contract Foundation
@@ -184,6 +186,58 @@ validation.
   - Status: Phase 4 implementation, promotion, full validation, and semantic review complete; actual spec closure remains separate.
   - Destination: none
   - Decision owner: none
+
+## Phase 5: Unified Spec Navigation
+
+**Purpose**: Add the user-requested singular `spec` command as a routing layer
+over the already accepted public view contracts.
+
+- [x] T010 Implement and document unified singular spec navigation.
+  - Depends on: T009
+  - Requirement: Requirement 10
+  - Properties: CP-003, CP-004, CP-005, CP-008
+  - Files: `skills/spec-lifecycle-manager/scripts/lifecycle/public_cli.py`,
+    `tests/runtime/test_public_cli.py`, `tests/runtime/slm-cli.test.mjs`,
+    `README.md`, `docs/reference/spec-lifecycle-runtime.md`,
+    `docs/design/spec-lifecycle-management.md`, bundle copies, and this spec's
+    traceability, quickstart, and verification artifacts
+  - Acceptance: `slm spec` defaults to open inventory; `all` and `closed`
+    select combined and historic inventory; a spec reference defaults to tasks;
+    explicit `tasks`, `next`, and `requirements` delegate to the existing
+    builders and filters; plural commands remain compatible; invalid mixed
+    forms fail with exit 2; source/bundle and packaged validation pass.
+  - Validation: Run focused Python and Node CLI tests, direct source command
+    equivalence smokes, package contract, source/bundle sync guard, full
+    validation, and `git diff --check`.
+  - Evidence mode: validation
+  - Evidence: Implemented unified `slm spec` inventory and per-spec routing with the requested defaults; retained plural compatibility; synchronized Codex and Claude bundles; promoted README, design, runtime, and install guidance. Validation passed: 34 focused Python tests, 7 dispatcher tests, seven live singular/plural JSON equivalence pairs, isolated installed-tarball smoke, and full `npm run validate` with 356 Python tests, 33 Node tests, lifecycle/package/sync checks, npm dry-run, and `git diff --check`.
+  - Status: Singular spec routing, compatibility coverage, durable documentation, bundle synchronization, and package validation complete.
+
+## Phase 6: Phase Progress Projection
+
+**Purpose**: Expose task-derived phase progress and state in active spec
+inventory without creating a second phase or task-state interpretation.
+
+- [x] T011 Implement and document task-derived phase progress in spec inventory.
+  - Depends on: T010
+  - Requirement: Requirement 11
+  - Properties: CP-003, CP-004, CP-009
+  - Files: `skills/spec-lifecycle-manager/scripts/lifecycle/public_views.py`,
+    `skills/spec-lifecycle-manager/scripts/lifecycle/public_cli.py`,
+    `tests/runtime/test_public_views.py`, `tests/runtime/test_public_cli.py`,
+    `README.md`, `docs/reference/spec-lifecycle-runtime.md`,
+    `docs/design/spec-lifecycle-management.md`, bundle copies, and this spec's
+    traceability, quickstart, change-impact, and verification artifacts
+  - Acceptance: Phased specs expose completed/total phase progress, current
+    phase name, and a normalized task-derived phase state; no-phase specs expose
+    null/`-` fields; task-free headings do not count; singular/plural routes
+    remain equivalent; source/bundle and packaged validation pass.
+  - Validation: Run focused public-view and CLI tests, live table/JSON smokes,
+    package smoke, source/bundle sync guard, full validation, lifecycle lint,
+    and `git diff --check`.
+  - Evidence mode: validation
+  - Evidence: Implemented task-derived phase progress and normalized current-phase state in active spec records; added PHASES and PHASE STATE table columns plus JSON fields, explicit no-phase nulls, deterministic precedence coverage, durable documentation, and synchronized Codex/Claude bundles. Validation passed: 38 focused Python tests, live table/JSON output, isolated installed-tarball smoke, and full `npm run validate` with 360 Python tests, 33 Node tests, lifecycle/package/source-bundle checks, npm dry-run, and `git diff --check`.
+  - Status: Phase grouping, progress/state projection, absent-phase behavior, presentation, durable documentation, bundle synchronization, and package validation complete.
 ## Execution Rules
 
 - Do not implement from this file alone. Read all linked artifacts and current

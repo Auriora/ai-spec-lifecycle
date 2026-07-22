@@ -18,6 +18,8 @@ EXIT_RUNTIME = 1
 EXIT_USAGE = 2
 ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 CONTROL_RE = re.compile(r"[\x00-\x1f\x7f-\x9f]")
+SPEC_INVENTORY_SELECTORS = frozenset({"all", "open", "closed"})
+SPEC_ACTIONS = ("tasks", "next", "requirements")
 
 
 class PublicArgumentParser(argparse.ArgumentParser):
@@ -33,6 +35,34 @@ def _add_common_options(parser: argparse.ArgumentParser, *, suppress_defaults: b
     parser.add_argument("--json", action="store_true", default=default, help="Emit the stable JSON view envelope.")
 
 
+def _add_task_options(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--complete", action="store_true", help="Include complete tasks.")
+    parser.add_argument("--pending", action="store_true", help="Include literal pending tasks.")
+    parser.add_argument("--open", action="store_true", help="Include all non-terminal open states.")
+    parser.add_argument("--state", action="append", default=[], help="Include a normalized task state; repeatable.")
+    parser.add_argument("--next", action="store_true", dest="next_only", help="Show only the dependency-aware next task.")
+
+
+def _add_requirement_options(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--priority",
+        action="append",
+        default=[],
+        help="Filter by canonical priority; repeatable.",
+    )
+    parser.add_argument(
+        "--missing-priority",
+        action="store_true",
+        help="Show requirements without an accepted canonical priority.",
+    )
+
+
+def _add_history_options(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--archived", action="store_true", help="Include retained archived specs.")
+    parser.add_argument("--removed", action="store_true", help="Include removed specs.")
+    parser.add_argument("--limit", type=int, help="Return at most the most recent N records.")
+
+
 def build_parser() -> PublicArgumentParser:
     parser = PublicArgumentParser(
         prog="slm",
@@ -42,6 +72,14 @@ def build_parser() -> PublicArgumentParser:
     _add_common_options(parser)
     subparsers = parser.add_subparsers(dest="command", metavar="COMMAND")
 
+    spec = subparsers.add_parser("spec", help="List specs or inspect one spec through a unified command.")
+    _add_common_options(spec, suppress_defaults=True)
+    spec.add_argument("selector", nargs="?", help="all, open, closed, or a spec ID, number, slug, or package path.")
+    spec.add_argument("action", nargs="?", choices=SPEC_ACTIONS, help="Per-spec view; defaults to tasks.")
+    _add_task_options(spec)
+    _add_requirement_options(spec)
+    _add_history_options(spec)
+
     specs = subparsers.add_parser("specs", help="List active specs and their lifecycle state.")
     _add_common_options(specs, suppress_defaults=True)
     specs.add_argument("--all", action="store_true", help="Include historic specs.")
@@ -49,11 +87,7 @@ def build_parser() -> PublicArgumentParser:
     tasks = subparsers.add_parser("tasks", help="List tasks and normalized state for a selected spec.")
     _add_common_options(tasks, suppress_defaults=True)
     tasks.add_argument("spec", nargs="?", help="Spec ID, number, slug, or package path.")
-    tasks.add_argument("--complete", action="store_true", help="Include complete tasks.")
-    tasks.add_argument("--pending", action="store_true", help="Include literal pending tasks.")
-    tasks.add_argument("--open", action="store_true", help="Include all non-terminal open states.")
-    tasks.add_argument("--state", action="append", default=[], help="Include a normalized task state; repeatable.")
-    tasks.add_argument("--next", action="store_true", dest="next_only", help="Show only the dependency-aware next task.")
+    _add_task_options(tasks)
 
     next_parser = subparsers.add_parser("next", help="Show the dependency-aware next task for a selected spec.")
     _add_common_options(next_parser, suppress_defaults=True)
@@ -62,23 +96,11 @@ def build_parser() -> PublicArgumentParser:
     requirements = subparsers.add_parser("requirements", help="List requirements, priorities, and linked tasks.")
     _add_common_options(requirements, suppress_defaults=True)
     requirements.add_argument("spec", nargs="?", help="Spec ID, number, slug, or package path.")
-    requirements.add_argument(
-        "--priority",
-        action="append",
-        default=[],
-        help="Filter by canonical priority; repeatable.",
-    )
-    requirements.add_argument(
-        "--missing-priority",
-        action="store_true",
-        help="Show requirements without an accepted canonical priority.",
-    )
+    _add_requirement_options(requirements)
 
     history = subparsers.add_parser("history", help="List closed and historic specs.")
     _add_common_options(history, suppress_defaults=True)
-    history.add_argument("--archived", action="store_true", help="Include retained archived specs.")
-    history.add_argument("--removed", action="store_true", help="Include removed specs.")
-    history.add_argument("--limit", type=int, help="Return at most the most recent N records.")
+    _add_history_options(history)
 
     install = subparsers.add_parser("install", help="Install the packaged Codex plugin.")
     install.add_argument("install_args", nargs=argparse.REMAINDER, help=argparse.SUPPRESS)
@@ -108,8 +130,89 @@ def resolve_repo_root(repo: str | None, cwd: Path) -> Path:
     return core.repo_root_for(cwd.resolve())
 
 
+def _has_task_filters(args: argparse.Namespace) -> bool:
+    return any(
+        (
+            bool(getattr(args, "complete", False)),
+            bool(getattr(args, "pending", False)),
+            bool(getattr(args, "open", False)),
+            bool(getattr(args, "state", [])),
+            bool(getattr(args, "next_only", False)),
+        )
+    )
+
+
+def _has_requirement_filters(args: argparse.Namespace) -> bool:
+    return bool(getattr(args, "priority", [])) or bool(getattr(args, "missing_priority", False))
+
+
+def _has_history_filters(args: argparse.Namespace) -> bool:
+    return (
+        bool(getattr(args, "archived", False))
+        or bool(getattr(args, "removed", False))
+        or getattr(args, "limit", None) is not None
+    )
+
+
+def _reject_filters(args: argparse.Namespace, *, allowed: str) -> None:
+    invalid = []
+    if allowed != "tasks" and _has_task_filters(args):
+        invalid.append("task")
+    if allowed != "requirements" and _has_requirement_filters(args):
+        invalid.append("requirement")
+    if allowed != "history" and _has_history_filters(args):
+        invalid.append("history")
+    if invalid:
+        raise public_views.PublicViewError(
+            f"{'/'.join(invalid)} filters are not valid for this slm spec route.",
+            code="usage",
+        )
+
+
+def build_singular_spec_view(args: argparse.Namespace, repo_root: Path) -> dict[str, Any]:
+    selector = getattr(args, "selector", None)
+    action = getattr(args, "action", None)
+    if selector is None or selector in SPEC_INVENTORY_SELECTORS:
+        if action is not None:
+            raise public_views.PublicViewError(
+                "Inventory selectors cannot be combined with a per-spec action.",
+                code="usage",
+            )
+        inventory = selector or "open"
+        if inventory == "closed":
+            _reject_filters(args, allowed="history")
+            filters = public_views.HistoryFilters(
+                archived=bool(getattr(args, "archived", False)),
+                removed=bool(getattr(args, "removed", False)),
+                limit=getattr(args, "limit", None),
+            )
+            return public_views.build_history_view(repo_root, filters=filters)
+        _reject_filters(args, allowed="inventory")
+        return public_views.build_specs_view(repo_root, include_history=inventory == "all")
+
+    selected_action = action or "tasks"
+    _reject_filters(args, allowed=selected_action)
+    spec_path = public_views.select_active_spec(repo_root, selector)
+    if selected_action in {"tasks", "next"}:
+        filters = public_views.TaskFilters(
+            complete=bool(getattr(args, "complete", False)),
+            pending=bool(getattr(args, "pending", False)),
+            open=bool(getattr(args, "open", False)),
+            states=tuple(getattr(args, "state", [])),
+            next_only=selected_action == "next" or bool(getattr(args, "next_only", False)),
+        )
+        return public_views.build_tasks_view(repo_root, spec_path, filters=filters, command=selected_action)
+    filters = public_views.RequirementFilters(
+        priorities=tuple(getattr(args, "priority", [])),
+        missing_priority=bool(getattr(args, "missing_priority", False)),
+    )
+    return public_views.build_requirements_view(repo_root, spec_path, filters=filters)
+
+
 def build_view(args: argparse.Namespace, repo_root: Path) -> dict[str, Any]:
     command = args.command or "specs"
+    if command == "spec":
+        return build_singular_spec_view(args, repo_root)
     if command == "specs":
         return public_views.build_specs_view(repo_root, include_history=bool(getattr(args, "all", False)))
     if command in {"tasks", "next"}:
@@ -157,12 +260,30 @@ def safe_text(value: Any) -> str:
 
 
 def _spec_rows(records: list[dict[str, Any]]) -> tuple[list[str], list[list[str]]]:
-    headers = ["SPEC", "STATUS", "LIFECYCLE", "DISPOSITION", "HEALTH", "TASKS", "NEXT", "PATH"]
+    headers = [
+        "SPEC",
+        "STATUS",
+        "LIFECYCLE",
+        "DISPOSITION",
+        "HEALTH",
+        "TASKS",
+        "PHASES",
+        "PHASE STATE",
+        "NEXT",
+        "PATH",
+    ]
     rows = []
     for record in records:
         total = record.get("tasks_total")
         complete = record.get("tasks_complete")
         progress = f"{complete}/{total}" if total is not None and complete is not None else "-"
+        phases_total = record.get("phases_total")
+        phases_complete = record.get("phases_complete")
+        phase_progress = (
+            f"{phases_complete}/{phases_total}"
+            if phases_total is not None and phases_complete is not None
+            else "-"
+        )
         rows.append(
             [
                 record.get("spec_id"),
@@ -171,6 +292,8 @@ def _spec_rows(records: list[dict[str, Any]]) -> tuple[list[str], list[list[str]
                 record.get("disposition"),
                 record.get("health"),
                 progress,
+                phase_progress,
+                record.get("phase_state"),
                 record.get("next_task"),
                 record.get("path") or record.get("package_path"),
             ]

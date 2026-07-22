@@ -303,7 +303,16 @@ class HistoryAndSpecsViewTests(unittest.TestCase):
             mock.patch.object(
                 public_views.core,
                 "parse_tasks",
-                return_value=[SimpleNamespace(complete=True), SimpleNamespace(complete=False), SimpleNamespace(complete=False)],
+                return_value=[
+                    SimpleNamespace(task_id="T001", complete=True, status="complete"),
+                    SimpleNamespace(task_id="T002", complete=False, status="in_progress"),
+                    SimpleNamespace(task_id="T003", complete=False, status="pending"),
+                ],
+            ),
+            mock.patch.object(
+                public_views.core,
+                "task_phase_map",
+                return_value={"T001": "Phase 1", "T002": "Phase 2", "T003": "Phase 2"},
             ),
             mock.patch.object(public_views.core, "next_task", return_value={"selected": {"task_id": "T002"}}),
             mock.patch.object(public_views.core, "spec_summary") as repeated_lint,
@@ -321,9 +330,80 @@ class HistoryAndSpecsViewTests(unittest.TestCase):
                 "tasks_total": 3,
                 "tasks_complete": 1,
                 "next_task": "T002",
+                "phases_total": 2,
+                "phases_complete": 1,
+                "current_phase": "Phase 2",
+                "phase_state": "in_progress",
             },
             view["records"][0],
         )
+
+    def test_phase_progress_uses_task_states_and_deterministic_precedence(self):
+        tasks = [
+            SimpleNamespace(task_id="T001", complete=True, status="complete"),
+            SimpleNamespace(task_id="T002", complete=True, status="complete"),
+            SimpleNamespace(task_id="T003", complete=False, status="pending"),
+            SimpleNamespace(task_id="T004", complete=False, status="attention"),
+            SimpleNamespace(task_id="T005", complete=False, status="in_progress"),
+        ]
+        phase_map = {
+            "T001": "Phase 1: Foundation",
+            "T002": "Phase 1: Foundation",
+            "T003": "Phase 2: Delivery",
+            "T004": "Phase 2: Delivery",
+            "T005": "Phase 3: Follow-up",
+        }
+        with mock.patch.object(public_views.core, "task_phase_map", return_value=phase_map):
+            progress = public_views._phase_progress(Path("/repo/docs/specs/001/tasks.md"), tasks)
+        self.assertEqual(
+            {
+                "phases_total": 3,
+                "phases_complete": 1,
+                "current_phase": "Phase 2: Delivery",
+                "phase_state": "attention",
+            },
+            progress,
+        )
+
+    def test_phase_progress_is_absent_for_unphased_tasks(self):
+        tasks = [SimpleNamespace(task_id="T001", complete=False, status="pending")]
+        with mock.patch.object(public_views.core, "task_phase_map", return_value={"T001": "Unphased"}):
+            progress = public_views._phase_progress(Path("/repo/docs/specs/001/tasks.md"), tasks)
+        self.assertEqual(
+            {
+                "phases_total": None,
+                "phases_complete": None,
+                "current_phase": None,
+                "phase_state": None,
+            },
+            progress,
+        )
+
+    def test_phase_state_precedence_covers_every_normalized_task_state(self):
+        for index, expected in enumerate(public_views.PHASE_STATE_PRECEDENCE):
+            states = public_views.PHASE_STATE_PRECEDENCE[index:]
+            tasks = [
+                SimpleNamespace(task_id=f"T{offset:03d}", complete=state == "complete", status=state)
+                for offset, state in enumerate(states, start=1)
+            ]
+            phase_map = {task.task_id: "Phase 1" for task in tasks}
+            with self.subTest(expected=expected), mock.patch.object(
+                public_views.core, "task_phase_map", return_value=phase_map
+            ):
+                progress = public_views._phase_progress(Path("/repo/docs/specs/001/tasks.md"), tasks)
+            self.assertEqual(expected, progress["phase_state"])
+
+    def test_all_complete_phases_select_the_final_phase(self):
+        tasks = [
+            SimpleNamespace(task_id="T001", complete=True, status="complete"),
+            SimpleNamespace(task_id="T002", complete=True, status="complete"),
+        ]
+        phase_map = {"T001": "Phase 1", "T002": "Phase 2"}
+        with mock.patch.object(public_views.core, "task_phase_map", return_value=phase_map):
+            progress = public_views._phase_progress(Path("/repo/docs/specs/001/tasks.md"), tasks)
+        self.assertEqual(2, progress["phases_complete"])
+        self.assertEqual("Phase 2", progress["current_phase"])
+        self.assertEqual("complete", progress["phase_state"])
 
 
 if __name__ == "__main__":

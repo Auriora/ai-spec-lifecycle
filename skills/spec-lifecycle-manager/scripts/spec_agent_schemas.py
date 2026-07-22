@@ -243,7 +243,7 @@ def phase_gate_check_output_schema() -> dict[str, Any]:
         },
         "additionalProperties": False,
     }
-    return {"oneOf": [compact, full, section, stale_expansion_response_schema()]}
+    return {"type": "object", "oneOf": [compact, full, section, stale_expansion_response_schema()]}
 
 
 def spec_id_inventory_output_schema() -> dict[str, Any]:
@@ -293,7 +293,10 @@ def spec_creation_plan_output_schema() -> dict[str, Any]:
         },
         "additionalProperties": False,
     }
-    return {"oneOf": [compact_aggregate_envelope_schema(), full, section, stale_expansion_response_schema()]}
+    return {
+        "type": "object",
+        "oneOf": [compact_aggregate_envelope_schema(), full, section, stale_expansion_response_schema()],
+    }
 
 
 def review_packet_output_schema() -> dict[str, Any]:

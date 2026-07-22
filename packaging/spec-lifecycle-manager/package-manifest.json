@@ -1,6 +1,6 @@
 {
   "name": "spec-lifecycle-manager",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "registry": "local",
   "distribution": {
     "npm_contract": "packaging/spec-lifecycle-manager/npm-package.json",

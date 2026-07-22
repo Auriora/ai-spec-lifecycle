@@ -4,7 +4,7 @@ doc_type: spec
 artifact_type: change-impact
 status: draft
 owner: platform
-last_reviewed: 2026-07-19
+last_reviewed: 2026-07-22
 ---
 
 # Change Impact
@@ -45,16 +45,19 @@ spec can close.
 | Add durable closed/history inventory | add | archive index and closure log | runtime reference | yes |
 | Add human table and stable JSON presentation | add | public CLI output schema | runtime reference and design | yes |
 | Preserve `slc` as maintainer-only tooling | clarify | `tools/devcli/` | README and design | yes |
+| Add singular `spec` navigation with compatible plural commands | add | public CLI parser over existing normalized views | README, runtime reference, and design | yes |
+| Add task-derived phase progress and state to active spec inventory | add | shared task parser and task-to-phase mapping | README, runtime reference, and design | yes |
 
 ## Promotion Targets
 
 | Spec content | Durable destination | Promotion status | Notes |
 |--------------|---------------------|------------------|-------|
-| User command/install path | `README.md` | pending | Include examples for all four plural commands and `next`. |
-| Public CLI architecture and ownership | `docs/design/spec-lifecycle-management.md` | pending | Keep MCP primary for agents and shared core authoritative. |
-| Commands, filters, output, state semantics, exit behavior | `docs/reference/spec-lifecycle-runtime.md` | pending | Include `pending` versus `open` and no synthetic spec state. |
-| Bin rename, Python resolution, tarball verification | `docs/reference/spec-lifecycle-manager-mcp-install.md` | pending | State that compatibility aliases are intentionally absent. |
+| User command/install path | `README.md` | complete | Includes preferred singular navigation and compatible plural examples. |
+| Public CLI architecture and ownership | `docs/design/spec-lifecycle-management.md` | complete | Keeps MCP primary for agents and shared core authoritative. |
+| Commands, filters, output, state semantics, exit behavior | `docs/reference/spec-lifecycle-runtime.md` | complete | Includes singular defaults, filter routing, `pending` versus `open`, and no synthetic spec state. |
+| Bin rename, Python resolution, tarball verification | `docs/reference/spec-lifecycle-manager-mcp-install.md` | complete | States that compatibility aliases are intentionally absent and verifies singular/plural package output. |
 | Breaking executable rename and feature summary | next release notes | pending | Required when implementation is released. |
+| Phase progress/state semantics | `README.md`, `docs/reference/spec-lifecycle-runtime.md`, `docs/design/spec-lifecycle-management.md` | complete | Documents task-derived progress, precedence, current-phase selection, and absent-phase behavior. |
 
 ## Unchanged Durable Areas
 

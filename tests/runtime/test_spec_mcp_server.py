@@ -152,7 +152,7 @@ class SpecMcpServerTests(unittest.TestCase):
         result = payload["result"]
         self.assertEqual("2025-06-18", result["protocolVersion"])
         self.assertEqual("spec-lifecycle-manager", result["serverInfo"]["name"])
-        self.assertEqual("0.5.0", result["serverInfo"]["version"])
+        self.assertEqual("0.6.0", result["serverInfo"]["version"])
         self.assertIn("tools", result["capabilities"])
         self.assertIn("resources", result["capabilities"])
         self.assertIn("prompts", result["capabilities"])
@@ -170,6 +170,13 @@ class SpecMcpServerTests(unittest.TestCase):
             )
 
         tools = {tool["name"] for tool in responses[0]["result"]["tools"]}
+        tools_with_output_schemas = [
+            tool for tool in responses[0]["result"]["tools"] if "outputSchema" in tool
+        ]
+        self.assertGreater(len(tools_with_output_schemas), 0)
+        for tool in tools_with_output_schemas:
+            with self.subTest(tool=tool["name"]):
+                self.assertEqual("object", tool["outputSchema"].get("type"))
         self.assertIn("scan_specs", tools)
         self.assertIn("spec_id_inventory", tools)
         self.assertIn("spec_creation_plan", tools)
@@ -361,7 +368,7 @@ class SpecMcpServerTests(unittest.TestCase):
         self.assertEqual("ready", payload["status"])
         self.assertEqual("not_observed", payload["client_metadata_status"])
         self.assertEqual("spec-lifecycle-manager", payload["server"]["name"])
-        self.assertEqual("0.5.0", payload["server"]["version"])
+        self.assertEqual("0.6.0", payload["server"]["version"])
         self.assertFalse(payload["server"]["capabilities"]["tools"]["listChanged"])
         self.assertEqual("unknown", payload["client"]["name"])
         self.assertEqual("stable_tool_surface", payload["dynamic_tools"]["decision"])

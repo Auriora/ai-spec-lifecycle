@@ -4,7 +4,7 @@ doc_type: spec
 artifact_type: requirements
 status: draft
 owner: platform
-last_reviewed: 2026-07-19
+last_reviewed: 2026-07-22
 ---
 
 # Requirements
@@ -34,6 +34,11 @@ in use.
   drift.
 - Keep the first public CLI release strictly read-only and cross-platform.
 - Preserve the existing repository-local `slc` maintainer workflow.
+- Provide a singular `spec` command that groups spec inventory and per-spec
+  task, next-task, and requirement inspection without removing the original
+  plural commands.
+- Show phase progress and phase state in spec inventory when `tasks.md`
+  contains task-backed phases, deriving both exclusively from task states.
 
 ## Non-Goals
 
@@ -87,8 +92,8 @@ documentation delta.
 
 ## Staged Readiness
 
-- **Current stage:** tasks
-- **Next stage:** reconcile and implement
+- **Current stage:** implement
+- **Next stage:** verify and promote
 - **Ready to implement when:** package lint passes, the public command and
   output contracts remain traceable through design and tasks, and the selected
   implementation task has bounded context.
@@ -304,6 +309,64 @@ repository.
    and tests through the package contract and SHALL verify the executable from
    a built tarball rather than a development checkout.
 
+### Requirement 10: Unified singular spec command
+
+**User Story:** As a user, I want one discoverable `slm spec` command for both
+spec inventory and inspection, so that I can navigate lifecycle state without
+remembering several top-level nouns.
+
+**Priority:** must-have
+
+#### Acceptance Criteria
+
+1. WHEN the user runs `slm spec` or `slm spec open`, THEN THE SYSTEM SHALL list
+   active specs using the existing active-spec inventory semantics.
+2. WHEN the user runs `slm spec all`, THEN THE SYSTEM SHALL list active and
+   historic specs using the existing combined inventory semantics.
+3. WHEN the user runs `slm spec closed`, THEN THE SYSTEM SHALL list historic
+   specs using the existing durable history semantics.
+4. GIVEN an active spec reference, WHEN the user runs `slm spec SPEC` or `slm
+   spec SPEC tasks`, THEN THE SYSTEM SHALL list that spec's tasks using the
+   existing task inventory and filter semantics.
+5. GIVEN an active spec reference, WHEN the user runs `slm spec SPEC next` or
+   `slm spec SPEC requirements`, THEN THE SYSTEM SHALL delegate respectively
+   to the existing next-task or requirement inventory semantics.
+6. THE SYSTEM SHALL accept existing command-specific filters and common
+   `--json` and repository-selection options on the singular command forms.
+7. THE SYSTEM SHALL retain `specs`, `tasks`, `next`, `requirements`, and
+   `history` as compatible top-level commands.
+8. WHERE an inventory selector is combined with a per-spec action, or an
+   unknown per-spec action is supplied, THEN THE SYSTEM SHALL fail with a
+   concise usage error instead of guessing.
+
+### Requirement 11: Task-derived phase progress
+
+**User Story:** As a user, I want spec inventory to show phase progress beside
+task progress, so that I can see delivery position without opening each
+`tasks.md` file.
+
+**Priority:** must-have
+
+#### Acceptance Criteria
+
+1. GIVEN an active spec whose `tasks.md` contains explicit task-backed phases,
+   WHEN the user lists specs, THEN THE SYSTEM SHALL show completed/total phase
+   progress in both human and JSON output.
+2. THE SYSTEM SHALL count a phase as complete only when every task assigned to
+   that phase has normalized state `complete`.
+3. THE SYSTEM SHALL identify the current phase as the first incomplete phase
+   in document order, or the final phase when all phases are complete.
+4. THE SYSTEM SHALL expose the current phase name and a phase state selected
+   only from its normalized task states, using deterministic precedence:
+   `attention`, `review_needed`, `in_progress`, `partial`, `pending`,
+   `follow_up`, `no_op`, then `complete`.
+5. WHERE a spec has no explicit task-backed phase, THE SYSTEM SHALL return null
+   phase fields in JSON and `-` phase values in the human table rather than
+   inventing an `Unphased` phase.
+6. Headings without tasks SHALL NOT affect phase totals or phase state.
+7. Singular and plural spec inventory routes SHALL expose identical phase
+   fields because they share the same normalized spec records.
+
 ## Correctness Properties
 
 - **CP-001:** For every task record, exactly one normalized state is derived
@@ -323,6 +386,11 @@ repository.
 - **CP-007:** Requirement priority display uses the shared canonical parser;
   missing priority maps to `unspecified` and does not become a fourth persisted
   priority.
+- **CP-008:** Every `slm spec` form delegates to the same normalized view
+  builder and filter contract as its compatible plural command.
+- **CP-009:** Phase progress and phase state are deterministic projections of
+  the shared task-to-phase mapping and normalized task states; they never
+  reinterpret Markdown markers or synthesize an `Unphased` phase.
 
 ## Technical Context
 
@@ -351,6 +419,10 @@ repository.
   are present.
 - **SC-004:** README, runtime, design, and installation references describe the
   accepted public CLI and clearly distinguish it from `slc` and MCP.
+- **SC-005:** Focused tests prove each singular `spec` route is output-equivalent
+  to its compatible plural command and that invalid mixed forms fail closed.
+- **SC-006:** Active spec inventory shows task-derived phase progress/state for
+  phased specs and explicit absence for specs without task-backed phases.
 
 ## Related Artifacts
 

@@ -4,7 +4,7 @@ doc_type: spec
 artifact_type: quickstart
 status: draft
 owner: platform
-last_reviewed: 2026-07-19
+last_reviewed: 2026-07-22
 ---
 
 # Quickstart
@@ -34,6 +34,10 @@ Record the implemented user journey and packaged smoke scenarios for `slm`.
 3. From a lifecycle-enabled repository, list active specs:
 
    ```bash
+   slm spec
+   slm spec open
+   slm spec all
+   slm spec closed
    slm specs
    slm specs --json
    ```
@@ -41,6 +45,10 @@ Record the implemented user journey and packaged smoke scenarios for `slm`.
 4. Select an active spec and inspect tasks:
 
    ```bash
+   slm spec 039
+   slm spec 039 tasks --pending
+   slm spec 039 next
+   slm spec 039 requirements
    slm tasks 039
    slm tasks 039 --pending
    slm tasks 039 --open
@@ -76,6 +84,10 @@ Record the implemented user journey and packaged smoke scenarios for `slm`.
 - `slm --help` shows `specs`, `tasks`, `next`, `requirements`, `history`, and
   `install`.
 - Bare `slm` and `slm specs` show the same active-spec records.
+- `slm spec` defaults to open inventory, and `slm spec 039` defaults to tasks;
+  singular routes match their compatible plural command output.
+- Specs with task-backed phases show completed/total phase progress and the
+  current phase's task-derived normalized state; unphased specs show `-`.
 - Human mode uses concise plain text; `--json` emits one valid versioned JSON
   document.
 - `--pending` shows literal pending tasks, while `--open` includes all defined
@@ -96,6 +108,8 @@ Record the implemented user journey and packaged smoke scenarios for `slm`.
 | Removed history | Archive fixture with absent package directory | passed | Malformed records fail closed. |
 | Explicit/nested root selection | Temporary repository fixture | passed locally | Windows/macOS/Linux workflow run remains a release gate. |
 | Read-only guarantee | Before/after worktree fingerprint | passed | `install` is excluded by design. |
+| Singular route equivalence | Seven live JSON comparisons plus focused source and installed-package tests | passed | Existing plural commands remain supported compatibility surfaces. |
+| Phase progress/state | Mixed-state, precedence, all-complete, no-phase, human/JSON, and installed-package tests | passed | Future normalized task states require explicit precedence review. |
 
 ## Cleanup
 

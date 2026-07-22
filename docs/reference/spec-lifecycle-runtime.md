@@ -43,15 +43,23 @@ not available.
 
 The release package exposes `slm` as its sole executable. It is the human- and
 automation-facing read-only query surface; `slm install` is the one explicit
-mutating package action. Bare `slm` is equivalent to `slm specs`.
+mutating package action. Bare `slm`, `slm spec`, `slm spec open`, and `slm
+specs` all show active specs.
 
 In this repository, the executable root-level `./slm` launcher delegates to the
 same package dispatcher and bundled Python CLI for source-backed testing. It is
 not included as a second npm bin and does not require a local npm install.
 
+- `slm spec` is the unified inventory route. With no selector it defaults to
+  `open`; `all` includes active and historic records, and `closed` delegates to
+  validated durable history.
+- `slm spec SPEC` is the unified per-spec route. With no action it defaults to
+  `tasks`; the `tasks`, `next`, and `requirements` actions accept the same
+  filters as their compatible plural commands.
 - `slm specs` reports active spec ID, declared status, structural health,
-  completed/total task progress, and next runnable task. `--all` adds historic
-  records with lifecycle/disposition.
+  completed/total task progress, task-derived phase progress/state when phases
+  exist, and next runnable task. `--all` adds historic records with
+  lifecycle/disposition.
 - `slm tasks [SPEC]` reports task ID, marker, normalized state, dependencies,
   linked requirements, and summary. Its filters are `--complete`, `--pending`,
   `--open`, repeatable `--state STATE`, or exclusive `--next`.
@@ -63,6 +71,24 @@ not included as a second npm bin and does not require a local npm install.
 - `slm history` reports closed spec ID, title, disposition, final spec commit,
   and cleanup commit from validated durable history. It accepts `--archived`,
   `--removed`, and `--limit N`.
+
+The plural `specs`, `tasks`, `next`, `requirements`, and `history` commands
+remain supported for compatibility. Singular routes preserve the underlying
+normalized command identity in JSON and delegate to the same selection,
+filter, view, and rendering functions; they do not define parallel lifecycle
+semantics. Inventory selectors cannot be combined with per-spec actions, and
+filters from an unrelated action fail with exit 2 rather than being ignored.
+
+Active spec records include `phases_complete`, `phases_total`,
+`current_phase`, and `phase_state` when `tasks.md` contains explicit headings
+with assigned tasks. A phase is complete only when all its tasks have normalized
+state `complete`. The current phase is the first incomplete phase in document
+order, or the final phase when all are complete. Its state is selected from its
+task states using this precedence: `attention`, `review_needed`, `in_progress`,
+`partial`, `pending`, `follow_up`, `no_op`, then `complete`. This is a
+presentation projection; it does not write or invent phase state. Task-free
+headings do not count, and specs with only unphased tasks return null JSON phase
+fields and `-` table values.
 
 Task filters form a union and never duplicate records. `--pending` means only
 literal `[ ]` tasks. `--open` means pending, in-progress, partial,

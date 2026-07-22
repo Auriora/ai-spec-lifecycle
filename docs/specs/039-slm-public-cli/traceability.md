@@ -4,7 +4,7 @@ doc_type: spec
 artifact_type: traceability
 status: draft
 owner: platform
-last_reviewed: 2026-07-19
+last_reviewed: 2026-07-22
 ---
 
 # Traceability Matrix
@@ -29,6 +29,8 @@ public contract from `tasks.md` alone.
 | T007 | Requirement 1, Requirement 7, Requirement 8, Requirement 9 | R1 AC1-AC4; R7 AC1-AC5; R8 AC1-AC4; R9 AC1-AC4 | `design.md#operational-considerations` | Packaged cross-platform operation | Bundle, dry-run, tarball, and CI gates | install/runtime references | none |
 | T008 | Requirement 1, Requirement 2, Requirement 3, Requirement 4, Requirement 5, Requirement 6, Requirement 7, Requirement 8, Requirement 9 | durable promotion criteria | `design.md#slice-boundary-and-residual-architecture` | All promotion targets | Durable-doc review gate | README, design, runtime, install, release notes | none |
 | T009 | Requirement 1, Requirement 2, Requirement 3, Requirement 4, Requirement 5, Requirement 6, Requirement 7, Requirement 8, Requirement 9 | all | `design.md#validation-strategy` | All proposed changes | Full validation and semantic closure gates | closure log/archive index after delivery | none |
+| T010 | Requirement 10 | R10 AC1-AC8 | `design.md#algorithms-and-logic`, `design.md#function-signatures-and-interfaces`, `design.md#migration-and-compatibility` | Singular `spec` routing and public docs | Route equivalence, defaults, filters, invalid forms, bundles, and package gates | README; runtime and design references | none |
+| T011 | Requirement 11 | R11 AC1-AC7 | `design.md#data-models`, `design.md#algorithms-and-logic`, `design.md#validation-strategy` | Task-derived phase progress/state and public docs | Mixed-state precedence, phase progress, absent-phase, table/JSON, route-equivalence, bundle, and package gates | README; runtime and design references | none |
 
 ## Requirement To Delivery Matrix
 
@@ -43,6 +45,8 @@ public contract from `tasks.md` alone.
 | Requirement 7 | must-have | AC1, AC2, AC3, AC4, AC5 | Data Models; Data Flow; Interfaces | T001, T004-T009 | Table/JSON parity and path gates | runtime/design references | complete | none |
 | Requirement 8 | should-have | AC1, AC2, AC3, AC4 | Data Flow; Error Handling | T001, T004-T009 | Root discovery, exit-code, and cross-platform CI gates | runtime/install references | complete | none |
 | Requirement 9 | must-have | AC1, AC2, AC3, AC4 | Security; Migration; Operational Considerations | T001, T004-T009 | Read-only, interpreter, bundle, tarball, and installed-package matrix gates | README; install/runtime references | complete | none |
+| Requirement 10 | must-have | AC1-AC8 | Algorithms and Logic; Interfaces; Migration and Compatibility | T010 | Singular/plural route equivalence, defaults, filters, invalid forms, bundle and package gates | README; runtime/design references | complete | none |
+| Requirement 11 | must-have | AC1-AC7 | Data Models; Algorithms and Logic; Validation Strategy | T011 | Mixed-state precedence, phase progress, absent-phase, table/JSON, route-equivalence, bundle, and package gates | README; runtime/design references | complete | none |
 
 ## Correctness Property Coverage
 
@@ -55,6 +59,8 @@ public contract from `tasks.md` alone.
 | CP-005 | Requirement 3 | Algorithms and Logic; Error Handling | T001-T005, T009 | Multiple-active selection tests | none |
 | CP-006 | Requirement 6 | Algorithms and Logic | T001-T005, T009 | Removed package and malformed archive fixtures | none after diagnostics are fail-closed |
 | CP-007 | Requirement 5 | Components and Changes; Data Models | T001-T005, T009 | Canonical/shorthand/invalid/missing priority tests | `unspecified` remains view-only |
+| CP-008 | Requirement 10 | Algorithms and Logic; Interfaces | T010 | Singular/plural JSON and builder-call equivalence tests | none if every singular form delegates to existing views |
+| CP-009 | Requirement 11 | Data Models; Algorithms and Logic | T011 | Phase grouping, completion, precedence, no-phase, and route-equivalence tests | future task states require an explicit precedence update |
 
 ## Design To Implementation Matrix
 
@@ -67,6 +73,8 @@ public contract from `tasks.md` alone.
 | Error Handling | Requirements 3, 6, 8 | T001, T004, T005, T007 | CLI and dispatcher | exit/stderr tests | complete | none |
 | Security, Trust, and Access | Requirement 9 | T001, T004-T007, T009 | argument-vector launch and read-only queries | injection/read-only tests and review | complete | none |
 | Migration and Compatibility | Requirements 1, 9 | T006-T009 | bin map and durable docs | package metadata, release review, and green cross-platform matrix | complete | none |
+| Singular spec routing | Requirement 10 | T010 | public parser, existing view builders, durable docs | focused CLI, Node forwarding, bundle, and package tests | complete | none |
+| Phase progress projection | Requirement 11 | T011 | public spec records, table renderer, durable docs | focused view/CLI, package, bundle, and full validation | complete | none |
 
 ## Open Decision Impact
 

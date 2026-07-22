@@ -50,6 +50,18 @@ test("query arguments and child exit status are forwarded unchanged", async () =
   assert.deepEqual(forwarded.slice(-3), ["tasks", "039", "--json"]);
 });
 
+test("singular spec query arguments are forwarded unchanged", async () => {
+  let forwarded;
+  const code = await dispatch(["spec", "039", "requirements", "--json"], queryDependencies({
+    spawnSync: (_command, args) => {
+      forwarded = args;
+      return { status: 0 };
+    },
+  }));
+  assert.equal(code, 0);
+  assert.deepEqual(forwarded.slice(-4), ["spec", "039", "requirements", "--json"]);
+});
+
 test("install is routed in-process with package source and separator removed", async () => {
   let forwarded;
   const code = await dispatch(["install", "--", "--help"], queryDependencies({
